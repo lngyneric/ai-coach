@@ -101,7 +101,6 @@ def streaming_from_template(chat_box, template, variables,
     prompt_template = PromptTemplate(input_variables=list(variables.keys()), template=template)
     full_result = ''
     parse_json = ''
-    start_record_json = False
     need_streaming_complte = False
     count = 0
     for chunk in llm.stream(prompt_template.format(**variables)):
@@ -139,6 +138,7 @@ def streaming_from_template(chat_box, template, variables,
             logging.error(f'解析JSON失败：{e}')
         
     return full_result
+
 
 if __name__ == '__main__':
     # print(get_current_time())
