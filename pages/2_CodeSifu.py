@@ -64,11 +64,7 @@ if not st.session_state['has_welcome']:
         Markdown(text, in_expander=False)
     )
 
-    for t in simulate_streaming(trial.WELCOME):
-        text += t
-        chat_box.update_msg(text, element_index=0, streaming=True)
-
-    chat_box.update_msg(text, element_index=0, streaming=False, state="complete")
+    simulate_streaming(chat_box, trial.WELCOME)
 
 
 if not st.session_state['has_nickname']:        
@@ -77,7 +73,7 @@ if not st.session_state['has_nickname']:
         chat_box.user_say(user_prompt)
         
         
-        full_result = streaming_from_template(chat_box, agent.CHECK_NICKNAME, {"nickname": user_prompt})
+        full_result = streaming_from_template(chat_box, agent.CHECK_NICKNAME, {"input": user_prompt})
         logging.debug(f'CHECK_NICKNAME: {full_result}')
         
         if full_result == 'OK':
