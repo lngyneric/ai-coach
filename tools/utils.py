@@ -1,9 +1,12 @@
+import base64
 import random
 import time
 import logging
 import json
+from pathlib import Path
 
 import streamlit as st
+import validators
 from streamlit_chatbox import *
 from langchain_core.prompts import PromptTemplate
 from langchain_openai import ChatOpenAI
@@ -47,12 +50,30 @@ def append_and_show(role, content):
     st.chat_message(role, avatar=ICON_AI if role == 'assistant' else ICON_USER).write(content)
 
 
-# def simulate_streaming(text: str):
-#     for t in text:
-#         yield t
-#         # 随机sleep 0.1~0.5 秒
-#         # time.sleep(random.uniform(0.001, 0.1))
-#         time.sleep(random.uniform(0.001, 0.01))
+def fix_sidebar_add_logo(logo_url: str):
+    if validators.url(logo_url) is True:
+        logo = f"url({logo_url})"
+    else:
+        logo = f"url(data:image/png;base64,{base64.b64encode(Path(logo_url).read_bytes()).decode()})"
+
+    st.markdown(
+        f"""
+        <style>
+            [data-testid="stSidebarNav"] {{
+                background-image: {logo};
+                background-repeat: no-repeat;
+                background-size: contain;
+                padding-top: 70px;
+                background-position: 0px 0px;
+            }}
+            [data-testid="stSidebar"] {{
+                max-width: 300px !important;
+                min-width: 300px !important;
+            }}
+        </style>
+        """,
+        unsafe_allow_html=True,
+    )
 
 
 def simulate_streaming(chat_box, template: str, variables=None,
@@ -80,7 +101,8 @@ def simulate_streaming(chat_box, template: str, variables=None,
     for t in template:
         current_text += t
         chat_box.update_msg(current_text, element_index=0, streaming=True)
-        time.sleep(random.uniform(random_min, random_max))
+        time.sleep(random.uniform(random_min / 4 if st.session_state.DEV_MODE else random_min,
+                                  random_max / 4 if st.session_state.DEV_MODE else random_max))
 
     chat_box.update_msg(current_text, element_index=0, streaming=False, state="complete")
     return current_text
