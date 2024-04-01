@@ -1,90 +1,122 @@
-import json
-import logging
-import random
-
-from streamlit_chatbox import *
-from langchain_openai import ChatOpenAI
+from streamlit_extras.bottom_container import bottom
 
 from tools.utils import *
-from prompt import trial, agent
+from tools.dev_tools import *
+from script import *
 
 
-# ========== 基础初始化工作 ==========
-# 日志级别设置
-logging.basicConfig(level=logging.DEBUG)  # 如需要更细致的观察run状态时可以将 `level` 的值改为 `logging.DEBUG`
-
-chat_box = ChatBox(
-    assistant_avatar=ICON_SIFU,
-)
-
-
-# llm = ChatOpenAI(model='gpt-4', organization='org-fC5Q2f4MQIEaTOa3k8vTQu6G')
-
-# ========== Streamlit 初始化 ==========
+# ==================== 各种初始化工作 ====================
 # 设置页面标题和图标
 st.set_page_config(
     page_title="CodeSifu",
     page_icon="🧙‍♂️",  # 👨‍🏫
 )
-
+# 固定侧边栏宽度并添加Logo
+fix_sidebar_add_logo("static/CodeSifu_logo_w300.jpg")
+# 页面内的大标题小标题
 '# Code Sifu ⌨️🧙‍♂️⌨️'  # 📚
 st.caption('📚 你的专属AI编程私教')
 
 
-with st.sidebar:
-    st.subheader('start to chat using streamlit')
-    streaming = st.checkbox('streaming', True)
-    in_expander = st.checkbox('show messages in expander', True)
+# ========== Debug 初始化 ==========
+# 日志级别设置
+logging.basicConfig(level=logging.DEBUG)  # 如需要更细致的观察run状态时可以将 `level` 的值改为 `logging.DEBUG`
+# 是否开启开发模式
+st.session_state.DEV_MODE = True if st.query_params.get('dev') else False
+logging.info(f'DEV_MODE: {st.session_state.DEV_MODE}')
 
+# ========== chat_box 初始化 ==========
+chat_box = ChatBox(assistant_avatar=ICON_SIFU)
 chat_box.init_session()
 chat_box.output_messages()
 
+# ========== session 初始化 ==========
+# 初始化进展ID
+if 'progress' not in st.session_state:
+    st.session_state.progress = 0
 
-# # ========== Streamlit 对话框架初始化 ==========
-# # 初始化messages列表到Streamlit的session_state中
-# if "messages" not in st.session_state:
-#     st.session_state["messages"] = [{"role": "assistant", "content": trial.HELLO}]
+# 记录剧本是否输出
+if 'script_has_output' not in st.session_state:
+    st.session_state.script_has_output = set()
 
-# # 将st中的messages列表中的消息显示出来
-# for msg in st.session_state.messages:
-#     st.chat_message(msg["role"], avatar=ICON_SIFU if msg["role"] == 'assistant' else ICON_USER).write(msg["content"])
+if 'has_started' not in st.session_state:
+    st.session_state.has_started = False
 
-if "has_welcome" not in st.session_state:
-    st.session_state['has_welcome'] = False
-if "has_nickname" not in st.session_state:
-    st.session_state['has_nickname'] = False
-
-
-nick_name = ''
-# ========== 固定的欢迎部分 ==========
-if not st.session_state['has_welcome']:
-    st.session_state['has_welcome'] = True
-    text = trial.HELLO
-    chat_box.ai_say(
-        Markdown(text, in_expander=False)
-    )
-
-    simulate_streaming(chat_box, trial.WELCOME)
+# ======================================================
 
 
-if not st.session_state['has_nickname']:        
-    # 开始出现输入框
-    if user_prompt := st.chat_input('请输入你的名字'):
-        chat_box.user_say(user_prompt)
-        
-        
-        full_result = streaming_from_template(chat_box, agent.CHECK_NICKNAME, {"input": user_prompt})
-        logging.debug(f'CHECK_NICKNAME: {full_result}')
-        
-        if full_result == 'OK':
-            nick_name = user_prompt
-            logging.info(f'用户昵称：{nick_name}')
-            st.session_state['has_nickname'] = True
-            
-            full_result = streaming_from_template(chat_box, agent.SAY_HELLO, {"nickname": user_prompt}, update=True)
-            logging.debug(f'SAY_HELLO: {full_result}')
-            st.rerun()
-            
+# ==================== 主体框架 ====================
+if st.session_state.DEV_MODE:
+    load_process_controller()
 
-if st.session_state['has_nickname']:
-    st.button('继续', type='primary', use_container_width=True)
+if st.session_state.has_started or not st.session_state.DEV_MODE:
+
+    # 获取剧本总长度，并在结束时提示
+    script_len = len(SCRIPT_LIST)
+    if st.session_state.progress >= script_len:
+        chat_box.ai_say('别再犹豫了，马上把我带回家吧~')
+        with bottom():
+            st.write('')
+        st.stop()
+
+    # 根据当前进度ID，获取对应的剧本
+    script = SCRIPT_LIST[st.session_state.progress]
+    logging.debug(f'当前剧本：\n{script}')
+    if st.session_state.DEV_MODE:
+        show_current_script(script)
+
+
+    # ========== 内容输出部分 ==========
+    # 如果剧本没有输出过，则进行输出
+    if script['id'] not in st.session_state.script_has_output:
+        full_result = None
+        if script['type'] == Type.FIXED:
+            if script['format'] == Format.MARKDOWN:
+                full_result = simulate_streaming(chat_box, script['template'], script['template_vars'])
+            elif script['format'] == Format.IMAGE:
+                chat_box.ai_say(Image(script['media_url']))
+                full_result = script['media_url']
+        elif script['type'] == Type.PROMPT:
+            full_result = streaming_from_template(chat_box, script['template'], {v: st.session_state[v] for v in script['template_vars']})
+        # elif script['type'] == Type.XXXX:  # TODO: 其他类型？
+
+        # 记录已输出的剧本ID，避免重复输出
+        st.session_state.script_has_output.add(script['id'])
+        logging.debug(f'script id: {script["id"]}, chat result: {full_result}')
+
+
+    # ========== 交互区域部分 ==========
+    # 需要用户输入
+    if script['show_input']:
+        # 获取用户输入
+        if user_input := st.chat_input(script['input_placeholder']):
+            chat_box.user_say(user_input)  # 展示用户输入信息
+
+            # 通过 `检查模版` 输出AI回复
+            full_result = streaming_from_template(chat_box, script['check_input'], {'input': user_input},
+                                                  input_done_with=script['input_done_with'],
+                                                  parse_keys=script['parse_keys'])
+            logging.debug(f'scrip id: {script["id"]}, chat result: {full_result}')
+
+            # 如果AI回复中包含了结束标志，则进入下一个剧本
+            if full_result.startswith(script['input_done_with']):
+                if script['input_for'] == InputFor.SAVE_PROFILE:
+                    st.session_state[script['save_key']] = user_input
+                    logging.debug(f'保存用户输入：{script["save_key"]} = {user_input}')
+
+                st.session_state.progress += 1
+                st.rerun()
+    # 展示按钮
+    elif script['show_btn']:
+        with bottom():
+            if st.button(script['btn_label'], type=script['btn_type'], use_container_width=script['use_container_width']):
+                if script['btn_for'] == BtnFor.CONTINUE:
+                    st.session_state.progress += 1
+                    st.rerun()
+                elif 1:
+                    pass  # TODO 其他可能的按钮操作
+    else:
+        st.session_state.progress += 1
+        st.rerun()
+
+
