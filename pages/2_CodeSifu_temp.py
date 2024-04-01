@@ -48,6 +48,10 @@ with st.sidebar:
 chat_box.init_session()
 chat_box.output_messages()
 
+script_len = len(SCRIPT_LIST)
+if st.session_state['progress'] >= script_len:
+    chat_box.ai_say('别再犹豫了，马上把我带回家吧~')
+    st.stop()
 
 # 根据剧本的进度，展示不同的对话
 # 根据当前进度ID，获取对应的剧本
