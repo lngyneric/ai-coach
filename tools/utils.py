@@ -8,9 +8,10 @@ from streamlit_chatbox import *
 from langchain_core.prompts import PromptTemplate
 from langchain_openai import ChatOpenAI
 
-from init import SIM_STM_MIN, SIM_STM_MAX
+from init import SIM_STM_MIN, SIM_STM_MAX, OPENAI_MODEL, OPENAI_ORG
 
-llm = ChatOpenAI(model='gpt-4', organization='org-fC5Q2f4MQIEaTOa3k8vTQu6G')
+llm = ChatOpenAI(model=OPENAI_MODEL, organization=OPENAI_ORG)
+
 
 def get_current_time(*args, **kwargs):
     return f'现在时间是{time.strftime("%H:%M:%S", time.localtime())}'

@@ -1,3 +1,8 @@
 simulate_streaming_random_sleep:
   min: 0.01
   max: 0.05
+
+llm:
+  openai:
+    model: gpt-4
+    organization: org-fC5Q2f4MQIEaTOa3k8vTQu6G
