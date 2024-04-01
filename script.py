@@ -1,15 +1,20 @@
 from enum import Enum
 from prompt import agent, trial
 
+
 class Type(Enum):
     FIXED = 'fixed'
     PROMPT = 'prompt'
 
+
 class Format(Enum):
-    MARKDOWN = 'Markdown'
+    MARKDOWN = 'markdown'
+    IMAGE = 'image'
+
 
 class InputFor(Enum):
     SAVE_PROFILE = 'save_profile'
+
 
 class BtnFor(Enum):
     CONTINUE = 'continue'
@@ -43,8 +48,8 @@ SCRIPT_LIST = [
      'input_placeholder': '请输入你在什么行业从事什么岗位', 
      'check_input': agent.CHECK_BUSINESS, 'input_done_with': 'OK',
      'parse_keys': ['industry', 'occupation'],
-    #  'input_for': InputFor.SAVE_PROFILE, 'save_key': 'business',
-    'input_for': None, 'save_key': None,
+     #  'input_for': InputFor.SAVE_PROFILE, 'save_key': 'business',
+     'input_for': None, 'save_key': None,
      'show_btn': False},
     
     {'id': 5, 'type': Type.PROMPT, 
@@ -89,8 +94,14 @@ SCRIPT_LIST = [
      'btn_label': '出发！', 'btn_type': 'primary', 'use_container_width': True,
      'btn_for': BtnFor.CONTINUE},
     
-    {'id': 11, 'type': Type.FIXED, 'format': Format.MARKDOWN, 
-     'template': trial.PAY_URL, 'template_vars': None,
-     'show_input': False, 
+    # {'id': 11, 'type': Type.FIXED, 'format': Format.MARKDOWN,
+    #  'template': trial.PAY_URL, 'template_vars': None,
+    #  'show_input': False,
+    #  'show_btn': False},
+
+    {'id': 11, 'type': Type.FIXED, 'format': Format.IMAGE,
+     # 'template': trial.PAY_URL, 'template_vars': None,
+     'media_url': trial.PAY_IMAGE_URL,
+     'show_input': False,
      'show_btn': False},
 ]

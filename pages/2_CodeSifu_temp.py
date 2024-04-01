@@ -57,12 +57,20 @@ logging.debug(f'当前剧本：\n{script}')
 
 if script['id'] not in st.session_state['script_has_output']:
     if script['type'] == Type.FIXED:
-        full_result = simulate_streaming(chat_box, script['template'], script['template_vars'])
+        if script['format'] == Format.MARKDOWN:
+            full_result = simulate_streaming(chat_box, script['template'], script['template_vars'])
+        elif script['format'] == Format.IMAGE:
+            chat_box.ai_say(Image(script['media_url']))
+            full_result = script['media_url']
     elif script['type'] == Type.PROMPT:
         full_result = streaming_from_template(chat_box, script['template'], {v: st.session_state[v] for v in script['template_vars']})
+    # elif script['type'] == Type.XXXX:  # TODO: 其他类型？
+    else:
+        full_result = None
     
     logging.debug(f'scrip id: {script["id"]}, chat result: {full_result}')
     st.session_state['script_has_output'].add(script['id'])
+
 
 if script['show_input']:
     if user_input := st.chat_input(script['input_placeholder']):

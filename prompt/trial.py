@@ -67,3 +67,5 @@ PROMOTE = '''
 PAY_URL = '''
 https://a.agiclass.ai
 '''
+
+PAY_IMAGE_URL = 'static/CodeSifu_pay.jpg'
