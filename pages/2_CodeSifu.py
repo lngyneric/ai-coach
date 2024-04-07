@@ -100,9 +100,9 @@ if st.session_state.has_started or not st.session_state.DEV_MODE:
 
             # 如果AI回复中包含了结束标志，则进入下一个剧本
             if full_result.startswith(script['input_done_with']):
-                if script['input_for'] == InputFor.SAVE_PROFILE:
-                    st.session_state[script['save_key']] = user_input
-                    logging.debug(f'保存用户输入：{script["save_key"]} = {user_input}')
+                # if script['input_for'] == InputFor.SAVE_PROFILE:
+                #     st.session_state[script['save_key']] = user_input
+                #     logging.debug(f'保存用户输入：{script["save_key"]} = {user_input}')
 
                 st.session_state.progress += 1
                 st.rerun()

@@ -4,5 +4,7 @@ simulate_streaming_random_sleep:
 
 llm:
   openai:
-    model: gpt-3.5-turbo
+    # TODO: 要能支持单次对话指定使用什么模型版本
+#    model: gpt-3.5-turbo
+    model: gpt-4
     organization: org-fC5Q2f4MQIEaTOa3k8vTQu6G

@@ -81,7 +81,8 @@ def simulate_streaming(chat_box, template: str, variables=None,
     """
     模拟流式输出
     :param chat_box: ChatBox 对象
-    :param text: 输出文本
+    :param template: 模版内容
+    :param variables: 变量字典
     :param random_min: 随机sleep的最小值
     :param random_max: 随机sleep的最大值
     :param update: 是否更新之前的 chat_box 输出，默认是开启一段新对话
@@ -111,11 +112,14 @@ def simulate_streaming(chat_box, template: str, variables=None,
 def streaming_from_template(chat_box, template, variables, 
                             input_done_with=None, parse_keys=None,
                             update=False):
+    # TODO: 指定模型版本运行
     """
     通过给定模版和遍历调用LLM，并流式输出（作为AI身份输出）。
     :param chat_box: ChatBox 对象
     :param template: 模版内容（Langchain的PromptTemplate）
     :param variables: 变量字典（支持同时传入多个变量）
+    :param parse_keys: 解析JSON的key列表
+    :param input_done_with: 输入完成的标志
     :param update: 是否更新之前的 chat_box 输出，默认是开启一段新对话
     """
     
@@ -124,7 +128,7 @@ def streaming_from_template(chat_box, template, variables,
     prompt_template = PromptTemplate(input_variables=list(variables.keys()), template=template)
     full_result = ''
     parse_json = ''
-    need_streaming_complte = False
+    need_streaming_complete = False
     count = 0
     for chunk in llm.stream(prompt_template.format(**variables)):
         if len(chunk.content) == 0:
@@ -139,9 +143,9 @@ def streaming_from_template(chat_box, template, variables,
             chat_box.update_msg(input_done_with, element_index=0, streaming=False, state="complete")
         else:
             chat_box.update_msg(full_result, element_index=0, streaming=True)
-            need_streaming_complte = True
+            need_streaming_complete = True
     
-    if need_streaming_complte:
+    if need_streaming_complete:
         chat_box.update_msg(full_result, element_index=0, streaming=False, state="complete")
 
     if logging.getLogger().level == logging.DEBUG:

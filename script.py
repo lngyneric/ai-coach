@@ -30,13 +30,14 @@ SCRIPT_LIST = [
      'template': trial.WELCOME, 'template_vars': None,
      'show_input': True, 
      'input_placeholder': '请输入你的昵称（仅昵称）', 
-     'check_input': agent.CHECK_NICKNAME, 'input_done_with': 'OK',  # 目前 check_input 仅支持传递一个变量，固定名称为 input 
-     'parse_keys': None,
-     'input_for': InputFor.SAVE_PROFILE, 'save_key': 'nickname',
+     # 'check_input': agent.CHECK_NICKNAME, 'input_done_with': 'OK',
+     'check_input': agent.CHECK_NICKNAME_v2, 'input_done_with': 'OK',
+     'parse_keys': ['nickname'],
+     # 'input_for': InputFor.SAVE_PROFILE, 'save_key': 'nickname',
      'show_btn': False},
     
     {'id': 3, 'type': Type.PROMPT, 
-     'template': trial.SAY_HELLO, 'template_vars': ['nickname'],  # 目前 prompt_var 仅支持传递一个变量
+     'template': trial.SAY_HELLO, 'template_vars': ['nickname'],
      'show_input': False,
      'show_btn': True, 
      'btn_label': '继续', 'btn_type': 'primary', 'use_container_width': True,
@@ -49,11 +50,11 @@ SCRIPT_LIST = [
      'check_input': agent.CHECK_BUSINESS, 'input_done_with': 'OK',
      'parse_keys': ['industry', 'occupation'],
      #  'input_for': InputFor.SAVE_PROFILE, 'save_key': 'business',
-     'input_for': None, 'save_key': None,
+     # 'input_for': None, 'save_key': None,
      'show_btn': False},
     
     {'id': 5, 'type': Type.PROMPT, 
-     'template': trial.PRAISE_INDUSTRY_OCCUPATION, 'template_vars': ['industry', 'occupation'],  # 目前 prompt_var 仅支持传递一个变量
+     'template': trial.PRAISE_INDUSTRY_OCCUPATION, 'template_vars': ['industry', 'occupation'],
      'show_input': False,
      'show_btn': True, 
      'btn_label': '继续', 'btn_type': 'primary', 'use_container_width': True,
