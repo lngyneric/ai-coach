@@ -70,15 +70,15 @@ if st.session_state.has_started or not st.session_state.DEV_MODE:
     # 如果剧本没有输出过，则进行输出
     if script['id'] not in st.session_state.script_has_output:
         full_result = None
-        if script['type'] == Type.FIXED:
-            if script['format'] == Format.MARKDOWN:
+        if script['type'] == ScriptType.FIXED:
+            if script['format'] == ScriptFormat.MARKDOWN:
                 full_result = simulate_streaming(chat_box, script['template'], script['template_vars'])
-            elif script['format'] == Format.IMAGE:
+            elif script['format'] == ScriptFormat.IMAGE:
                 chat_box.ai_say(Image(script['media_url']))
                 full_result = script['media_url']
-        elif script['type'] == Type.PROMPT:
+        elif script['type'] == ScriptType.PROMPT:
             full_result = streaming_from_template(chat_box, script['template'], {v: st.session_state[v] for v in script['template_vars']})
-        # elif script['type'] == Type.XXXX:  # TODO: 其他类型？
+        # elif script['type'] == ScriptType.XXXX:  # TODO: 其他类型？
 
         # 记录已输出的剧本ID，避免重复输出
         st.session_state.script_has_output.add(script['id'])

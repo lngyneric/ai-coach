@@ -16,6 +16,11 @@ try:
         OPENAI_MODEL = _cfg_openai['model']
         OPENAI_ORG = _cfg_openai['organization']
 
+        _cfg_lark = config['lark']
+        LARK_APP_TOKEN = _cfg_lark['app_token']
+        LARK_TABLE_ID = _cfg_lark['table_id']
+        LARK_VIEW_ID = _cfg_lark['view_id']
+
         print('Load Config OK!')
 except Exception as e:
     print('====!!!! Load Config ERROR !!!!====')

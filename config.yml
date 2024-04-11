@@ -8,3 +8,8 @@ llm:
 #    model: gpt-3.5-turbo
     model: gpt-4
     organization: org-fC5Q2f4MQIEaTOa3k8vTQu6G
+
+lark:
+  app_token: LLwmbSyMcakFVJsM5yacT5Gqnse
+  table_id: tbl2ww1H5VCfQzxL
+  view_id: vewlGkI2Jp
