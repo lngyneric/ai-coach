@@ -5,6 +5,7 @@ import logging
 import json
 from pathlib import Path
 
+from dotenv import load_dotenv, find_dotenv
 import streamlit as st
 import validators
 from streamlit_chatbox import *
@@ -13,6 +14,7 @@ from langchain_openai import ChatOpenAI
 
 from init import SIM_STM_MIN, SIM_STM_MAX, OPENAI_MODEL, OPENAI_ORG
 
+_ = load_dotenv(find_dotenv())
 llm = ChatOpenAI(model=OPENAI_MODEL, organization=OPENAI_ORG)
 
 

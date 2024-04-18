@@ -2,6 +2,7 @@ import logging
 import os
 import json
 from enum import Enum
+from typing import Literal
 
 from dotenv import load_dotenv, find_dotenv
 import lark_oapi as lark
@@ -40,6 +41,9 @@ class NextAction(Enum):
 
 
 class Script:
+    """ 单条剧本
+
+    """
     def __init__(self, id, desc, type, format,
                  template, template_vars, media_url,
                  next_action, btn_label, input_placeholder,
@@ -70,6 +74,9 @@ class Script:
         self.media_url: Optional[str] = media_url
         self.next_action: NextAction = next_action
         self.btn_label: Optional[str] = btn_label
+        self.btn_type: Literal["primary", "secondary"] = 'primary'
+        self.btn_container_width: bool = True
+        self.btn_for: BtnFor = BtnFor.CONTINUE
         self.input_placeholder: Optional[str] = input_placeholder
         self.check_template: Optional[str] = check_template
         self.check_ok_sign: Optional[str] = check_ok_sign
@@ -165,13 +172,13 @@ def load_scripts_from_bitable(app_token, table_id, view_id):
             script_format = ScriptFormat(item.fields.get('内容格式', '无'))
             template = ''.join(item["text"] for item in item.fields.get('模版内容', [{"text": "未填写！"}]))
             template_vars = item.fields.get('模版变量')
-            media_url = item.fields.get('媒体URL')
+            media_url = item.fields.get('媒体URL')['text'] if item.fields.get('媒体URL') else None
             next_action = NextAction(item.fields.get('后续交互'))
-            btn_label = item.fields.get('按钮标题')
-            input_placeholder = item.fields.get('输入框提示')
-            check_template = item.fields.get('检查模版')
-            check_ok_sign = item.fields.get('检查通过标志')
-            parse_vars = item.fields.get('解析变量')
+            btn_label = ''.join(item["text"] for item in item.fields.get('按钮标题', [{"text": "继续"}]))
+            input_placeholder = ''.join(item["text"] for item in item.fields.get('输入框提示', [{"text": "请输入"}]))
+            check_template = ''.join(item["text"] for item in item.fields.get('检查模版内容', [{"text": "未填写！"}]))
+            check_ok_sign = ''.join(item["text"] for item in item.fields.get('输入成功标识', [{"text": "OK"}]))
+            parse_vars = item.fields.get('解析用户输入内容')
 
             script_list.append(Script(
                 id, desc, script_type, script_format,
@@ -218,7 +225,7 @@ SCRIPT_LIST = [
      'template': trial.SAY_HELLO, 'template_vars': ['nickname'],
      'show_input': False,
      'show_btn': True, 
-     'btn_label': '继续', 'btn_type': 'primary', 'use_container_width': True,
+     'btn_label': '继续', 'btn_type': 'primary', 'btn_container_width': True,
      'btn_for': BtnFor.CONTINUE},
     
     {'id': 4, 'type': ScriptType.FIXED, 'format': ScriptFormat.MARKDOWN,
@@ -235,42 +242,42 @@ SCRIPT_LIST = [
      'template': trial.PRAISE_INDUSTRY_OCCUPATION, 'template_vars': ['industry', 'occupation'],
      'show_input': False,
      'show_btn': True, 
-     'btn_label': '继续', 'btn_type': 'primary', 'use_container_width': True,
+     'btn_label': '继续', 'btn_type': 'primary', 'btn_container_width': True,
      'btn_for': BtnFor.CONTINUE},  # TODO：需要新增again按钮功能
     
     {'id': 6, 'type': ScriptType.FIXED, 'format': ScriptFormat.MARKDOWN,
      'template': trial.FIXED_6, 'template_vars': None,
      'show_input': False, 
      'show_btn': True, 
-     'btn_label': '真的吗？', 'btn_type': 'primary', 'use_container_width': True,
+     'btn_label': '真的吗？', 'btn_type': 'primary', 'btn_container_width': True,
      'btn_for': BtnFor.CONTINUE},
     
     {'id': 7, 'type': ScriptType.FIXED, 'format': ScriptFormat.MARKDOWN,
      'template': trial.FIXED_7, 'template_vars': None,
      'show_input': False, 
      'show_btn': True, 
-     'btn_label': '有道理！继续~', 'btn_type': 'primary', 'use_container_width': True,
+     'btn_label': '有道理！继续~', 'btn_type': 'primary', 'btn_container_width': True,
      'btn_for': BtnFor.CONTINUE},
     
     {'id': 8, 'type': ScriptType.FIXED, 'format': ScriptFormat.MARKDOWN,
      'template': trial.FIXED_8, 'template_vars': None,
      'show_input': False, 
      'show_btn': True, 
-     'btn_label': '有啥用？', 'btn_type': 'primary', 'use_container_width': True,
+     'btn_label': '有啥用？', 'btn_type': 'primary', 'btn_container_width': True,
      'btn_for': BtnFor.CONTINUE},
     
     {'id': 9, 'type': ScriptType.PROMPT,
      'template': trial.WHATS_USE_OF, 'template_vars': ['industry', 'occupation'],  # 目前 prompt_var 仅支持传递一个变量
      'show_input': False,
      'show_btn': True, 
-     'btn_label': '太好了！我要学！', 'btn_type': 'primary', 'use_container_width': True,
+     'btn_label': '太好了！我要学！', 'btn_type': 'primary', 'btn_container_width': True,
      'btn_for': BtnFor.CONTINUE},  # TODO：需要新增again按钮功能
     
     {'id': 10, 'type': ScriptType.FIXED, 'format': ScriptFormat.MARKDOWN,
      'template': trial.PROMOTE, 'template_vars': None,
      'show_input': False, 
      'show_btn': True, 
-     'btn_label': '出发！', 'btn_type': 'primary', 'use_container_width': True,
+     'btn_label': '出发！', 'btn_type': 'primary', 'btn_container_width': True,
      'btn_for': BtnFor.CONTINUE},
     
     # {'id': 11, 'type': ScriptType.FIXED, 'format': ScriptFormat.MARKDOWN,
