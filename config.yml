@@ -11,5 +11,6 @@ llm:
 
 lark:
   app_token: LLwmbSyMcakFVJsM5yacT5Gqnse
-  table_id: tbl2ww1H5VCfQzxL
+#  table_id: tbl2ww1H5VCfQzxL
+  table_id: tblMGLpPFYWU0gIK
   view_id: vewlGkI2Jp

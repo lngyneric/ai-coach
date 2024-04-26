@@ -5,14 +5,27 @@ import streamlit as st
 
 def load_process_controller():
     if not st.session_state.has_started:
+        nickname = st.query_params.get('nickname')
+        industry = st.query_params.get('industry')
+        occupation = st.query_params.get('occupation')
+
+        if progress := st.query_params.get('progress'):
+            st.session_state.progress = int(progress) - 1
+            st.session_state.nickname = nickname if nickname else '小明'
+            st.session_state.industry = industry if industry else '互联网'
+            st.session_state.occupation = occupation if occupation else '产品经理'
+            st.session_state.has_started = True
+            logging.debug(f'从 {st.session_state.progress} 开始剧本')
+            st.rerun()
+
         with st.sidebar:
             with st.expander('默认用户Profile'):
-                st.session_state.nickname = st.text_input('默认昵称', value='小明')
-                st.session_state.industry = st.text_input('默认行业', value='互联网')
-                st.session_state.occupation = st.text_input('默认职业', value='产品经理')
+                st.session_state.nickname = st.text_input('默认昵称', value=nickname if nickname else '小明')
+                st.session_state.industry = st.text_input('默认行业', value=industry if industry else '互联网')
+                st.session_state.occupation = st.text_input('默认职业', value=occupation if occupation else '产品经理')
             # add_vertical_space(1)
             st.write('开始位置：')
-            st.session_state.progress = st.number_input('', value=0, step=1, label_visibility='collapsed')
+            st.session_state.progress = st.number_input('', value=1, step=1, label_visibility='collapsed') - 1
             if st.button(f'开始', type='primary', use_container_width=True):
                 st.session_state.has_started = True
                 logging.debug(f'从 {st.session_state.progress} 开始剧本')

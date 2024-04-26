@@ -127,12 +127,18 @@ def streaming_from_template(chat_box, template, variables,
     
     if not update:
         chat_box.ai_say(Markdown('', in_expander=False))
-    prompt_template = PromptTemplate(input_variables=list(variables.keys()), template=template)
+
+    if variables:
+        prompt = PromptTemplate(input_variables=list(variables.keys()), template=template)
+        prompt = prompt.format(**variables)
+    else:
+        prompt = template
+
     full_result = ''
     parse_json = ''
     need_streaming_complete = False
     count = 0
-    for chunk in llm.stream(prompt_template.format(**variables)):
+    for chunk in llm.stream(prompt):
         if len(chunk.content) == 0:
             continue
         full_result += chunk.content
