@@ -169,7 +169,7 @@ def load_scripts_from_bitable(app_token, table_id, view_id):
 
             desc = ''.join(item["text"] for item in item.fields.get('剧本简述', [{"text": "未填写！"}]))
             script_type = ScriptType(item.fields.get('剧本类型'))
-            script_format = ScriptFormat(item.fields.get('内容格式', '无'))
+            script_format = ScriptFormat(item.fields.get('内容格式', '文本'))
             template = ''.join(item["text"] for item in item.fields.get('模版内容', [{"text": "未填写！"}]))
             template_vars = item.fields.get('模版变量')
             media_url = item.fields.get('媒体URL')['text'] if item.fields.get('媒体URL') else None
