@@ -37,6 +37,7 @@ class BtnFor(Enum):
 class NextAction(Enum):
     ShowInput = '显示 输入框'
     ShowBtn = '显示 按钮'
+    ShowBtnGroup = '显示 按钮组'
     NoAction = '无'
 
 
@@ -74,9 +75,6 @@ class Script:
         self.media_url: Optional[str] = media_url
         self.next_action: NextAction = next_action
         self.btn_label: Optional[str] = btn_label
-        self.btn_type: Literal["primary", "secondary"] = 'primary'
-        self.btn_container_width: bool = True
-        self.btn_for: BtnFor = BtnFor.CONTINUE
         self.input_placeholder: Optional[str] = input_placeholder
         self.check_template: Optional[str] = check_template
         self.check_ok_sign: Optional[str] = check_ok_sign
@@ -168,12 +166,12 @@ def load_scripts_from_bitable(app_token, table_id, view_id):
                 continue
 
             desc = ''.join(item["text"] for item in item.fields.get('剧本简述', [{"text": "未填写！"}]))
-            script_type = ScriptType(item.fields.get('剧本类型'))
+            script_type = ScriptType(item.fields.get('剧本类型', '固定剧本'))
             script_format = ScriptFormat(item.fields.get('内容格式', '文本'))
             template = ''.join(item["text"] for item in item.fields.get('模版内容', [{"text": "未填写！"}]))
             template_vars = item.fields.get('模版变量')
             media_url = item.fields.get('媒体URL')['text'] if item.fields.get('媒体URL') else None
-            next_action = NextAction(item.fields.get('后续交互'))
+            next_action = NextAction(item.fields.get('后续交互', '无'))
             btn_label = ''.join(item["text"] for item in item.fields.get('按钮标题', [{"text": "继续"}]))
             input_placeholder = ''.join(item["text"] for item in item.fields.get('输入框提示', [{"text": "请输入"}]))
             check_template = ''.join(item["text"] for item in item.fields.get('检查模版内容', [{"text": "未填写！"}]))

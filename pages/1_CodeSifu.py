@@ -57,7 +57,8 @@ if st.session_state.DEV_MODE:
     # 加载进度控制器
     load_process_controller()
 
-if st.session_state.has_started or not st.session_state.DEV_MODE:
+# 非开发者模式直接开始，若在开发者模式则等待配置后开始
+if not st.session_state.DEV_MODE or st.session_state.has_started:
 
     # 获取剧本总长度，并在结束时停止
     if st.session_state.progress >= st.session_state.script_list_len:
@@ -78,7 +79,7 @@ if st.session_state.has_started or not st.session_state.DEV_MODE:
     if script.id not in st.session_state.script_has_output:
         full_result = None
 
-        # 输出【固定剧本】内容
+        # ===【固定剧本】：模拟流式输出
         if script.type == ScriptType.FIXED:
             if script.format == ScriptFormat.MARKDOWN:
                 full_result = simulate_streaming(chat_box, script.template, script.template_vars)
@@ -86,20 +87,20 @@ if st.session_state.has_started or not st.session_state.DEV_MODE:
                 chat_box.ai_say(Image(script.media_url))
                 full_result = script.media_url
 
-        # 将【Prompt】剧本内容提交给 LLM，获得AI回复
+        # == 【Prompt】：剧本内容提交给 LLM，获得AI回复输出
         elif script.type == ScriptType.PROMPT:
             full_result = streaming_from_template(
                 chat_box, script.template,
                 {v: st.session_state[v] for v in script.template_vars} if script.template_vars else None)
         # elif script['type'] == ScriptType.XXXX:  # TODO: 其他类型？
 
-        # 记录已输出的剧本ID，避免重复输出
+        # 最后记录下已输出的剧本ID，避免重复输出
         st.session_state.script_has_output.add(script.id)
         logging.debug(f'script id: {script.id}, chat result: {full_result}')
 
 
-    # ========== 交互区域部分 ==========
-    # 需要用户输入
+    # ========== 处理【后续交互】 ==========
+    # === 显示 输入框
     if script.next_action == NextAction.ShowInput:
         # 获取用户输入
         if user_input := st.chat_input(script.input_placeholder):
@@ -113,21 +114,19 @@ if st.session_state.has_started or not st.session_state.DEV_MODE:
 
             # 如果AI回复中包含了结束标志，则进入下一个剧本
             if full_result.startswith(script.check_ok_sign):
-                # if script['input_for'] == InputFor.SAVE_PROFILE:
-                #     st.session_state[script['save_key']] = user_input
-                #     logging.debug(f'保存用户输入：{script["save_key"]} = {user_input}')
-
                 st.session_state.progress += 1
                 st.rerun()
-    # 展示按钮
+
+    # === 显示 按钮
     elif script.next_action == NextAction.ShowBtn:
         with bottom():
-            if st.button(script.btn_label, type=script.btn_type, use_container_width=script.btn_container_width):
-                if script.btn_for == BtnFor.CONTINUE:
-                    st.session_state.progress += 1
-                    st.rerun()
-                elif 1:
-                    pass  # TODO 其他可能的按钮操作
+            if st.button(script.btn_label, type='primary', use_container_width=True):
+                st.session_state.progress += 1
+                st.rerun()
+
+    # # === 显示 按钮组
+    # elif script.next_action == NextAction.ShowBtnGroup:
+
     else:
         st.session_state.progress += 1
         st.rerun()
