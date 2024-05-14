@@ -25,8 +25,9 @@ def load_process_controller():
                 st.session_state.occupation = st.text_input('默认职业', value=occupation if occupation else '产品经理')
             # add_vertical_space(1)
             st.write('开始位置：')
-            st.session_state.progress = st.number_input('', value=1, step=1, label_visibility='collapsed') - 1
-            if st.button(f'开始', type='primary', use_container_width=True):
+            progress = st.number_input('', value=1, step=1, label_visibility='collapsed') - 1
+            if st.button(f'开始', type='primary', use_container_width=True) or progress:
+                st.session_state.progress = progress
                 st.session_state.has_started = True
                 logging.debug(f'从 {st.session_state.progress} 开始剧本')
                 st.rerun()
