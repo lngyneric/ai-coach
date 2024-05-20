@@ -35,12 +35,6 @@ chat_box.output_messages()
 if 'progress' not in st.session_state:
     st.session_state.progress = 0
 
-# 初始化剧本
-if 'script_list' not in st.session_state:
-    with st.spinner('正在加载剧本...'):
-        st.session_state.script_list = load_scripts_from_bitable(LARK_APP_TOKEN, LARK_TABLE_ID, LARK_VIEW_ID)
-        st.session_state.script_list_len = len(st.session_state.script_list)
-
 # 记录剧本是否输出
 if 'script_has_output' not in st.session_state:
     st.session_state.script_has_output = set()
@@ -59,6 +53,13 @@ if st.session_state.DEV_MODE:
 
 # 非开发者模式直接开始，若在开发者模式则等待配置后开始
 if not st.session_state.DEV_MODE or st.session_state.has_started:
+
+    # 初始化剧本
+    if 'script_list' not in st.session_state:
+        with st.spinner('正在加载剧本...'):
+            st.session_state.script_list = load_scripts_from_bitable(
+                cfg.LARK_APP_TOKEN, cfg.DEF_LARK_TABLE_ID, cfg.DEF_LARK_VIEW_ID)
+            st.session_state.script_list_len = len(st.session_state.script_list)
 
     # 获取剧本总长度，并在结束时停止
     if st.session_state.progress >= st.session_state.script_list_len:
@@ -91,7 +92,9 @@ if not st.session_state.DEV_MODE or st.session_state.has_started:
         elif script.type == ScriptType.PROMPT:
             full_result = streaming_from_template(
                 chat_box, script.template,
-                {v: st.session_state[v] for v in script.template_vars} if script.template_vars else None)
+                {v: st.session_state[v] for v in script.template_vars} if script.template_vars else None,
+                model=script.custom_model
+            )
         # elif script['type'] == ScriptType.XXXX:  # TODO: 其他类型？
 
         # 最后记录下已输出的剧本ID，避免重复输出

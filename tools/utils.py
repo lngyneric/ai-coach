@@ -10,12 +10,11 @@ import streamlit as st
 import validators
 from streamlit_chatbox import *
 from langchain_core.prompts import PromptTemplate
-from langchain_openai import ChatOpenAI
 
-from init import SIM_STM_MIN, SIM_STM_MAX, OPENAI_MODEL, OPENAI_ORG
+
+from init import *
 
 _ = load_dotenv(find_dotenv())
-llm = ChatOpenAI(model=OPENAI_MODEL, organization=OPENAI_ORG)
 
 
 def get_current_time(*args, **kwargs):
@@ -79,7 +78,7 @@ def fix_sidebar_add_logo(logo_url: str):
 
 
 def simulate_streaming(chat_box, template: str, variables=None,
-                       random_min=SIM_STM_MIN, random_max=SIM_STM_MAX, update=False):
+                       random_min=cfg.SIM_STM_MIN, random_max=cfg.SIM_STM_MAX, update=False):
     """
     模拟流式输出
     :param chat_box: ChatBox 对象
@@ -112,19 +111,21 @@ def simulate_streaming(chat_box, template: str, variables=None,
 
 
 def streaming_from_template(chat_box, template, variables, 
-                            input_done_with=None, parse_keys=None,
-                            update=False):
-    # TODO: 指定模型版本运行
+                            input_done_with=None, parse_keys=None, update=False,
+                            model=None):
     """
     通过给定模版和遍历调用LLM，并流式输出（作为AI身份输出）。
     :param chat_box: ChatBox 对象
     :param template: 模版内容（Langchain的PromptTemplate）
     :param variables: 变量字典（支持同时传入多个变量）
-    :param parse_keys: 解析JSON的key列表
     :param input_done_with: 输入完成的标志
+    :param parse_keys: 解析JSON的key列表
     :param update: 是否更新之前的 chat_box 输出，默认是开启一段新对话
+    :param model: 使用指定的自定义模型，提供模型名称（config.yml 中有支持的模型）
     """
-    
+
+    llm = load_llm() if not model else load_llm(model)
+
     if not update:
         chat_box.ai_say(Markdown('', in_expander=False))
 
