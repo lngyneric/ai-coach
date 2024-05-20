@@ -9,7 +9,7 @@ from streamlit_extras.bottom_container import bottom
 from tools.utils import *
 from tools.dev_tools import *
 from script import *
-from init import IMG_LOCAL_DIR, IMG_OSS_ANAME, IMG_OSS_ENDPOINT, IMG_OSS_BUCKET
+from init import cfg
 
 _ = load_dotenv(find_dotenv())
 
@@ -29,7 +29,7 @@ st.caption('')
 if 'bucket' not in st.session_state:
     st.session_state.bucket = oss2.Bucket(
         oss2.ProviderAuth(EnvironmentVariableCredentialsProvider()),
-        IMG_OSS_ENDPOINT, IMG_OSS_BUCKET)
+        cfg.IMG_OSS_ENDPOINT, cfg.IMG_OSS_BUCKET)
 
 
 # ==================== 图片上传 ====================
@@ -42,7 +42,7 @@ for uploaded_file in uploaded_files:
     # st.write("filename:", uploaded_file.name)
 
     # 创建本地文件的存储路径
-    file_path = os.path.join(IMG_LOCAL_DIR, file_name)
+    file_path = os.path.join(cfg.IMG_LOCAL_DIR, file_name)
 
     bytes_data = uploaded_file.read()
 
@@ -55,7 +55,7 @@ for uploaded_file in uploaded_files:
     st.session_state.bucket.put_object(file_name, bytes_data)
 
     st.success(f"文件 '{file_name}' 上传成功，URL如下（鼠标Hover后 右侧会出现复制按钮）：")
-    st.code(f"https://{IMG_OSS_ANAME}/{file_name}")
+    st.code(f"https://{cfg.IMG_OSS_ANAME}/{file_name}")
 
 '---------------'
 # ==================== 图片管理 ====================
@@ -64,11 +64,11 @@ img_files = []
 # 加载 Bucket 下的所有文件
 for obj in oss2.ObjectIteratorV2(st.session_state.bucket):
     img_files.insert(0, {
-        '缩略图': f'https://{IMG_OSS_ANAME}/{obj.key}?x-oss-process=image/resize,h_50,m_lfit',
+        '缩略图': f'https://{cfg.IMG_OSS_ANAME}/{obj.key}?x-oss-process=image/resize,h_50,m_lfit',
         '文件名': obj.key,
         '大小': f'{obj.size / 1024 / 1024:.2f} MB',
         '最后修改时间': time.strftime("%Y-%m-%d %H:%M:%S", time.localtime(obj.last_modified)),
-        'URL': f'https://{IMG_OSS_ANAME}/{obj.key}',
+        'URL': f'https://{cfg.IMG_OSS_ANAME}/{obj.key}',
     })
 
 

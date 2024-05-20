@@ -3,21 +3,31 @@ simulate_streaming_random_sleep:
   max: 0.2
 
 llm:
+#  default_vendor: wenxin
+  default_model: ERNIE-4.0-8K  # ernie-4.0-8k-0329
+  wenxin:
+    models:
+      - ERNIE-4.0-8K  # ernie-4.0-8k-0329
   openai:
-    # TODO: 要能支持单次对话指定使用什么模型版本
-#    model: gpt-3.5-turbo
-    model: gpt-4
+    models:
+      - gpt-4
+      - gpt-4o
+      - gpt-3.5-turbo
     organization: org-fC5Q2f4MQIEaTOa3k8vTQu6G
 
 lark:
   app_token: LLwmbSyMcakFVJsM5yacT5Gqnse
-  table_id: tbl2ww1H5VCfQzxL  # 试学课
+  default_table_id: tbl2ww1H5VCfQzxL  # 试学课
 #  table_id: tblMGLpPFYWU0gIK  # 试学课 test01
 #  table_id: tbltsSzDfJQm6dne  # 在自己电脑上运行Python
-  view_id: vewlGkI2Jp
+  default_view_id: vewlGkI2Jp
 
 fileupload:
   img_local_dir: /tmp/codesifu/img
   img_oss_aname: img.agiclass.cn
   img_oss_endpoint: https://oss-cn-beijing.aliyuncs.com
   img_oss_bucket: codesifu-img
+
+db:
+  sqlite:
+    path: codesifu-demo.db
