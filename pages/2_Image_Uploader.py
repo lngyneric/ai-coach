@@ -2,9 +2,6 @@ import time
 
 import oss2
 from oss2.credentials import EnvironmentVariableCredentialsProvider
-from itertools import islice
-from dotenv import load_dotenv, find_dotenv
-from streamlit_extras.bottom_container import bottom
 
 from tools.utils import *
 from tools.dev_tools import *

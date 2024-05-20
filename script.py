@@ -2,14 +2,11 @@ import logging
 import os
 import json
 from enum import Enum
-from typing import Literal
 
 from dotenv import load_dotenv, find_dotenv
 import lark_oapi as lark
 from lark_oapi.api.auth.v3 import *
 from lark_oapi.api.bitable.v1 import *
-
-from prompt import agent, trial
 
 
 _ = load_dotenv(find_dotenv())
@@ -208,90 +205,3 @@ if __name__ == '__main__':
     script_list = load_scripts_from_bitable(cfg.LARK_APP_TOKEN, cfg.DEF_LARK_TABLE_ID, cfg.DEF_LARK_VIEW_ID)
     print(script_list)
 
-
-SCRIPT_LIST = [
-    {'id': 1, 'type': ScriptType.FIXED, 'format': ScriptFormat.MARKDOWN,
-     'template': trial.HELLO, 'template_vars': None,
-     'show_input': False, 
-     'show_btn': False},
-    
-    {'id': 2, 'type': ScriptType.FIXED, 'format': ScriptFormat.MARKDOWN,
-     'template': trial.WELCOME, 'template_vars': None,
-     'show_input': True, 
-     'input_placeholder': '请输入你的昵称（仅昵称）',
-     # 'check_input': agent.CHECK_NICKNAME, 'input_done_with': 'OK',
-     'check_input': agent.CHECK_NICKNAME_v2, 'input_done_with': 'OK',
-     'parse_keys': ['nickname'],
-     # 'input_for': InputFor.SAVE_PROFILE, 'save_key': 'nickname',
-     'show_btn': False},
-    
-    {'id': 3, 'type': ScriptType.PROMPT,
-     'template': trial.SAY_HELLO, 'template_vars': ['nickname'],
-     'show_input': False,
-     'show_btn': True, 
-     'btn_label': '继续', 'btn_type': 'primary', 'btn_container_width': True,
-     'btn_for': BtnFor.CONTINUE},
-    
-    {'id': 4, 'type': ScriptType.FIXED, 'format': ScriptFormat.MARKDOWN,
-     'template': trial.TELL_ME_YOUR_BUSINESS, 'template_vars': ['nickname'],
-     'show_input': True, 
-     'input_placeholder': '请输入你在什么行业从事什么岗位', 
-     'check_input': agent.CHECK_BUSINESS, 'input_done_with': 'OK',
-     'parse_keys': ['industry', 'occupation'],
-     #  'input_for': InputFor.SAVE_PROFILE, 'save_key': 'business',
-     # 'input_for': None, 'save_key': None,
-     'show_btn': False},
-    
-    {'id': 5, 'type': ScriptType.PROMPT,
-     'template': trial.PRAISE_INDUSTRY_OCCUPATION, 'template_vars': ['industry', 'occupation'],
-     'show_input': False,
-     'show_btn': True, 
-     'btn_label': '继续', 'btn_type': 'primary', 'btn_container_width': True,
-     'btn_for': BtnFor.CONTINUE},  # TODO：需要新增again按钮功能
-    
-    {'id': 6, 'type': ScriptType.FIXED, 'format': ScriptFormat.MARKDOWN,
-     'template': trial.FIXED_6, 'template_vars': None,
-     'show_input': False, 
-     'show_btn': True, 
-     'btn_label': '真的吗？', 'btn_type': 'primary', 'btn_container_width': True,
-     'btn_for': BtnFor.CONTINUE},
-    
-    {'id': 7, 'type': ScriptType.FIXED, 'format': ScriptFormat.MARKDOWN,
-     'template': trial.FIXED_7, 'template_vars': None,
-     'show_input': False, 
-     'show_btn': True, 
-     'btn_label': '有道理！继续~', 'btn_type': 'primary', 'btn_container_width': True,
-     'btn_for': BtnFor.CONTINUE},
-    
-    {'id': 8, 'type': ScriptType.FIXED, 'format': ScriptFormat.MARKDOWN,
-     'template': trial.FIXED_8, 'template_vars': None,
-     'show_input': False, 
-     'show_btn': True, 
-     'btn_label': '有啥用？', 'btn_type': 'primary', 'btn_container_width': True,
-     'btn_for': BtnFor.CONTINUE},
-    
-    {'id': 9, 'type': ScriptType.PROMPT,
-     'template': trial.WHATS_USE_OF, 'template_vars': ['industry', 'occupation'],  # 目前 prompt_var 仅支持传递一个变量
-     'show_input': False,
-     'show_btn': True, 
-     'btn_label': '太好了！我要学！', 'btn_type': 'primary', 'btn_container_width': True,
-     'btn_for': BtnFor.CONTINUE},  # TODO：需要新增again按钮功能
-    
-    {'id': 10, 'type': ScriptType.FIXED, 'format': ScriptFormat.MARKDOWN,
-     'template': trial.PROMOTE, 'template_vars': None,
-     'show_input': False, 
-     'show_btn': True, 
-     'btn_label': '出发！', 'btn_type': 'primary', 'btn_container_width': True,
-     'btn_for': BtnFor.CONTINUE},
-    
-    # {'id': 11, 'type': ScriptType.FIXED, 'format': ScriptFormat.MARKDOWN,
-    #  'template': trial.PAY_URL, 'template_vars': None,
-    #  'show_input': False,
-    #  'show_btn': False},
-
-    {'id': 11, 'type': ScriptType.FIXED, 'format': ScriptFormat.IMAGE,
-     # 'template': trial.PAY_URL, 'template_vars': None,
-     'media_url': trial.PAY_IMAGE_URL,
-     'show_input': False,
-     'show_btn': False},
-]

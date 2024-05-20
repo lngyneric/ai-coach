@@ -95,7 +95,6 @@ if not st.session_state.DEV_MODE or st.session_state.has_started:
                 {v: st.session_state[v] for v in script.template_vars} if script.template_vars else None,
                 model=script.custom_model
             )
-        # elif script['type'] == ScriptType.XXXX:  # TODO: 其他类型？
 
         # 最后记录下已输出的剧本ID，避免重复输出
         st.session_state.script_has_output.add(script.id)
