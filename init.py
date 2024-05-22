@@ -17,7 +17,7 @@ def load_llm(model: str = None):
     if model is None:
         model = cfg.DEFAULT_MODEL
 
-    if model in cfg.WENXIN_MODELS:
-        return QianfanChatEndpoint(streaming=True, model=model)
+    if model in cfg.QIANFAN_MODELS:
+        return QianfanChatEndpoint(streaming=True, model=model, verbose=True)
     elif model in cfg.OPENAI_MODELS:
         return ChatOpenAI(model=model, organization=cfg.OPENAI_ORG)

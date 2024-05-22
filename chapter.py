@@ -13,7 +13,7 @@ class Chapter:
         self.rank = rank
 
     def __repr__(self):
-        return f'{self.name}  (id: {self.id})'
+        return f'{self.name}  ({self.lark_table_id})'
 
 
 def load_chapters_from_sqlite() -> list[Chapter]:

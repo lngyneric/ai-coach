@@ -74,8 +74,8 @@ def simulate_streaming(chat_box, template: str, variables=None,
     for t in template:
         current_text += t
         chat_box.update_msg(current_text, element_index=0, streaming=True)
-        time.sleep(random.uniform(random_min / 4 if st.session_state.DEV_MODE else random_min,
-                                  random_max / 4 if st.session_state.DEV_MODE else random_max))
+        time.sleep(random.uniform(random_min / 20 if st.session_state.DEV_MODE else random_min,
+                                  random_max / 20 if st.session_state.DEV_MODE else random_max))
 
     chat_box.update_msg(current_text, element_index=0, streaming=False, state="complete")
     return current_text
@@ -105,6 +105,7 @@ def streaming_from_template(chat_box, template, variables,
         prompt = prompt.format(**variables)
     else:
         prompt = template
+    logging.debug(f'调用LLM：{prompt}')
 
     full_result = ''
     parse_json = ''
@@ -131,7 +132,7 @@ def streaming_from_template(chat_box, template, variables,
     if logging.getLogger().level == logging.DEBUG:
         print()
     
-    if parse_keys:
+    if parse_keys is not None and full_result.startswith(input_done_with):
         # 清理字符串
         parse_json = full_result.replace(input_done_with, '').strip()
         
@@ -143,6 +144,8 @@ def streaming_from_template(chat_box, template, variables,
                 logging.debug(f'已将"{parse_json[k]}"存入session："{k}"中')
         except Exception as e:
             logging.error(f'解析JSON失败：{e}')
+            full_result = '抱歉出现错误，请再次尝试~'
+            chat_box.update_msg(full_result, element_index=0, streaming=False, state="complete")
         
     return full_result
 

@@ -26,10 +26,11 @@ def load_process_controller():
                 st.session_state.industry = st.text_input('默认行业', value=industry if industry else '互联网')
                 st.session_state.occupation = st.text_input('默认职业', value=occupation if occupation else '产品经理')
 
-            default_model = st.selectbox('默认 LLM：', cfg.SUPPORT_MODELS)
+            default_model = st.selectbox('默认 LLM：', cfg.SUPPORT_MODELS,
+                                         index=cfg.SUPPORT_MODELS.index(cfg.DEFAULT_MODEL))
             cfg.set_default_model(default_model)
 
-            add_vertical_space(2)
+            add_vertical_space(1)
             st.write('## 剧本')
             chapter = st.selectbox('选择剧本：', load_chapters_from_sqlite())
             print(chapter)

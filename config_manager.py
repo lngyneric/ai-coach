@@ -16,10 +16,10 @@ class ConfigManager:
             _cfg_llm = config['llm']
             # DEFAULT_VENDOR = _cfg_openai['default_vendor']
             self.DEFAULT_MODEL = _cfg_llm['default_model']
-            self.WENXIN_MODELS = _cfg_llm['wenxin']['models']
+            self.QIANFAN_MODELS = _cfg_llm['qianfan']['models']
             self.OPENAI_MODELS = _cfg_llm['openai']['models']
             self.OPENAI_ORG = _cfg_llm['openai']['organization']
-            self.SUPPORT_MODELS = self.WENXIN_MODELS + self.OPENAI_MODELS
+            self.SUPPORT_MODELS = self.QIANFAN_MODELS + self.OPENAI_MODELS
 
             _cfg_lark = config['lark']
             self.LARK_APP_TOKEN = _cfg_lark['app_token']

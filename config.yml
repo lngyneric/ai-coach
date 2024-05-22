@@ -4,10 +4,16 @@ simulate_streaming_random_sleep:
 
 llm:
 #  default_vendor: wenxin
-  default_model: ERNIE-4.0-8K  # ernie-4.0-8k-0329
-  wenxin:
+  default_model: ERNIE-Speed-8K
+  qianfan:
     models:
-      - ERNIE-4.0-8K  # ernie-4.0-8k-0329
+      - ERNIE-4.0-8K
+      - ERNIE-3.5-8K
+      - ERNIE-Speed-128K
+      - ERNIE-Speed-8K
+      - Meta-Llama-3-70B
+      - Meta-Llama-3-8B
+      - Yi-34B-Chat
   openai:
     models:
       - gpt-4
