@@ -126,8 +126,52 @@ if not st.session_state.DEV_MODE or st.session_state.has_started:
                 st.session_state.progress += 1
                 st.rerun()
 
-    # # === 显示 按钮组
-    # elif script.next_action == NextAction.ShowBtnGroup:
+    # === 显示 按钮组
+    elif script.next_action == NextAction.ShowBtnGroup:
+        with bottom():
+            btns = distribute_elements(script.btn_group_cfg['btns'], 3, 2)
+            for row in btns:
+                st_cols = st.columns(len(row))
+                for i, btn in enumerate(row):
+                    if st_cols[i].button(btn['label'], key=btn['value'], type='primary', use_container_width=True):
+                        # 获取用户点击按钮的 value
+                        st.session_state[script.btn_group_cfg['var_name']] = btn['value']
+                        st.session_state.progress += 1
+                        st.rerun()
+
+    # === 跳转按钮
+    elif script.next_action == NextAction.JumpBtn:
+        if st.button(script.btn_label, type='primary', use_container_width=True):
+            # 获取需要判断的变量值
+            var_value = st.session_state.get(script.btn_jump_cfg['var_name'])
+            # == 如果是静默跳转
+            if script.btn_jump_cfg['jump_type'] == 'silent':
+                # 找到要跳转的子剧本
+                lark_table_id, lark_view_id = None, None
+                for jump_rule in script.btn_jump_cfg['jump_rule']:
+                    if var_value == jump_rule['value']:
+                        lark_table_id = jump_rule['lark_table_id']
+                        lark_view_id = jump_rule['lark_view_id']
+
+                # 如果找到了则加载，否则报错
+                if lark_table_id:
+                    sub_script_list = load_scripts_from_bitable(cfg.LARK_APP_TOKEN, lark_table_id, lark_view_id)
+                    # 将子剧本插入到原剧本中
+                    st.session_state.script_list = (
+                            st.session_state.script_list[:st.session_state.progress + 1]
+                            + sub_script_list
+                            + st.session_state.script_list[st.session_state.progress + 1:]
+                    )
+                    # 更新剧本总长度
+                    st.session_state.script_list_len = len(st.session_state.script_list)
+                    # 更新剧本进度
+                    st.session_state.progress += 1
+                    # 重新运行
+                    st.rerun()
+
+                else:
+                    raise ValueError('未找到对应的子剧本')
+
 
     else:
         st.session_state.progress += 1

@@ -150,6 +150,40 @@ def streaming_from_template(chat_box, template, variables,
     return full_result
 
 
+def distribute_elements(btns, max_cols, min_cols):
+    num_elements = len(btns)
+    if num_elements < min_cols:
+        raise ValueError("元素数量不足以满足最小列要求")
+
+    result = []
+    row = []
+
+    # 按行填充元素，满了就新起一行
+    for btn in btns:
+        row.append(btn)
+        if len(row) == max_cols:
+            result.append(row)
+            row = []
+
+    # 处理剩余的不满一行的元素
+    if row:
+        result.append(row)
+
+    # 检查最后一行是否满足最小列数要求，如果不满足，则尝试从前面的行借元素
+    while len(result[-1]) < min_cols:
+        # 从倒数第二行开始借元素
+        for i in range(len(result) - 2, -1, -1):
+            while len(result[i]) > min_cols and len(result[-1]) < min_cols:
+                result[-1].insert(0, result[i].pop())  # 从前一行的末尾取元素到最后一行的开头
+            if len(result[-1]) >= min_cols:
+                break
+        else:
+            # 如果所有行都无法借出更多元素，则抛出异常
+            raise ValueError("无法满足最小列要求，元素过少或分布不均")
+
+    return result
+
+
 if __name__ == '__main__':
     # print(get_current_time())
     pass

@@ -34,6 +34,7 @@ class NextAction(Enum):
     ShowInput = '显示 输入框'
     ShowBtn = '显示 按钮'
     ShowBtnGroup = '显示 按钮组'
+    JumpBtn = '跳转按钮'
     NoAction = '无'
 
 
@@ -43,8 +44,9 @@ class Script:
     """
     def __init__(self, id, desc, type, format,
                  template, template_vars, media_url,
-                 next_action, btn_label, input_placeholder,
-                 check_template, check_ok_sign, parse_vars,
+                 next_action,
+                 btn_label, btn_group_cfg, btn_jump_cfg,
+                 input_placeholder, check_template, check_ok_sign, parse_vars,
                  custom_model):
         """ 剧本对象
 
@@ -57,6 +59,8 @@ class Script:
         :param media_url: 仅图片剧本时必填，图片地址
         :param next_action: 【必填】后续交互，可选值：NextAction.ShowInput, NextAction.ShowBtn, NextAction.NoAction
         :param btn_label: 后续交互为按钮时，按钮的标签
+        :param btn_group_cfg: 后续交互为按钮组时，按钮组的配置
+        :param btn_jump_cfg: 后续交互为跳转按钮时，跳转按钮的配置
         :param input_placeholder: 后续交互为输入时，输入框的提示语
         :param check_template: 后续交互为输入时，提供检查模版，用于检查用户输入是否符合要求
         :param check_ok_sign: 后续交互为输入时，检查通过的标志
@@ -73,6 +77,8 @@ class Script:
         self.media_url: Optional[str] = media_url
         self.next_action: NextAction = next_action
         self.btn_label: Optional[str] = btn_label
+        self.btn_group_cfg: Optional[str] = btn_group_cfg
+        self.btn_jump_cfg: Optional[str] = btn_jump_cfg
         self.input_placeholder: Optional[str] = input_placeholder
         self.check_template: Optional[str] = check_template
         self.check_ok_sign: Optional[str] = check_ok_sign
@@ -172,6 +178,10 @@ def load_scripts_from_bitable(app_token, table_id, view_id):
             media_url = item.fields.get('媒体URL')['text'] if item.fields.get('媒体URL') else None
             next_action = NextAction(item.fields.get('后续交互', '无'))
             btn_label = ''.join(item["text"] for item in item.fields.get('按钮标题', [{"text": "继续"}]))
+            btn_group_cfg = json.loads(
+                ''.join(item["text"] for item in item.fields.get('按钮组配置', [{"text": "{}"}])))
+            btn_jump_cfg = json.loads(
+                ''.join(item["text"] for item in item.fields.get('跳转配置', [{"text": "{}"}])))
             input_placeholder = ''.join(item["text"] for item in item.fields.get('输入框提示', [{"text": "请输入"}]))
             check_template = ''.join(item["text"] for item in item.fields.get('检查模版内容', [{"text": "未填写！"}]))
             check_ok_sign = ''.join(item["text"] for item in item.fields.get('输入成功标识', [{"text": "OK"}]))
@@ -181,8 +191,9 @@ def load_scripts_from_bitable(app_token, table_id, view_id):
             script_list.append(Script(
                 id, desc, script_type, script_format,
                 template, template_vars, media_url,
-                next_action, btn_label, input_placeholder,
-                check_template, check_ok_sign, parse_vars,
+                next_action,
+                btn_label, btn_group_cfg, btn_jump_cfg,
+                input_placeholder, check_template, check_ok_sign, parse_vars,
                 custom_model
             ))
         except Exception as e:
