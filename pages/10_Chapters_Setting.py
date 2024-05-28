@@ -35,6 +35,7 @@ st.dataframe(
 )
 
 
+# 修改 章节剧本文档
 if not df_chapters.empty:
     with st.expander('✏️ 修改 章节剧本文档'):
         edit_chapter_list = st.empty()
@@ -59,7 +60,7 @@ if not df_chapters.empty:
                 st.rerun()
 
 
-# 添加新章节剧本文档
+# 添加 章节剧本文档
 with st.expander('➕ 添加 章节剧本文档'):
     with st.form('add_row'):
         max_rank = df_chapters['rank'].max() if not df_chapters.empty else 0
@@ -80,3 +81,17 @@ with st.expander('➕ 添加 章节剧本文档'):
             conn.close()
             st.rerun()
 
+# 删除 章节剧本文档
+if not df_chapters.empty:
+    with st.expander('❌ 删除 章节剧本文档'):
+        delete_chapter_list = st.empty()
+        chapter_name = delete_chapter_list.selectbox('要删除的章节名称', list(df_chapters['name']), label_visibility='collapsed')
+        chapter_id = int(df_chapters[df_chapters['name'] == chapter_name].index[0])
+        delete_button = st.button('删除', type='primary', use_container_width=True)
+        if delete_button:
+            conn = sqlite3.connect(cfg.SQLITE_DB_PATH)
+            cursor = conn.cursor()
+            c = cursor.execute('DELETE FROM `chapters` WHERE id=?', (chapter_id,))
+            conn.commit()
+            conn.close()
+            st.rerun()
