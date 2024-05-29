@@ -3,6 +3,7 @@ from streamlit_extras.add_vertical_space import add_vertical_space
 
 from chapter import *
 from script import *
+from tools.utils import load_scripts_and_system_role
 
 
 def load_process_controller():
@@ -35,13 +36,12 @@ def load_process_controller():
             chapter = st.selectbox('选择剧本：', load_chapters_from_sqlite())
             print(chapter)
             print(chapter.lark_table_id)
-            progress = st.number_input('开始位置：', value=1, step=1) - 1
+            progress = st.number_input('开始位置：', value=2, min_value=1, step=1) - 2
             if st.button(f'开始', type='primary', use_container_width=True) or progress:
-                if 'script_list' not in st.session_state:
-                    with st.spinner('正在加载剧本...'):
-                        st.session_state.script_list = load_scripts_from_bitable(
-                            cfg.LARK_APP_TOKEN, chapter.lark_table_id, chapter.lark_view_id)
-                        st.session_state.script_list_len = len(st.session_state.script_list)
+                # 加载剧本及系统角色
+                load_scripts_and_system_role(cfg.LARK_APP_TOKEN, chapter.lark_table_id, chapter.lark_view_id)
+
+                progress += 1 if 'system_role' not in st.session_state else progress
                 st.session_state.progress = progress
                 st.session_state.has_started = True
                 logging.debug(f'从 {st.session_state.progress} 开始剧本')

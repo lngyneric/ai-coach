@@ -54,12 +54,8 @@ if st.session_state.DEV_MODE:
 # 非开发者模式直接开始，若在开发者模式则等待配置后开始
 if not st.session_state.DEV_MODE or st.session_state.has_started:
 
-    # 初始化剧本
-    if 'script_list' not in st.session_state:
-        with st.spinner('正在加载剧本...'):
-            st.session_state.script_list = load_scripts_from_bitable(
-                cfg.LARK_APP_TOKEN, cfg.DEF_LARK_TABLE_ID, cfg.DEF_LARK_VIEW_ID)
-            st.session_state.script_list_len = len(st.session_state.script_list)
+    # 加载剧本及系统角色
+    load_scripts_and_system_role()
 
     # 获取剧本总长度，并在结束时停止
     if st.session_state.progress >= st.session_state.script_list_len:

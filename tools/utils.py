@@ -1,18 +1,16 @@
 import base64
 import random
 import time
-import logging
-import json
 from pathlib import Path
 
-from dotenv import load_dotenv, find_dotenv
 import streamlit as st
 import validators
 from streamlit_chatbox import *
 from langchain_core.prompts import PromptTemplate
-
+from langchain_core.messages import HumanMessage, SystemMessage
 
 from init import *
+from script import *
 
 _ = load_dotenv(find_dotenv())
 
@@ -105,13 +103,18 @@ def streaming_from_template(chat_box, template, variables,
         prompt = prompt.format(**variables)
     else:
         prompt = template
-    logging.debug(f'调用LLM：{prompt}')
+    logging.debug(f'调用LLM（Human）：{prompt}')
+    llm_input = [HumanMessage(prompt)]
+    if 'system_role' in st.session_state:
+        llm_input.append(SystemMessage(st.session_state.system_role))
+        logging.debug(f'调用LLM（System）：{st.session_state.system_role}')
 
     full_result = ''
     parse_json = ''
     need_streaming_complete = False
     count = 0
-    for chunk in llm.stream(prompt):
+    # for chunk in llm.stream(prompt, system=st.session_state.system_role):
+    for chunk in llm.stream(llm_input):
         if len(chunk.content) == 0:
             continue
         full_result += chunk.content
@@ -182,6 +185,30 @@ def distribute_elements(btns, max_cols, min_cols):
             raise ValueError("无法满足最小列要求，元素过少或分布不均")
 
     return result
+
+
+def load_scripts_and_system_role(
+        app_token=cfg.LARK_APP_TOKEN,
+        table_id=cfg.DEF_LARK_TABLE_ID,
+        view_id=cfg.DEF_LARK_VIEW_ID
+):
+    if 'script_list' not in st.session_state:
+        with st.spinner('正在加载剧本...'):
+            st.session_state.script_list = load_scripts_from_bitable(app_token, table_id, view_id)
+            if st.session_state.script_list[0].type == ScriptType.SYSTEM:
+                system_role_script = st.session_state.script_list.pop(0)
+                template = system_role_script.template
+                variables = {v: st.session_state[v] for v in system_role_script.template_vars} if system_role_script.template_vars else None
+
+                if variables:
+                    prompt = PromptTemplate(input_variables=list(variables.keys()), template=template)
+                    prompt = prompt.format(**variables)
+                else:
+                    prompt = template
+
+                st.session_state.system_role = prompt
+
+            st.session_state.script_list_len = len(st.session_state.script_list)
 
 
 if __name__ == '__main__':

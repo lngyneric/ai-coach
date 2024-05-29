@@ -17,7 +17,7 @@ LARK_APP_SECRET = os.environ.get('LARK_APP_SECRET')
 class ScriptType(Enum):
     FIXED = '固定剧本'
     PROMPT = 'Prompt'
-
+    SYSTEM = '系统角色'
 
 
 class ScriptFormat(Enum):
@@ -77,8 +77,8 @@ class Script:
         self.media_url: Optional[str] = media_url
         self.next_action: NextAction = next_action
         self.btn_label: Optional[str] = btn_label
-        self.btn_group_cfg: Optional[str] = btn_group_cfg
-        self.btn_jump_cfg: Optional[str] = btn_jump_cfg
+        self.btn_group_cfg: Optional[dict] = btn_group_cfg
+        self.btn_jump_cfg: Optional[dict] = btn_jump_cfg
         self.input_placeholder: Optional[str] = input_placeholder
         self.check_template: Optional[str] = check_template
         self.check_ok_sign: Optional[str] = check_ok_sign
@@ -132,7 +132,7 @@ def get_tenant_access_token():
     return token
 
 
-def load_scripts_from_bitable(app_token, table_id, view_id):
+def load_scripts_from_bitable(app_token, table_id, view_id) -> List[Script]:
     logging.info(f'开始加载剧本记录：app_token={app_token}, table_id={table_id}, view_id={view_id}')
     client = get_lark_client()
 
@@ -203,8 +203,6 @@ def load_scripts_from_bitable(app_token, table_id, view_id):
             continue
 
     return script_list
-
-
 
 
 

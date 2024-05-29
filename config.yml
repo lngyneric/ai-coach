@@ -23,7 +23,8 @@ llm:
 
 lark:
   app_token: LLwmbSyMcakFVJsM5yacT5Gqnse
-  default_table_id: tbl2ww1H5VCfQzxL  # 试学课
+  default_table_id: tblgad2Ru33lJUPy  # 试学课 test02
+#  default_table_id: tbl2ww1H5VCfQzxL  # 试学课
 #  table_id: tblMGLpPFYWU0gIK  # 试学课 test01
 #  table_id: tbltsSzDfJQm6dne  # 在自己电脑上运行Python
   default_view_id: vewlGkI2Jp
