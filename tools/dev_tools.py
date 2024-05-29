@@ -11,14 +11,24 @@ def load_process_controller():
         nickname = st.query_params.get('nickname')
         industry = st.query_params.get('industry')
         occupation = st.query_params.get('occupation')
+        ai_tools = st.query_params.get('ai_tools')
+        table = st.query_params.get('table')
 
         if progress := st.query_params.get('progress'):
             st.session_state.progress = int(progress) - 1
             st.session_state.nickname = nickname if nickname else '小明'
             st.session_state.industry = industry if industry else '互联网'
             st.session_state.occupation = occupation if occupation else '产品经理'
+            st.session_state.ai_tools = ai_tools if ai_tools else 'GitHub_Copilot'
+            st.session_state.table = table if table else None
+            if st.session_state.table:
+                load_scripts_and_system_role(cfg.LARK_APP_TOKEN, st.session_state.table, cfg.DEF_LARK_VIEW_ID)
+                if 'system_role' in st.session_state:
+                    st.session_state.progress -= 1
+                logging.debug(f'从 {st.session_state.progress} 开始剧本（{st.session_state.table}）')
+            else:
+                logging.debug(f'从 {st.session_state.progress} 开始默认剧本（{cfg.DEF_LARK_TABLE_ID}）')
             st.session_state.has_started = True
-            logging.debug(f'从 {st.session_state.progress} 开始剧本')
             st.rerun()
 
         with st.sidebar:
@@ -26,6 +36,7 @@ def load_process_controller():
                 st.session_state.nickname = st.text_input('默认昵称', value=nickname if nickname else '小明')
                 st.session_state.industry = st.text_input('默认行业', value=industry if industry else '互联网')
                 st.session_state.occupation = st.text_input('默认职业', value=occupation if occupation else '产品经理')
+                st.session_state.ai_tools = st.text_input('默认AI工具', value=ai_tools if ai_tools else 'GitHub_Copilot')
 
             default_model = st.selectbox('默认 LLM：', cfg.SUPPORT_MODELS,
                                          index=cfg.SUPPORT_MODELS.index(cfg.DEFAULT_MODEL))
