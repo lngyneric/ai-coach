@@ -35,6 +35,7 @@ class NextAction(Enum):
     ShowBtn = '显示 按钮'
     ShowBtnGroup = '显示 按钮组'
     JumpBtn = '跳转按钮'
+    ShowPayQR = '显示 付款码'
     NoAction = '无'
 
 

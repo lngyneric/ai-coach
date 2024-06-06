@@ -169,6 +169,9 @@ if not st.session_state.DEV_MODE or st.session_state.has_started:
                 else:
                     raise ValueError('未找到对应的子剧本')
 
+    # === 显示 付款码
+    elif script.next_action == NextAction.ShowPayQR:
+        pass  # TODO 显示付款码 待处理
 
     else:
         st.session_state.progress += 1
