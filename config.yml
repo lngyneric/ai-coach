@@ -14,12 +14,14 @@ llm:
       - Meta-Llama-3-70B
       - Meta-Llama-3-8B
       - Yi-34B-Chat
+    default_temperature: 0.8  # (0, 1.0]
   openai:
     models:
       - gpt-4
       - gpt-4o
       - gpt-3.5-turbo
     organization: org-fC5Q2f4MQIEaTOa3k8vTQu6G
+    default_temperature: 1  # [0, 2.0]
 
 lark:
   app_token: LLwmbSyMcakFVJsM5yacT5Gqnse

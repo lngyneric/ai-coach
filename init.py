@@ -13,11 +13,10 @@ _ = load_dotenv(find_dotenv())
 cfg = ConfigManager()
 
 
-def load_llm(model: str = None):
-    if model is None:
-        model = cfg.DEFAULT_MODEL
-
+def load_llm(model: str = cfg.DEFAULT_MODEL, temperature: float = None):
     if model in cfg.QIANFAN_MODELS:
-        return QianfanChatEndpoint(streaming=True, model=model, verbose=True)
+        temperature = temperature if temperature else cfg.QIANFAN_DEF_TMP
+        return QianfanChatEndpoint(streaming=True, model=model, temperature=temperature, verbose=True)
     elif model in cfg.OPENAI_MODELS:
-        return ChatOpenAI(model=model, organization=cfg.OPENAI_ORG)
+        temperature = temperature if temperature else cfg.OPENAI_DEF_TMP
+        return ChatOpenAI(model=model, temperature=temperature, organization=cfg.OPENAI_ORG)

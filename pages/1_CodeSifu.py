@@ -89,7 +89,7 @@ if not st.session_state.DEV_MODE or st.session_state.has_started:
             full_result = streaming_from_template(
                 chat_box, script.template,
                 {v: st.session_state[v] for v in script.template_vars} if script.template_vars else None,
-                model=script.custom_model
+                model=script.custom_model, temperature=script.temperature
             )
 
         # 最后记录下已输出的剧本ID，避免重复输出
@@ -107,7 +107,8 @@ if not st.session_state.DEV_MODE or st.session_state.has_started:
             # 通过 `检查模版` 输出AI回复
             full_result = streaming_from_template(chat_box, script.check_template, {'input': user_input},
                                                   input_done_with=script.check_ok_sign,
-                                                  parse_keys=script.parse_vars)
+                                                  parse_keys=script.parse_vars,
+                                                  model=script.custom_model, temperature=script.temperature)
             logging.debug(f'scrip id: {script.id}, chat result: {full_result}')
 
             # 如果AI回复中包含了结束标志，则进入下一个剧本

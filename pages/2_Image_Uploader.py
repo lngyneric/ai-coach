@@ -1,5 +1,3 @@
-import time
-
 import oss2
 from oss2.credentials import EnvironmentVariableCredentialsProvider
 

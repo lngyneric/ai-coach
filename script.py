@@ -47,7 +47,7 @@ class Script:
                  next_action,
                  btn_label, btn_group_cfg, btn_jump_cfg,
                  input_placeholder, check_template, check_ok_sign, parse_vars,
-                 custom_model):
+                 custom_model, temperature):
         """ 剧本对象
 
         :param id: 【必填】在使用飞书多维表格时，填写其记录的ID
@@ -66,6 +66,7 @@ class Script:
         :param check_ok_sign: 后续交互为输入时，检查通过的标志
         :param parse_vars: 后续交互为输入时，提供解析变量名列表，用于解析用户输入
         :param custom_model: 单条剧本指定使用自定义模型时，提供模型名称
+        :param temperature: 单条剧本指定使用自定义温度时，提供温度值
         """
 
         self.id: str = id
@@ -84,6 +85,7 @@ class Script:
         self.check_ok_sign: Optional[str] = check_ok_sign
         self.parse_vars: Optional[List[str]] = parse_vars
         self.custom_model: Optional[str] = custom_model
+        self.temperature: Optional[float] = temperature
 
 
 
@@ -185,8 +187,9 @@ def load_scripts_from_bitable(app_token, table_id, view_id) -> List[Script]:
             input_placeholder = ''.join(item["text"] for item in item.fields.get('输入框提示', [{"text": "请输入"}]))
             check_template = ''.join(item["text"] for item in item.fields.get('检查模版内容', [{"text": "未填写！"}]))
             check_ok_sign = ''.join(item["text"] for item in item.fields.get('输入成功标识', [{"text": "OK"}]))
-            parse_vars = item.fields.get('解析用户输入内容')
+            parse_vars = item.fields.get('解析用户输入内容', None)
             custom_model = item.fields.get('自定义模型', None)
+            temperature = item.fields.get('temperature', None)
 
             script_list.append(Script(
                 id, desc, script_type, script_format,
@@ -194,13 +197,13 @@ def load_scripts_from_bitable(app_token, table_id, view_id) -> List[Script]:
                 next_action,
                 btn_label, btn_group_cfg, btn_jump_cfg,
                 input_placeholder, check_template, check_ok_sign, parse_vars,
-                custom_model
+                custom_model, temperature
             ))
         except Exception as e:
             logging.error(f'加载剧本记录失败，剧本ID：{id}')
             logging.error(f'剧本内容：{item.fields}')
             logging.error(f'异常信息：{e}')
-            continue
+            raise e
 
     return script_list
 

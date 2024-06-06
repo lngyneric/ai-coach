@@ -33,7 +33,7 @@ def fix_sidebar_add_logo(logo_url: str):
                 background-image: {logo};
                 background-repeat: no-repeat;
                 background-size: contain;
-                padding-top: 70px;
+                padding-top: 130px;
                 background-position: 0px 0px;
             }}
             [data-testid="stSidebar"] {{
@@ -81,7 +81,7 @@ def simulate_streaming(chat_box, template: str, variables=None,
 
 def streaming_from_template(chat_box, template, variables, 
                             input_done_with=None, parse_keys=None, update=False,
-                            model=None):
+                            model=None, temperature=None):
     """
     通过给定模版和遍历调用LLM，并流式输出（作为AI身份输出）。
     :param chat_box: ChatBox 对象
@@ -91,9 +91,13 @@ def streaming_from_template(chat_box, template, variables,
     :param parse_keys: 解析JSON的key列表
     :param update: 是否更新之前的 chat_box 输出，默认是开启一段新对话
     :param model: 使用指定的自定义模型，提供模型名称（config.yml 中有支持的模型）
+    :param temperature: 温度参数，用于控制生成文本的多样性
     """
 
-    llm = load_llm() if not model else load_llm(model)
+    # llm = load_llm() if not model else load_llm(model, temperature)
+    llm = load_llm(model, temperature)
+
+    chat_box.ai_say
 
     if not update:
         chat_box.ai_say(Markdown('', in_expander=False))
@@ -105,7 +109,9 @@ def streaming_from_template(chat_box, template, variables,
         prompt = template
     logging.debug(f'调用LLM（Human）：{prompt}')
     llm_input = [HumanMessage(prompt)]
-    if 'system_role' in st.session_state:
+
+    # 有配置 系统角色 且 不是检查用户输入内容的Prompt时，加入系统角色
+    if 'system_role' in st.session_state and parse_keys is None:
         llm_input.append(SystemMessage(st.session_state.system_role))
         logging.debug(f'调用LLM（System）：{st.session_state.system_role}')
 
@@ -151,6 +157,54 @@ def streaming_from_template(chat_box, template, variables,
             chat_box.update_msg(full_result, element_index=0, streaming=False, state="complete")
         
     return full_result
+
+
+def from_template(template, variables=None, system_role=None, model=None, temperature=None):
+    """
+    直接通过剧本输出，根据剧本类型自动判断是普通Prompt给AI，还是检查用户输入的Prompt给AI
+    :param script: 单条剧本
+    :param model: 使用指定的自定义模型，提供模型名称（config.yml 中有支持的模型）
+    :param temperature: 温度参数，用于控制生成文本的多样性
+    """
+
+    logging.debug('=====================')
+    logging.debug(f'== 调用剧本输出：{template}')
+    logging.debug(f'== 变量：{variables}')
+    logging.debug(f'== 系统角色：{system_role}')
+    logging.debug(f'== 自定义模型：{model}')
+    logging.debug(f'== 温度：{temperature}')
+    logging.debug('=====================')
+
+    llm = load_llm(model, temperature)
+
+
+    if system_role:
+        # 普通Prompt
+        if variables:
+            prompt = PromptTemplate(input_variables=list(variables.keys()), template=template)
+            prompt = prompt.format(**variables)
+        else:
+            prompt = template
+    else:  # user_input is not None:
+        # 检查用户输入的Prompt
+        prompt = PromptTemplate(input_variables=list(variables.keys()), template=template)
+        prompt = prompt.format(**variables)
+    # else:
+    #     raise Exception('有检查用户输入的Prompt内容，但没有提供用户输入！')
+
+    logging.debug(f'调用LLM（Human）：{prompt}')
+    llm_input = [HumanMessage(prompt)]
+
+    # 有配置 系统角色 且 不是检查用户输入内容的Prompt时，加入系统角色
+    if system_role:
+        llm_input.append(SystemMessage(system_role))
+        logging.debug(f'调用LLM（System）：{system_role}')
+
+    rtn_msg = llm.invoke(llm_input)
+    print(rtn_msg)
+    print(rtn_msg.content)
+
+    return rtn_msg.content
 
 
 def distribute_elements(btns, max_cols, min_cols):
