@@ -21,4 +21,4 @@ jobs:
         port: ${{ secrets.PORT }}
         script: |
           sudo su -
-          bash /path/to/your/deploy-sifu-web-test.sh
+          bash /item/agi-deploy/deploy-sifu-web-test.sh
