@@ -12,9 +12,6 @@ jobs:
     - name: Checkout
       uses: actions/checkout@v4
 
-    - name: Install pnpm
-      run: npm install -g pnpm
-
     - name: SSH to remote server and execute deployment script
       uses: appleboy/ssh-action@master
       with:
