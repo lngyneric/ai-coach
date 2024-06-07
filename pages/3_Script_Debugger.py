@@ -130,6 +130,8 @@ with col1:
     temperature = 0
     if model in cfg.QIANFAN_MODELS:
         temperature = cfg.QIANFAN_DEF_TMP
+    elif model in cfg.ZHIPU_MODELS:
+        temperature = cfg.ZHIPU_DEF_TMP
     elif model in cfg.OPENAI_MODELS:
         temperature = cfg.OPENAI_DEF_TMP
     temperature = st.number_input('设定温度：', value=temperature)

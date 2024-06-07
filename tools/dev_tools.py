@@ -13,6 +13,8 @@ def load_process_controller():
         occupation = st.query_params.get('occupation')
         ai_tools = st.query_params.get('ai_tools')
         style = st.query_params.get('style')
+        q_model = st.query_params.get('model')
+        q_temperature = st.query_params.get('temperature')
         table = st.query_params.get('table')
 
         if progress := st.query_params.get('progress'):
@@ -22,6 +24,10 @@ def load_process_controller():
             st.session_state.occupation = occupation if occupation else '产品经理'
             st.session_state.ai_tools = ai_tools if ai_tools else 'GitHub_Copilot'
             st.session_state.style = style if style else '幽默风趣'
+            cfg.set_default_model(q_model if q_model else cfg.ORIGINAL_DEFAULT_MODEL)
+            if q_temperature:
+                cfg.set_openai_default_temperature(q_temperature)
+                cfg.set_qianfan_default_temperature(q_temperature)
             st.session_state.table = table if table else None
             if st.session_state.table:
                 load_scripts_and_system_role(cfg.LARK_APP_TOKEN, st.session_state.table, cfg.DEF_LARK_VIEW_ID)

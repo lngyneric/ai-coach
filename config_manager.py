@@ -16,12 +16,15 @@ class ConfigManager:
             _cfg_llm = config['llm']
             # DEFAULT_VENDOR = _cfg_openai['default_vendor']
             self.DEFAULT_MODEL = _cfg_llm['default_model']
+            self.ORIGINAL_DEFAULT_MODEL = _cfg_llm['default_model']
             self.QIANFAN_MODELS = _cfg_llm['qianfan']['models']
             self.QIANFAN_DEF_TMP = _cfg_llm['qianfan']['default_temperature']
+            self.ZHIPU_MODELS = _cfg_llm['zhipu']['models']
+            self.ZHIPU_DEF_TMP = _cfg_llm['zhipu']['default_temperature']
             self.OPENAI_MODELS = _cfg_llm['openai']['models']
             self.OPENAI_ORG = _cfg_llm['openai']['organization']
             self.OPENAI_DEF_TMP = _cfg_llm['openai']['default_temperature']
-            self.SUPPORT_MODELS = self.QIANFAN_MODELS + self.OPENAI_MODELS
+            self.SUPPORT_MODELS = self.QIANFAN_MODELS + self.ZHIPU_MODELS + self.OPENAI_MODELS
 
             _cfg_lark = config['lark']
             self.LARK_APP_TOKEN = _cfg_lark['app_token']
