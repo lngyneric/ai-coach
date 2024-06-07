@@ -1,0 +1,5 @@
+.todo_page .ant-table-wrapper .ant-table-tbody >tr.ant-table-row-selected >td{
+    background-color: rgba(0, 0, 0, 0);
+    opacity: 0.5;   
+    text-decoration-line:line-through;
+}

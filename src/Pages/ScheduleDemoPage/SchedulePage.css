@@ -1,0 +1,161 @@
+.schedule_page {
+  background-color: #fff;
+  height: 100%;
+  padding: 16px;
+  border-radius: 6px;
+}
+
+.fc .fullcalendar_day-header__today {
+  border-bottom: 5px solid rgb(0, 150, 255);
+}
+
+.fc .fullcalendar_day-header__align-left {
+  text-align: left;
+}
+
+.fc .fullcalendar_day-header__align-right {
+  text-align: right;
+}
+
+.fc .fullcalendar_day-cell .fc-scrollgrid-sync-inner {
+  padding-top: 4px;
+  padding-bottom: 4px;
+  padding-right: 8px;
+}
+
+.fc .fullcalendar_day-cell a {
+  color: #000;
+  font-size: 16px;
+  font-weight: 600;
+}
+
+.fc .fullcalendar_day-header-sunday,
+.fc .fullcalendar_day-header-saturday {
+  background-color: rgba(245, 245, 245, 1);
+}
+
+.fc .fullcalendar_cell-today {
+  background-color: #fff !important;
+}
+
+.fc .date-Number_container {
+  display: flex;
+  align-items: center;
+}
+
+.fc .fullcalendar_day-cell .date-number {
+  border-radius: 50%;
+  height: 32px;
+  line-height: 32px;
+  text-align: center;
+  transition: 0.1s;
+}
+
+.fc .fullcalendar_cell-today .date-Number_container .date-number {
+  background-color: rgb(0, 150, 255);
+  border-radius: 50%;
+  width: 32px;
+  height: 32px;
+  color: #fff;
+  line-height: 32px;
+  text-align: center;
+  font-size: 18px;
+}
+
+.fc .fullcalendar_day-cell:hover .date-number {
+  background-color: rgba(0, 150, 255, 0.5);
+  width: 32px;
+  color: #fff;
+}
+
+.fc .fc-toolbar-title {
+  display: inline-block;
+  vertical-align: middle;
+  margin-right: 16px;
+}
+
+.fc .fc-today-button {
+  width: 62px;
+  height: 32px;
+  background: #e5f4ff;
+  border-radius: 2px 2px 2px 2px;
+  opacity: 1;
+  padding: 0;
+  border: 0;
+  color: #0096ff;
+}
+.fc .fc-today-button:hover {
+  width: 62px;
+  height: 32px;
+  background: #e5f4ff;
+  border-radius: 2px 2px 2px 2px;
+  opacity: 1;
+  padding: 0;
+  border: 0;
+  color: #0096ff;
+}
+
+.fc .fc-today-button:disabled {
+  width: 62px;
+  height: 32px;
+  background: #f2f3f5;
+  border-radius: 2px 2px 2px 2px;
+  opacity: 1;
+  padding: 0;
+  border: 0;
+  color: #4e5969;
+}
+
+.fc .fc-prev-button,
+.fc .fc-next-button {
+  width: 32px;
+  height: 32px;
+  border-radius: 0px 0px 0px 0px;
+  opacity: 1;
+  padding: 0;
+  background-color: #fff;
+  color: #4e5969;
+  border: 0;
+}
+
+.fc .fc-prev-button:hover,
+.fc .fc-next-button:hover,
+.fc .fc-prev-button:active,
+.fc .fc-next-button:active {
+  border-radius: 0px 0px 0px 0px;
+  opacity: 1;
+  padding: 0;
+  background-color: #e5f4ff;
+  color: #0096ff;
+  border: 0;
+}
+
+.fc .fc-dayGridMonth-button,
+.fc .fc-timeGridWeek-button,
+.fc .fc-timeGridDay-button {
+  height: 32px;
+  border-radius: 2px 2px 2px 2px;
+  opacity: 1;
+  background-color: #f2f3f5;
+  padding: 5px 24px;
+  border: 0;
+  color: #4e5969;
+}
+
+.fc .fc-dayGridMonth-button:hover,
+.fc .fc-timeGridWeek-button:hover,
+.fc .fc-timeGridDay-button:hover,
+.fc .fc-dayGridMonth-button:active,
+.fc .fc-timeGridWeek-button:active,
+.fc .fc-timeGridDay-button:active {
+  background-color: #e5f4ff;
+  color: #0096ff;
+  border: 0;
+}
+.fc .fc-dayGridMonth-button.active,
+.fc .fc-timeGridWeek-button.active,
+.fc .fc-timeGridDay-button.active {
+  background-color: #e5f4ff;
+  color: #0096ff;
+  border: 0;
+}
