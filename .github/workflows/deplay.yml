@@ -2,7 +2,7 @@ name: Build and Sync to Alibaba Cloud Host
 
 on:
   push:
-    branches: ["main"]
+    branches: ["develop"] # Trigger only on push to the develop branch
 
 jobs:
   build-and-sync:
