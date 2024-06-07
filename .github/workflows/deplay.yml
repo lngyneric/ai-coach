@@ -17,11 +17,14 @@ jobs:
       with:
         node-version: '14' # or your preferred Node.js version
 
+    - name: Install pnpm
+      run: npm install -g pnpm
+
     - name: Install dependencies
-      run: npm install
+      run: pnpm i
 
     - name: Build the project
-      run: npm run build # or your project's build command
+      run: pnpm run build # or your project's build command
 
     - name: Install rsync
       run: sudo apt-get install -y rsync
