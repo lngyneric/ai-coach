@@ -16,7 +16,11 @@ export const NavHeader = ({
         <LogoCircle size={24} />
         {!isCollapse && <div className={styles.productName}>{productName}</div>}
       </div>
-      {showCollapseBtn && (<div className={styles.actionBtn} onClick={() => onToggle?.({ isCollapse: !isCollapse })}>{ isCollapse ? '>' : '<' }</div>)}
+        
+      {showCollapseBtn 
+        && (<div className={styles.actionBtn} onClick={() => onToggle?.({ isCollapse: !isCollapse })}>
+          <img src={require('@Assets/newchat/light/icon16-expand.png')} alt="展开/折叠" className={classNames(styles.icon)} />
+        </div>)}
       {showCloseBtn && <div className={styles.actionBtn} onClick={onClose}>X</div>}
       
     </div>

@@ -2,7 +2,7 @@
 import CourseCatalog from "./CourseCatalog.jsx";
 import styles from './CourseCatalogList.module.scss';
 
-export const CourseCatalogList = ({ catalogs = [{ id: 1 }] }) => {
+export const CourseCatalogList = ({ catalogs = [{ id: 1 }, {id: 2}, {id: 3}] }) => {
   return (<div className={styles.courseCatalogList}>
     <div className={styles.titleRow}>
       <div className={styles.titleArea}>

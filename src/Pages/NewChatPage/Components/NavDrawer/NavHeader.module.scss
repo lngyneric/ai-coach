@@ -21,15 +21,16 @@
 
   .actionBtn {
     width: 16px;
-    height: 16px;
     text-align: center;
     vertical-align: middle;
-    padding: 3px;
-    border-radius: 50%;
-    border: 1px solid var(--font-color-main);
 
     &:hover {
       cursor: pointer;
+    }
+    .icon {
+      width: 16px;
+      transition: transform 0.3s ease;
+      transform: rotate(-180deg);
     }
   }
 
@@ -37,5 +38,11 @@
     padding: 22px 0;
     width: 60px;
     flex-flow: column-reverse nowrap;
+
+    .actionBtn {
+      .icon {
+        transform: rotate(0deg);
+      }
+    }
   }
 }

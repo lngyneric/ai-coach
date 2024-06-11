@@ -1,20 +1,18 @@
 import PopupModal from '@Components/PopupModal';
-import styles from './SettingWindow.module.scss';
+import styles from './SettingModal.module.scss';
 import classNames from 'classnames';
-
 import Icon1 from '@Assets/newchat/light/icon16-edit.svg';
-import { redirect } from 'react-router-dom';
 
-export const SettingWindow = ({ open, onClose, style }) => {
+export const SettingModal = ({ open, onClose, style }) => {
   return (
     <PopupModal open={open} onClose={onClose} wrapStyle={{ ...style}}>
-      <div className={styles.settingWindow}>
+      <div className={styles.settingModal}>
         <div className={classNames(styles.settingRow, styles.loginRow)}>
           <div className={styles.loginLeft}>
             <div>x</div>
             <div>未登录</div>
           </div>
-          <img src={Icon1} style={{ color: 'red' }} />
+          <img src={Icon1} alt="" />
         </div>
         <div className={styles.settingRow}>
           <div>账号安全</div>
@@ -37,4 +35,4 @@ export const SettingWindow = ({ open, onClose, style }) => {
   )
 }
 
-export default SettingWindow;
+export default SettingModal;

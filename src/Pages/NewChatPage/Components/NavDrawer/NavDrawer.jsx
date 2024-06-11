@@ -9,7 +9,7 @@ import NavBody from './NavBody.jsx';
 import NavFooter from './NavFooter.jsx';
 import FillingModal from './FilingModal.jsx';
 import ThemeWindow from './ThemeWindow.jsx';
-import SettingWindow from './SettingWindow.jsx';
+import SettingModal from './SettingModal.jsx';
 import CourseCatalogList from '../CourseCatalog/CourseCatalogList.jsx';
 import styles from './NavDrawer.module.scss';
 
@@ -50,7 +50,7 @@ const calcNavWidth = (frameLayout) => {
 
 const COLLAPSE_WIDTH = '60px';
 
-const NavDrawer = ({ showType = NAV_SHOW_TYPE_NORMAL }) => {
+const NavDrawer = ({ showType = NAV_SHOW_TYPE_NORMAL, onLoginClick = () => {}}) => {
   const { frameLayout, isLogin } = useContext(AppContext);
   const [isCollapse, setIsCollapse] = useState(false);
   const [popupModalState, setPopupModalState] = useState(POPUP_WINDOW_STATE_CLOSE);
@@ -79,8 +79,8 @@ const NavDrawer = ({ showType = NAV_SHOW_TYPE_NORMAL }) => {
           onToggle={onHeaderToggleHandler}
           isCollapse={isCollapse}
         />
-        <div style={{flex: '1 1 auto'}}>
-          { !isCollapse && (isLogin ? <CourseCatalogList /> : <NavBody />) }
+        <div style={{flex: '1 1 0', overflowY: 'auto'}}>
+          { !isCollapse && (isLogin ? <CourseCatalogList /> : <NavBody onLoginClick={onLoginClick} />) }
         </div>
         <NavFooter
           isCollapse={isCollapse}
@@ -98,7 +98,7 @@ const NavDrawer = ({ showType = NAV_SHOW_TYPE_NORMAL }) => {
           style={popupWindowStyle}
           onClose={onPopupModalClose}
         />
-        <SettingWindow
+        <SettingModal
           open={popupModalState === POPUP_WINDOW_STATE_SETTING}
           style={popupWindowStyle}
           onClose={onPopupModalClose}

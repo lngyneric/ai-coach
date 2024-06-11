@@ -1,12 +1,29 @@
 .filingModal {
   font-size: var(--font-size-5);
   padding: 10px;
-  line-height: 1.6em;
+  line-height: 2em;
 
 
   :global(.ant-modal-content) {
     padding: 0;
   }
+
+  .miitLink, .miitLink:visited {
+    text-decoration: none;
+    color: var(--font-color-main);
+  }
+
+  .gonganRow {
+    display: flex;
+    flex-flow: row nowrap;
+    align-items: center;
+
+    .beianIcon {
+      width: 12px;
+      margin-right: 3px;
+    }
+  }
+
 
   .btnGroup {
     display: flex;

@@ -10,7 +10,7 @@ export const ThemeWindow = ({ open, onClose, style }) => {
         justifyContent: 'center',
         alignItems: 'center',
       }}>
-        暂不支持
+        敬请期待
       </div>
     </PopupModal>
   )

@@ -4,18 +4,17 @@ import styles from './CourseCatalog.module.scss'
 
 import { useState } from 'react';
 
-export const CourseCatalog = ({ id = 0, chapterList = [{id: 0}], onCollapse=({id, collapse}) => {} }) => {
+export const CourseCatalog = ({ id = 0, chapterList = [{id: 0, available: true }, {id: 1, selected: true, available: true }, {id: 2}], onCollapse=({id, collapse}) => {} }) => {
   const [collapse, setCollapse] = useState(false);
 
   const onCollapseHandler = (e) => {
-    console.log('onCollapseHandler');
     setCollapse(!collapse)
   }
 
-  return (<div className={styles.courseCatalog}>
+  return (<div className={classNames(styles.courseCatalog, collapse && styles.collapse) }>
     <div className={styles.titleRow} onClick={onCollapseHandler}>
       <div>第一章</div>
-      <img className={classNames(styles.collapseBtn, collapse ? styles.collapse : '')} src={require('@Assets/newchat/light/icon16-arrow-down.png')} alt="" />
+      <img className={styles.collapseBtn} src={require('@Assets/newchat/light/icon16-arrow-down.png')} alt="" />
     </div>
     <div className={styles.sectionList}>
       {

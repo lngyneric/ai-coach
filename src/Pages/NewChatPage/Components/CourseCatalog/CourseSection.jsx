@@ -1,9 +1,8 @@
 import classNames from 'classnames';
 import styles from './CourseSection.module.scss';
 import { SECTION_STATUS } from 'constants/courseContants.js';
-import style from 'react-syntax-highlighter/dist/esm/styles/hljs/a11y-dark';
 
-export const CourseSection = ({ status = SECTION_STATUS.learning, selected }) => {
+export const CourseSection = ({ id, status = SECTION_STATUS.learning, selected, available = false, onSelect = ({ id }) => {} }) => {
   const genIconClassName = () => {
     switch (status) {
       case SECTION_STATUS.notStart:
@@ -17,7 +16,10 @@ export const CourseSection = ({ status = SECTION_STATUS.learning, selected }) =>
     }
   }
 
-  return (<div className={styles.courseSection}>
+  return (<div
+      className={classNames(styles.courseSection, selected && styles.selected, available ? styles.available : styles.unavailable) }
+      onClick={() => onSelect({ id })}
+    >
     <div className={classNames(styles.iconWrapper, genIconClassName())}>
       <div className={styles.topLine}></div>
       <div className={styles.icon} >
@@ -26,9 +28,16 @@ export const CourseSection = ({ status = SECTION_STATUS.learning, selected }) =>
           && <div className={styles.smallIcon}></div>
         }
         { status === SECTION_STATUS.learning 
-          && <img className={styles.bigIcon} src={require('@Assets/newchat/light/icon16-learning.png')} alt="" /> }
+          && (selected
+            ? <img className={styles.bigIcon} src={require('@Assets/newchat/light/icon16-learning-selected.png')} alt="" />
+            : <img className={styles.bigIcon} src={require('@Assets/newchat/light/icon16-learning.png')} alt="" />)  }
         { status === SECTION_STATUS.completed 
-          && <img className={styles.bigIcon} src={require('@Assets/newchat/light/icon16-learning-completed.png')} alt="" /> }
+          && (selected
+            ? <img className={styles.bigIcon} src={require('@Assets/newchat/light/icon16-learning-completed-selected.png')} alt="" />
+            : <img className={styles.bigIcon} src={require('@Assets/newchat/light/icon16-learning-completed.png')} alt="" />
+          )
+        }
+          
       </div>
       <div className={styles.bottomLine}></div>
     </div>

@@ -1,4 +1,17 @@
 .courseCatalog {
+  &.collapse {
+    .titleRow {
+      .collapseBtn {
+        transform: rotate(-180deg);
+      }
+    }
+
+    .sectionList {
+      height: 0;
+      overflow: hidden;
+    }
+  }
+
   .titleRow {
     display: flex;
     flex-flow: row nowrap;
@@ -10,10 +23,6 @@
     .collapseBtn {
       width: 16px;
       transition: transform 0.2s ease-in;
-
-      &.collapse {
-        transform: rotate(-180deg);
-      }
     }
   }
 
