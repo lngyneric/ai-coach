@@ -46,7 +46,7 @@ const ChatApp = () => {
           placeholder="Type your message..."
           className={styles.inputField}
         />
-        <button type="submit" className={styles.submitButton}>提问1</button>
+        <button type="submit" className={styles.submitButton}>提问2</button>
       </form>
     </div>
   );
