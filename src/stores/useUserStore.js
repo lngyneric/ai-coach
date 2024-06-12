@@ -9,7 +9,15 @@ export const useUserStore = create((set) => ({
   userInfo: null,
 
   login: async ({mobile, check_code}) => {
-    const res = await login({mobile, check_code});
+    const { userInfo, token } = await login({mobile, check_code});
+    
+    set(() => ({
+      hasLogin: true,
+      userInfo,
+    }));
+
+    tokenTool.set({ token, faked: false });
+
   },
 
   // 通过接口检测登录状态
@@ -34,10 +42,20 @@ export const useUserStore = create((set) => ({
 
     try {
       const res = await getUserInfo();
-      set(() => ({
-        hasLogin: true,
-        userInfo: res.data.userInfo,
-      }));
+      if (res.mobile) {
+        set(() => ({
+          hasLogin: true,
+          userInfo: res.data.userInfo,
+        }));
+
+        tokenTool.set({ token: tokenTool.get().token, faked: false });
+      } else {
+        set(() => ({
+          hasLogin: false,
+          userInfo: res.data.userInfo,
+        }));
+        tokenTool.set({ token: tokenTool.get().token, faked: true });
+      }
     } catch (err) {
       if (err.status && err.status === 403) {
         set(() => ({

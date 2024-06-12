@@ -28,6 +28,23 @@
     }
   }
 
+  .verifyCodeForm {
+    position: relative;
+
+    .vcodeImage {
+      display: block;
+      position: absolute;
+      right: 0;
+      top: 0;
+      padding: 0;
+      height: 25px;
+    }
+
+    &:hover {
+      cursor: pointer;
+    }
+  }
+
   .aggrementWrapper {
     display: flex;
     flex-flow: column;
@@ -38,7 +55,7 @@
       flex-flow: row wrap;
 
       .text {
-        margin-left: 1em;
+        margin-left: 0.5em;
       }
     }
 

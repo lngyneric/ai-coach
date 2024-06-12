@@ -69,7 +69,7 @@ axiosrequest.interceptors.request.use(async(config)=>{
 // 创建响应拦截器
 axiosrequest.interceptors.response.use(
   response => {
-    if(response.data.code !== 0){
+    if(response.data.code !== 0) {
       message.error({content:response.data.message});
       const apiError = new CustomEvent("apiError", {detail:response.data, bubbles:true,});
       document.dispatchEvent(apiError);

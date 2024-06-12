@@ -1,4 +1,4 @@
-import store, { get }  from 'store';
+import store, { get, remove }  from 'store';
 
 const TOKEN_KEY = 'token';
 const USERINFO_KEY = 'userinfo';
@@ -18,9 +18,24 @@ const createStore = (key) => {
   }
 }
 
+const createBoolStore = (key) => {
+  return {
+    get: () => {
+      return !!parseInt(store.get(key));
+    },
+    set: (v) => {
+      const val = v ? 1 : 0;
+      store.set(key, val);
+    },
+    remove: () => {
+      store.remove(key);
+    }
+  }
+}
+
 export const tokenStore = createStore(TOKEN_KEY);
 export const userInfoStore = createStore(USERINFO_KEY);
-export const tokenFakedStore = createStore(TOKEN_FAKED_KEY);
+const tokenFakedStore = createBoolStore(TOKEN_FAKED_KEY);
 
 export const tokenTool = {
   get: () => ({

@@ -1,17 +1,21 @@
 import { useState, useRef } from 'react';
+import { sendSmsCode } from '@Api/user.js';
 
 const DEFAULT_COUNTDOWN = 5;
+const DEFAULT_COUNTDOWN_INTERVAL = 1000;
 
 export const useSendCode = ({ countDownTime = DEFAULT_COUNTDOWN }) => {
   const [countDown, setCountDown] = useState(0);
   let timer = useRef();
 
-  const sendCode = async (mobile) => {
+  const sendCode = async (mobile, checkCode) => {
     if (!!countDown) {
       throw new Error(`${countDownTime}秒内只能发送一次`);
     }
 
     // send code logic
+    await sendSmsCode({ mobile, check_code: checkCode });
+
     setCountDown(countDownTime);
 
     timer.current = setInterval(() => {
@@ -22,9 +26,9 @@ export const useSendCode = ({ countDownTime = DEFAULT_COUNTDOWN }) => {
           timer.current = null;
           return 0;
         }
-        return countDown - 1
+        return countDown - 1;
       });
-    }, 1000);
+    }, DEFAULT_COUNTDOWN_INTERVAL);
   }
 
   const reset = () => {

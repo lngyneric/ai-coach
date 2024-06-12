@@ -15,7 +15,7 @@ const NewChatPage = (props) => {
   const { frameLayout, updateFrameLayout } = useUiLayoutStore((state) => state);
   const [loginModalOpen, setLoginModalOpen] = useState(false);
   const [firstLoading, setFirstLoading] = useState(true);
-  const { isLogin, userInfo, checkLogin } = useUserStore((state) => state);
+  const { hasLogin, userInfo, checkLogin } = useUserStore((state) => state);
 
   // 判断布局类型
   useEffect(() => {
@@ -48,14 +48,14 @@ const NewChatPage = (props) => {
 
   return (
     <div className={classNames(styles.newChatPage)}>
-      <AppContext.Provider value={{frameLayout, isLogin: false, userInfo: null, theme: ''}}>
-          <Skeleton style={{ width: '100%', height: '100%' }} loading={firstLoading} >
+      <AppContext.Provider value={{frameLayout, hasLogin, userInfo, theme: ''}}>
+          <Skeleton style={{ width: '100%', height: '100%' }} loading={firstLoading} paragraph={true} rows={10} >
             <NavDrawer
               onLoginClick={() => setLoginModalOpen(true)}
             />
             <ChatUi />
           </Skeleton>
-        <LoginModal open={loginModalOpen} onClose={onLoginModalClose} destroyOnClose={true} />
+        { loginModalOpen && <LoginModal open={loginModalOpen} onClose={onLoginModalClose} destroyOnClose={true} /> }
       </AppContext.Provider>
     </div>
   );

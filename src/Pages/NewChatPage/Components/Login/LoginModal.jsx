@@ -1,14 +1,16 @@
 import classNames from 'classnames';
 import { useState } from 'react';
-import { Modal, Input, Button, Checkbox, Form } from 'antd';
+import { Modal, Input, Button, Checkbox, Form, message } from 'antd';
 import { useSendCode } from './useSendCode.js';
 import styles from './LoginModal.module.scss';
 import MainButton from '@Components/MainButton.jsx';
-import { calModalWidth } from 'Utils/common.js';
+import { calModalWidth } from '@Utils/common.js';
+import { genCheckCode, verifySmsCode } from '@Api/user.js';
 
 const MODAL_STEP = {
   MOBILE: 1,
   CODE: 2,
+  VERIFY_CODE: 3,
 };
 
 export const LoginModal = ({ open, width, onClose=() => {}, inMobile = false }) => {
@@ -16,24 +18,57 @@ export const LoginModal = ({ open, width, onClose=() => {}, inMobile = false }) 
   // const [countDown, setCountDown] = useState(0);
   const [mobileForm] = Form.useForm();
   const [codeForm] = Form.useForm();
+  const [verifyCodeForm] = Form.useForm();
   const [modalStep, setModalStep] = useState(MODAL_STEP.MOBILE);
   const [countDown, sendCode, reset] = useSendCode({});
   const [aggrement, setAggrement] = useState(false);
+  const [verifyCodeImage, setVerifyCodeImage] = useState('');
+  const [messageApi, contextHolder] = message.useMessage();
+
+  const updateVerifyCodeImage = async (mobile) => {
+    const { data: res } = await genCheckCode(mobile);
+    setVerifyCodeImage(res.img);
+ }
+
+  const onMobileFormOkClick = async () => {
+    try {
+      const { mobile } = await mobileForm.validateFields();
+      setMobile(mobile);
+      updateVerifyCodeImage(mobile);
+      setModalStep(MODAL_STEP.VERIFY_CODE);
+    } catch {}
+  }
+
+  const onVerifyCodeFormOkClick = async () => {
+    try {
+      const { checkCode } = await verifyCodeForm.validateFields();
+      try {
+        await sendCode(mobile, checkCode);
+        setModalStep(MODAL_STEP.CODE);
+      } catch (ex) {
+        messageApi.error(ex.message);
+      }
+    } catch {}
+  }
+
+  const onCodeFromkOkClick = async () => {
+    try {
+      const { smsCode } = await codeForm.validateFields();
+    } catch {}
+  }
 
   const onLoginClick = async () => {
     if (modalStep === MODAL_STEP.MOBILE) {
-      try {
-        const { mobile }= await mobileForm.validateFields();
-        setMobile(mobile);
-        sendCode(mobile);
-        setModalStep(MODAL_STEP.CODE);
-      } catch {}
+      await onMobileFormOkClick();
     }
 
-    try {
-      const { code } = await codeForm.validateFields();
+    if (modalStep === MODAL_STEP.CODE) {
+      await onCodeFromkOkClick();
+    }
 
-    } catch {}
+    if (modalStep === MODAL_STEP.VERIFY_CODE) {
+      await onVerifyCodeFormOkClick();
+    }
   };
 
   return (
@@ -70,7 +105,7 @@ export const LoginModal = ({ open, width, onClose=() => {}, inMobile = false }) 
         {modalStep === MODAL_STEP.CODE && (
           <Form form={codeForm} className={styles.codeForm}>
             <Form.Item
-              name="code"
+              name="smsCode"
               rules={[
                 {
                   required: true,
@@ -80,9 +115,9 @@ export const LoginModal = ({ open, width, onClose=() => {}, inMobile = false }) 
               ]}
             >
               <Input
-                className={classNames(styles.verifyCode, styles.sfInput)}
+                className={classNames(styles.smsCode, styles.sfInput)}
                 maxLength={4}
-                name="code"
+                name="smsCode"
               />
             </Form.Item>
             <Button
@@ -93,6 +128,23 @@ export const LoginModal = ({ open, width, onClose=() => {}, inMobile = false }) 
             >
               {countDown > 0 ? `重新发送(${countDown})` : "重新发送"}
             </Button>
+          </Form>
+        )}
+        { modalStep === MODAL_STEP.VERIFY_CODE && (
+          <Form
+            className={styles.verifyCodeForm}
+            form={verifyCodeForm}
+          >
+            <Form.Item 
+              name="checkCode"
+            >
+              <Input
+                className={classNames(styles.verifyCode, styles.sfInput)}
+                maxLength={4}
+                name="checkCode"
+              />
+            </Form.Item>
+            <img className={styles.vcodeImage} src={verifyCodeImage} alt="图形验证码" onClick={() => {updateVerifyCodeImage(mobile)}} />
           </Form>
         )}
         <div
@@ -127,6 +179,7 @@ export const LoginModal = ({ open, width, onClose=() => {}, inMobile = false }) 
           登录/注册
         </MainButton>
       </div>
+      {contextHolder}
     </Modal>
   );
 }

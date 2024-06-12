@@ -52,7 +52,7 @@ const calcNavWidth = (frameLayout) => {
 const COLLAPSE_WIDTH = '60px';
 
 const NavDrawer = ({ showType = NAV_SHOW_TYPE_NORMAL, onLoginClick = () => {}}) => {
-  const { frameLayout, isLogin } = useContext(AppContext);
+  const { frameLayout, hasLogin } = useContext(AppContext);
   const [isCollapse, setIsCollapse] = useState(false);
   const [popupModalState, setPopupModalState] = useState(POPUP_WINDOW_STATE_CLOSE);
   const [feedbackModalOpen, setFeedbackModalOpen] = useState(false);
@@ -83,7 +83,7 @@ const NavDrawer = ({ showType = NAV_SHOW_TYPE_NORMAL, onLoginClick = () => {}}) 
           isCollapse={isCollapse}
         />
         <div style={{flex: '1 1 0', overflowY: 'auto'}}>
-          { !isCollapse && (isLogin ? <CourseCatalogList /> : <NavBody onLoginClick={onLoginClick} />) }
+          { !isCollapse && (hasLogin ? <CourseCatalogList /> : <NavBody onLoginClick={onLoginClick} />) }
         </div>
         <NavFooter
           isCollapse={isCollapse}
