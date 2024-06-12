@@ -53,7 +53,7 @@
   "scripts": {
     "start:dev": "dotenv -e .local.single.env -e .env.dev craco start",
     "start:dev-local": "dotenv -e .local.single.env -e .env.dev-local craco start",
-    "build": "dotenv -e .local.single.env -e .env.prop craco build",
+    "build": "dotenv -e .local.single.env -e .env.prod craco build",
     "test": "craco test",
     "eject": "craco eject"
   },

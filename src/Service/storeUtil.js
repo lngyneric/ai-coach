@@ -1,7 +1,8 @@
-import store  from 'store';
+import store, { get }  from 'store';
 
 const TOKEN_KEY = 'token';
 const USERINFO_KEY = 'userinfo';
+const TOKEN_FAKED_KEY = 'token_faked';
 
 const createStore = (key) => {
   return {
@@ -19,3 +20,19 @@ const createStore = (key) => {
 
 export const tokenStore = createStore(TOKEN_KEY);
 export const userInfoStore = createStore(USERINFO_KEY);
+export const tokenFakedStore = createStore(TOKEN_FAKED_KEY);
+
+export const tokenTool = {
+  get: () => ({
+    token: tokenStore.get(),
+    faked: tokenFakedStore.get(),
+  }),
+  set: ({ token, faked }) => {
+    tokenStore.set(token);
+    tokenFakedStore.set(faked);
+  },
+  remove: () => {
+    tokenStore.remove();
+    tokenFakedStore.remove();
+  }
+}

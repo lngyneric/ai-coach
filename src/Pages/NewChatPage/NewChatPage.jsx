@@ -1,8 +1,10 @@
 import { useEffect, useState } from "react";
 import classNames from "classnames";
 import styles from "./NewChatPage.module.scss";
+import { Skeleton } from 'antd';
 import { calcFrameLayout } from "@constants/uiContants.js";
 import { useUiLayoutStore } from "@stores/useUiLayoutStore.js";
+import { useUserStore } from '@stores/useUserStore.js';
 import { AppContext } from "@Components/AppContext.js";
 import NavDrawer from "./Components/NavDrawer/NavDrawer.jsx";
 import ChatUi from "./Components/ChatUi/ChatUi.jsx";
@@ -12,6 +14,8 @@ import LoginModal from './Components/Login/LoginModal.jsx';
 const NewChatPage = (props) => {
   const { frameLayout, updateFrameLayout } = useUiLayoutStore((state) => state);
   const [loginModalOpen, setLoginModalOpen] = useState(false);
+  const [firstLoading, setFirstLoading] = useState(true);
+  const { isLogin, userInfo, checkLogin } = useUserStore((state) => state);
 
   // 判断布局类型
   useEffect(() => {
@@ -28,16 +32,29 @@ const NewChatPage = (props) => {
     };
   }, []);
 
+  const loadData = () => {
+  };
+
+  useEffect(() => {
+    (async () => {
+      await checkLogin();
+      setFirstLoading(false);
+    })()
+  }, [])
+
   const onLoginModalClose = () => {
     setLoginModalOpen(false);
   }
+
   return (
     <div className={classNames(styles.newChatPage)}>
       <AppContext.Provider value={{frameLayout, isLogin: false, userInfo: null, theme: ''}}>
-        <NavDrawer
-          onLoginClick={() => setLoginModalOpen(true)}
-        />
-        <ChatUi />
+          <Skeleton style={{ width: '100%', height: '100%' }} loading={firstLoading} >
+            <NavDrawer
+              onLoginClick={() => setLoginModalOpen(true)}
+            />
+            <ChatUi />
+          </Skeleton>
         <LoginModal open={loginModalOpen} onClose={onLoginModalClose} destroyOnClose={true} />
       </AppContext.Provider>
     </div>

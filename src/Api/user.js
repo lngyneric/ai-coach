@@ -79,3 +79,58 @@ export const resetPassword = (username, new_password, code) => {
     data: { username, new_password, code }
   })
 }
+
+/**
+ * 获取临时 token，在用户正常登录的时候，也需要有一个 token
+ * @param tmp_id 客户端生成的 id，可以用来换 token
+ * @returns 
+ * 
+ * https://agiclass.feishu.cn/docx/WyXhdgeVzoKVqDx1D4wc0eMknmg
+ */
+export const registerTmp = ({ temp_id }) => {
+  return request(
+    {
+      url: '/api/user/require_tmp',
+      method: 'post',
+      data: { temp_id }
+    }
+  );
+}
+
+/**
+ * 获取图形验证码
+ */
+export const genCheckCode = (mobile) => {
+  return request({
+    url: '/api/user/generate_chk_code',
+    method: 'post',
+    data: { mobile },
+  });
+}
+
+/**
+ * 发送手机验证码
+ * @param {string} mobile 手机号
+ * @param {string} check_code 图形验证码
+ */
+export const sendSmsCode = ({ mobile, check_code }) => {
+  return request({
+    url: '/api/user/send_sms_code',
+    method: 'post',
+    data: { mobile, check_code },
+  });
+}
+
+/**
+ * 验证手机号
+ * @param {mobile} 手机号
+ * @param {sms_code} 短信验证码
+ * @returns 
+ */
+export const verifySmsCode = ({ mobile, sms_code }) => {
+  return request({
+    url: '/api/user/verify_sms_code',
+    method: 'post',
+    data: { mobile, sms_code },
+  });
+}
