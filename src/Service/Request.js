@@ -2,7 +2,7 @@ import { SSE } from "sse.js";
 import axios from "axios";
 import Cookies from "js-cookie";
 import { message } from "antd";
-import store from "store";
+import { tokenStore } from "./storeUtil.js";
 /**
  * 
  * @param {*} token 
@@ -11,8 +11,7 @@ import store from "store";
  * @param {*} onMessage 
  * @returns 
  */
-export const SendMsg = (token,chatId, text, onMessage) => {
-  Cookies.set("token", token);
+export const SendMsg = (token, chatId, text, onMessage) => {
   var source = new SSE(process.env.REACT_APP_BASEURL+"/chat/chat-assistant?token="+token, {
     headers: { "Content-Type": "application/json" ,"Cookie":"token="+token},
     payload: JSON.stringify({
@@ -49,7 +48,7 @@ export const SendMsg = (token,chatId, text, onMessage) => {
 }
 
 
-console.log(process.env.REACT_APP_BASEURL);
+console.log('api base url: ', process.env.REACT_APP_BASEURL);
 
 /**
  * @description 创建 axios 实例 
@@ -63,7 +62,7 @@ const axiosrequest = axios.create({
 
 // 创建请求拦截器
 axiosrequest.interceptors.request.use(async(config)=>{
-  config.headers.token = store.get("token");
+  config.headers.token = tokenStore.get();
   return config;
 })
 
@@ -84,9 +83,4 @@ axiosrequest.interceptors.response.use(
     return Promise.reject(error);
   })
 
-
-
-
-
 export default axiosrequest;
-

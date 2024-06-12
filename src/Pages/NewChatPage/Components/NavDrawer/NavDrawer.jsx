@@ -12,6 +12,7 @@ import ThemeWindow from './ThemeWindow.jsx';
 import SettingModal from './SettingModal.jsx';
 import CourseCatalogList from '../CourseCatalog/CourseCatalogList.jsx';
 import styles from './NavDrawer.module.scss';
+import FeedbackModal from '../FeedbackModal/FeedbackModal.jsx';
 
 import {
   FRAME_LAYOUT_PAD,
@@ -54,12 +55,14 @@ const NavDrawer = ({ showType = NAV_SHOW_TYPE_NORMAL, onLoginClick = () => {}}) 
   const { frameLayout, isLogin } = useContext(AppContext);
   const [isCollapse, setIsCollapse] = useState(false);
   const [popupModalState, setPopupModalState] = useState(POPUP_WINDOW_STATE_CLOSE);
+  const [feedbackModalOpen, setFeedbackModalOpen] = useState(false);
 
-  const onHeaderCloseHandler = () => {
-    console.log('onHeaderCloseHandler');
+
+  const onHeaderCloseClick = () => {
+    console.log('onHeaderCloseClick');
   }
 
-  const onHeaderToggleHandler = ({ isCollapse }) => {
+  const onHeaderToggleClick = ({ isCollapse }) => {
     setIsCollapse(isCollapse);
   }
 
@@ -75,8 +78,8 @@ const NavDrawer = ({ showType = NAV_SHOW_TYPE_NORMAL, onLoginClick = () => {}}) 
     <div className={styles.navDrawerWrapper} style={{width: isCollapse ? COLLAPSE_WIDTH : calcNavWidth(frameLayout) }}>
       <div className={styles.navDrawer}>
         <NavHeader
-          onClose={onHeaderCloseHandler}
-          onToggle={onHeaderToggleHandler}
+          onClose={onHeaderCloseClick}
+          onToggle={onHeaderToggleClick}
           isCollapse={isCollapse}
         />
         <div style={{flex: '1 1 0', overflowY: 'auto'}}>
@@ -92,6 +95,7 @@ const NavDrawer = ({ showType = NAV_SHOW_TYPE_NORMAL, onLoginClick = () => {}}) 
           open={popupModalState === POPUP_WINDOW_STATE_FILING}
           style={popupWindowStyle}
           onClose={onPopupModalClose}
+          onFeedbackClick={() => {setFeedbackModalOpen(true)}}
         />
         <ThemeWindow 
           open={popupModalState === POPUP_WINDOW_STATE_THEME}
@@ -103,6 +107,7 @@ const NavDrawer = ({ showType = NAV_SHOW_TYPE_NORMAL, onLoginClick = () => {}}) 
           style={popupWindowStyle}
           onClose={onPopupModalClose}
         />
+        <FeedbackModal open={feedbackModalOpen} onClose={() => {setFeedbackModalOpen(false)}} />
       </div>
     </div>
   );

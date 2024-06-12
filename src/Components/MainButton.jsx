@@ -1,7 +1,7 @@
 import { Button } from "antd";
 import styles from "./MainButton.module.scss";
 
-export const MainButton = ({ disabled, children, width, height, style, onClick }) => {
+export const MainButton = ({ disabled, children, width, height = 40, style, onClick }) => {
   return (
     <Button
       type="primary"

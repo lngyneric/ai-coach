@@ -28,14 +28,17 @@ const NewChatPage = (props) => {
     };
   }, []);
 
+  const onLoginModalClose = () => {
+    setLoginModalOpen(false);
+  }
   return (
     <div className={classNames(styles.newChatPage)}>
       <AppContext.Provider value={{frameLayout, isLogin: false, userInfo: null, theme: ''}}>
         <NavDrawer
-          onLoginClick={() => { setLoginModalOpen(true)}}
+          onLoginClick={() => setLoginModalOpen(true)}
         />
         <ChatUi />
-        <LoginModal open={loginModalOpen} />
+        <LoginModal open={loginModalOpen} onClose={onLoginModalClose} destroyOnClose={true} />
       </AppContext.Provider>
     </div>
   );

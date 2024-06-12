@@ -10,12 +10,41 @@
 
     .formWrapper {
       margin-top: 40px;
-
     }
   }
 
   .btnWrapper {
     margin-top: 20px;
+  }
+
+  .codeForm {
+    position: relative;
+
+    .sendBtn {
+      position: absolute;
+      right: 0;
+      top: 0;
+      padding: 0;
+    }
+  }
+
+  .aggrementWrapper {
+    display: flex;
+    flex-flow: column;
+    align-items: center;
+
+    .aggrement {
+      display: flex;
+      flex-flow: row wrap;
+
+      .text {
+        margin-left: 1em;
+      }
+    }
+
+    .feedback {
+      margin-top: 10px;
+    }
   }
 }
 
