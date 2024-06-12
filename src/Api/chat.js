@@ -19,3 +19,12 @@ export const GetChatDetail = async (chatId) => {
     method: "get",
   });
 };
+
+
+export const run = async (data) => {
+  return request({
+    url: "/api/study/run",
+    method: "post",
+    data: data,
+  });
+};
