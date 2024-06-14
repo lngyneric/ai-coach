@@ -18,7 +18,9 @@ export const UserSettings = ({ onClose }) => {
       <div className={styles.settingBody}>
         <div className={styles.centerWrapper}>
           <Form form={form} className={styles.formWrapper}>
-            <Form.Item></Form.Item>
+            <Form.Item>
+              
+            </Form.Item>
           </Form>
         </div>
       </div>

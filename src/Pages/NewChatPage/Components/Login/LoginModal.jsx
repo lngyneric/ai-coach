@@ -5,7 +5,9 @@ import { useSendCode } from './useSendCode.js';
 import styles from './LoginModal.module.scss';
 import MainButton from '@Components/MainButton.jsx';
 import { calModalWidth } from '@Utils/common.js';
-import { genCheckCode, verifySmsCode } from '@Api/user.js';
+import { genCheckCode } from '@Api/user.js';
+import { useUserStore } from '@stores/useUserStore.js';
+
 
 const MODAL_STEP = {
   MOBILE: 1,
@@ -20,14 +22,19 @@ export const LoginModal = ({ open, width, onClose=() => {}, inMobile = false }) 
   const [codeForm] = Form.useForm();
   const [verifyCodeForm] = Form.useForm();
   const [modalStep, setModalStep] = useState(MODAL_STEP.MOBILE);
-  const [countDown, sendCode, reset] = useSendCode({});
+  const [countDown, sendCode] = useSendCode({});
   const [aggrement, setAggrement] = useState(false);
   const [verifyCodeImage, setVerifyCodeImage] = useState('');
   const [messageApi, contextHolder] = message.useMessage();
+  const login = useUserStore(state => state.login);
+  
 
   const updateVerifyCodeImage = async (mobile) => {
     const { data: res } = await genCheckCode(mobile);
     setVerifyCodeImage(res.img);
+ }
+ const clearVerifyCode = () => {
+    verifyCodeForm.resetFields();
  }
 
   const onMobileFormOkClick = async () => {
@@ -36,6 +43,14 @@ export const LoginModal = ({ open, width, onClose=() => {}, inMobile = false }) 
       setMobile(mobile);
       updateVerifyCodeImage(mobile);
       setModalStep(MODAL_STEP.VERIFY_CODE);
+    } catch {}
+  }
+
+  const onResendClick = async () => {
+    try {
+      updateVerifyCodeImage(mobile);
+      setModalStep(MODAL_STEP.VERIFY_CODE);
+      clearVerifyCode();
     } catch {}
   }
 
@@ -54,8 +69,18 @@ export const LoginModal = ({ open, width, onClose=() => {}, inMobile = false }) 
   const onCodeFromkOkClick = async () => {
     try {
       const { smsCode } = await codeForm.validateFields();
+
+      console.log('onCodeFromkOkClick', aggrement, smsCode);
+      if (!aggrement) {
+        messageApi.error('请勾选同意协议');
+        return
+      }
+
+      await login({ mobile, smsCode});
+      messageApi.success('登录成功');
+      onClose?.();
     } catch {}
-  }
+  };
 
   const onLoginClick = async () => {
     if (modalStep === MODAL_STEP.MOBILE) {
@@ -109,7 +134,7 @@ export const LoginModal = ({ open, width, onClose=() => {}, inMobile = false }) 
               rules={[
                 {
                   required: true,
-                  message: "请输入4位验证码",
+                  message: "请输入4位短信验证码",
                   pattern: /^\d{4}$/,
                 },
               ]}
@@ -117,6 +142,7 @@ export const LoginModal = ({ open, width, onClose=() => {}, inMobile = false }) 
               <Input
                 className={classNames(styles.smsCode, styles.sfInput)}
                 maxLength={4}
+                placeholder='请输入4位短信验证码'
                 name="smsCode"
               />
             </Form.Item>
@@ -124,7 +150,7 @@ export const LoginModal = ({ open, width, onClose=() => {}, inMobile = false }) 
               className={styles.sendBtn}
               disabled={countDown > 0}
               type="link"
-              onClick={sendCode}
+              onClick={onResendClick}
             >
               {countDown > 0 ? `重新发送(${countDown})` : "重新发送"}
             </Button>
@@ -142,6 +168,7 @@ export const LoginModal = ({ open, width, onClose=() => {}, inMobile = false }) 
                 className={classNames(styles.verifyCode, styles.sfInput)}
                 maxLength={4}
                 name="checkCode"
+                placeholder='请输入4位验证码'
               />
             </Form.Item>
             <img className={styles.vcodeImage} src={verifyCodeImage} alt="图形验证码" onClick={() => {updateVerifyCodeImage(mobile)}} />

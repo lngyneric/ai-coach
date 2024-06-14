@@ -2,22 +2,21 @@ import { create } from 'zustand';
 import { getUserInfo, registerTmp } from '@Api/user.js';
 import { userInfoStore, tokenTool } from '@Service/storeUtil.js';
 import { genUuid } from '@Utils/common.js';
-import { login } from 'Api/user.js';
+import { verifySmsCode } from '@Api/user.js';
 
 export const useUserStore = create((set) => ({
   hasLogin: false,
   userInfo: null,
 
-  login: async ({mobile, check_code}) => {
-    const { userInfo, token } = await login({mobile, check_code});
-    
+  login: async ({mobile, smsCode}) => {
+    const res = await verifySmsCode({mobile, sms_code: smsCode });
+    const { userInfo, token } = res.data;
     set(() => ({
       hasLogin: true,
       userInfo,
     }));
 
     tokenTool.set({ token, faked: false });
-
   },
 
   // 通过接口检测登录状态
