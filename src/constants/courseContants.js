@@ -1,6 +1,6 @@
 export const SECTION_STATUS = {
-  notStart: 1,
-  unavailable: 2,
+  notStart: '未开始',
+  unavailable: '未解锁',
   learning: 3,
-  completed: 4,
+  completed: '已完成',
 }

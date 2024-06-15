@@ -9,6 +9,7 @@ import { AppContext } from "@Components/AppContext.js";
 import NavDrawer from "./Components/NavDrawer/NavDrawer.jsx";
 import ChatUi from "./Components/ChatUi/ChatUi.jsx";
 import LoginModal from './Components/Login/LoginModal.jsx';
+import { getLessonTree } from '@Api/lesson.js';
 
 // 课程学习主页面
 const NewChatPage = (props) => {
@@ -21,14 +22,14 @@ const NewChatPage = (props) => {
   useEffect(() => {
     const onResize = () => {
       const frameLayout = calcFrameLayout("#root");
-      console.log("test fl ", frameLayout);
+      console.log('frame layout: ', frameLayout);
       updateFrameLayout(frameLayout);
     };
-    window.addEventListener("resize", onResize);
+    window.addEventListener('resize', onResize);
     onResize();
 
     return () => {
-      window.removeEventListener("resize", onResize);
+      window.removeEventListener('resize', onResize);
     };
   }, []);
 

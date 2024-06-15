@@ -4,7 +4,7 @@ import styles from './CourseCatalog.module.scss'
 
 import { useState } from 'react';
 
-export const CourseCatalog = ({ id = 0, chapterList = [{id: 0, available: true }, {id: 1, selected: true, available: true }, {id: 2}], onCollapse=({id, collapse}) => {} }) => {
+export const CourseCatalog = ({ id = 0, chapters = [{id: 0, available: true }, {id: 1, selected: true, available: true }, {id: 2}], onCollapse=({id, collapse}) => {} }) => {
   const [collapse, setCollapse] = useState(false);
 
   const onCollapseClick = (e) => {
@@ -18,7 +18,7 @@ export const CourseCatalog = ({ id = 0, chapterList = [{id: 0, available: true }
     </div>
     <div className={styles.sectionList}>
       {
-        chapterList.map(e => {
+        chapters.map(e => {
           return (<CourseSection key={e.id} {...e} />)
         })
       }

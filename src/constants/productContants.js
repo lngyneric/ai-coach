@@ -1,2 +1,2 @@
-export const productName = '产品名称';
+export const productName = '枕头编程';
 export const slogan = 'this is slogan';

@@ -181,9 +181,8 @@ export const LoginModal = ({ open, width, onClose=() => {}, inMobile = false }) 
       </div>
       <div className={styles.aggrementWrapper}>
         <div className={styles.aggrement}>
-          <Checkbox className={styles.checkbox} onChange={(e) => setAggrement(e.target.checked)} />
-          <div className={styles.text}>
-            我已阅读并同意{" "}
+          <Checkbox className={styles.checkbox} onChange={(e) => setAggrement(e.target.checked)} >
+            我已阅读并同意
             <a
               className={styles.link}
               href="x"
@@ -192,7 +191,7 @@ export const LoginModal = ({ open, width, onClose=() => {}, inMobile = false }) 
             >
               服务协议 & 隐私政策
             </a>
-          </div>
+          </Checkbox>
         </div>
         <div className={styles.feedback}>
           登录遇到问题？
