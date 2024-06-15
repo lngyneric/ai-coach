@@ -1,31 +1,45 @@
-import classNames from 'classnames';
-import CourseSection from './CourseSection.jsx';
-import styles from './CourseCatalog.module.scss'
+import classNames from "classnames";
+import CourseSection from "./CourseSection.jsx";
+import styles from "./CourseCatalog.module.scss";
 
-import { useState } from 'react';
+import { useState } from "react";
 
-export const CourseCatalog = ({ id = 0, chapters = [{id: 0, available: true }, {id: 1, selected: true, available: true }, {id: 2}], onCollapse=({id, collapse}) => {} }) => {
-  const [collapse, setCollapse] = useState(false);
-
-  const onCollapseClick = (e) => {
-    setCollapse(!collapse)
-  }
-
-  return (<div className={classNames(styles.courseCatalog, collapse && styles.collapse) }>
-    <div className={styles.titleRow} onClick={onCollapseClick}>
-      <div>第一章</div>
-      <img className={styles.collapseBtn} src={require('@Assets/newchat/light/icon16-arrow-down.png')} alt="" />
+export const CourseCatalog = ({
+  id = 0,
+  name = "",
+  chapters = [],
+  collapse = false,
+  onCollapse = ({ id }) => {},
+  onChapterSelect = ({ id }) => {},
+}) => {
+  return (
+    <div
+      className={classNames(styles.courseCatalog, collapse && styles.collapse)}
+    >
+      <div className={styles.titleRow} onClick={onCollapse?.({id})}>
+        <div>{name}</div>
+        <img
+          className={styles.collapseBtn}
+          src={require("@Assets/newchat/light/icon16-arrow-down.png")}
+          alt=""
+        />
+      </div>
+      <div className={styles.sectionList}>
+        {chapters.map((e) => {
+          return (
+            <CourseSection
+              key={e.id}
+              id={e.id}
+              name={e.name}
+              status={e.status}
+              selected={e.selected}
+              onSelect={onChapterSelect}
+            />
+          );
+        })}
+      </div>
     </div>
-    <div className={styles.sectionList}>
-      {
-        chapters.map(e => {
-          return (<CourseSection key={e.id} {...e} />)
-        })
-      }
-    </div>
-
-
-  </div>)
-}
+  );
+};
 
 export default CourseCatalog;

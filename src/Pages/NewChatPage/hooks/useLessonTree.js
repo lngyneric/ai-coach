@@ -9,8 +9,8 @@ export const useLessonTree = () => {
     const resp = await getLessonTree();
     const treeData = resp.data;
 
-    treeData.categoryLength = 0;
-    treeData.sectionLength = 0;
+    treeData.categoryCount = 0;
+    treeData.sectionCount = 0;
     
     treeData.catalogs = treeData.lessons.map(l => {
       const chapters = l.children.map(c => ({
@@ -27,7 +27,7 @@ export const useLessonTree = () => {
       };
     })
 
-    setTree(tree);
+    setTree(treeData);
   }
 
   const setCurr = async(chapterId) => {
