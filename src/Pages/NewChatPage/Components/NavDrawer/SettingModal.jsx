@@ -2,8 +2,25 @@ import PopupModal from '@Components/PopupModal';
 import styles from './SettingModal.module.scss';
 import classNames from 'classnames';
 import Icon1 from '@Assets/newchat/light/icon16-edit.svg';
+import { useUserStore } from '@stores/useUserStore.js';
+import { Modal } from 'antd';
+
 
 export const SettingModal = ({ open, onClose, style }) => {
+  const { hasLogin, logout } = useUserStore((state) => state);
+  const [modal] = Modal.useModal();
+
+  const onLogoutClick = async () => {
+    const confirmed = await modal.confirm({
+      title: '确认退出登录？',
+      content: '确认退出登录么',
+    });
+    if (confirmed) {
+      await logout();
+      onClose();
+    }
+  };
+
   return (
     <PopupModal open={open} onClose={onClose} wrapStyle={{ ...style}}>
       <div className={styles.settingModal}>
@@ -30,6 +47,17 @@ export const SettingModal = ({ open, onClose, style }) => {
             alt=''
           />
         </div>
+        {
+          hasLogin &&
+          <div className={styles.settingRow} onClick={onLogoutClick}>
+            <div>退出登录</div>
+            <img
+              className={styles.rowIcon}
+              src={require('@Assets/newchat/light/icon16-member.png')}
+              alt=''
+            />
+          </div>
+        }
       </div>
     </PopupModal>
   )

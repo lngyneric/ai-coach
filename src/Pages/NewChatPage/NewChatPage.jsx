@@ -9,7 +9,7 @@ import { AppContext } from "@Components/AppContext.js";
 import NavDrawer from "./Components/NavDrawer/NavDrawer.jsx";
 import ChatUi from "./Components/ChatUi/ChatUi.jsx";
 import LoginModal from './Components/Login/LoginModal.jsx';
-import { getLessonTree } from '@Api/lesson.js';
+import { useLessonTree } from "./hooks/useLessonTree.js";
 
 // 课程学习主页面
 const NewChatPage = (props) => {
@@ -17,6 +17,7 @@ const NewChatPage = (props) => {
   const [loginModalOpen, setLoginModalOpen] = useState(false);
   const [firstLoading, setFirstLoading] = useState(true);
   const { hasLogin, userInfo, checkLogin } = useUserStore((state) => state);
+  const [tree, loadTree, setCurr, toggleExpand] = useLessonTree();
 
   // 判断布局类型
   useEffect(() => {
@@ -33,18 +34,29 @@ const NewChatPage = (props) => {
     };
   }, []);
 
-  const loadData = () => {
+  const loadData = async () => {
+    await loadTree();
   };
 
   useEffect(() => {
     (async () => {
       await checkLogin();
       setFirstLoading(false);
+      
+      await loadTree();
     })()
   }, [])
 
-  const onLoginModalClose = () => {
+  useEffect(() => {
+    (async () => {
+      await loadData();
+    })()
+  }, [hasLogin]);
+
+
+  const onLoginModalClose = async () => {
     setLoginModalOpen(false);
+    await loadData();
   }
 
   return (
@@ -53,6 +65,8 @@ const NewChatPage = (props) => {
           <Skeleton style={{ width: '100%', height: '100%' }} loading={firstLoading} paragraph={true} rows={10} >
             <NavDrawer
               onLoginClick={() => setLoginModalOpen(true)}
+              lessonTree={tree}
+              onLessonCollapse={toggleExpand}
             />
             <ChatUi />
           </Skeleton>

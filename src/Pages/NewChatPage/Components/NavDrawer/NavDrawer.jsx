@@ -1,24 +1,24 @@
 /*
  * 左侧导航控件容器
  */
-import { AppContext } from '@Components/AppContext.js';
-import { useContext, useState } from 'react';
+import { AppContext } from "@Components/AppContext.js";
+import { useContext, useState } from "react";
 
-import NavHeader from './NavHeader.jsx';
-import NavBody from './NavBody.jsx';
-import NavFooter from './NavFooter.jsx';
-import FillingModal from './FilingModal.jsx';
-import ThemeWindow from './ThemeWindow.jsx';
-import SettingModal from './SettingModal.jsx';
-import CourseCatalogList from '../CourseCatalog/CourseCatalogList.jsx';
-import styles from './NavDrawer.module.scss';
-import FeedbackModal from '../FeedbackModal/FeedbackModal.jsx';
+import NavHeader from "./NavHeader.jsx";
+import NavBody from "./NavBody.jsx";
+import NavFooter from "./NavFooter.jsx";
+import FillingModal from "./FilingModal.jsx";
+import ThemeWindow from "./ThemeWindow.jsx";
+import SettingModal from "./SettingModal.jsx";
+import CourseCatalogList from "../CourseCatalog/CourseCatalogList.jsx";
+import styles from "./NavDrawer.module.scss";
+import FeedbackModal from "../FeedbackModal/FeedbackModal.jsx";
 
 import {
   FRAME_LAYOUT_PAD,
   FRAME_LAYOUT_PAD_INTENSIVE,
   FRAME_LAYOUT_MOBILE,
-} from '@constants/uiContants';
+} from "@constants/uiContants";
 
 /**
  * 导航栏展示形式
@@ -38,66 +38,99 @@ export const POPUP_WINDOW_STATE_FILING = 1;
 
 const calcNavWidth = (frameLayout) => {
   if (frameLayout === FRAME_LAYOUT_MOBILE) {
-    return '100%';
+    return "100%";
   }
   if (frameLayout === FRAME_LAYOUT_PAD_INTENSIVE) {
-    return '280px';
+    return "280px";
   }
   if (frameLayout === FRAME_LAYOUT_PAD) {
-    return '25%';
+    return "25%";
   }
-  return '280px';
-}
+  return "280px";
+};
 
-const COLLAPSE_WIDTH = '60px';
+const COLLAPSE_WIDTH = "60px";
 
-const NavDrawer = ({ showType = NAV_SHOW_TYPE_NORMAL, onLoginClick = () => {}}) => {
+const NavDrawer = ({
+  showType = NAV_SHOW_TYPE_NORMAL,
+  onLoginClick = () => {},
+  lessonTree,
+  onLessonCollapse = () => {},
+  onChapterSelect = () => {},
+}) => {
   const { frameLayout, hasLogin } = useContext(AppContext);
   const [isCollapse, setIsCollapse] = useState(false);
-  const [popupModalState, setPopupModalState] = useState(POPUP_WINDOW_STATE_CLOSE);
+  const [popupModalState, setPopupModalState] = useState(
+    POPUP_WINDOW_STATE_CLOSE
+  );
   const [feedbackModalOpen, setFeedbackModalOpen] = useState(false);
 
-
   const onHeaderCloseClick = () => {
-    console.log('onHeaderCloseClick');
-  }
+    console.log("onHeaderCloseClick");
+  };
 
   const onHeaderToggleClick = ({ isCollapse }) => {
     setIsCollapse(isCollapse);
-  }
+  };
 
   const onPopupModalClose = () => {
     setPopupModalState(POPUP_WINDOW_STATE_CLOSE);
-  }
+  };
 
   const popupWindowStyle = {
-    left: '50%', transform: 'translate(-50%)', width: '250px', top: 'auto', bottom: 80 
-  }
+    left: "50%",
+    transform: "translate(-50%)",
+    width: "250px",
+    top: "auto",
+    bottom: 80,
+  };
 
   return (
-    <div className={styles.navDrawerWrapper} style={{width: isCollapse ? COLLAPSE_WIDTH : calcNavWidth(frameLayout) }}>
+    <div
+      className={styles.navDrawerWrapper}
+      style={{ width: isCollapse ? COLLAPSE_WIDTH : calcNavWidth(frameLayout) }}
+    >
       <div className={styles.navDrawer}>
         <NavHeader
           onClose={onHeaderCloseClick}
           onToggle={onHeaderToggleClick}
           isCollapse={isCollapse}
         />
-        <div style={{flex: '1 1 0', overflowY: 'auto'}}>
-          { !isCollapse && (hasLogin ? <CourseCatalogList /> : <NavBody onLoginClick={onLoginClick} />) }
+        <div style={{ flex: "1 1 0", overflowY: "auto" }}>
+          {!isCollapse &&
+            (hasLogin ? (
+              <CourseCatalogList
+                catalogs={lessonTree?.catalogs || []}
+                catalogCount={lessonTree?.catalogCount || 0}
+                chapterCount={lessonTree?.chapterCount || 0}
+                onLessonCollapse={onLessonCollapse}
+                onChapterSelect={onChapterSelect}
+              />
+            ) : (
+              <NavBody onLoginClick={onLoginClick} />
+            ))}
         </div>
         <NavFooter
           isCollapse={isCollapse}
-          onFilingClick={() => { setPopupModalState(POPUP_WINDOW_STATE_FILING) }}
-          onThemeClick={() => { setPopupModalState(POPUP_WINDOW_STATE_THEME) }}
-          onSettingsClick={() => { setPopupModalState(POPUP_WINDOW_STATE_SETTING) }}
+          onFilingClick={() => {
+            setPopupModalState(POPUP_WINDOW_STATE_FILING);
+          }}
+          onThemeClick={() => {
+            setPopupModalState(POPUP_WINDOW_STATE_THEME);
+          }}
+          onSettingsClick={() => {
+            setPopupModalState(POPUP_WINDOW_STATE_SETTING);
+          }}
         />
         <FillingModal
           open={popupModalState === POPUP_WINDOW_STATE_FILING}
           style={popupWindowStyle}
           onClose={onPopupModalClose}
-          onFeedbackClick={() => {setFeedbackModalOpen(true)}}
+          onFeedbackClick={() => {
+            setFeedbackModalOpen(true);
+          }}
         />
-        <ThemeWindow 
+        <ThemeWindow
           open={popupModalState === POPUP_WINDOW_STATE_THEME}
           style={popupWindowStyle}
           onClose={onPopupModalClose}
@@ -107,7 +140,12 @@ const NavDrawer = ({ showType = NAV_SHOW_TYPE_NORMAL, onLoginClick = () => {}}) 
           style={popupWindowStyle}
           onClose={onPopupModalClose}
         />
-        <FeedbackModal open={feedbackModalOpen} onClose={() => {setFeedbackModalOpen(false)}} />
+        <FeedbackModal
+          open={feedbackModalOpen}
+          onClose={() => {
+            setFeedbackModalOpen(false);
+          }}
+        />
       </div>
     </div>
   );

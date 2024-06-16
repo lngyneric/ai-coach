@@ -66,7 +66,7 @@ export const LoginModal = ({ open, width, onClose=() => {}, inMobile = false }) 
     } catch {}
   }
 
-  const onCodeFromkOkClick = async () => {
+  const onCodeFormkOkClick = async () => {
     try {
       const { smsCode } = await codeForm.validateFields();
 
@@ -88,7 +88,7 @@ export const LoginModal = ({ open, width, onClose=() => {}, inMobile = false }) 
     }
 
     if (modalStep === MODAL_STEP.CODE) {
-      await onCodeFromkOkClick();
+      await onCodeFormkOkClick();
     }
 
     if (modalStep === MODAL_STEP.VERIFY_CODE) {
@@ -123,6 +123,7 @@ export const LoginModal = ({ open, width, onClose=() => {}, inMobile = false }) 
                 placeholder="请输入手机号"
                 maxLength={11}
                 name="mobile"
+                onPressEnter={onMobileFormOkClick}
               />
             </Form.Item>
           </Form>
@@ -144,6 +145,7 @@ export const LoginModal = ({ open, width, onClose=() => {}, inMobile = false }) 
                 maxLength={4}
                 placeholder='请输入4位短信验证码'
                 name="smsCode"
+                onPressEnter={onCodeFormkOkClick}
               />
             </Form.Item>
             <Button
@@ -169,6 +171,7 @@ export const LoginModal = ({ open, width, onClose=() => {}, inMobile = false }) 
                 maxLength={4}
                 name="checkCode"
                 placeholder='请输入4位验证码'
+                onPressEnter={onVerifyCodeFormOkClick}
               />
             </Form.Item>
             <img className={styles.vcodeImage} src={verifyCodeImage} alt="图形验证码" onClick={() => {updateVerifyCodeImage(mobile)}} />

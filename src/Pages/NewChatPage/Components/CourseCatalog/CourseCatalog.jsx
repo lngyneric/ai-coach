@@ -16,7 +16,7 @@ export const CourseCatalog = ({
     <div
       className={classNames(styles.courseCatalog, collapse && styles.collapse)}
     >
-      <div className={styles.titleRow} onClick={onCollapse?.({id})}>
+      <div className={styles.titleRow} onClick={() => onCollapse?.({id})}>
         <div>{name}</div>
         <img
           className={styles.collapseBtn}

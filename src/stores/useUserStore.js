@@ -41,17 +41,19 @@ export const useUserStore = create((set) => ({
 
     try {
       const res = await getUserInfo();
-      if (res.mobile) {
+      const userInfo = res.data;
+
+      if (userInfo.mobile) {
         set(() => ({
           hasLogin: true,
-          userInfo: res.data.userInfo,
+          userInfo,
         }));
 
         tokenTool.set({ token: tokenTool.get().token, faked: false });
       } else {
         set(() => ({
           hasLogin: false,
-          userInfo: res.data.userInfo,
+          userInfo: userInfo,
         }));
         tokenTool.set({ token: tokenTool.get().token, faked: true });
       }
@@ -67,5 +69,16 @@ export const useUserStore = create((set) => ({
         tokenTool.set({ token, faked: true });
       }
     }
-  }
+  },
+
+  logout: async () => {
+    set(() => {
+      userInfoStore.remove();
+      tokenTool.remove();
+      return {
+        hasLogin: false,
+        userInfo: null,
+      };
+    })
+  },
 }));

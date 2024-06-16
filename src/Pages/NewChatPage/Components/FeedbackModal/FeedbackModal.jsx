@@ -8,7 +8,7 @@ const FEEDBACK_MAX_LENGTH = 300;
 export const FeedbackModal = ({ open, onClose, inMobile = false }) => {
   const { TextArea } = Input;
 
-  const onMainBtnClick = () => {};
+  const onSubmitFeedback = () => {};
 
   return (
     <Modal

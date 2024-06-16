@@ -9,14 +9,16 @@ export const useLessonTree = () => {
     const resp = await getLessonTree();
     const treeData = resp.data;
 
-    treeData.categoryCount = 0;
-    treeData.sectionCount = 0;
-    
-    treeData.catalogs = treeData.lessons.map(l => {
-      const chapters = l.children.map(c => ({
-        id: l.lesson_id,
-        name: l.lesson_name,
-      }));
+    let chapterCount = 0;    
+    const catalogs = treeData.lessons.map(l => {
+      const chapters = l.children.map(c => {
+        chapterCount += 1;
+        return {
+          id: c.lesson_id,
+          name: c.lesson_name,
+          status: c.status,
+        }
+      });
 
       return {
         id: l.lesson_id,
@@ -25,9 +27,13 @@ export const useLessonTree = () => {
         chapters,
         collapse: false,
       };
-    })
+    });
 
-    setTree(treeData);
+    setTree({
+      catalogCount: catalogs.length,
+      catalogs,
+      chapterCount,
+    });
   }
 
   const setCurr = async(chapterId) => {
@@ -50,17 +56,21 @@ export const useLessonTree = () => {
     setTree(nextState);
   }
 
-  const toggleExpand = (lessonId) => {
+  const toggleCollapse = ({id}) => {
     const nextState = produce(tree, draft => {
+      console.log('toggle', draft.catalogs, id);
       draft.catalogs.forEach(c => {
-        if (c.id === lessonId) {
+        console.log('catalogs.forEach', c)
+        if (c.id === id) {
           c.collapse = !c.collapse;
         }
       })
     });
 
+    console.log('nextState', nextState)
+
     setTree(nextState);
   }
 
-  return [tree, loadTree, setCurr, toggleExpand]
+  return [tree, loadTree, setCurr, toggleCollapse]
 }
