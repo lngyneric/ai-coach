@@ -4,4 +4,7 @@
     <option name="sdkName" value="$USER_HOME$/miniforge3/envs/zhihu-agiclass" />
   </component>
   <component name="ProjectRootManager" version="2" project-jdk-name="codesifu" project-jdk-type="Python SDK" />
+  <component name="PythonCompatibilityInspectionAdvertiser">
+    <option name="version" value="3" />
+  </component>
 </project>

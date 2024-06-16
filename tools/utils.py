@@ -159,6 +159,47 @@ def streaming_from_template(chat_box, template, variables,
     return full_result
 
 
+def parse_vars_from_template(chat_box, template, variables, parse_keys=None,
+                             model=None, temperature=None):
+    """
+    通过给定模版调用 JSON mode，目前仅用于解析用户输入内容。
+    :param chat_box: ChatBox 对象
+    :param template: 模版内容（Langchain的PromptTemplate）
+    :param variables: 变量字典（支持同时传入多个变量）
+    :param parse_keys: 解析JSON的key列表
+    :param model: 使用指定的自定义模型，提供模型名称（config.yml 中有支持的模型）
+    :param temperature: 温度参数，用于控制生成文本的多样性
+    """
+
+    llm = load_llm(model, temperature, json_mode=True)
+
+    prompt = PromptTemplate(input_variables=list(variables.keys()), template=template)
+    prompt = prompt.format(**variables)
+
+    logging.debug(f'调用LLM（Human）JSON mode：{prompt}')
+    llm_input = [HumanMessage(prompt)]
+
+    response = llm.invoke(llm_input)
+    logging.debug(f'parse_vars_from_template 返回结果：{response.content}')
+
+    try:
+        parse_json = json.loads(response.content)
+        if parse_json['result'] == 'ok':
+            for k in parse_keys:
+                st.session_state[k] = parse_json['parse_vars'][k]
+                logging.debug(f'已将"{parse_json["parse_vars"][k]}"存入session："{k}"中')
+            return True
+        else:
+            reason = parse_json['reason']
+            chat_box.ai_say(reason)
+            return False
+    except Exception as e:
+        logging.error(f'解析JSON失败：{e}')
+        chat_box.ai_say('抱歉出现错误，请再次尝试~')
+
+
+
+
 def from_template(template, variables=None, system_role=None, model=None, temperature=None):
     """
     直接通过剧本输出，根据剧本类型自动判断是普通Prompt给AI，还是检查用户输入的Prompt给AI

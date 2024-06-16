@@ -36,6 +36,8 @@ class NextAction(Enum):
     ShowBtnGroup = '显示 按钮组'
     JumpBtn = '跳转按钮'
     ShowPayQR = '显示 付款码'
+    InputPhoneNum = '输入 手机号'
+    InputVerifyCode = '输入 验证码'
     NoAction = '无'
 
 

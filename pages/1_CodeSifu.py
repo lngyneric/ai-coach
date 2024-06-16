@@ -104,15 +104,13 @@ if not st.session_state.DEV_MODE or st.session_state.has_started:
         if user_input := st.chat_input(script.input_placeholder):
             chat_box.user_say(user_input)  # 展示用户输入信息
 
-            # 通过 `检查模版` 输出AI回复
-            full_result = streaming_from_template(chat_box, script.check_template, {'input': user_input},
-                                                  input_done_with=script.check_ok_sign,
-                                                  parse_keys=script.parse_vars,
-                                                  model=script.custom_model, temperature=script.temperature)
-            logging.debug(f'scrip id: {script.id}, chat result: {full_result}')
+            # 通过 `检查模版` 提取变量（JSON mode）
+            is_ok = parse_vars_from_template(chat_box, script.check_template, {'input': user_input},
+                                             parse_keys=script.parse_vars,
+                                             model=script.custom_model, temperature=script.temperature)
 
-            # 如果AI回复中包含了结束标志，则进入下一个剧本
-            if full_result.startswith(script.check_ok_sign):
+            # 如果正常执行，则进入下一个剧本
+            if is_ok:
                 st.session_state.progress += 1
                 st.rerun()
 
@@ -172,6 +170,30 @@ if not st.session_state.DEV_MODE or st.session_state.has_started:
     # === 显示 付款码
     elif script.next_action == NextAction.ShowPayQR:
         pass  # TODO 显示付款码 待处理
+
+    # === 输入 手机号
+    elif script.next_action == NextAction.InputPhoneNum:
+        # 获取用户输入
+        if user_input := st.chat_input(script.input_placeholder):
+            chat_box.user_say(user_input)  # 展示用户输入信息
+
+            # 暂时不做任何处理，直接下一步
+            st.info('暂时不做任何处理，直接下一步', icon="ℹ️")
+            time.sleep(1)
+            st.session_state.progress += 1
+            st.rerun()
+
+    # === 输入 验证码
+    elif script.next_action == NextAction.InputVerifyCode:
+        # 获取用户输入
+        if user_input := st.chat_input(script.input_placeholder):
+            chat_box.user_say(user_input)  # 展示用户输入信息
+
+            # 暂时不做任何处理，直接下一步
+            st.info('暂时不做任何处理，直接下一步', icon="ℹ️")
+            time.sleep(1)
+            st.session_state.progress += 1
+            st.rerun()
 
     else:
         st.session_state.progress += 1
