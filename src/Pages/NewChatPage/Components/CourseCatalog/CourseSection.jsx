@@ -5,18 +5,18 @@ import { SECTION_STATUS } from "constants/courseContants.js";
 export const CourseSection = ({
   id,
   name = '',
-  status = SECTION_STATUS.learning,
+  status = SECTION_STATUS.LEARNING,
   selected,
   onSelect = ({ id }) => {},
 }) => {
-  const available = !status.unavailable;
+  const available = status === SECTION_STATUS.LEARNING || status === SECTION_STATUS.COMPLETED;
   const genIconClassName = () => {
     switch (status) {
-      case SECTION_STATUS.notStart:
-      case SECTION_STATUS.unavailable:
+      case SECTION_STATUS.NOT_START:
+      case SECTION_STATUS.LOCKED:
         return styles.small;
-      case SECTION_STATUS.learning:
-      case SECTION_STATUS.completed:
+      case SECTION_STATUS.LEARNING:
+      case SECTION_STATUS.COMPLETED:
         return "";
       default:
         return styles.small;
@@ -35,11 +35,11 @@ export const CourseSection = ({
       <div className={classNames(styles.iconWrapper, genIconClassName())}>
         <div className={styles.topLine}></div>
         <div className={styles.icon}>
-          {(status === SECTION_STATUS.notStart ||
-            status === SECTION_STATUS.unavailable) && (
+          {(status === SECTION_STATUS.NOT_START ||
+            status === SECTION_STATUS.LOCKED) && (
             <div className={styles.smallIcon}></div>
           )}
-          {status === SECTION_STATUS.learning &&
+          {status === SECTION_STATUS.LEARNING &&
             (selected ? (
               <img
                 className={styles.bigIcon}
@@ -53,7 +53,7 @@ export const CourseSection = ({
                 alt=""
               />
             ))}
-          {status === SECTION_STATUS.completed &&
+          {status === SECTION_STATUS.COMPLETED &&
             (selected ? (
               <img
                 className={styles.bigIcon}

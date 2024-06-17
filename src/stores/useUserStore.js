@@ -72,9 +72,12 @@ export const useUserStore = create((set) => ({
   },
 
   logout: async () => {
+    const res = await registerTmp({ temp_id: genUuid() });
+    const token = res.data.token;
+    tokenTool.set({ token, faked: true });
+    userInfoStore.remove();
+
     set(() => {
-      userInfoStore.remove();
-      tokenTool.remove();
       return {
         hasLogin: false,
         userInfo: null,

@@ -106,7 +106,11 @@ const routes = [
   },
   {
     path: '/newchat',
-    element: <NewChatPage></NewChatPage>
+    element: <NewChatPage />
+  },
+  {
+    path: '/newchat/:chapterId',
+    element: <NewChatPage />
   }
 ];
 export { authRoutes };

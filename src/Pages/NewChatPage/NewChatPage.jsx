@@ -1,4 +1,5 @@
 import { useEffect, useState } from "react";
+import { useParams, useNavigate } from "react-router-dom";
 import classNames from "classnames";
 import styles from "./NewChatPage.module.scss";
 import { Skeleton } from 'antd';
@@ -17,7 +18,9 @@ const NewChatPage = (props) => {
   const [loginModalOpen, setLoginModalOpen] = useState(false);
   const [firstLoading, setFirstLoading] = useState(true);
   const { hasLogin, userInfo, checkLogin } = useUserStore((state) => state);
-  const [tree, loadTree, setCurr, toggleExpand] = useLessonTree();
+  const { tree, loadTree, setCurr, setCurrCatalog, toggleCollapse, catalogAvailable, getRunningElement  } = useLessonTree();
+  const { cid } =  useParams();
+  const navigate = useNavigate();
 
   // 判断布局类型
   useEffect(() => {
@@ -34,24 +37,43 @@ const NewChatPage = (props) => {
     };
   }, []);
 
+
   const loadData = async () => {
     await loadTree();
   };
 
   useEffect(() => {
     (async () => {
-      await checkLogin();
-      setFirstLoading(false);
-      
-      await loadTree();
-    })()
-  }, [])
-
-  useEffect(() => {
-    (async () => {
+      if (firstLoading) {
+        await checkLogin();
+      }
       await loadData();
+      setFirstLoading(false);
     })()
   }, [hasLogin]);
+
+  useEffect(() => {
+    if (!tree) {
+      return
+    }
+    (async () => {
+      if (cid) {
+        if (!catalogAvailable(cid)) {
+          navigate('/newchat');
+        } else {
+          setCurrCatalog(cid);
+        }
+      } else {
+        const data = getRunningElement(tree);
+        if (!data) {
+          return;
+        }
+        if (data.chapter) {
+          setCurr(data.chapter.id);
+        }
+      }
+    })();
+  }, [tree])
 
 
   const onLoginModalClose = async () => {
@@ -66,7 +88,7 @@ const NewChatPage = (props) => {
             <NavDrawer
               onLoginClick={() => setLoginModalOpen(true)}
               lessonTree={tree}
-              onLessonCollapse={toggleExpand}
+              onLessonCollapse={toggleCollapse}
             />
             <ChatUi />
           </Skeleton>
