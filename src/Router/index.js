@@ -109,7 +109,7 @@ const routes = [
     element: <NewChatPage />
   },
   {
-    path: '/newchat/:chapterId',
+    path: '/newchat/:cid',
     element: <NewChatPage />
   }
 ];

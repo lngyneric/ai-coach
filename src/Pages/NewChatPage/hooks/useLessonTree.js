@@ -3,26 +3,35 @@ import { getLessonTree } from '@Api/lesson.js';
 import { produce } from 'immer';
 import { SECTION_STATUS } from "constants/courseContants.js";
 
-export const catalogAvailableInner = (tree, catalogId) => {
-  const catalog = tree.catalogs.find(v => v.id === catalogId)
-
-  if (!catalog) {
-    return false;
-  }
-
-  return catalog.status === SECTION_STATUS.LEARNING || catalog.status === SECTION_STATUS.COMPLETED;
+export const checkChapterCanLearning = ({ status }) => {
+  return status === SECTION_STATUS.LEARNING || status === SECTION_STATUS.COMPLETED || status === SECTION_STATUS.PREPARE_LEARNING;
 }
 
-export const getRunningElementInner = (tree) => {
-    const catalog = tree.catalogs.find(v => v.status === SECTION_STATUS.LEARNING)
+const getCurrElementInner = (tree) => {
+  for (let catalog of tree.catalogs) {
+    const chapter = catalog.chapters.find(v => v.selected === true);
 
-    if (!catalog) {
-      return null;
+    if (chapter) {
+      return { catalog, chapter };
     }
+  }
 
-    const chapter = catalog.chapters.find(v => v.status === SECTION_STATUS.LEARNING)
+  return null;
+}
 
-    return { catalog, chapter };
+export const initialSelectedChapter = (tree) => {
+  let catalog = tree.catalogs.find(v => v.status === SECTION_STATUS.LEARNING);
+  if (catalog) {
+    const chapter = catalog.chapters.find(v => v.status === SECTION_STATUS.LEARNING);
+
+    chapter && (chapter.selected = true);
+  } else {
+    catalog = tree.catalogs.find(v => v.status === SECTION_STATUS.PREPARE_LEARNING);
+    if (catalog) {
+      const chapter = catalog.chapters.find(v => v.status === SECTION_STATUS.PREPARE_LEARNING);
+      chapter && (chapter.selected =true);
+    }
+  }
 }
 
 export const useLessonTree = () => {
@@ -40,6 +49,7 @@ export const useLessonTree = () => {
           id: c.lesson_id,
           name: c.lesson_name,
           status: c.status,
+          canLearning: checkChapterCanLearning(c),
         }
       });
 
@@ -57,9 +67,8 @@ export const useLessonTree = () => {
       catalogs,
       chapterCount,
     }
+    initialSelectedChapter(newTree);
     setTree(newTree);
-
-
 
     return newTree;
   }
@@ -101,7 +110,6 @@ export const useLessonTree = () => {
     }
 
     setCurr(c.id);
-
   }
 
   const toggleCollapse = ({id}) => {
@@ -117,14 +125,13 @@ export const useLessonTree = () => {
   }
 
   const catalogAvailable = (catalogId) => {
-
     const catalog = tree.catalogs.find(v => v.id === catalogId)
 
     if (!catalog) {
       return false;
     }
 
-    return catalog.status === SECTION_STATUS.LEARNING || catalog.status === SECTION_STATUS.COMPLETED;
+    return catalog.status === SECTION_STATUS.LEARNING || catalog.status === SECTION_STATUS.COMPLETED || catalog.status === SECTION_STATUS.PREPARE_LEARNING;
   }
 
   const getRunningElement = () => {
@@ -132,7 +139,7 @@ export const useLessonTree = () => {
       return null;
     }
 
-    return getRunningElementInner(tree);
+    return getCurrElementInner(tree);
   }
 
 

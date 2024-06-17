@@ -3,7 +3,7 @@ import ChatInput from "./ChatInput"
 /**
  * 聊天区的整体画布
  */
-export const ChatUi = (props) => {
+export const ChatUi = ({ catalogId }) => {
   return (<div style={
     {
       height: '100%',
@@ -11,7 +11,7 @@ export const ChatUi = (props) => {
       flex: '1 1 auto',
     }
   }>
-    <ChatInput/>
+    <ChatInput catalogId={catalogId} />
   </div>);
 };
 

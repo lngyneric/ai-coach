@@ -7,14 +7,15 @@ export const CourseSection = ({
   name = '',
   status = SECTION_STATUS.LEARNING,
   selected,
+  canLearning = false,
   onSelect = ({ id }) => {},
 }) => {
-  const available = status === SECTION_STATUS.LEARNING || status === SECTION_STATUS.COMPLETED;
   const genIconClassName = () => {
     switch (status) {
       case SECTION_STATUS.NOT_START:
       case SECTION_STATUS.LOCKED:
         return styles.small;
+      case SECTION_STATUS.PREPARE_LEARNING:
       case SECTION_STATUS.LEARNING:
       case SECTION_STATUS.COMPLETED:
         return "";
@@ -28,7 +29,7 @@ export const CourseSection = ({
       className={classNames(
         styles.courseSection,
         selected && styles.selected,
-        available ? styles.available : styles.unavailable
+        canLearning ? styles.available : styles.unavailable
       )}
       onClick={() => onSelect({ id })}
     >
@@ -39,7 +40,7 @@ export const CourseSection = ({
             status === SECTION_STATUS.LOCKED) && (
             <div className={styles.smallIcon}></div>
           )}
-          {status === SECTION_STATUS.LEARNING &&
+          {(status === SECTION_STATUS.LEARNING || status === SECTION_STATUS.PREPARE_LEARNING) &&
             (selected ? (
               <img
                 className={styles.bigIcon}

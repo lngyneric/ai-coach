@@ -20,6 +20,7 @@ const NewChatPage = (props) => {
   const { hasLogin, userInfo, checkLogin } = useUserStore((state) => state);
   const { tree, loadTree, setCurr, setCurrCatalog, toggleCollapse, catalogAvailable, getRunningElement  } = useLessonTree();
   const { cid } =  useParams();
+  const [currCatalogId, setCurrCatalogId] = useState(cid);
   const navigate = useNavigate();
 
   // 判断布局类型
@@ -52,6 +53,7 @@ const NewChatPage = (props) => {
     })()
   }, [hasLogin]);
 
+  // 定位当前课程位置
   useEffect(() => {
     if (!tree) {
       return
@@ -64,12 +66,13 @@ const NewChatPage = (props) => {
           setCurrCatalog(cid);
         }
       } else {
-        const data = getRunningElement(tree);
+        const data = getRunningElement();
         if (!data) {
           return;
         }
         if (data.chapter) {
           setCurr(data.chapter.id);
+          setCurrCatalogId(data.catalog.id);
         }
       }
     })();
@@ -90,7 +93,7 @@ const NewChatPage = (props) => {
               lessonTree={tree}
               onLessonCollapse={toggleCollapse}
             />
-            <ChatUi />
+            <ChatUi catalogId={currCatalogId} />
           </Skeleton>
         { loginModalOpen && <LoginModal open={loginModalOpen} onClose={onLoginModalClose} destroyOnClose={true} /> }
       </AppContext.Provider>

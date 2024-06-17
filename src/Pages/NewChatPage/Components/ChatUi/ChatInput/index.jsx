@@ -2,8 +2,11 @@ import React, { useState, useEffect } from "react";
 import axios from "axios";
 import styles from "./ChatInput.module.scss";
 import { Run } from "@Utils";
+import { getLessonStudyRecord } from '@Api/study.js';
 
-const ChatApp = () => {
+const ChatApp = ({ catalogId }) => {
+  const [loading, setLoading] = useState(false);
+
   const [messages, setMessages] = useState([
     { id: 1, role: "user", content: "Hello" },
     { id: 2, role: "ai", content: "Hi there! How can I assist you today?" },
@@ -18,7 +21,6 @@ const ChatApp = () => {
   const [input, setInput] = useState("");
 
   // 定义当前的类型
-  // const [type, setInput] = useState("");
   const [currentMessage, setCurrentMessage] = useState("");
   const token = process.env.REACT_APP_TOKEN;
 
@@ -54,6 +56,28 @@ const ChatApp = () => {
 
     fetchMessages();
   }, [token, currentMessage]);
+
+  useEffect(() => {
+    console.log('useEffect.catalogId', catalogId);
+    if (!catalogId) {
+      return
+    }
+    (async () => {
+      const resp = await getLessonStudyRecord(catalogId);
+      const records = resp.data.records;
+
+      const nextMessages = records.map((v, i) => {
+        return {
+          role: v.script_role,
+          content: v.script_content,
+          id: v.i,
+          type: v.script_type,
+        };
+      })
+
+      setMessages(nextMessages);
+    })();  
+  }, [catalogId]);
 
   const handleInputChange = (e) => {
     setInput(e.target.value);

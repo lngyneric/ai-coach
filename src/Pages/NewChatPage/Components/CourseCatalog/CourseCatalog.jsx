@@ -33,6 +33,7 @@ export const CourseCatalog = ({
               name={e.name}
               status={e.status}
               selected={e.selected}
+              canLearning={e.canLearning}
               onSelect={onChapterSelect}
             />
           );

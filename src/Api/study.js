@@ -16,9 +16,7 @@ export const RunScript = (course_id,lesson_id,input,input_type,onMessage) => {
   });
   source.onmessage = (event) => {
     try {
-      // var response = eval('('+event.data+")")
       var response = JSON.parse(event.data);
-      // console.log("response", response);
       if (onMessage) {
         onMessage(response);
       }
@@ -50,10 +48,14 @@ export const RunScript = (course_id,lesson_id,input,input_type,onMessage) => {
 
 
 
-
-export const getLessonStudyRecord = async (lesson_id) => {
+/**
+ * 获取课程学习记录
+ * @param {*} lessonId 
+ * @returns 
+ */
+export const getLessonStudyRecord = async (lessonId) => {
   return request({
-    url: "/api/study/get_lesson_study_record?lesson_id="+ lesson_id,
+    url: "/api/study/get_lesson_study_record?lesson_id=" + lessonId,
     method: "get",
   });
 }
