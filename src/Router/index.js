@@ -17,12 +17,12 @@ import NewChatPage from "../Pages/NewChatPage/NewChatPage.jsx";
  * @type {*}
  * */
 const authRoutes = [
-  {
-    path: "/chat",
-    element: <ChatPage></ChatPage>,
-    title: "学习",
-    icon: <ReadOutlined></ReadOutlined>,
-  },
+  // {
+  //   path: "/chat",
+  //   element: <ChatPage></ChatPage>,
+  //   title: "学习",
+  //   icon: <ReadOutlined></ReadOutlined>,
+  // },
 // <<<<<<< HEAD
   // {
   //   path: "/schedele",
@@ -89,6 +89,12 @@ const routes = [
       </BeforeEach>
     ),
     children: authRoutes,
+  },
+  {
+    path: "/chat",
+    element: <ChatPage></ChatPage>,
+    title: "学习",
+    icon: <ReadOutlined></ReadOutlined>,
   },
   {
     path: "/login",
