@@ -16,6 +16,9 @@ const ChatApp = () => {
     },
   ]);
   const [input, setInput] = useState("");
+
+  // 定义当前的类型
+  // const [type, setInput] = useState("");
   const [currentMessage, setCurrentMessage] = useState("");
   const token = process.env.REACT_APP_TOKEN;
 
@@ -50,9 +53,6 @@ const ChatApp = () => {
     };
 
     fetchMessages();
-    // const intervalId = setInterval(fetchMessages, 1000); // Poll every 1 second
-
-    // return () => clearInterval(intervalId);
   }, [token, currentMessage]);
 
   const handleInputChange = (e) => {
@@ -70,26 +70,29 @@ const ChatApp = () => {
       setMessages([...messages, newMessage]);
       setInput("");
       Run({
-        lesson_id: "4c7266c012d24e2b8598e46ee68f3dd0",
-        input: input,
-        input_type: "continue",
+        "lesson_id": "4ec0deaa454d474b9a3baa4a3e4d4ced",
+        "input": "",
+        "input_type": "start"
+    },{
+        onMessage:(data)=>{
+          setMessages(
+            [...messages,newMessage,{
+              id: messages.length + 1,
+              role: "ai",
+              content: data?.message,
+            }]
+          )
+          console.log("data",data)
+        },
+        onEnd:(data)=>{
+          setMessages([...messages,newMessage,{
+            id: messages.length + 1,
+            role: "ai",
+            content: data?.message,
+          }])
+ 
+        }
       });
-      // try {
-      //   await axios({
-      //     method: "post",
-      //     url: `https://test-api-sifu.agiclass.cn/api/study/run?token=${token}`,
-      //     headers: {
-      //       "Content-Type": "application/json",
-      //     },
-      //     data: JSON.stringify({
-      //       lesson_id: "4c7266c012d24e2b8598e46ee68f3dd0",
-      //       input: input,
-      //       input_type: "continue",
-      //     }),
-      //   });
-      // } catch (error) {
-      //   console.error("Request error:", error);
-      // }
     }
   };
 
