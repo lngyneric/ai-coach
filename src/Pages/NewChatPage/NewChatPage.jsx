@@ -55,6 +55,7 @@ const NewChatPage = (props) => {
 
   // 定位当前课程位置
   useEffect(() => {
+    console.log('useEffect.tree', tree)
     if (!tree) {
       return
     }
@@ -71,8 +72,8 @@ const NewChatPage = (props) => {
           return;
         }
         if (data.chapter) {
-          setCurr(data.chapter.id);
-          setCurrCatalogId(data.catalog.id);
+          // setCurr(data.chapter.id);
+          // setCurrCatalogId(data.catalog.id);
         }
       }
     })();

@@ -1,4 +1,5 @@
 import ChatInput from "./ChatInput"
+import ChatComponents from "./ChatComponents.jsx";
 
 /**
  * 聊天区的整体画布
@@ -11,7 +12,9 @@ export const ChatUi = ({ catalogId }) => {
       flex: '1 1 auto',
     }
   }>
-    <ChatInput catalogId={catalogId} />
+    {<ChatComponents catalogId={catalogId} />}
+    {/* <ChatInput catalogId={catalogId} /> */}
+
   </div>);
 };
 

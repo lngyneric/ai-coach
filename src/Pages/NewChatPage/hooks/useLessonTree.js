@@ -73,7 +73,7 @@ export const useLessonTree = () => {
     return newTree;
   }
 
-  const setCurr = async(chapterId) => {
+  const setCurr = async(chapterId, forceExpand = false) => {
     if (!tree) {
       return
     }
@@ -82,7 +82,9 @@ export const useLessonTree = () => {
       draft.catalogs.forEach(c => {
         c.chapters.forEach(ch => {
           if (ch.id === chapterId) {
-            c.collapse = false;
+            if (forceExpand) {
+              c.collapse = false;
+            }
             ch.selected = true;
           } else {
             ch.selected = false;
