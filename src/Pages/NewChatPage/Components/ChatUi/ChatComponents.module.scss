@@ -1,0 +1,14 @@
+.chatComponents {
+  width: 100%;
+  height: 100%;
+  position: relative;
+
+  :global(.MessageContainer) {
+    background-color: var(--color-4);
+  }
+
+
+  :global(.MessageList) {
+    padding-bottom: 50px;
+  }
+}

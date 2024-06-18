@@ -7,7 +7,7 @@ import "./chatui-theme.css";
 import "../../App.css";
 import React, { useEffect, forwardRef, useImperativeHandle } from "react";
 // import { SendMsg } from "../../Service/SSE";
-import { RunScript } from "../../Api/study";
+import { runScript } from "../../Api/study";
 import { UploadEvent } from "../../Api/UploadEvent";
 import { ReactMarkdown } from "react-markdown/lib/react-markdown";
 
@@ -114,7 +114,7 @@ const ChatComponents = forwardRef(({ onTitleUpdate, className ,lessonStatusUpdat
     }
     setTyping(true);
     let lastMsg = null;
-    RunScript(chatId, lessonId,  val,type, (response) => {
+    runScript(chatId, lessonId,  val,type, (response) => {
       try {
         setChatId(response.chat_id);
         let id = generateUUID();

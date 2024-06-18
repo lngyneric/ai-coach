@@ -1,4 +1,3 @@
-import ChatInput from "./ChatInput"
 import ChatComponents from "./ChatComponents.jsx";
 
 /**

@@ -1,0 +1,14 @@
+.inputForm {
+  width: 100%;
+  display: flex;
+  flex-flow: row nowrap;
+
+  .inputWrapper {
+    flex: 1 1 auto;
+  }
+
+  .subBtn {
+    margin-left: 10px;
+    width: 100px;
+  }
+}

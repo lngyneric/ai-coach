@@ -3,24 +3,32 @@ import { Button } from "antd";
 import { Image } from "antd";
 
 import "@chatui/core/dist/index.css";
-import React, { useEffect, forwardRef, useImperativeHandle } from "react";
+import { useEffect, forwardRef, useImperativeHandle, useState } from "react";
 // import { SendMsg } from "../../Service/SSE";
-import { RunScript, getLessonStudyRecord } from "@Api/study";
+import { runScript, getLessonStudyRecord } from "@Api/study";
 import { UploadEvent } from "@Api/UploadEvent";
 import { ReactMarkdown } from "react-markdown/lib/react-markdown";
-
 import { Prism as SyntaxHighlighter } from "react-syntax-highlighter";
 import { vscDarkPlus } from "react-syntax-highlighter/dist/esm/styles/prism";
 import { CopyOutlined, NodeExpandOutlined, SendOutlined } from "@ant-design/icons";
 import { genUuid } from '@Utils/common.js';
-import MainButton from "Components/MainButton.jsx";
+import ChatInputArea from "./ChatInput/ChatInputArea.jsx";
+import styles from './ChatComponents.module.scss';
+import { useContext } from "react";
+import { AppContext } from "Components/AppContext.js";
+
+const USER_ROLE = {
+  TEACHER: '老师',
+  STUDENT: '学生'
+};
+
+const robotAvatar = require("@Assets/chat/sunner_icon.jpg");
 
 const MarkdownBubble = (props) => {
   const onCopy = (content) => {
-    console.log(content);
-    navigator.clipboard.writeText(content).then((res) => {
-    });
+    navigator.clipboard.writeText(content);
   };
+
   return (
     <Bubble>
       <ReactMarkdown
@@ -71,133 +79,84 @@ const MarkdownBubble = (props) => {
   );
 };
 
-const ChatComponents = forwardRef(({ onTitleUpdate, className ,lessonStatusUpdate}, ref) => {
+const convertMessage = (serverMessage, userInfo) => {
+  const role = serverMessage.script_role;
+  let avatar = robotAvatar;
+
+  if (role === USER_ROLE.STUDENT) {
+    avatar = userInfo?.avatar || require('@Assets/newchat/light/user.png');
+  }
+
+  return {
+    role,
+    content: serverMessage.script_content,
+    id: serverMessage.id,
+    type: serverMessage.script_type,
+    position: role === USER_ROLE.STUDENT ? 'right' : 'left',
+    user: { avatar },
+  }
+}
+
+const ChatComponents = forwardRef(({ className ,lessonStatusUpdate, catalogId }, ref) => {
   const { messages, appendMsg, setTyping, updateMsg, resetList } = useMessages(
-    [
-    { id: 1, role: "user", content: "Hello", type: 'text' },
-    { id: 2, role: "ai", content: "Hi there! How can I assist you today?",  type: 'text' },
-    { id: 3, role: "user", content: "Can you help me with a coding problem?",  type: 'text' },
-    {
-      id: 4,
-      role: "ai",
-      content:
-        "Absolutely! Please provide more details about the problem you're working on and I'll do my best to help.",
-      type: 'text',
-      position: 'right',
-      user: { avatar: require('@Assets/newchat/light/robotx2.png')}
-    },
-    { id: 5, role: "user", content: "Hello", type: 'text' },
-    { id: 6, role: "ai", content: "Hi there! How can I assist you today?",  type: 'text' },
-    { id: 7, role: "user", content: "Can you help me with a coding problem?",  type: 'text' },
-    {
-      id: 8,
-      role: "ai",
-      content:
-        "Absolutely! Please provide more details about the problem you're working on and I'll do my best to help.",
-      type: 'text',
-      position: 'right',
-      user: { avatar: require('@Assets/newchat/light/robotx2.png')}
-    },
-    { id: 9, role: "user", content: "Hello", type: 'text' },
-    { id: 10, role: "ai", content: "Hi there! How can I assist you today?",  type: 'text' },
-    { id: 11, role: "user", content: "Can you help me with a coding problem?",  type: 'text' },
-    {
-      id: 12,
-      role: "ai",
-      content:
-        "Absolutely! Please provide more details about the problem you're working on and I'll do my best to help.",
-      type: 'text',
-      position: 'right',
-      user: { avatar: require('@Assets/newchat/light/robotx2.png')}
-    },
-    { id: 13, role: "user", content: "Hello", type: 'text' },
-    { id: 14, role: "ai", content: "Hi there! How can I assist you today?",  type: 'text' },
-    { id: 15, role: "user", content: "Can you help me with a coding problem?",  type: 'text' },
-    {
-      id: 16,
-      role: "ai",
-      content:
-        "Absolutely! Please provide more details about the problem you're working on and I'll do my best to help.",
-      type: 'text',
-      position: 'right',
-      user: { avatar: require('@Assets/newchat/light/robotx2.png')}
-    },
-    ],
+    [],
   );
-  const [chatId, setChatId] = React.useState("");
-  const [scriptId, setScriptId] = React.useState("");
-  const [inputPlaceholder, setInputPlaceholder] = React.useState("请输入");
-  const [inputDisabled, setInputDisabled] = React.useState(false);
-  const [lessonId, setLessonId] = React.useState("");
+
+  const [chatId, setChatId] = useState("");
+  const [lessonId, setLessonId] = useState("");
+  const [scriptId, setScriptId] = useState("");
+  const [inputPlaceholder, setInputPlaceholder] = useState("请输入");
+  const [inputDisabled, setInputDisabled] = useState(false);
+  const { userInfo } = useContext(AppContext);
+  const [inputModal, setInputModal] = useState(null);
 
   useEffect(() => {
-    setTimeout(() => {
-
-      appendMsg({
-        _id: genUuid(),
-        type: "text",
-        content: "Absolutely! Please provide more details about the problem you're working on and I'll do my best to help.",
-        position: "right",
-        user: { avatar: require('@Assets/newchat/light/robotx2.png')}
-      })
-    }, 1000)
-  }, []);
-
-  function handleSend(type, val) {
-    console.log('handle send',type,val)
-    let sendScriptId = scriptId;
-    if (type === "text" && val.trim()) {
-      appendMsg({
-        _id: genUuid(),
-        type: "text",
-        content: { type: "text", text: val },
-        position: "right",
-      });
-      UploadEvent("ChatInput", {
-        text_length: val.length,
-        page: "chat",
-      });
-    } else if (type === "button") {
-      sendScriptId = undefined;
+    if (!catalogId) {
+      return
     }
-    setTyping(true);
+    (async () => {
+      resetList();
+
+      const resp = await getLessonStudyRecord(catalogId);
+      const records = resp.data.records;
+
+      if (!records || records.length === 0) {
+        handleSend('start', '');
+        return
+      }
+
+      records.forEach((v, i) => {
+        v.id = i;
+        const newMessage = convertMessage({
+          ...v,
+          id: i,
+          script_type: 'text',
+        }, userInfo);
+        appendMsg(newMessage);
+
+        console.log('load', newMessage);
+      });
+
+    })();  
+  }, [catalogId]);
+
+  const nextStep = ({ chatId, lessonId, val, type }) => {
     let lastMsg = null;
-    RunScript(chatId, lessonId,  val,type, (response) => {
+    runScript(chatId, lessonId, val, type, (response) => {
       try {
         setChatId(response.chat_id);
         let id = genUuid();
-        if (lastMsg !== null && lastMsg.content.type === "calling") {
-          lastMsg.content.isProcessed = true;
-          updateMsg(lastMsg._id, lastMsg);
-        }
-        if (response.type === "calling") {
-          lastMsg = {
-            content: {
-              function_name: response.function_name,
-              type: response.type,
-              isProcessed: false,
-            },
-            _id: id,
-          };
-          appendMsg(lastMsg);
-          UploadEvent("CallingRunning", {
-            page: "chat",
-            function_name: response.function_name,
-          });
-        } else if (response.type === "text") {
+        if (response.type === "text") {
           if (lastMsg !== null && lastMsg.content.type === "text") {
-            lastMsg.content.text = lastMsg.content.text + response.content;
-            updateMsg(lastMsg._id, lastMsg);
+            lastMsg.content.text = lastMsg.text + response.content;
+            updateMsg(lastMsg.id, lastMsg);
           } else {
             lastMsg = {
-              _id: id,
+              id: id,
               type: response.type,
-              content: {
-                type: response.type,
-                text: response.content,
-              },
+              text: response.content,
               position: "left",
-              user: { avatar: require("@Assets/chat/sunner_icon.jpg") },
+              user: { avatar: robotAvatar },
             };
             appendMsg(lastMsg);
           }
@@ -227,7 +186,7 @@ const ChatComponents = forwardRef(({ onTitleUpdate, className ,lessonStatusUpdat
           appendMsg(lastMsg);
           setInputDisabled(true); 
           
-        }else if (response.type === "study_complete") {
+        } else if (response.type === "study_complete") {
           // setLessonId(response.lesson_id);
 
         } else if (response.type === "lesson_update"){
@@ -235,10 +194,29 @@ const ChatComponents = forwardRef(({ onTitleUpdate, className ,lessonStatusUpdat
               lessonStatusUpdate(response.content)
             }
         }
-      } catch (e) {
-        // console.log("error", e);
-      }
+      } catch (e) { }
     });
+  }
+
+  function handleSend(type, val) {
+    console.log('handle send',type,val)
+    let sendScriptId = scriptId;
+    if (type === "text" && val.trim()) {
+      appendMsg({
+        _id: genUuid(),
+        type: "text",
+        content: { type: "text", text: val },
+        position: "right",
+      });
+      UploadEvent("ChatInput", {
+        text_length: val.length,
+        page: "chat",
+      });
+    } else if (type === "button") {
+      sendScriptId = undefined;
+    }
+    setTyping(true);
+    nextStep({ chatId, lessonId, val, type });
   }
 
   function onButtonClick(type,content) {
@@ -335,19 +313,21 @@ const ChatComponents = forwardRef(({ onTitleUpdate, className ,lessonStatusUpdat
       }, 100);
     });
   }
-  const switchLesson = (lessonInfo) => {
-    console.log("switch Lesson", lessonInfo);
+
+  const switchLesson = async (lessonInfo) => {
     setLessonId(lessonInfo.lesson_id);
     setChatId(lessonInfo.course_id);
     if (lessonInfo.status === "未开始") {
           handleSend("start","")
     } else {
-      getLessonStudyRecord(lessonInfo.lesson_id).then((res) => {
+      await getLessonStudyRecord(lessonInfo.lesson_id).then((res) => {
         // console.log("getLessonStudyRecord", res);
         loadMsg(lessonInfo.lesson_id, res.data);
       });
+      loadMsg()
     }
   }
+
   useImperativeHandle(ref, () => ({
     loadMsg,
     switchLesson
@@ -370,20 +350,27 @@ const ChatComponents = forwardRef(({ onTitleUpdate, className ,lessonStatusUpdat
     }
   }
   return (
-    <Chat
-      navbar={null}
-      messages={messages}
-      renderMessageContent={renderMessageContent}
-      onSend={handleSend}
-      loadMsg={loadMsg}
-      renderBeforeMessageList={renderBeforeMessageList}
-      recorder={{ canRecord: true }}
-      placeholder={inputPlaceholder}
-      inputOptions={{ disabled: inputDisabled }}
-      Composer={({ onChange, onSubmit, value }) => {
-        return<></> 
-      }}
-    />
+    <div className={styles.chatComponents} >
+      <Chat
+        navbar={null}
+        messages={messages}
+        renderMessageContent={renderMessageContent}
+        onSend={handleSend}
+        loadMsg={loadMsg}
+        renderBeforeMessageList={renderBeforeMessageList}
+        recorder={{ canRecord: true }}
+        placeholder={inputPlaceholder}
+        inputOptions={{ disabled: inputDisabled }}
+        Composer={({ onChange, onSubmit, value }) => {
+          return<></> 
+        }}
+      />
+
+      {
+        (!inputDisabled && inputModal) &&
+        <ChatInputArea />
+      }
+    </div>
   );
 });
 

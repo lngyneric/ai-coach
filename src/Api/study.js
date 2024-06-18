@@ -1,14 +1,11 @@
 import { SSE } from "sse.js";
 import Cookies from "js-cookie";
-import store from "store";
 import request from "../Service/Request";
-const token = process.env.REACT_APP_TOKEN
-console.log('token',token)
-const url = (process.env.REACT_APP_BASEURL || "") + "/api/study/run";
+import { tokenStore } from "Service/storeUtil.js";
 
-export const RunScript = (course_id,lesson_id,input,input_type,onMessage) => {
+export const runScript = (course_id, lesson_id, input, input_type, onMessage) => {
 
-  var source = new SSE(url + "?token=" + token, {
+  var source = new SSE(`${process.env.REACT_APP_BASEURL || ''}/api/study/run?token=${tokenStore.get()}`, {
     headers: { "Content-Type": "application/json" },
     payload: JSON.stringify({
         course_id,lesson_id,input,input_type
