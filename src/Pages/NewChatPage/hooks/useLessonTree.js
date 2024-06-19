@@ -1,10 +1,10 @@
 import { useState } from "react";
 import { getLessonTree } from '@Api/lesson.js';
 import { produce } from 'immer';
-import { SECTION_STATUS } from "constants/courseContants.js";
+import { LESSON_STATUS } from "constants/courseContants.js";
 
 export const checkChapterCanLearning = ({ status }) => {
-  return status === SECTION_STATUS.LEARNING || status === SECTION_STATUS.COMPLETED || status === SECTION_STATUS.PREPARE_LEARNING;
+  return status === LESSON_STATUS.LEARNING || status === LESSON_STATUS.COMPLETED || status === LESSON_STATUS.PREPARE_LEARNING;
 }
 
 const getCurrElementInner = (tree) => {
@@ -20,15 +20,15 @@ const getCurrElementInner = (tree) => {
 }
 
 export const initialSelectedChapter = (tree) => {
-  let catalog = tree.catalogs.find(v => v.status === SECTION_STATUS.LEARNING);
+  let catalog = tree.catalogs.find(v => v.status === LESSON_STATUS.LEARNING);
   if (catalog) {
-    const chapter = catalog.chapters.find(v => v.status === SECTION_STATUS.LEARNING);
+    const chapter = catalog.chapters.find(v => v.status === LESSON_STATUS.LEARNING);
 
     chapter && (chapter.selected = true);
   } else {
-    catalog = tree.catalogs.find(v => v.status === SECTION_STATUS.PREPARE_LEARNING);
+    catalog = tree.catalogs.find(v => v.status === LESSON_STATUS.PREPARE_LEARNING);
     if (catalog) {
-      const chapter = catalog.chapters.find(v => v.status === SECTION_STATUS.PREPARE_LEARNING);
+      const chapter = catalog.chapters.find(v => v.status === LESSON_STATUS.PREPARE_LEARNING);
       chapter && (chapter.selected =true);
     }
   }
@@ -138,7 +138,7 @@ export const useLessonTree = () => {
       return false;
     }
 
-    return catalog.status === SECTION_STATUS.LEARNING || catalog.status === SECTION_STATUS.COMPLETED || catalog.status === SECTION_STATUS.PREPARE_LEARNING;
+    return catalog.status === LESSON_STATUS.LEARNING || catalog.status === LESSON_STATUS.COMPLETED || catalog.status === LESSON_STATUS.PREPARE_LEARNING;
   }
 
   const getRunningElement = () => {

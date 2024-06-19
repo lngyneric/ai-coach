@@ -1,6 +1,7 @@
 .ChatButtonGroup {
   display: flex;
   flex-flow: row wrap;
+  justify-content: center;
 
   .selectBtn {
     margin-top: 10px;

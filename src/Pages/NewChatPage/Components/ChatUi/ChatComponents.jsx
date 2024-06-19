@@ -11,9 +11,9 @@ import { genUuid } from '@Utils/common.js';
 import ChatInputArea from './ChatInput/ChatInputArea.jsx';
 import { AppContext } from 'Components/AppContext.js';
 import styles from './ChatComponents.module.scss';
-import { INPUT_TYPE } from './ChatInput/ChatInputArea.jsx';
+import { INPUT_TYPE } from '@constants/courseContants.js';
 import { useCurrentLesson } from '@stores/useCurrentLesson';
-import { SECTION_STATUS } from "constants/courseContants.js";
+import { LESSON_STATUS } from "constants/courseContants.js";
 
 const USER_ROLE = {
   TEACHER: '老师',
@@ -112,20 +112,21 @@ const convertInputModal = ({ type, content }) => {
   if (type === 'input') {
     return {
       type: INPUT_TYPE.TEXT,
-      content: content,
+      props: {content},
     }
   } else if (type === INPUT_TYPE.BUTTONS){
     const buttons = content.buttons;
     if (buttons.length === 1) {
       return {
         type: INPUT_TYPE.CONTINUE,
-        content: buttons[0].label,
-        value: buttons[0].value,
+        props: {
+          ...buttons[0],
+        },
       }
     } else {
       return {
         type,
-        content,
+        props: content,
       }
     }
   }
@@ -187,6 +188,20 @@ const ChatComponents = forwardRef(({ className, lessonUpdate, catalogId }, ref) 
     })();  
   }, [catalogId]);
 
+
+  const lessonUpdateResp = (response) => {
+    const content = response.content;
+    lessonUpdate?.({ id: content.lesson_id, name: content.lesson_name, status: content.status });
+
+    if (content.status === LESSON_STATUS.PREPARE_LEARNING) {
+      nextStep({ chatId, lessonId: content.lesson_id, type: 'start', val: '' });
+    }
+    if (content.status === LESSON_STATUS.LEARNING) {
+      setLessonId(content.lesson_id);
+      changeCurrLesson(content.lesson_id);
+    }
+  }
+
   const nextStep = ({ chatId, lessonId, val, type }) => {
     let lastMsg = null;
     runScript(chatId, lessonId, val, type, (response) => {
@@ -209,27 +224,19 @@ const ChatComponents = forwardRef(({ className, lessonUpdate, catalogId }, ref) 
         } else if (response.type === "text_end") {
           lastMsg = null;
         } else if (response.type === "input") {
-          setInputModal({ type: INPUT_TYPE.TEXT, content: response.content });
-          // setLessonId(response.lesson_id);
+          setInputModal({ type: INPUT_TYPE.TEXT, props: response });
           setInputDisabled(false);
         }else if (response.type === "buttons") {
           const model = convertInputModal(response)
           setInputModal(model)
         } else if (response.type === "study_complete") {
         } else if (response.type === "lesson_update") {
-          const content = response.content;
-          lessonUpdate?.({ id: content.lesson_id, name: content.lesson_name, status: content.status });
-
-          if (content.status === SECTION_STATUS.PREPARE_LEARNING) {
-            nextStep({ chatId, lessonId: content.lesson_id, type: 'start', val: '' })
-          }
-          if (content.status === SECTION_STATUS.LEARNING) {
-            setLessonId(content.lesson_id);
-            changeCurrLesson(content.lesson_id);
-          }
+          lessonUpdateResp(response);
         } else if (response.type === 'chapter_update') {
+          const { status, lesson_id: lessonId }  = response.content;
         }
       } catch (e) { }
+
     });
   }
 
@@ -342,23 +349,8 @@ const ChatComponents = forwardRef(({ className, lessonUpdate, catalogId }, ref) 
     });
   }
 
-  const switchLesson = async (lessonInfo) => {
-    // setLessonId(lessonInfo.lesson_id);
-    setChatId(lessonInfo.course_id);
-    if (lessonInfo.status === "未开始") {
-          // handleSend("start","")
-    } else {
-      await getLessonStudyRecord(lessonInfo.lesson_id).then((res) => {
-        // console.log("getLessonStudyRecord", res);
-        loadMsg(lessonInfo.lesson_id, res.data);
-      });
-      loadMsg()
-    }
-  }
-
   useImperativeHandle(ref, () => ({
     loadMsg,
-    switchLesson
   }));
 
   function renderBeforeMessageList() {
@@ -396,7 +388,7 @@ const ChatComponents = forwardRef(({ className, lessonUpdate, catalogId }, ref) 
         (true && inputModal) &&
         <ChatInputArea
           type={inputModal.type}
-          content={inputModal.content}
+          props={inputModal.props}
           onSend={(type, val) => {
             handleSend(type, val);
           }}
