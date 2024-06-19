@@ -9,7 +9,7 @@
   .continueWrapper {
     display: flex;
     justify-content: center;
-    padding: 0 50px;
+    padding: 0 10px 30px 10px;
 
     .continueBtn {
       width: 80%;
@@ -19,6 +19,10 @@
   .inputTextWrapper {
     display: flex;
     justify-content: center;
+    padding: 0 10px 30px 10px;
+  }
+
+  .buttonGroupWrapper {
     padding: 0 10px 30px 10px;
   }
 }

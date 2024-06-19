@@ -5,7 +5,7 @@ import SubButton from 'Components/SubButton.jsx';
 
 import styles from './ChatInputText.module.scss';
 
-export const ChatInputText = () => {
+export const ChatInputText = ({ onClick }) => {
   const [input, setInput] = useState('');
   const [messageApi, contextHolder] = message.useMessage();
 
@@ -15,7 +15,9 @@ export const ChatInputText = () => {
       return
     }
 
+    onClick?.(input.trim());
     setInput('');
+
   }
 
   return (

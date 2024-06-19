@@ -7,4 +7,13 @@
     flex-flow: column nowrap;
     position: relative;
   }
+
+  .bodyWrapper {
+    flex: 1 1 0;
+    overflow-y: auto;
+
+    &::-webkit-scrollbar {
+      display: none;
+    }
+  }
 }

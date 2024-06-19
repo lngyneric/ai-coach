@@ -1,21 +1,19 @@
-import Chat, { Bubble, useMessages, Empty, Card, CardMedia, CardTitle, CardText, CardActions } from "@chatui/core";
-import { Button } from "antd";
-import { Image } from "antd";
-
-import "@chatui/core/dist/index.css";
-import { useEffect, forwardRef, useImperativeHandle, useState } from "react";
-// import { SendMsg } from "../../Service/SSE";
-import { runScript, getLessonStudyRecord } from "@Api/study";
-import { UploadEvent } from "@Api/UploadEvent";
-import { ReactMarkdown } from "react-markdown/lib/react-markdown";
-import { Prism as SyntaxHighlighter } from "react-syntax-highlighter";
-import { vscDarkPlus } from "react-syntax-highlighter/dist/esm/styles/prism";
-import { CopyOutlined, NodeExpandOutlined, SendOutlined } from "@ant-design/icons";
+import '@chatui/core/dist/index.css';
+import Chat, { Bubble, useMessages } from '@chatui/core';
+import { Button, Image } from 'antd';
+import { useEffect, forwardRef, useImperativeHandle, useState, useContext } from 'react';
+import { runScript, getLessonStudyRecord } from '@Api/study';
+import { ReactMarkdown } from 'react-markdown/lib/react-markdown';
+import { Prism as SyntaxHighlighter } from 'react-syntax-highlighter';
+import { vscDarkPlus } from 'react-syntax-highlighter/dist/esm/styles/prism';
+import { CopyOutlined  } from '@ant-design/icons';
 import { genUuid } from '@Utils/common.js';
-import ChatInputArea from "./ChatInput/ChatInputArea.jsx";
+import ChatInputArea from './ChatInput/ChatInputArea.jsx';
+import { AppContext } from 'Components/AppContext.js';
 import styles from './ChatComponents.module.scss';
-import { useContext } from "react";
-import { AppContext } from "Components/AppContext.js";
+import { INPUT_TYPE } from './ChatInput/ChatInputArea.jsx';
+import { useCurrentLesson } from '@stores/useCurrentLesson';
+import { SECTION_STATUS } from "constants/courseContants.js";
 
 const USER_ROLE = {
   TEACHER: '老师',
@@ -79,31 +77,68 @@ const MarkdownBubble = (props) => {
   );
 };
 
-const convertMessage = (serverMessage, userInfo) => {
-  const role = serverMessage.script_role;
+const createMessage = ({id = 0, role, content, type = 'text', userInfo }) => {
+  const mid = id || genUuid();
+
+  const position = role === USER_ROLE.STUDENT ? 'right' : 'left';
+
   let avatar = robotAvatar;
 
   if (role === USER_ROLE.STUDENT) {
     avatar = userInfo?.avatar || require('@Assets/newchat/light/user.png');
   }
-
   return {
+    _id: mid,
+    id: mid,
     role,
-    content: serverMessage.script_content,
-    id: serverMessage.id,
-    type: serverMessage.script_type,
-    position: role === USER_ROLE.STUDENT ? 'right' : 'left',
-    user: { avatar },
+    content,
+    type,
+    position,
+    user: {avatar},
   }
 }
 
-const ChatComponents = forwardRef(({ className ,lessonStatusUpdate, catalogId }, ref) => {
+const convertMessage = (serverMessage, userInfo) => {
+  return createMessage({
+    id: serverMessage.id,
+    role: serverMessage.script_role,
+    content: serverMessage.script_content,
+    type: serverMessage.script_type,
+    userInfo,
+  });
+}
+
+const convertInputModal = ({ type, content }) => {
+  if (type === 'input') {
+    return {
+      type: INPUT_TYPE.TEXT,
+      content: content,
+    }
+  } else if (type === INPUT_TYPE.BUTTONS){
+    const buttons = content.buttons;
+    if (buttons.length === 1) {
+      return {
+        type: INPUT_TYPE.CONTINUE,
+        content: buttons[0].label,
+        value: buttons[0].value,
+      }
+    } else {
+      return {
+        type,
+        content,
+      }
+    }
+  }
+}
+
+const ChatComponents = forwardRef(({ className, lessonUpdate, catalogId }, ref) => {
   const { messages, appendMsg, setTyping, updateMsg, resetList } = useMessages(
     [],
   );
 
   const [chatId, setChatId] = useState("");
-  const [lessonId, setLessonId] = useState("");
+  const { lessonId: currLessonId, changeCurrLesson } = useCurrentLesson(state => state);
+  const [lessonId, setLessonId] = useState(null);
   const [scriptId, setScriptId] = useState("");
   const [inputPlaceholder, setInputPlaceholder] = useState("请输入");
   const [inputDisabled, setInputDisabled] = useState(false);
@@ -111,14 +146,22 @@ const ChatComponents = forwardRef(({ className ,lessonStatusUpdate, catalogId },
   const [inputModal, setInputModal] = useState(null);
 
   useEffect(() => {
+    if (!lessonId) {
+      setLessonId(currLessonId);
+    }
+  }, [currLessonId])
+
+  useEffect(() => {
     if (!catalogId) {
       return
     }
+
     (async () => {
       resetList();
 
       const resp = await getLessonStudyRecord(catalogId);
       const records = resp.data.records;
+      const ui = resp.data.ui;
 
       if (!records || records.length === 0) {
         handleSend('start', '');
@@ -126,16 +169,20 @@ const ChatComponents = forwardRef(({ className ,lessonStatusUpdate, catalogId },
       }
 
       records.forEach((v, i) => {
-        v.id = i;
         const newMessage = convertMessage({
           ...v,
           id: i,
           script_type: 'text',
         }, userInfo);
         appendMsg(newMessage);
-
-        console.log('load', newMessage);
       });
+
+      setLessonId(records[records.length - 1].lesson_id);
+
+      if (ui) {
+        const nextInputModal = convertInputModal(ui);
+        setInputModal(nextInputModal);
+      }
 
     })();  
   }, [catalogId]);
@@ -143,56 +190,42 @@ const ChatComponents = forwardRef(({ className ,lessonStatusUpdate, catalogId },
   const nextStep = ({ chatId, lessonId, val, type }) => {
     let lastMsg = null;
     runScript(chatId, lessonId, val, type, (response) => {
+      console.log('run script resp', response);
       try {
-        setChatId(response.chat_id);
-        let id = genUuid();
         if (response.type === "text") {
-          if (lastMsg !== null && lastMsg.content.type === "text") {
-            lastMsg.content.text = lastMsg.text + response.content;
+          if (lastMsg !== null && lastMsg.type === "text") {
+            lastMsg.content = lastMsg.content + response.content;
             updateMsg(lastMsg.id, lastMsg);
           } else {
-            lastMsg = {
+            const id = genUuid();
+            lastMsg = createMessage({
               id: id,
               type: response.type,
-              text: response.content,
-              position: "left",
-              user: { avatar: robotAvatar },
-            };
+              role: USER_ROLE.TEACHER,
+              content: response.content,
+              userInfo,
+            })
             appendMsg(lastMsg);
           }
         } else if (response.type === "text_end") {
           lastMsg = null;
         } else if (response.type === "input") {
-          setInputPlaceholder(response.content);
-          setScriptId(response.id);
-          setInputDisabled(false);
-        } else if (response.type === "button") {
-          lastMsg = {
-            _id: id,
-            type: "card",
-            content: response.content,
-            position: "right"
-          };
-          appendMsg(lastMsg);
-          setInputDisabled(true);
-        }else if (response.type === "buttons") {
-          console.log(response)
-          lastMsg = {
-            _id: id,
-            type: "card",
-            content: response.content,
-            position: "right"
-          };
-          appendMsg(lastMsg);
-          setInputDisabled(true); 
-          
-        } else if (response.type === "study_complete") {
+          setInputModal({ type: INPUT_TYPE.TEXT, content: response.content });
           // setLessonId(response.lesson_id);
+          setInputDisabled(false);
+        }else if (response.type === "buttons") {
+          const model = convertInputModal(response)
+          setInputModal(model)
+        } else if (response.type === "study_complete") {
+        } else if (response.type === "lesson_update") {
+          const content = response.content;
+          lessonUpdate?.({ lessonId: content.lesson_id, lessonName: content.lesson_name, status: content.status });
+          if (content.status === SECTION_STATUS.PREPARE_LEARNING) {
+            setLessonId(content.lesson_id);
+            changeCurrLesson(content.lesson_id);
 
-        } else if (response.type === "lesson_update"){
-            if (lessonStatusUpdate){
-              lessonStatusUpdate(response.content)
-            }
+            nextStep({ chatId, lessonId: content.lesson_id, type: 'start', val: '' })
+          }
         }
       } catch (e) { }
     });
@@ -200,28 +233,20 @@ const ChatComponents = forwardRef(({ className ,lessonStatusUpdate, catalogId },
 
   function handleSend(type, val) {
     console.log('handle send',type,val)
-    let sendScriptId = scriptId;
     if (type === "text" && val.trim()) {
-      appendMsg({
-        _id: genUuid(),
-        type: "text",
-        content: { type: "text", text: val },
-        position: "right",
+      const message = createMessage({
+        role: USER_ROLE.STUDENT,
+        content: val,
+        type: 'text',
+        userInfo,
       });
-      UploadEvent("ChatInput", {
-        text_length: val.length,
-        page: "chat",
-      });
+      appendMsg(message);
     } else if (type === "button") {
-      sendScriptId = undefined;
     }
     setTyping(true);
-    nextStep({ chatId, lessonId, val, type });
+    nextStep({ chatId, lessonId, type, val });
   }
 
-  function onButtonClick(type,content) {
-    handleSend(type, content);
-  }
   function renderMessageContent(msg) {
     const { content, type } = msg;
     if (content === undefined) {
@@ -275,7 +300,7 @@ const ChatComponents = forwardRef(({ className ,lessonStatusUpdate, catalogId },
     newMessages.forEach((item) => {
       if (item.role === "学生") {
         appendMsg({
-          _id: genUuid(),
+          id: genUuid(),
           type: "text",
           content: { type: "text", text: item.content },
           position: "right",
@@ -315,10 +340,10 @@ const ChatComponents = forwardRef(({ className ,lessonStatusUpdate, catalogId },
   }
 
   const switchLesson = async (lessonInfo) => {
-    setLessonId(lessonInfo.lesson_id);
+    // setLessonId(lessonInfo.lesson_id);
     setChatId(lessonInfo.course_id);
     if (lessonInfo.status === "未开始") {
-          handleSend("start","")
+          // handleSend("start","")
     } else {
       await getLessonStudyRecord(lessonInfo.lesson_id).then((res) => {
         // console.log("getLessonStudyRecord", res);
@@ -355,8 +380,6 @@ const ChatComponents = forwardRef(({ className ,lessonStatusUpdate, catalogId },
         navbar={null}
         messages={messages}
         renderMessageContent={renderMessageContent}
-        onSend={handleSend}
-        loadMsg={loadMsg}
         renderBeforeMessageList={renderBeforeMessageList}
         recorder={{ canRecord: true }}
         placeholder={inputPlaceholder}
@@ -367,8 +390,14 @@ const ChatComponents = forwardRef(({ className ,lessonStatusUpdate, catalogId },
       />
 
       {
-        (!inputDisabled && inputModal) &&
-        <ChatInputArea />
+        (true && inputModal) &&
+        <ChatInputArea
+          type={inputModal.type}
+          content={inputModal.content}
+          onSend={(type, val) => {
+            handleSend(type, val);
+          }}
+        />
       }
     </div>
   );

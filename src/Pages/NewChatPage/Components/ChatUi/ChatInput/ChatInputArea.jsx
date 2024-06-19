@@ -5,26 +5,37 @@
 import MainButton from 'Components/MainButton.jsx';
 import styles from './ChatInputArea.module.scss';
 import ChatInputText from './ChatInputText.jsx';
+import ChatButtonGroup from './ChatButtonGroup.jsx';
 
-const INPUT_TYPE = {
+export const INPUT_TYPE = {
   CONTINUE: 'continue', // 下一步
   TEXT: 'text', // 文本
-  SELECT: 'select', // 按钮组
+  BUTTONS: 'buttons', // 按钮组
 };
 
-
-export const ChatInputArea = ({ onSend, type = 'text', text, buttons }) => {
+export const ChatInputArea = ({ type = 'text', content, buttons, onSend = (type, val) => {}}) => {
   return (
     <div className={styles.chatInputArea}>
       {
         type === INPUT_TYPE.CONTINUE &&
         <div className={styles.continueWrapper}>
-          <MainButton className={styles.continueBtn} width="100%">下一步</MainButton>
+          <MainButton className={styles.continueBtn} width="90%" onClick={() => onSend?.(INPUT_TYPE.CONTINUE, content)}>{content}</MainButton>
         </div>
       }
       {
+        type === INPUT_TYPE.TEXT &&
         <div className={styles.inputTextWrapper}>
-          <ChatInputText />
+          <ChatInputText
+            onClick={(val) => {
+              onSend?.(INPUT_TYPE.TEXT, val);
+            }}
+          />
+        </div>
+      }
+      {
+        type === INPUT_TYPE.BUTTONS &&
+        <div className={styles.buttonGroupWrapper}>
+          <ChatButtonGroup />
         </div>
       }
     </div>

@@ -36,8 +36,10 @@ export const initialSelectedChapter = (tree) => {
 
 export const useLessonTree = () => {
   const [tree, setTree] = useState(null);
+  const [treeLoaded, setLoadedTree] = useState(false);
 
   const loadTree = async () => {
+    setLoadedTree(false);
     const resp = await getLessonTree();
     const treeData = resp.data;
 
@@ -69,6 +71,7 @@ export const useLessonTree = () => {
     }
     initialSelectedChapter(newTree);
     setTree(newTree);
+    setLoadedTree(true);
 
     return newTree;
   }
@@ -144,6 +147,26 @@ export const useLessonTree = () => {
     return getCurrElementInner(tree);
   }
 
+  const updateChapter = (chapterId, val) => {
+    if (!tree) {
+      return
+    }
 
-  return { tree, loadTree, setCurr, setCurrCatalog, toggleCollapse, catalogAvailable, getRunningElement }
+    const nextState = produce(tree, draft => {
+      draft.catalogs.forEach(c => {
+        const idx = c.chapters.findIndex(ch => ch.id === chapterId)
+        if (idx !== -1) {
+          c.chapters[idx] = {
+            ...c.chapters[idx],
+            ...val
+          };
+        }
+      })
+    });
+
+    setTree(nextState);
+  }
+
+
+  return { tree, loadTree, treeLoaded, setCurr, setCurrCatalog, toggleCollapse, catalogAvailable, getRunningElement, updateChapter }
 }

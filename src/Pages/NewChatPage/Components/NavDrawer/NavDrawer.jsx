@@ -96,7 +96,7 @@ const NavDrawer = ({
           onToggle={onHeaderToggleClick}
           isCollapse={isCollapse}
         />
-        <div style={{ flex: "1 1 0", overflowY: "auto" }}>
+        <div className={styles.bodyWrapper} style={{ flex: "1 1 0", overflowY: "auto",  }}>
           {!isCollapse &&
             (hasLogin ? (
               <CourseCatalogList
