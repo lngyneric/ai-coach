@@ -4,8 +4,8 @@ import request from "../Service/Request";
 import { tokenStore } from "Service/storeUtil.js";
 
 export const runScript = (course_id, lesson_id, input, input_type, onMessage) => {
-
-  var source = new SSE(`${process.env.REACT_APP_BASEURL || ''}/api/study/run?token=${tokenStore.get()}`, {
+  console.log('runScript')
+  const source = new SSE(`${process.env.REACT_APP_BASEURL || ''}/api/study/run?token=${tokenStore.get()}`, {
     headers: { "Content-Type": "application/json" },
     payload: JSON.stringify({
         course_id,lesson_id,input,input_type

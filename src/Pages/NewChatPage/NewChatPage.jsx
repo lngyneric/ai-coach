@@ -66,7 +66,6 @@ const NewChatPage = (props) => {
 
   // 定位当前课程位置
   useEffect(() => {
-    console.log("useEffect treeLoaded");
     if (!tree || !treeLoaded) {
       return;
     }
@@ -76,6 +75,10 @@ const NewChatPage = (props) => {
           navigate("/newchat");
         } else {
           setCurrCatalog(cid);
+          const data = getRunningElement();
+          if (data.chapter) {
+            setCurr(data.chapter.id);
+          }
         }
       } else {
         const data = getRunningElement();
@@ -91,10 +94,19 @@ const NewChatPage = (props) => {
     })();
   }, [treeLoaded]);
 
+  useEffect(() => {
+    setCurr(lessonId); 
+  }, [lessonId]);
+
   const onLoginModalClose = async () => {
     setLoginModalOpen(false);
     await loadData();
   };
+
+  const onLessonUpdate = (val) => {
+    console.log('onLessonUpdate', val);
+    updateChapter(val.id, val);
+  }
 
   return (
     <div className={classNames(styles.newChatPage)}>
@@ -112,7 +124,10 @@ const NewChatPage = (props) => {
             lessonTree={tree}
             onLessonCollapse={toggleCollapse}
           />
-          <ChatUi catalogId={currCatalogId} lessonUpdate={(val) => { updateChapter(val.id, val) }} />
+          <ChatUi
+            catalogId={currCatalogId}
+            lessonUpdate={onLessonUpdate}
+          />
         </Skeleton>
         {loginModalOpen && (
           <LoginModal

@@ -58,7 +58,7 @@ export const useUserStore = create((set) => ({
         tokenTool.set({ token: tokenTool.get().token, faked: true });
       }
     } catch (err) {
-      if (err.status && err.status === 403) {
+      if ((err.status && err.status === 403) || (err.code && err.code === 1005)) {
         set(() => ({
           hasLogin: false,
           userInfo: null,

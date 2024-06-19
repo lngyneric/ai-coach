@@ -77,26 +77,28 @@ export const useLessonTree = () => {
   }
 
   const setCurr = async(chapterId, forceExpand = false) => {
-    if (!tree) {
-      return
-    }
+    setTree(old => {
+      if (!old) {
+        return
+      }
 
-    const nextState = produce(tree, draft => {
-      draft.catalogs.forEach(c => {
-        c.chapters.forEach(ch => {
-          if (ch.id === chapterId) {
-            if (forceExpand) {
-              c.collapse = false;
+      const nextState = produce(old, draft => {
+        draft.catalogs.forEach(c => {
+          c.chapters.forEach(ch => {
+            if (ch.id === chapterId) {
+              if (forceExpand) {
+                c.collapse = false;
+              }
+              ch.selected = true;
+            } else {
+              ch.selected = false;
             }
-            ch.selected = true;
-          } else {
-            ch.selected = false;
-          }
+          });
         });
       });
-    });
 
-    setTree(nextState);
+      return nextState;
+    });
   }
 
   const setCurrCatalog = async (catalogId) => {
@@ -147,24 +149,27 @@ export const useLessonTree = () => {
     return getCurrElementInner(tree);
   }
 
-  const updateChapter = (chapterId, val) => {
-    if (!tree) {
-      return
-    }
+  const updateChapter = (id, val) => {
+    setTree(old => {
+      if (!old) {
+        return
+      }
+      const nextState = produce(old, draft => {
+        draft.catalogs.forEach(c => {
+          const idx = c.chapters.findIndex(ch => ch.id === id)
+          if (idx !== -1) {
+            const newC = {
+              ...c.chapters[idx],
+              ...val
+            };
+            newC.canLearning = checkChapterCanLearning(newC);
+            c.chapters[idx] = newC;
+          }
+        })
+      });
 
-    const nextState = produce(tree, draft => {
-      draft.catalogs.forEach(c => {
-        const idx = c.chapters.findIndex(ch => ch.id === chapterId)
-        if (idx !== -1) {
-          c.chapters[idx] = {
-            ...c.chapters[idx],
-            ...val
-          };
-        }
-      })
+      return nextState;
     });
-
-    setTree(nextState);
   }
 
 

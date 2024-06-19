@@ -190,7 +190,6 @@ const ChatComponents = forwardRef(({ className, lessonUpdate, catalogId }, ref) 
   const nextStep = ({ chatId, lessonId, val, type }) => {
     let lastMsg = null;
     runScript(chatId, lessonId, val, type, (response) => {
-      console.log('run script resp', response);
       try {
         if (response.type === "text") {
           if (lastMsg !== null && lastMsg.type === "text") {
@@ -219,13 +218,16 @@ const ChatComponents = forwardRef(({ className, lessonUpdate, catalogId }, ref) 
         } else if (response.type === "study_complete") {
         } else if (response.type === "lesson_update") {
           const content = response.content;
-          lessonUpdate?.({ lessonId: content.lesson_id, lessonName: content.lesson_name, status: content.status });
-          if (content.status === SECTION_STATUS.PREPARE_LEARNING) {
-            setLessonId(content.lesson_id);
-            changeCurrLesson(content.lesson_id);
+          lessonUpdate?.({ id: content.lesson_id, name: content.lesson_name, status: content.status });
 
+          if (content.status === SECTION_STATUS.PREPARE_LEARNING) {
             nextStep({ chatId, lessonId: content.lesson_id, type: 'start', val: '' })
           }
+          if (content.status === SECTION_STATUS.LEARNING) {
+            setLessonId(content.lesson_id);
+            changeCurrLesson(content.lesson_id);
+          }
+        } else if (response.type === 'chapter_update') {
         }
       } catch (e) { }
     });
@@ -244,6 +246,7 @@ const ChatComponents = forwardRef(({ className, lessonUpdate, catalogId }, ref) 
     } else if (type === "button") {
     }
     setTyping(true);
+    setInputModal(null);
     nextStep({ chatId, lessonId, type, val });
   }
 
