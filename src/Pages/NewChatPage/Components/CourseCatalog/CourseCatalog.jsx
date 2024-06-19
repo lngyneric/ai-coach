@@ -7,7 +7,7 @@ import { useState } from "react";
 export const CourseCatalog = ({
   id = 0,
   name = "",
-  chapters = [],
+  lessons = [],
   collapse = false,
   onCollapse = ({ id }) => {},
   onChapterSelect = ({ id }) => {},
@@ -25,7 +25,7 @@ export const CourseCatalog = ({
         />
       </div>
       <div className={styles.sectionList}>
-        {chapters.map((e) => {
+        {lessons.map((e) => {
           return (
             <CourseSection
               key={e.id}

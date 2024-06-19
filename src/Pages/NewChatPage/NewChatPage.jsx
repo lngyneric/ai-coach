@@ -27,7 +27,7 @@ const NewChatPage = (props) => {
     setCurrCatalog,
     toggleCollapse,
     catalogAvailable,
-    getRunningElement,
+    getCurrElement,
     updateChapter,
   } = useLessonTree();
   const { cid } = useParams();
@@ -72,22 +72,22 @@ const NewChatPage = (props) => {
     (async () => {
       if (cid) {
         if (!catalogAvailable(cid)) {
-          navigate("/newchat");
+          navigate('/newchat');
         } else {
           setCurrCatalog(cid);
-          const data = getRunningElement();
-          if (data.chapter) {
-            setCurr(data.chapter.id);
+          const data = getCurrElement();
+          if (data.lesson) {
+            setCurr(data.lesson.id);
           }
         }
       } else {
-        const data = getRunningElement();
+        const data = getCurrElement();
         if (!data) {
           return;
         }
-        if (data.chapter) {
-          setCurr(data.chapter.id);
-          changeCurrLesson(data.chapter.id);
+        if (data.lesson) {
+          setCurr(data.lesson.id);
+          changeCurrLesson(data.lesson.id);
           setCurrCatalogId(data.catalog.id);
         }
       }
@@ -106,6 +106,10 @@ const NewChatPage = (props) => {
   const onLessonUpdate = (val) => {
     console.log('onLessonUpdate', val);
     updateChapter(val.id, val);
+  }
+
+  const onGoChapter = (id) => {
+    navigate(`/newchat/${id}`);
   }
 
   return (
@@ -127,6 +131,7 @@ const NewChatPage = (props) => {
           <ChatUi
             catalogId={currCatalogId}
             lessonUpdate={onLessonUpdate}
+            onGoChapter={onGoChapter}
           />
         </Skeleton>
         {loginModalOpen && (

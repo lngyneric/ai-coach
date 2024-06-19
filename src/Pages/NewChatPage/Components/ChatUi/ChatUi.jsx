@@ -3,7 +3,7 @@ import ChatComponents from "./ChatComponents.jsx";
 /**
  * 聊天区的整体画布
  */
-export const ChatUi = ({ catalogId, lessonUpdate }) => {
+export const ChatUi = ({ catalogId, lessonUpdate, onGoChapter }) => {
   return (
     <div
       style={{
@@ -12,8 +12,13 @@ export const ChatUi = ({ catalogId, lessonUpdate }) => {
         flex: "1 1 auto",
       }}
     >
-      {<ChatComponents catalogId={catalogId} lessonUpdate={lessonUpdate} />}
-      {/* <ChatInput catalogId={catalogId} /> */}
+      {
+        <ChatComponents
+          chapterId={catalogId}
+          lessonUpdate={lessonUpdate}
+          onGoChapter={onGoChapter}
+        />
+      }
     </div>
   );
 };

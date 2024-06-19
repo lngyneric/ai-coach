@@ -9,10 +9,10 @@ export const checkChapterCanLearning = ({ status }) => {
 
 const getCurrElementInner = (tree) => {
   for (let catalog of tree.catalogs) {
-    const chapter = catalog.chapters.find(v => v.selected === true);
+    const lesson = catalog.lessons.find(v => v.selected === true);
 
-    if (chapter) {
-      return { catalog, chapter };
+    if (lesson) {
+      return { catalog, lesson };
     }
   }
 
@@ -22,14 +22,13 @@ const getCurrElementInner = (tree) => {
 export const initialSelectedChapter = (tree) => {
   let catalog = tree.catalogs.find(v => v.status === LESSON_STATUS.LEARNING);
   if (catalog) {
-    const chapter = catalog.chapters.find(v => v.status === LESSON_STATUS.LEARNING);
-
-    chapter && (chapter.selected = true);
+    const lesson = catalog.lessons.find(v => v.status === LESSON_STATUS.LEARNING || v.status === LESSON_STATUS.PREPARE_LEARNING);
+    lesson && (lesson.selected = true);
   } else {
     catalog = tree.catalogs.find(v => v.status === LESSON_STATUS.PREPARE_LEARNING);
     if (catalog) {
-      const chapter = catalog.chapters.find(v => v.status === LESSON_STATUS.PREPARE_LEARNING);
-      chapter && (chapter.selected =true);
+      const lesson = catalog.lessons.find(v => v.status === LESSON_STATUS.LEARNING || v.status === LESSON_STATUS.PREPARE_LEARNING);
+      lesson && (lesson.selected = true);
     }
   }
 }
@@ -43,10 +42,10 @@ export const useLessonTree = () => {
     const resp = await getLessonTree();
     const treeData = resp.data;
 
-    let chapterCount = 0;    
+    let lessonCount = 0;    
     const catalogs = treeData.lessons.map(l => {
-      const chapters = l.children.map(c => {
-        chapterCount += 1;
+      const lessons = l.children.map(c => {
+        lessonCount += 1;
         return {
           id: c.lesson_id,
           name: c.lesson_name,
@@ -59,7 +58,7 @@ export const useLessonTree = () => {
         id: l.lesson_id,
         name: l.lesson_name,
         status: l.status,
-        chapters,
+        lessons,
         collapse: false,
       };
     });
@@ -67,7 +66,7 @@ export const useLessonTree = () => {
     const newTree = {
       catalogCount: catalogs.length,
       catalogs,
-      chapterCount,
+      lessonCount,
     }
     initialSelectedChapter(newTree);
     setTree(newTree);
@@ -84,14 +83,14 @@ export const useLessonTree = () => {
 
       const nextState = produce(old, draft => {
         draft.catalogs.forEach(c => {
-          c.chapters.forEach(ch => {
-            if (ch.id === chapterId) {
+          c.lessons.forEach(ls => {
+            if (ls.id === chapterId) {
               if (forceExpand) {
                 c.collapse = false;
               }
-              ch.selected = true;
+              ls.selected = true;
             } else {
-              ch.selected = false;
+              ls.selected = false;
             }
           });
         });
@@ -111,12 +110,12 @@ export const useLessonTree = () => {
       return
     }
 
-    const c = ca.chapters[0];
-    if (!c) {
+    const l = ca.lessons[0];
+    if (!l) {
       return
     }
 
-    setCurr(c.id);
+    setCurr(l.id);
   }
 
   const toggleCollapse = ({id}) => {
@@ -141,7 +140,7 @@ export const useLessonTree = () => {
     return catalog.status === LESSON_STATUS.LEARNING || catalog.status === LESSON_STATUS.COMPLETED || catalog.status === LESSON_STATUS.PREPARE_LEARNING;
   }
 
-  const getRunningElement = () => {
+  const getCurrElement = () => {
     if (!tree) {
       return null;
     }
@@ -156,14 +155,14 @@ export const useLessonTree = () => {
       }
       const nextState = produce(old, draft => {
         draft.catalogs.forEach(c => {
-          const idx = c.chapters.findIndex(ch => ch.id === id)
+          const idx = c.lessons.findIndex(ch => ch.id === id)
           if (idx !== -1) {
-            const newC = {
-              ...c.chapters[idx],
+            const newLesson = {
+              ...c.lessons[idx],
               ...val
             };
-            newC.canLearning = checkChapterCanLearning(newC);
-            c.chapters[idx] = newC;
+            newLesson.canLearning = checkChapterCanLearning(newLesson);
+            c.lessons[idx] = newLesson;
           }
         })
       });
@@ -173,5 +172,5 @@ export const useLessonTree = () => {
   }
 
 
-  return { tree, loadTree, treeLoaded, setCurr, setCurrCatalog, toggleCollapse, catalogAvailable, getRunningElement, updateChapter }
+  return { tree, loadTree, treeLoaded, setCurr, setCurrCatalog, toggleCollapse, catalogAvailable, getCurrElement, updateChapter }
 }

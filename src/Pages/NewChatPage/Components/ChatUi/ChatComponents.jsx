@@ -13,7 +13,7 @@ import { AppContext } from 'Components/AppContext.js';
 import styles from './ChatComponents.module.scss';
 import { INPUT_TYPE } from '@constants/courseContants.js';
 import { useCurrentLesson } from '@stores/useCurrentLesson';
-import { LESSON_STATUS } from "constants/courseContants.js";
+import { INPUT_SUB_TYPE, LESSON_STATUS } from "constants/courseContants.js";
 
 const USER_ROLE = {
   TEACHER: '老师',
@@ -132,7 +132,7 @@ const convertInputModal = ({ type, content }) => {
   }
 }
 
-const ChatComponents = forwardRef(({ className, lessonUpdate, catalogId }, ref) => {
+const ChatComponents = forwardRef(({ className, lessonUpdate, onGoChapter = (id) => {}, chapterId }, ref) => {
   const { messages, appendMsg, setTyping, updateMsg, resetList } = useMessages(
     [],
   );
@@ -153,14 +153,14 @@ const ChatComponents = forwardRef(({ className, lessonUpdate, catalogId }, ref) 
   }, [currLessonId])
 
   useEffect(() => {
-    if (!catalogId) {
+    if (!chapterId) {
       return
     }
 
     (async () => {
       resetList();
 
-      const resp = await getLessonStudyRecord(catalogId);
+      const resp = await getLessonStudyRecord(chapterId);
       const records = resp.data.records;
       const ui = resp.data.ui;
 
@@ -186,7 +186,7 @@ const ChatComponents = forwardRef(({ className, lessonUpdate, catalogId }, ref) 
       }
 
     })();  
-  }, [catalogId]);
+  }, [chapterId]);
 
 
   const lessonUpdateResp = (response) => {
@@ -234,6 +234,16 @@ const ChatComponents = forwardRef(({ className, lessonUpdate, catalogId }, ref) 
           lessonUpdateResp(response);
         } else if (response.type === 'chapter_update') {
           const { status, lesson_id: lessonId }  = response.content;
+          if (status === LESSON_STATUS.PREPARE_LEARNING) {
+            setInputModal({
+              type: INPUT_TYPE.CONTINUE,
+              subType: INPUT_SUB_TYPE.NEXT_CHAPTER,
+              props: {
+                label: '继续',
+                lessonId,
+              }
+            });
+          }
         }
       } catch (e) { }
 
@@ -257,104 +267,22 @@ const ChatComponents = forwardRef(({ className, lessonUpdate, catalogId }, ref) 
     nextStep({ chatId, lessonId, type, val });
   }
 
-  function renderMessageContent(msg) {
+  const renderMessageContent = (msg) => {
     const { content, type } = msg;
     if (content === undefined) {
-      return null;
+      return <></>;
     }
-    if (type === "calling") {
-      return (
-        <div
-          style={{
-            display: "flex",
-            alignItems: "center",
-            padding: "10px",
-            borderRadius: "5px",
-            fontWeight: "bold",
-            minWidth: "25%",
-            backgroundColor: "#f7f8fa",
-          }}
-        >
-          <div>
-            <div style={{ display: "flex", alignItems: "center", gap: "8px" }}>
-              <img
-                style={{ display: content.isProcessed ? "block" : "none" }}
-                src={require("@Assets/success_chat.png")}
-                alt=""
-              />
-              <img
-                className="chat_loading"
-                style={{ display: content.isProcessed ? "none" : "block" }}
-                src={require("@Assets/loading_chat.png")}
-                alt=""
-              />
-              {content.isProcessed
-                ? "操作执行完成"
-                : `正在执行操作:“${content.function_name}”`}
-            </div>
-          </div>
-        </div>
-      );
-    } else if (type === "text") {
+    if (type === 'text') {
       return <MarkdownBubble content={content} />;
     } 
-    return null;
+    return <></>;
   }
 
-  function loadMsg(chatId, newMessages) {
-    resetList()
-    if (newMessages === undefined || newMessages === null) {
-      return;
-    }
-    
-    newMessages.forEach((item) => {
-      if (item.role === "学生") {
-        appendMsg({
-          id: genUuid(),
-          type: "text",
-          content: { type: "text", text: item.content },
-          position: "right",
-        });
-      } else {
-        if (item.function_call) {
-          appendMsg({
-            content: {
-              function_name: item.function_call,
-              type: "calling",
-              isProcessed: true,
-            },
-            _id: genUuid(),
-          });
-        } else {
-          appendMsg({
-            _id: genUuid(),
-            type: "text",
-            content: { type: "text", text: item.content },
-            position: "left",
-            user: { avatar: require("@Assets/chat/sunner_icon.jpg") },
-          });
-        }
-      }
-    });
-
-  }
-  function checkResetListComplete() {
-    return new Promise((resolve) => {
-      const intervalId = setInterval(() => {
-        if (messages !== undefined && messages !== null && messages.length === 0) {
-          clearInterval(intervalId);
-          resolve();
-        }
-      }, 100);
-    });
-  }
 
   useImperativeHandle(ref, () => ({
-    loadMsg,
   }));
 
-  function renderBeforeMessageList() {
-    // message 的长度等于 0 的时候 返回 Empty 组件
+  const renderBeforeMessageList = () => {
     if (messages.length === 0) {
       return (
         <div
@@ -369,6 +297,18 @@ const ChatComponents = forwardRef(({ className, lessonUpdate, catalogId }, ref) 
       );
     }
   }
+
+  const onChatInputSend = (type, val) => {
+    if (type === INPUT_TYPE.ACTION) {
+      const { action } = val;
+      if (action === INPUT_SUB_TYPE.NEXT_CHAPTER) {
+        onGoChapter?.(val.lessonId);
+      }
+    } else {
+      handleSend(type, val);
+    }
+  }
+
   return (
     <div className={styles.chatComponents} >
       <Chat
@@ -390,7 +330,7 @@ const ChatComponents = forwardRef(({ className, lessonUpdate, catalogId }, ref) 
           type={inputModal.type}
           props={inputModal.props}
           onSend={(type, val) => {
-            handleSend(type, val);
+            onChatInputSend(type, val);
           }}
         />
       }

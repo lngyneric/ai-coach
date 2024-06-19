@@ -9,7 +9,7 @@ export const ChatInputButton = ({ type, subType, props, onClick }) => {
         onClick?.(INPUT_TYPE.CONTINUE, props.value);
       }
       if (type === INPUT_SUB_TYPE.NEXT_CHAPTER) {
-        onClick?.(INPUT_TYPE.ACTION, { action: INPUT_SUB_TYPE.NEXT_CHAPTER });
+        onClick?.(INPUT_TYPE.ACTION, { action: INPUT_SUB_TYPE.NEXT_CHAPTER, lessonId: props.lessonId });
       }
     }}>{props.label}</MainButton>
   );
