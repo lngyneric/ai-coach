@@ -1,0 +1,12 @@
+.ChatUi {
+  display: flex;
+  height: 100%;
+  background: #F8FBFC;
+  flex: 1 1 auto;
+  justify-content: center;
+
+  .chatComponents {
+    width: 100%;
+    max-width: 1000px;
+  }
+}

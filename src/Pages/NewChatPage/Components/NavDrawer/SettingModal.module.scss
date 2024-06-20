@@ -24,6 +24,10 @@
     .loginLeft {
       display: flex;
       align-items: center;
+
+      .userName {
+        margin-left: 5px;
+      }
     }
   }
 }

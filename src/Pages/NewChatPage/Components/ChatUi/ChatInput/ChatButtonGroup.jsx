@@ -12,7 +12,7 @@ export const ChatButtonGroup = ({ buttons = [], onClick = (val) => {} }) => {
           return <MainButton
             key={e.id}
             onClick={() => onClick?.(e.value)}
-            style={{maxWidth: '100px', margin: '10px 0 0 10px'}}
+            style={{margin: '10px 0 0 10px'}}
           >{e.label}</MainButton>
         })
       }

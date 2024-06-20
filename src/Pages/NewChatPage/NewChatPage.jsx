@@ -92,7 +92,7 @@ const NewChatPage = (props) => {
         }
       }
     })();
-  }, [treeLoaded]);
+  }, [treeLoaded, cid]);
 
   useEffect(() => {
     setCurr(lessonId); 
@@ -104,7 +104,6 @@ const NewChatPage = (props) => {
   };
 
   const onLessonUpdate = (val) => {
-    console.log('onLessonUpdate', val);
     updateChapter(val.id, val);
   }
 

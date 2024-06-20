@@ -31,7 +31,7 @@ export const ChatInputArea = ({ type = 'text', subType = null, props = {}, onSen
       {
         type === INPUT_TYPE.BUTTONS &&
         <div className={styles.buttonGroupWrapper}>
-          <ChatButtonGroup buttons={props.buttons} onClick={(val) => { onSend?.(INPUT_TYPE.BUTTONS, val) }} />
+          <ChatButtonGroup buttons={props.buttons} onClick={(val) => { onSend?.(INPUT_TYPE.SELECT, val) }} />
         </div>
       }
     </div>

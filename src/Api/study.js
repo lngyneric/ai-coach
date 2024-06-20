@@ -4,7 +4,6 @@ import request from "../Service/Request";
 import { tokenStore } from "Service/storeUtil.js";
 
 export const runScript = (course_id, lesson_id, input, input_type, onMessage) => {
-  console.log('runScript')
   const source = new SSE(`${process.env.REACT_APP_BASEURL || ''}/api/study/run?token=${tokenStore.get()}`, {
     headers: { "Content-Type": "application/json" },
     payload: JSON.stringify({
@@ -33,7 +32,6 @@ export const runScript = (course_id, lesson_id, input, input_type, onMessage) =>
   };
   source.onopen = (event) => {
     console.log("连接成功");
-    console.log(event);
   };
   source.close = () => {
     console.log("主动断开连接");

@@ -7,8 +7,21 @@
     background-color: var(--color-4);
   }
 
-
   :global(.MessageList) {
     padding-bottom: 50px;
+
+    :global(.Bubble.text ol), :global(.Bubble.text ul) {
+      white-space: normal;
+      padding-inline-start: 1em;
+      margin: 0;
+
+      :global(li) {
+        margin-top: 0.5em;
+
+        :global(p) {
+          display: block;
+        }
+      }
+    }
   }
 }

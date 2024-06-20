@@ -1,22 +1,18 @@
 import ChatComponents from "./ChatComponents.jsx";
+import styles from './ChatUi.module.scss';
 
 /**
  * 聊天区的整体画布
  */
 export const ChatUi = ({ catalogId, lessonUpdate, onGoChapter }) => {
   return (
-    <div
-      style={{
-        height: "100%",
-        background: "#F8FBFC",
-        flex: "1 1 auto",
-      }}
-    >
+    <div className={styles.ChatUi} >
       {
         <ChatComponents
           chapterId={catalogId}
           lessonUpdate={lessonUpdate}
           onGoChapter={onGoChapter}
+          className={styles.chatComponents}
         />
       }
     </div>

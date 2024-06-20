@@ -7,8 +7,7 @@ export const ChatInputButton = ({ type, subType, props, onClick }) => {
     <MainButton className={styles.continueBtn} width="90%" onClick={() => {
       if (!subType) {
         onClick?.(INPUT_TYPE.CONTINUE, props.value);
-      }
-      if (type === INPUT_SUB_TYPE.NEXT_CHAPTER) {
+      } else if (subType === INPUT_SUB_TYPE.NEXT_CHAPTER) {
         onClick?.(INPUT_TYPE.ACTION, { action: INPUT_SUB_TYPE.NEXT_CHAPTER, lessonId: props.lessonId });
       }
     }}>{props.label}</MainButton>

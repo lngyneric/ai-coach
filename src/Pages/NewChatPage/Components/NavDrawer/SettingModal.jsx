@@ -1,3 +1,4 @@
+import { Avatar } from 'antd';
 import PopupModal from '@Components/PopupModal';
 import styles from './SettingModal.module.scss';
 import classNames from 'classnames';
@@ -7,7 +8,7 @@ import { Modal } from 'antd';
 
 
 export const SettingModal = ({ open, onClose, style }) => {
-  const { hasLogin, logout } = useUserStore((state) => state);
+  const { hasLogin, userInfo, logout } = useUserStore((state) => state);
   const [modal] = Modal.useModal();
 
   const onLogoutClick = async () => {
@@ -20,14 +21,15 @@ export const SettingModal = ({ open, onClose, style }) => {
       onClose();
     }
   };
+  const avatar = userInfo?.avatar || require("@Assets/newchat/light/user.png");
 
   return (
     <PopupModal open={open} onClose={onClose} wrapStyle={{ ...style}}>
       <div className={styles.settingModal}>
         <div className={classNames(styles.settingRow, styles.loginRow)}>
           <div className={styles.loginLeft}>
-            <div>x</div>
-            <div>未登录</div>
+            <Avatar src={avatar} size={20} />
+            <div className={styles.userName}>{hasLogin ? userInfo?.name || '' : '未登录' }</div>
           </div>
           <img src={Icon1} alt="" />
         </div>
