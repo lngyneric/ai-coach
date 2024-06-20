@@ -145,6 +145,7 @@ const ChatComponents = forwardRef(({ className, lessonUpdate, onGoChapter = (id)
   const [inputDisabled, setInputDisabled] = useState(false);
   const { userInfo } = useContext(AppContext);
   const [inputModal, setInputModal] = useState(null);
+  const [lessonEnd, setLessonEnd] = useState(false);
 
   useEffect(() => {
     if (!lessonId) {
@@ -207,6 +208,9 @@ const ChatComponents = forwardRef(({ className, lessonUpdate, onGoChapter = (id)
     runScript(chatId, lessonId, val, type, (response) => {
       try {
         if (response.type === "text") {
+          if (lessonEnd) {
+            return
+          }
           if (lastMsg !== null && lastMsg.type === "text") {
             lastMsg.content = lastMsg.content + response.content;
             updateMsg(lastMsg.id, lastMsg);
@@ -234,6 +238,9 @@ const ChatComponents = forwardRef(({ className, lessonUpdate, onGoChapter = (id)
           lessonUpdateResp(response);
         } else if (response.type === 'chapter_update') {
           const { status, lesson_id: lessonId }  = response.content;
+          if (status === LESSON_STATUS.COMPLETED) {
+            setLessonEnd(true);
+          }
           if (status === LESSON_STATUS.PREPARE_LEARNING) {
             setInputModal({
               type: INPUT_TYPE.CONTINUE,

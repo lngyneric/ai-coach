@@ -79,7 +79,7 @@ const authRoutes = [
 const routes = [
   {
     path: "/",
-    element: <Navigate to={authRoutes[0].path}></Navigate>,
+    element: <Navigate to='/newchat'></Navigate>,
   },
   {
     path: "/",
