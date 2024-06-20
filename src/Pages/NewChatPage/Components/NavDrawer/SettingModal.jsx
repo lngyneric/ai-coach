@@ -6,7 +6,7 @@ import Icon1 from '@Assets/newchat/light/icon16-edit.svg';
 import { useUserStore } from '@stores/useUserStore.js';
 import { Modal } from 'antd';
 
-import IndustrySettingModal from '../Settings/IndustrySettingModal.jsx';
+import JobSettingModal from '../Settings/JobSettingModal.jsx';
 import { useState } from 'react';
 
 export const SettingModal = ({ open, onClose, style }) => {
@@ -32,7 +32,7 @@ export const SettingModal = ({ open, onClose, style }) => {
 
   return (
     <>
-      <IndustrySettingModal open={tryOpen} onClose={() => { setTryOpen(false)}} onOk={(v) => onTryOk(v)} />
+      <JobSettingModal open={tryOpen} onClose={() => { setTryOpen(false)}} onOk={(v) => onTryOk(v)} />
 
       <PopupModal open={open} onClose={onClose} wrapStyle={{ ...style}}>
         <div className={styles.settingModal}>

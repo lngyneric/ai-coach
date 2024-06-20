@@ -1,19 +1,18 @@
+import styles from "./JobSettingModal.module.scss";
 import SettingBaseModal from "./SettingBaseModal.jsx";
 import { Form, Input } from "antd";
-import styles from "./IndustrySettingModal.module.scss";
 
-export const IndustrySettingModal = ({
+export const JobSettingModal = ({
   open,
   onClose,
-  onOk = ({ industry }) => {},
+  onOk = ({ job }) => {},
   initialValues = {},
 }) => {
   const [form] = Form.useForm();
-
   const onOkClick = async () => {
     try {
-      const { industry } = await form.validateFields();
-      onOk?.({ industry });
+      const { job } = await form.validateFields();
+      onOk?.({ job });
     } catch (ex) {}
   };
 
@@ -22,26 +21,21 @@ export const IndustrySettingModal = ({
       open={open}
       onClose={onClose}
       onOk={onOkClick}
-      title='行业'
+      title="职业"
     >
-      <Form
-        form={form}
-        initialValues={initialValues}>
+      <Form form={form} initialValues={initialValues}>
         <Form.Item
-          name="industry"
+          name="job"
           rules={[
-            { required: true, message: "请输入行业" },
+            { required: true, message: "请输入职业" },
             { type: "string", max: 20, message: "长度不能超过20" },
           ]}
         >
-          <Input
-            placeholder="请输入行业"
-            className={styles.sfInput}
-          />
+          <Input placeholder="请输入职业" className={styles.sfInput} />
         </Form.Item>
       </Form>
     </SettingBaseModal>
   );
 };
 
-export default IndustrySettingModal;
+export default JobSettingModal;

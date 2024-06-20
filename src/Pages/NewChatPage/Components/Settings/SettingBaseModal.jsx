@@ -9,8 +9,9 @@ export const SettingBaseModal = ({
   children,
   onOk,
   onClose,
-  defaultWidth = "360px",
-  header = <div className={styles.header}>设置</div>,
+  defaultWidth = '360px',
+  title='设置',
+  header = <div className={styles.header}>{title}</div>,
 }) => {
   const { inMobile } = useUiLayoutStore((state) => state);
 
