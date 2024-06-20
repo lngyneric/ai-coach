@@ -11,7 +11,7 @@ import NavDrawer from "./Components/NavDrawer/NavDrawer.jsx";
 import ChatUi from "./Components/ChatUi/ChatUi.jsx";
 import LoginModal from "./Components/Login/LoginModal.jsx";
 import { useLessonTree } from "./hooks/useLessonTree.js";
-import { useCurrentLesson } from "@stores/useCurrentLesson";
+import { useCurrentLessonStore } from "@stores/useCurrentLessonStore";
 
 // 课程学习主页面
 const NewChatPage = (props) => {
@@ -32,7 +32,7 @@ const NewChatPage = (props) => {
   } = useLessonTree();
   const { cid } = useParams();
   const [currCatalogId, setCurrCatalogId] = useState(cid);
-  const { lessonId, changeCurrLesson } = useCurrentLesson((state) => state);
+  const { lessonId, changeCurrLesson } = useCurrentLessonStore((state) => state);
   const navigate = useNavigate();
 
   // 判断布局类型

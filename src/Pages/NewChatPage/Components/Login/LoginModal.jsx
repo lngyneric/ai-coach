@@ -8,7 +8,6 @@ import { calModalWidth } from '@Utils/common.js';
 import { genCheckCode } from '@Api/user.js';
 import { useUserStore } from '@stores/useUserStore.js';
 
-
 const MODAL_STEP = {
   MOBILE: 1,
   CODE: 2,
@@ -17,7 +16,6 @@ const MODAL_STEP = {
 
 export const LoginModal = ({ open, width, onClose=() => {}, inMobile = false }) => {
   const [mobile, setMobile] = useState('');
-  // const [countDown, setCountDown] = useState(0);
   const [mobileForm] = Form.useForm();
   const [codeForm] = Form.useForm();
   const [verifyCodeForm] = Form.useForm();
@@ -122,7 +120,6 @@ export const LoginModal = ({ open, width, onClose=() => {}, inMobile = false }) 
                 className={classNames(styles.mobile, styles.sfInput)}
                 placeholder="请输入手机号"
                 maxLength={11}
-                name="mobile"
                 onPressEnter={onMobileFormOkClick}
               />
             </Form.Item>
@@ -144,7 +141,6 @@ export const LoginModal = ({ open, width, onClose=() => {}, inMobile = false }) 
                 className={classNames(styles.smsCode, styles.sfInput)}
                 maxLength={4}
                 placeholder='请输入4位短信验证码'
-                name="smsCode"
                 onPressEnter={onCodeFormkOkClick}
               />
             </Form.Item>
@@ -165,11 +161,16 @@ export const LoginModal = ({ open, width, onClose=() => {}, inMobile = false }) 
           >
             <Form.Item 
               name="checkCode"
+              rules={[
+                {
+                  required: true,
+                  message: "请输入4位验证码",
+                },
+              ]}
             >
               <Input
                 className={classNames(styles.verifyCode, styles.sfInput)}
                 maxLength={4}
-                name="checkCode"
                 placeholder='请输入4位验证码'
                 onPressEnter={onVerifyCodeFormOkClick}
               />

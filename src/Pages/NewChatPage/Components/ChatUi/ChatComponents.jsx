@@ -1,26 +1,27 @@
-import "@chatui/core/dist/index.css";
-import Chat, { Bubble, useMessages } from "@chatui/core";
-import { Button, Image } from "antd";
+import '@chatui/core/dist/index.css';
+import Chat, { Bubble, useMessages } from '@chatui/core';
+import { Button, Image } from 'antd';
 import {
   useEffect,
   forwardRef,
   useImperativeHandle,
   useState,
   useContext,
-} from "react";
-import { runScript, getLessonStudyRecord } from "@Api/study";
-import { ReactMarkdown } from "react-markdown/lib/react-markdown";
-import { Prism as SyntaxHighlighter } from "react-syntax-highlighter";
-import { vscDarkPlus } from "react-syntax-highlighter/dist/esm/styles/prism";
-import { CopyOutlined } from "@ant-design/icons";
-import { genUuid } from "@Utils/common.js";
-import ChatInputArea from "./ChatInput/ChatInputArea.jsx";
-import { AppContext } from "Components/AppContext.js";
-import styles from "./ChatComponents.module.scss";
-import { INPUT_TYPE, RESP_EVENT_TYPE } from "@constants/courseContants.js";
-import { useCurrentLesson } from "@stores/useCurrentLesson";
-import { INPUT_SUB_TYPE, LESSON_STATUS } from "constants/courseContants.js";
+} from 'react';
+import { runScript, getLessonStudyRecord } from '@Api/study';
+import { ReactMarkdown } from 'react-markdown/lib/react-markdown';
+import { Prism as SyntaxHighlighter } from 'react-syntax-highlighter';
+import { vscDarkPlus } from 'react-syntax-highlighter/dist/esm/styles/prism';
+import { CopyOutlined } from '@ant-design/icons';
+import { genUuid } from '@Utils/common.js';
+import ChatInputArea from './ChatInput/ChatInputArea.jsx';
+import { AppContext } from 'Components/AppContext.js';
+import styles from './ChatComponents.module.scss';
+import { INPUT_TYPE, RESP_EVENT_TYPE } from '@constants/courseContants.js';
+import { useCurrentLessonStore } from '@stores/useCurrentLessonStore.js';
+import { INPUT_SUB_TYPE, LESSON_STATUS } from 'constants/courseContants.js';
 import classNames from 'classnames';
+import { useUserStore } from '@stores/useUserStore.js';
 
 const USER_ROLE = {
   TEACHER: "老师",
@@ -145,16 +146,16 @@ const ChatComponents = forwardRef(
       useMessages([]);
 
     const [chatId, setChatId] = useState("");
-    const { lessonId: currLessonId, changeCurrLesson } = useCurrentLesson(
+    const { lessonId: currLessonId, changeCurrLesson } = useCurrentLessonStore(
       (state) => state
     );
     const [lessonId, setLessonId] = useState(null);
-    const [scriptId, setScriptId] = useState("");
     const [inputPlaceholder, setInputPlaceholder] = useState("请输入");
     const [inputDisabled, setInputDisabled] = useState(false);
     const { userInfo } = useContext(AppContext);
     const [inputModal, setInputModal] = useState(null);
     const [_, setLessonEnd] = useState(false);
+    const { hasLogin } = useUserStore((state) => state);
 
     useEffect(() => {
       if (!lessonId) {
@@ -199,7 +200,7 @@ const ChatComponents = forwardRef(
           setInputModal(nextInputModal);
         }
       })();
-    }, [chapterId]);
+    }, [chapterId, hasLogin]);
 
     const lessonUpdateResp = (response, isEnd) => {
       const content = response.content;
