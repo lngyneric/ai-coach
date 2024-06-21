@@ -1,17 +1,18 @@
-import { useEffect, useState } from "react";
-import { useParams, useNavigate } from "react-router-dom";
-import classNames from "classnames";
-import styles from "./NewChatPage.module.scss";
-import { Skeleton } from "antd";
-import { calcFrameLayout } from "@constants/uiContants.js";
-import { useUiLayoutStore } from "@stores/useUiLayoutStore.js";
-import { useUserStore } from "@stores/useUserStore.js";
-import { AppContext } from "@Components/AppContext.js";
-import NavDrawer from "./Components/NavDrawer/NavDrawer.jsx";
-import ChatUi from "./Components/ChatUi/ChatUi.jsx";
-import LoginModal from "./Components/Login/LoginModal.jsx";
-import { useLessonTree } from "./hooks/useLessonTree.js";
-import { useCurrentLessonStore } from "@stores/useCurrentLessonStore";
+import { useEffect, useState } from 'react';
+import { useParams, useNavigate } from 'react-router-dom';
+import classNames from 'classnames';
+import styles from './NewChatPage.module.scss';
+import { Skeleton } from 'antd';
+import { calcFrameLayout } from '@constants/uiContants.js';
+import { useUiLayoutStore } from '@stores/useUiLayoutStore.js';
+import { useUserStore } from '@stores/useUserStore.js';
+import { AppContext } from '@Components/AppContext.js';
+import NavDrawer from './Components/NavDrawer/NavDrawer.jsx';
+import ChatUi from './Components/ChatUi/ChatUi.jsx';
+import LoginModal from './Components/Login/LoginModal.jsx';
+import { useLessonTree } from './hooks/useLessonTree.js';
+import { useCourseStore } from '@stores/useCourseStore';
+import Tu from './Tu.jsx';
 
 // 课程学习主页面
 const NewChatPage = (props) => {
@@ -19,34 +20,35 @@ const NewChatPage = (props) => {
   const [loginModalOpen, setLoginModalOpen] = useState(false);
   const [firstLoading, setFirstLoading] = useState(true);
   const { hasLogin, userInfo, checkLogin } = useUserStore((state) => state);
+  const [ensureLogin, setEnsureLogin] = useState(false);
   const {
     tree,
     loadTree,
-    treeLoaded,
+    reloadTree,
     setCurr,
     setCurrCatalog,
     toggleCollapse,
-    catalogAvailable,
-    getCurrElement,
+    checkChapterAvaiableStatic,
+    getCurrElementStatic,
     updateChapter,
   } = useLessonTree();
   const { cid } = useParams();
-  const [currCatalogId, setCurrCatalogId] = useState(cid);
-  const { lessonId, changeCurrLesson } = useCurrentLessonStore((state) => state);
+  const [ currChapterId, setCurrChapterId] = useState(null);
+  const { lessonId, changeCurrLesson } = useCourseStore((state) => state);
   const navigate = useNavigate();
 
   // 判断布局类型
   useEffect(() => {
     const onResize = () => {
-      const frameLayout = calcFrameLayout("#root");
-      console.log("frame layout: ", frameLayout);
+      const frameLayout = calcFrameLayout('#root');
+      console.log('frame layout: ', frameLayout);
       updateFrameLayout(frameLayout);
     };
-    window.addEventListener("resize", onResize);
+    window.addEventListener('resize', onResize);
     onResize();
 
     return () => {
-      window.removeEventListener("resize", onResize);
+      window.removeEventListener('resize', onResize);
     };
   }, []);
 
@@ -56,46 +58,50 @@ const NewChatPage = (props) => {
 
   useEffect(() => {
     (async () => {
-      if (firstLoading) {
-        await checkLogin();
-      }
-      await loadData();
-      setFirstLoading(false);
+      await checkLogin();
+      setEnsureLogin(true);
     })();
-  }, [hasLogin]);
+  }, []);
 
   // 定位当前课程位置
   useEffect(() => {
-    if (!tree || !treeLoaded) {
-      return;
+    if (!ensureLogin) {
+      return
     }
     (async () => {
+      let nextTree;
+      if (firstLoading || !tree) {
+        nextTree = await loadTree();
+      } else {
+        nextTree = await reloadTree();
+      }
+      setFirstLoading(false);
       if (cid) {
-        if (!catalogAvailable(cid)) {
+        if (!checkChapterAvaiableStatic(nextTree, cid)) {
           navigate('/newchat');
         } else {
-          setCurrCatalog(cid);
-          const data = getCurrElement();
+          setCurrChapterId(cid);
+          const data = getCurrElementStatic(nextTree);
+
           if (data.lesson) {
             setCurr(data.lesson.id);
           }
         }
       } else {
-        const data = getCurrElement();
+        const data = getCurrElementStatic(nextTree);
         if (!data) {
           return;
         }
-        if (data.lesson) {
-          setCurr(data.lesson.id);
-          changeCurrLesson(data.lesson.id);
-          setCurrCatalogId(data.catalog.id);
+
+        if (data.catalog) {
+          navigate(`/newchat/${data.catalog.id}`)
         }
       }
     })();
-  }, [treeLoaded, cid]);
+  }, [hasLogin, cid, ensureLogin]);
 
   useEffect(() => {
-    setCurr(lessonId); 
+    setCurr(lessonId);
   }, [lessonId]);
 
   const onLoginModalClose = async () => {
@@ -105,19 +111,23 @@ const NewChatPage = (props) => {
 
   const onLessonUpdate = (val) => {
     updateChapter(val.id, val);
-  }
+  };
 
   const onGoChapter = (id) => {
     navigate(`/newchat/${id}`);
+  };
+
+  const onPurchased = () => {
+    reloadTree();
   }
 
   return (
     <div className={classNames(styles.newChatPage)}>
       <AppContext.Provider
-        value={{ frameLayout, hasLogin, userInfo, theme: "" }}
+        value={{ frameLayout, hasLogin, userInfo, theme: '' }}
       >
         <Skeleton
-          style={{ width: "100%", height: "100%" }}
+          style={{ width: '100%', height: '100%' }}
           loading={firstLoading}
           paragraph={true}
           rows={10}
@@ -127,11 +137,14 @@ const NewChatPage = (props) => {
             lessonTree={tree}
             onLessonCollapse={toggleCollapse}
           />
-          <ChatUi
-            catalogId={currCatalogId}
-            lessonUpdate={onLessonUpdate}
-            onGoChapter={onGoChapter}
-          />
+          {
+            <ChatUi
+              chapterId={currChapterId}
+              lessonUpdate={onLessonUpdate}
+              onGoChapter={onGoChapter}
+              onPurchased={onPurchased}
+            />
+          }
         </Skeleton>
         {loginModalOpen && (
           <LoginModal

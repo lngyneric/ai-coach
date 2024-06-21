@@ -4,15 +4,16 @@ import styles from './ChatUi.module.scss';
 /**
  * 聊天区的整体画布
  */
-export const ChatUi = ({ catalogId, lessonUpdate, onGoChapter }) => {
+export const ChatUi = ({ chapterId, lessonUpdate, onGoChapter, onPurchased }) => {
   return (
     <div className={styles.ChatUi} >
       {
         <ChatComponents
-          chapterId={catalogId}
+          chapterId={chapterId}
           lessonUpdate={lessonUpdate}
           onGoChapter={onGoChapter}
           className={styles.chatComponents}
+          onPurchased={onPurchased}
         />
       }
     </div>

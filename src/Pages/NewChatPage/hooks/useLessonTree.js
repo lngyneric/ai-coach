@@ -7,7 +7,17 @@ export const checkChapterCanLearning = ({ status }) => {
   return status === LESSON_STATUS.LEARNING || status === LESSON_STATUS.COMPLETED || status === LESSON_STATUS.PREPARE_LEARNING;
 }
 
-const getCurrElementInner = (tree) => {
+export const checkChapterAvaiableStatic = (tree, chapterId) => {
+    const catalog = tree.catalogs.find(v => v.id === chapterId)
+
+    if (!catalog) {
+      return false;
+    }
+
+    return catalog.status === LESSON_STATUS.LEARNING || catalog.status === LESSON_STATUS.COMPLETED || catalog.status === LESSON_STATUS.PREPARE_LEARNING;
+}
+
+const getCurrElementStatic = (tree) => {
   for (let catalog of tree.catalogs) {
     const lesson = catalog.lessons.find(v => v.selected === true);
 
@@ -35,10 +45,8 @@ export const initialSelectedChapter = (tree) => {
 
 export const useLessonTree = () => {
   const [tree, setTree] = useState(null);
-  const [treeLoaded, setLoadedTree] = useState(false);
 
-  const loadTree = async () => {
-    setLoadedTree(false);
+  const loadTreeInner = async () => {
     const resp = await getLessonTree();
     const treeData = resp.data;
 
@@ -68,9 +76,42 @@ export const useLessonTree = () => {
       catalogs,
       lessonCount,
     }
+
+    return newTree;
+  }
+
+  // 用于重新加载课程树，但保持临时状态
+  const reloadTree = async () => {
+    const newTree = await loadTreeInner();
+    const { lesson } = getCurrElementStatic(tree);
+
+    // 设置当前选中的元素
+    newTree.catalogs.forEach(c => {
+      c.lessons.forEach(ls => {
+        if (ls.id === lesson.id) {
+          ls.selected = true;
+        }
+      })
+    });
+
+    // 设置 collapse 状态
+    newTree.catalogs.forEach(c => {
+      const oldCatalog = tree.catalogs.find(oc => oc.id === c.id);
+
+      if (oldCatalog) {
+        c.collapse = oldCatalog.collapse;
+      }
+    });
+
+    setTree(newTree);
+
+    return newTree;
+  }
+
+  const loadTree = async () => {
+    const newTree = await loadTreeInner();
     initialSelectedChapter(newTree);
     setTree(newTree);
-    setLoadedTree(true);
 
     return newTree;
   }
@@ -130,22 +171,12 @@ export const useLessonTree = () => {
     setTree(nextState);
   }
 
-  const catalogAvailable = (catalogId) => {
-    const catalog = tree.catalogs.find(v => v.id === catalogId)
-
-    if (!catalog) {
-      return false;
-    }
-
-    return catalog.status === LESSON_STATUS.LEARNING || catalog.status === LESSON_STATUS.COMPLETED || catalog.status === LESSON_STATUS.PREPARE_LEARNING;
-  }
-
   const getCurrElement = () => {
     if (!tree) {
       return null;
     }
 
-    return getCurrElementInner(tree);
+    return getCurrElementStatic(tree);
   }
 
   const updateChapter = (id, val) => {
@@ -172,5 +203,5 @@ export const useLessonTree = () => {
   }
 
 
-  return { tree, loadTree, treeLoaded, setCurr, setCurrCatalog, toggleCollapse, catalogAvailable, getCurrElement, updateChapter }
+  return { tree, loadTree, reloadTree, setCurr, setCurrCatalog, toggleCollapse, checkChapterAvaiableStatic, getCurrElement, updateChapter, getCurrElementStatic }
 }

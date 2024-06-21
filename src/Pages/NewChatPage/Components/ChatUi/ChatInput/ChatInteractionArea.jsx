@@ -11,16 +11,16 @@ import classNames from 'classnames';
 
 const INTERACTION_DISPLAY_MAP = {
   [INTERACTION_TYPE.CONTINUE]: INTERACTION_DISPLAY_TYPE.BUTTON,
-  [INTERACTION_TYPE.TEXT]: INTERACTION_DISPLAY_TYPE.TEXT,
+  [INTERACTION_TYPE.INPUT]: INTERACTION_DISPLAY_TYPE.TEXT,
   [INTERACTION_TYPE.BUTTONS]: INTERACTION_DISPLAY_TYPE.BUTTONS,
   [INTERACTION_TYPE.NEXT_CHAPTER]: INTERACTION_DISPLAY_TYPE.BUTTON,
   [INTERACTION_TYPE.PHONE]: INTERACTION_DISPLAY_TYPE.TEXT,
   [INTERACTION_TYPE.CHECKCODE]: INTERACTION_DISPLAY_TYPE.TEXT,
+  [INTERACTION_TYPE.ORDER]: INTERACTION_DISPLAY_TYPE.BUTTON,
 };
 
 export const ChatInteractionArea = ({
   type = INTERACTION_DISPLAY_TYPE.TEXT,
-  subType = null,
   props = {},
   onSend = (type, val) => {},
   disabled = false,
@@ -34,29 +34,36 @@ export const ChatInteractionArea = ({
     onSend?.(type, val);
   }
 
+  const genRenderControl = () => {
+    switch (displayType) {
+      case INTERACTION_DISPLAY_TYPE.BUTTON:
+        return <ChatInputButton
+          disabled={disabled}
+          type={type}
+          props={props}
+          onClick={onSendFunc}
+        />
+      case INTERACTION_DISPLAY_TYPE.TEXT:
+        return <ChatInputText
+          disabled={disabled}
+          type={type}
+          props={props}
+          onClick={onSendFunc}
+        />
+      case INTERACTION_DISPLAY_TYPE.BUTTONS:
+        return <ChatButtonGroup
+          disabled={disabled}
+          type={type}
+          props={props}
+          onClick={onSendFunc}
+        />
+      default:
+        return <></>
+    }
+  }
   return (
     <div className={classNames(styles.chatInputArea, disabled && styles.disabled)}>
-      {displayType === INTERACTION_DISPLAY_TYPE.BUTTON && (
-        <ChatInputButton
-          type={type}
-          props={props}
-          onClick={onSendFunc}
-        />
-      )}
-      {displayType === INTERACTION_DISPLAY_TYPE.TEXT && (
-        <ChatInputText
-          type={type}
-          props={props}
-          onClick={onSendFunc}
-        />
-      )}
-      {displayType === INTERACTION_DISPLAY_TYPE.BUTTONS && (
-        <ChatButtonGroup
-          type={type}
-          props={props}
-          onClick={onSendFunc}
-        />
-      )}
+      {genRenderControl()}
     </div>
   );
 };

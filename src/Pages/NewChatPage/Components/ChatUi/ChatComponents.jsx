@@ -17,7 +17,7 @@ import { genUuid } from '@Utils/common.js';
 import ChatInteractionArea from './ChatInput/ChatInteractionArea.jsx';
 import { AppContext } from 'Components/AppContext.js';
 import styles from './ChatComponents.module.scss';
-import { useCurrentLessonStore } from '@stores/useCurrentLessonStore.js';
+import { useCourseStore } from '@stores/useCourseStore.js';
 import {
   LESSON_STATUS,
   INTERACTION_TYPE,
@@ -27,6 +27,8 @@ import {
 } from 'constants/courseContants.js';
 import classNames from 'classnames';
 import { useUserStore } from '@stores/useUserStore.js';
+import { fixMarkdown, fixMarkdownStream } from '@Utils/markdownUtils.js';
+import { testPurchaseOrder } from '@Api/order.js';
 
 const USER_ROLE = {
   TEACHER: '老师',
@@ -72,7 +74,6 @@ const MarkdownBubble = (props) => {
                   onCopy={() => {
                     onCopy(children);
                   }}
-                  renderInline={true}
                 ></SyntaxHighlighter>
               </div>
             ) : (
@@ -115,7 +116,7 @@ const convertMessage = (serverMessage, userInfo) => {
   return createMessage({
     id: serverMessage.id,
     role: serverMessage.script_role,
-    content: serverMessage.script_content,
+    content: fixMarkdown(serverMessage.script_content),
     type: serverMessage.script_type,
     userInfo,
   });
@@ -124,14 +125,23 @@ const convertMessage = (serverMessage, userInfo) => {
 const convertEventInputModal = ({ type, content }) => {
   if (type === RESP_EVENT_TYPE.INPUT) {
     return {
-      type: INTERACTION_TYPE.TEXT,
+      type,
       props: { content },
     };
-  } else if (type === RESP_EVENT_TYPE.BUTTONS) {
+  } else if (type === RESP_EVENT_TYPE.BUTTONS || type === RESP_EVENT_TYPE.ORDER) {
+    const getBtnType = (type) => {
+      if (type === INTERACTION_TYPE.ORDER) {
+        return INTERACTION_TYPE.ORDER;
+      }
+
+      return INTERACTION_TYPE.CONTINUE;
+    }
+    const btnType = getBtnType(type);
+
     const buttons = content.buttons;
     if (buttons.length === 1) {
       return {
-        type: INTERACTION_TYPE.CONTINUE,
+        type: btnType,
         props: {
           ...buttons[0],
         },
@@ -146,12 +156,12 @@ const convertEventInputModal = ({ type, content }) => {
 };
 
 const ChatComponents = forwardRef(
-  ({ className, lessonUpdate, onGoChapter = (id) => {}, chapterId }, ref) => {
+  ({ className, lessonUpdate, onGoChapter = (id) => {}, chapterId, onPurchased }, ref) => {
     const { messages, appendMsg, setTyping, updateMsg, resetList } =
       useMessages([]);
 
     const [chatId, setChatId] = useState('');
-    const { lessonId: currLessonId, changeCurrLesson } = useCurrentLessonStore(
+    const { lessonId: currLessonId, changeCurrLesson,  } = useCourseStore(
       (state) => state
     );
     const [lessonId, setLessonId] = useState(null);
@@ -160,7 +170,9 @@ const ChatComponents = forwardRef(
     const { userInfo } = useContext(AppContext);
     const [inputModal, setInputModal] = useState(null);
     const [_, setLessonEnd] = useState(false);
-    const { hasLogin } = useUserStore((state) => state);
+    const { hasLogin, checkLogin } = useUserStore((state) => state);
+    const [loginInChat, setLoginInChat] = useState(false);
+    const [loaded, setLoaded] = useState(false);
 
     useEffect(() => {
       if (!lessonId) {
@@ -168,44 +180,74 @@ const ChatComponents = forwardRef(
       }
     }, [currLessonId]);
 
-    useEffect(() => {
+    const resetAndLoadData = async () => {
       if (!chapterId) {
         return;
       }
 
+      setLessonEnd(false);
+      resetList();
+
+      const resp = await getLessonStudyRecord(chapterId);
+      const records = resp.data.records;
+      const ui = resp.data.ui;
+
+      if (!records || records.length === 0) {
+        handleSend(INTERACTION_OUTPUT_TYPE.START, '');
+        return;
+      }
+
+      records.forEach((v, i) => {
+        const newMessage = convertMessage(
+          {
+            ...v,
+            id: i,
+            script_type: 'text',
+          },
+          userInfo
+        );
+        appendMsg(newMessage);
+      });
+
+      setLessonId(records[records.length - 1].lesson_id);
+
+      if (ui) {
+        const nextInputModal = convertEventInputModal(ui);
+        setInputModal(nextInputModal);
+      }
+    }
+
+    useEffect(() => {
+      if (!loaded) {
+        return
+      }
       (async () => {
-        setLessonEnd(false);
-        resetList();
-
-        const resp = await getLessonStudyRecord(chapterId);
-        const records = resp.data.records;
-        const ui = resp.data.ui;
-
-        if (!records || records.length === 0) {
-          handleSend(INTERACTION_OUTPUT_TYPE.START, '');
-          return;
-        }
-
-        records.forEach((v, i) => {
-          const newMessage = convertMessage(
-            {
-              ...v,
-              id: i,
-              script_type: 'text',
-            },
-            userInfo
-          );
-          appendMsg(newMessage);
-        });
-
-        setLessonId(records[records.length - 1].lesson_id);
-
-        if (ui) {
-          const nextInputModal = convertEventInputModal(ui);
-          setInputModal(nextInputModal);
-        }
+        await resetAndLoadData();
       })();
-    }, [chapterId, hasLogin]);
+    }, [chapterId]);
+
+    useEffect(() => {
+      // 在聊天内登录，不重新加载数据
+      if ((hasLogin && loginInChat) || !loaded) {
+        return
+      }
+
+      (async () => {
+        await resetAndLoadData();
+      })();
+    }, [hasLogin]);
+
+    useEffect(() => {
+      if (loaded) {
+        return;
+      }
+      (async () => {
+        await resetAndLoadData();
+        setLoaded(true);
+      })();
+    }, [loaded])
+
+    
 
     const lessonUpdateResp = (response, isEnd) => {
       const content = response.content;
@@ -245,7 +287,8 @@ const ChatComponents = forwardRef(
               return;
             }
             if (lastMsg !== null && lastMsg.type === 'text') {
-              lastMsg.content = lastMsg.content + response.content;
+              const currText = fixMarkdownStream(lastMsg.content, response.content);
+              lastMsg.content = lastMsg.content + currText;
               updateMsg(lastMsg.id, lastMsg);
             } else {
               const id = genUuid();
@@ -263,11 +306,14 @@ const ChatComponents = forwardRef(
               return;
             }
             lastMsg = null;
-          } else if (response.type === RESP_EVENT_TYPE.INPUT) {
+          } else if (response.type === RESP_EVENT_TYPE.INPUT
+            || response.type === RESP_EVENT_TYPE.PHONE
+            || response.type === RESP_EVENT_TYPE.CHECKCODE
+          ) {
             if (isEnd) {
               return;
             }
-            setInputModal({ type: INTERACTION_TYPE.TEXT, props: response });
+            setInputModal({ type: response.type, props: response });
             setInputDisabled(false);
           } else if (response.type === RESP_EVENT_TYPE.BUTTONS) {
             if (isEnd) {
@@ -278,13 +324,15 @@ const ChatComponents = forwardRef(
             setInputDisabled(false);
           } else if (response.type === RESP_EVENT_TYPE.LESSON_UPDATE) {
             lessonUpdateResp(response, isEnd);
+          } else if (response.type === RESP_EVENT_TYPE.ORDER) {
+            setInputModal(convertEventInputModal(response))
+            setInputDisabled(false);
           } else if (response.type === RESP_EVENT_TYPE.CHAPTER_UPDATE) {
             const { status, lesson_id: lessonId } = response.content;
             if (status === LESSON_STATUS.COMPLETED) {
               setLessonEnd(true);
             }
             if (status === LESSON_STATUS.PREPARE_LEARNING) {
-              setInputDisabled(false);
               setInputModal({
                 type: INTERACTION_TYPE.NEXT_CHAPTER,
                 props: {
@@ -292,17 +340,22 @@ const ChatComponents = forwardRef(
                   lessonId,
                 },
               });
+              setInputDisabled(false);
             }
           }
         } catch (e) {}
       });
     };
 
-    function handleSend(type, val) {
-      if ((type === INTERACTION_OUTPUT_TYPE.TEXT)
-          && (type === INTERACTION_OUTPUT_TYPE.SELECT) 
-          && (type === INTERACTION_OUTPUT_TYPE.CONTINUE) 
-          && val.trim()) {
+    const handleSend = async (type, val) => {
+      if (
+        (type === INTERACTION_OUTPUT_TYPE.TEXT
+        || type === INTERACTION_OUTPUT_TYPE.SELECT
+        || type === INTERACTION_OUTPUT_TYPE.CONTINUE
+        || type === INTERACTION_OUTPUT_TYPE.PHONE
+        || type === INTERACTION_OUTPUT_TYPE.CHECKCODE)
+        && val.trim()
+      ) {
         const message = createMessage({
           role: USER_ROLE.STUDENT,
           content: val,
@@ -310,6 +363,11 @@ const ChatComponents = forwardRef(
           userInfo,
         });
         appendMsg(message);
+
+        if (type === INTERACTION_OUTPUT_TYPE.CHECKCODE) {
+          setLoginInChat(true);
+          await checkLogin();
+        }
       }
       setInputDisabled(true);
       setTyping(true);
@@ -344,9 +402,16 @@ const ChatComponents = forwardRef(
       }
     };
 
-    const onChatInputSend = (type, val) => {
+    const onChatInputSend = async (type, val) => {
       if (type === INTERACTION_OUTPUT_TYPE.NEXT_CHAPTER) {
         onGoChapter?.(val.lessonId);
+        return;
+      }
+
+      if (type === INTERACTION_OUTPUT_TYPE.ORDER) {
+        await testPurchaseOrder({ orderId: val.orderId }); 
+        setInputDisabled(true);
+        onPurchased?.();
         return;
       }
 

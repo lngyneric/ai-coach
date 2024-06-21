@@ -16,7 +16,7 @@ export const INTERACTION_DISPLAY_TYPE = {
 // 交互组件的功能类型
 export const INTERACTION_TYPE = {
   CONTINUE: 'continue', // 下一步
-  TEXT: 'text', // 文本
+  INPUT: 'input', // 文本
   BUTTONS: 'buttons', // 按钮组
   NEXT_CHAPTER: 'next_chapter', // 跳转下一章
   PHONE: 'phone', // 输入手机号
@@ -33,6 +33,7 @@ export const INTERACTION_OUTPUT_TYPE = {
   NEXT_CHAPTER: 'next_chapter', // 跳转下一章
   PHONE: 'phone', // 输入手机号
   CHECKCODE: 'checkcode', // 输入短信验证码
+  ORDER: 'order', // 购买课程
 }
 
 // sse 返回的事件类型
@@ -43,6 +44,10 @@ export const RESP_EVENT_TYPE = {
   INPUT: 'input',
   LESSON_UPDATE: 'lesson_update',
   CHAPTER_UPDATE: 'chapter_update',
+  PHONE: 'phone', // 输入手机号
+  CHECKCODE: 'checkcode', // 输入短信验证码
+  ORDER: 'order', // 购买课程
+  ORDER_SUCCESS: 'order_success',
 }
 
 // chat message 类型
