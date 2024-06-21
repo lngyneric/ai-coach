@@ -14,7 +14,12 @@ const MODAL_STEP = {
   VERIFY_CODE: 3,
 };
 
-export const LoginModal = ({ open, width, onClose=() => {}, inMobile = false }) => {
+export const LoginModal = ({
+  open,
+  width,
+  onClose = () => {},
+  inMobile = false,
+}) => {
   const [mobile, setMobile] = useState('');
   const [mobileForm] = Form.useForm();
   const [codeForm] = Form.useForm();
@@ -24,16 +29,15 @@ export const LoginModal = ({ open, width, onClose=() => {}, inMobile = false }) 
   const [aggrement, setAggrement] = useState(false);
   const [verifyCodeImage, setVerifyCodeImage] = useState('');
   const [messageApi, contextHolder] = message.useMessage();
-  const login = useUserStore(state => state.login);
-  
+  const login = useUserStore((state) => state.login);
 
   const updateVerifyCodeImage = async (mobile) => {
     const { data: res } = await genCheckCode(mobile);
     setVerifyCodeImage(res.img);
- }
- const clearVerifyCode = () => {
+  };
+  const clearVerifyCode = () => {
     verifyCodeForm.resetFields();
- }
+  };
 
   const onMobileFormOkClick = async () => {
     try {
@@ -42,7 +46,7 @@ export const LoginModal = ({ open, width, onClose=() => {}, inMobile = false }) 
       updateVerifyCodeImage(mobile);
       setModalStep(MODAL_STEP.VERIFY_CODE);
     } catch {}
-  }
+  };
 
   const onResendClick = async () => {
     try {
@@ -50,7 +54,7 @@ export const LoginModal = ({ open, width, onClose=() => {}, inMobile = false }) 
       setModalStep(MODAL_STEP.VERIFY_CODE);
       clearVerifyCode();
     } catch {}
-  }
+  };
 
   const onVerifyCodeFormOkClick = async () => {
     try {
@@ -62,7 +66,7 @@ export const LoginModal = ({ open, width, onClose=() => {}, inMobile = false }) 
         messageApi.error(ex.message);
       }
     } catch {}
-  }
+  };
 
   const onCodeFormkOkClick = async () => {
     try {
@@ -71,10 +75,10 @@ export const LoginModal = ({ open, width, onClose=() => {}, inMobile = false }) 
       console.log('onCodeFromkOkClick', aggrement, smsCode);
       if (!aggrement) {
         messageApi.error('请勾选同意协议');
-        return
+        return;
       }
 
-      await login({ mobile, smsCode});
+      await login({ mobile, smsCode });
       messageApi.success('登录成功');
       onClose?.();
     } catch {}
@@ -111,7 +115,7 @@ export const LoginModal = ({ open, width, onClose=() => {}, inMobile = false }) 
               rules={[
                 {
                   required: true,
-                  message: "请输入11位手机号",
+                  message: '请输入11位手机号',
                   pattern: /^1\d{10}$/,
                 },
               ]}
@@ -132,7 +136,7 @@ export const LoginModal = ({ open, width, onClose=() => {}, inMobile = false }) 
               rules={[
                 {
                   required: true,
-                  message: "请输入4位短信验证码",
+                  message: '请输入4位短信验证码',
                   pattern: /^\d{4}$/,
                 },
               ]}
@@ -140,7 +144,7 @@ export const LoginModal = ({ open, width, onClose=() => {}, inMobile = false }) 
               <Input
                 className={classNames(styles.smsCode, styles.sfInput)}
                 maxLength={4}
-                placeholder='请输入4位短信验证码'
+                placeholder="请输入4位短信验证码"
                 onPressEnter={onCodeFormkOkClick}
               />
             </Form.Item>
@@ -150,42 +154,49 @@ export const LoginModal = ({ open, width, onClose=() => {}, inMobile = false }) 
               type="link"
               onClick={onResendClick}
             >
-              {countDown > 0 ? `重新发送(${countDown})` : "重新发送"}
+              {countDown > 0 ? `重新发送(${countDown})` : '重新发送'}
             </Button>
           </Form>
         )}
-        { modalStep === MODAL_STEP.VERIFY_CODE && (
-          <Form
-            className={styles.verifyCodeForm}
-            form={verifyCodeForm}
-          >
-            <Form.Item 
+        {modalStep === MODAL_STEP.VERIFY_CODE && (
+          <Form className={styles.verifyCodeForm} form={verifyCodeForm}>
+            <Form.Item
               name="checkCode"
               rules={[
                 {
                   required: true,
-                  message: "请输入4位验证码",
+                  message: '请输入4位验证码',
                 },
               ]}
             >
               <Input
                 className={classNames(styles.verifyCode, styles.sfInput)}
                 maxLength={4}
-                placeholder='请输入4位验证码'
+                placeholder="请输入4位验证码"
                 onPressEnter={onVerifyCodeFormOkClick}
               />
             </Form.Item>
-            <img className={styles.vcodeImage} src={verifyCodeImage} alt="图形验证码" onClick={() => {updateVerifyCodeImage(mobile)}} />
+            <img
+              className={styles.vcodeImage}
+              src={verifyCodeImage}
+              alt="图形验证码"
+              onClick={() => {
+                updateVerifyCodeImage(mobile);
+              }}
+            />
           </Form>
         )}
         <div
           className={styles.verifyCodeWrapper}
-          style={{ display: "none" }}
+          style={{ display: 'none' }}
         ></div>
       </div>
       <div className={styles.aggrementWrapper}>
         <div className={styles.aggrement}>
-          <Checkbox className={styles.checkbox} onChange={(e) => setAggrement(e.target.checked)} >
+          <Checkbox
+            className={styles.checkbox}
+            onChange={(e) => setAggrement(e.target.checked)}
+          >
             我已阅读并同意
             <a
               className={styles.link}
@@ -212,6 +223,6 @@ export const LoginModal = ({ open, width, onClose=() => {}, inMobile = false }) 
       {contextHolder}
     </Modal>
   );
-}
+};
 
 export default LoginModal;

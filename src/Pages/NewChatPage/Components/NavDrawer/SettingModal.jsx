@@ -21,25 +21,33 @@ export const SettingModal = ({ open, onClose, style }) => {
       onOk: async () => {
         await logout();
         onClose();
-      }
+      },
     });
   };
-  const avatar = userInfo?.avatar || require("@Assets/newchat/light/user.png");
+  const avatar = userInfo?.avatar || require('@Assets/newchat/light/user.png');
 
   const onTryOk = (val) => {
     console.log('onTryOk', val);
-  }
+  };
 
   return (
     <>
-      <JobSettingModal open={tryOpen} onClose={() => { setTryOpen(false)}} onOk={(v) => onTryOk(v)} />
+      <JobSettingModal
+        open={tryOpen}
+        onClose={() => {
+          setTryOpen(false);
+        }}
+        onOk={(v) => onTryOk(v)}
+      />
 
-      <PopupModal open={open} onClose={onClose} wrapStyle={{ ...style}}>
+      <PopupModal open={open} onClose={onClose} wrapStyle={{ ...style }}>
         <div className={styles.settingModal}>
           <div className={classNames(styles.settingRow, styles.loginRow)}>
             <div className={styles.loginLeft}>
               <Avatar src={avatar} size={20} />
-              <div className={styles.userName}>{hasLogin ? userInfo?.name || '' : '未登录' }</div>
+              <div className={styles.userName}>
+                {hasLogin ? userInfo?.name || '' : '未登录'}
+              </div>
             </div>
             <img src={Icon1} alt="" />
           </div>
@@ -48,32 +56,36 @@ export const SettingModal = ({ open, onClose, style }) => {
             <img
               className={styles.rowIcon}
               src={require('@Assets/newchat/light/icon16-account.png')}
-              alt=''
+              alt=""
             />
           </div>
-          <div className={styles.settingRow} onClick={() => { setTryOpen(true)}}>
+          <div
+            className={styles.settingRow}
+            onClick={() => {
+              setTryOpen(true);
+            }}
+          >
             <div>会员管理</div>
             <img
               className={styles.rowIcon}
               src={require('@Assets/newchat/light/icon16-member.png')}
-              alt=''
+              alt=""
             />
           </div>
-          {
-            hasLogin &&
+          {hasLogin && (
             <div className={styles.settingRow} onClick={onLogoutClick}>
               <div>退出登录</div>
               <img
                 className={styles.rowIcon}
                 src={require('@Assets/newchat/light/icon16-member.png')}
-                alt=''
+                alt=""
               />
             </div>
-          }
+          )}
         </div>
       </PopupModal>
     </>
-  )
-}
+  );
+};
 
 export default SettingModal;

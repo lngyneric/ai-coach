@@ -6,23 +6,33 @@ export const LESSON_STATUS = {
   COMPLETED: '已完成',
 }
 
-// 输入交互类型
-export const INPUT_TYPE = {
-  START: 'START',
+// 交互组件的展示类型
+export const INTERACTION_DISPLAY_TYPE = {
+  BUTTON: 'button', // 下一步
+  TEXT: 'text', // 文本
+  BUTTONS: 'buttons', // 按钮组
+}
+
+// 交互组件的功能类型
+export const INTERACTION_TYPE = {
   CONTINUE: 'continue', // 下一步
   TEXT: 'text', // 文本
   BUTTONS: 'buttons', // 按钮组
-  ACTION: 'action', // 特殊动作
-  SELECT: 'select',
-};
-
-// 输入交互的子类型
-export const INPUT_SUB_TYPE = {
   NEXT_CHAPTER: 'next_chapter', // 跳转下一章
+  PHONE: 'phone', // 输入手机号
+  CHECKCODE: 'checkcode', // 输入验证码
+  ORDER: 'order', // 购买课程
 }
 
-export const INPUT_ACTION_TYPE = {
+// 交互组件的输出类型
+export const INTERACTION_OUTPUT_TYPE = {
+  START: 'start', // lesson 开始
+  CONTINUE: 'continue', // 下一步
+  TEXT: 'text', // 文本
+  SELECT: 'select', // 多项选择
   NEXT_CHAPTER: 'next_chapter', // 跳转下一章
+  PHONE: 'phone', // 输入手机号
+  CHECKCODE: 'checkcode', // 输入短信验证码
 }
 
 // sse 返回的事件类型
@@ -33,4 +43,9 @@ export const RESP_EVENT_TYPE = {
   INPUT: 'input',
   LESSON_UPDATE: 'lesson_update',
   CHAPTER_UPDATE: 'chapter_update',
+}
+
+// chat message 类型
+export const CHAT_MESSAGE_TYPE ={
+  TEXT: 'text',
 }

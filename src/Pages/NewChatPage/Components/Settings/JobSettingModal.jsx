@@ -1,6 +1,6 @@
-import styles from "./JobSettingModal.module.scss";
-import SettingBaseModal from "./SettingBaseModal.jsx";
-import { Form, Input } from "antd";
+import styles from './JobSettingModal.module.scss';
+import SettingBaseModal from './SettingBaseModal.jsx';
+import { Form, Input } from 'antd';
 
 export const JobSettingModal = ({
   open,
@@ -27,8 +27,8 @@ export const JobSettingModal = ({
         <Form.Item
           name="job"
           rules={[
-            { required: true, message: "请输入职业" },
-            { type: "string", max: 20, message: "长度不能超过20" },
+            { required: true, message: '请输入职业' },
+            { type: 'string', max: 20, message: '长度不能超过20' },
           ]}
         >
           <Input placeholder="请输入职业" className={styles.sfInput} />

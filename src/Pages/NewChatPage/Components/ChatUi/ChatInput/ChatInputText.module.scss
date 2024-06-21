@@ -1,14 +1,21 @@
-.inputForm {
-  width: 100%;
+.inputTextWrapper {
   display: flex;
-  flex-flow: row nowrap;
+  justify-content: center;
+  padding: 0 10px 30px 10px;
 
-  .inputWrapper {
-    flex: 1 1 auto;
-  }
+  .inputForm {
+    width: 100%;
+    display: flex;
+    flex-flow: row nowrap;
 
-  .subBtn {
-    margin-left: 10px;
-    width: 100px;
+    .inputWrapper {
+      flex: 1 1 auto;
+    }
+
+    .subBtn {
+      margin-left: 10px;
+      width: 100px;
+    }
   }
 }
+

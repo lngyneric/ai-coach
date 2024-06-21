@@ -14,21 +14,26 @@ import { Prism as SyntaxHighlighter } from 'react-syntax-highlighter';
 import { vscDarkPlus } from 'react-syntax-highlighter/dist/esm/styles/prism';
 import { CopyOutlined } from '@ant-design/icons';
 import { genUuid } from '@Utils/common.js';
-import ChatInputArea from './ChatInput/ChatInputArea.jsx';
+import ChatInteractionArea from './ChatInput/ChatInteractionArea.jsx';
 import { AppContext } from 'Components/AppContext.js';
 import styles from './ChatComponents.module.scss';
-import { INPUT_TYPE, RESP_EVENT_TYPE } from '@constants/courseContants.js';
 import { useCurrentLessonStore } from '@stores/useCurrentLessonStore.js';
-import { INPUT_SUB_TYPE, LESSON_STATUS } from 'constants/courseContants.js';
+import {
+  LESSON_STATUS,
+  INTERACTION_TYPE,
+  INTERACTION_OUTPUT_TYPE,
+  RESP_EVENT_TYPE,
+  CHAT_MESSAGE_TYPE,
+} from 'constants/courseContants.js';
 import classNames from 'classnames';
 import { useUserStore } from '@stores/useUserStore.js';
 
 const USER_ROLE = {
-  TEACHER: "老师",
-  STUDENT: "学生",
+  TEACHER: '老师',
+  STUDENT: '学生',
 };
 
-const robotAvatar = require("@Assets/chat/sunner_icon.jpg");
+const robotAvatar = require('@Assets/chat/sunner_icon.jpg');
 
 const MarkdownBubble = (props) => {
   const onCopy = (content) => {
@@ -41,12 +46,12 @@ const MarkdownBubble = (props) => {
         children={props.content}
         components={{
           code({ node, inline, className, children, ...props }) {
-            const match = /language-(\w+)/.exec(className || "");
+            const match = /language-(\w+)/.exec(className || '');
             return !inline && match ? (
               <div
                 className="markdown-code_block"
                 style={{
-                  position: "relative",
+                  position: 'relative',
                 }}
               >
                 <Button
@@ -59,7 +64,7 @@ const MarkdownBubble = (props) => {
                 ></Button>
                 <SyntaxHighlighter
                   {...props}
-                  children={String(children).replace(/\n$/, "")}
+                  children={String(children).replace(/\n$/, '')}
                   style={vscDarkPlus}
                   language={match[1]}
                   showLineNumbers={true}
@@ -85,15 +90,15 @@ const MarkdownBubble = (props) => {
   );
 };
 
-const createMessage = ({ id = 0, role, content, type = "text", userInfo }) => {
+const createMessage = ({ id = 0, role, content, type = 'text', userInfo }) => {
   const mid = id || genUuid();
 
-  const position = role === USER_ROLE.STUDENT ? "right" : "left";
+  const position = role === USER_ROLE.STUDENT ? 'right' : 'left';
 
   let avatar = robotAvatar;
 
   if (role === USER_ROLE.STUDENT) {
-    avatar = userInfo?.avatar || require("@Assets/newchat/light/user.png");
+    avatar = userInfo?.avatar || require('@Assets/newchat/light/user.png');
   }
   return {
     _id: mid,
@@ -116,17 +121,17 @@ const convertMessage = (serverMessage, userInfo) => {
   });
 };
 
-const convertInputModal = ({ type, content }) => {
-  if (type === "input") {
+const convertEventInputModal = ({ type, content }) => {
+  if (type === RESP_EVENT_TYPE.INPUT) {
     return {
-      type: INPUT_TYPE.TEXT,
+      type: INTERACTION_TYPE.TEXT,
       props: { content },
     };
-  } else if (type === INPUT_TYPE.BUTTONS) {
+  } else if (type === RESP_EVENT_TYPE.BUTTONS) {
     const buttons = content.buttons;
     if (buttons.length === 1) {
       return {
-        type: INPUT_TYPE.CONTINUE,
+        type: INTERACTION_TYPE.CONTINUE,
         props: {
           ...buttons[0],
         },
@@ -145,12 +150,12 @@ const ChatComponents = forwardRef(
     const { messages, appendMsg, setTyping, updateMsg, resetList } =
       useMessages([]);
 
-    const [chatId, setChatId] = useState("");
+    const [chatId, setChatId] = useState('');
     const { lessonId: currLessonId, changeCurrLesson } = useCurrentLessonStore(
       (state) => state
     );
     const [lessonId, setLessonId] = useState(null);
-    const [inputPlaceholder, setInputPlaceholder] = useState("请输入");
+    const [inputPlaceholder, setInputPlaceholder] = useState('请输入');
     const [inputDisabled, setInputDisabled] = useState(false);
     const { userInfo } = useContext(AppContext);
     const [inputModal, setInputModal] = useState(null);
@@ -177,7 +182,7 @@ const ChatComponents = forwardRef(
         const ui = resp.data.ui;
 
         if (!records || records.length === 0) {
-          handleSend(INPUT_TYPE.START, '');
+          handleSend(INTERACTION_OUTPUT_TYPE.START, '');
           return;
         }
 
@@ -186,7 +191,7 @@ const ChatComponents = forwardRef(
             {
               ...v,
               id: i,
-              script_type: "text",
+              script_type: 'text',
             },
             userInfo
           );
@@ -196,7 +201,7 @@ const ChatComponents = forwardRef(
         setLessonId(records[records.length - 1].lesson_id);
 
         if (ui) {
-          const nextInputModal = convertInputModal(ui);
+          const nextInputModal = convertEventInputModal(ui);
           setInputModal(nextInputModal);
         }
       })();
@@ -214,7 +219,7 @@ const ChatComponents = forwardRef(
         nextStep({
           chatId,
           lessonId: content.lesson_id,
-          type: INPUT_TYPE.START,
+          type: INTERACTION_OUTPUT_TYPE.START,
           val: '',
         });
       }
@@ -239,7 +244,7 @@ const ChatComponents = forwardRef(
             if (isEnd) {
               return;
             }
-            if (lastMsg !== null && lastMsg.type === "text") {
+            if (lastMsg !== null && lastMsg.type === 'text') {
               lastMsg.content = lastMsg.content + response.content;
               updateMsg(lastMsg.id, lastMsg);
             } else {
@@ -262,14 +267,15 @@ const ChatComponents = forwardRef(
             if (isEnd) {
               return;
             }
-            setInputModal({ type: INPUT_TYPE.TEXT, props: response });
+            setInputModal({ type: INTERACTION_TYPE.TEXT, props: response });
             setInputDisabled(false);
           } else if (response.type === RESP_EVENT_TYPE.BUTTONS) {
             if (isEnd) {
               return;
             }
-            const model = convertInputModal(response);
+            const model = convertEventInputModal(response);
             setInputModal(model);
+            setInputDisabled(false);
           } else if (response.type === RESP_EVENT_TYPE.LESSON_UPDATE) {
             lessonUpdateResp(response, isEnd);
           } else if (response.type === RESP_EVENT_TYPE.CHAPTER_UPDATE) {
@@ -280,10 +286,9 @@ const ChatComponents = forwardRef(
             if (status === LESSON_STATUS.PREPARE_LEARNING) {
               setInputDisabled(false);
               setInputModal({
-                type: INPUT_TYPE.CONTINUE,
-                subType: INPUT_SUB_TYPE.NEXT_CHAPTER,
+                type: INTERACTION_TYPE.NEXT_CHAPTER,
                 props: {
-                  label: "下一章",
+                  label: '下一章',
                   lessonId,
                 },
               });
@@ -294,19 +299,20 @@ const ChatComponents = forwardRef(
     };
 
     function handleSend(type, val) {
-      console.log("handle send", type, val);
-      if (type === "text" && val.trim()) {
+      if ((type === INTERACTION_OUTPUT_TYPE.TEXT)
+          && (type === INTERACTION_OUTPUT_TYPE.SELECT) 
+          && (type === INTERACTION_OUTPUT_TYPE.CONTINUE) 
+          && val.trim()) {
         const message = createMessage({
           role: USER_ROLE.STUDENT,
           content: val,
-          type: "text",
+          type: CHAT_MESSAGE_TYPE.TEXT,
           userInfo,
         });
         appendMsg(message);
-      } else if (type === "button") {
       }
+      setInputDisabled(true);
       setTyping(true);
-      setInputModal(null);
       nextStep({ chatId, lessonId, type, val });
     }
 
@@ -315,7 +321,7 @@ const ChatComponents = forwardRef(
       if (content === undefined) {
         return <></>;
       }
-      if (type === "text") {
+      if (type === CHAT_MESSAGE_TYPE.TEXT) {
         return <MarkdownBubble content={content} />;
       }
       return <></>;
@@ -329,9 +335,9 @@ const ChatComponents = forwardRef(
           <div
             className="full-height chat-ui_container"
             style={{
-              display: "flex",
-              alignItems: "center",
-              justifyContent: "center",
+              display: 'flex',
+              alignItems: 'center',
+              justifyContent: 'center',
             }}
           ></div>
         );
@@ -339,14 +345,12 @@ const ChatComponents = forwardRef(
     };
 
     const onChatInputSend = (type, val) => {
-      if (type === INPUT_TYPE.ACTION) {
-        const { action } = val;
-        if (action === INPUT_SUB_TYPE.NEXT_CHAPTER) {
-          onGoChapter?.(val.lessonId);
-        }
-      } else {
-        handleSend(type, val);
+      if (type === INTERACTION_OUTPUT_TYPE.NEXT_CHAPTER) {
+        onGoChapter?.(val.lessonId);
+        return;
       }
+
+      handleSend(type, val);
     };
 
     return (
@@ -364,11 +368,11 @@ const ChatComponents = forwardRef(
           }}
         />
 
-        {true && inputModal && (
-          <ChatInputArea
+        {inputModal && (
+          <ChatInteractionArea
             type={inputModal.type}
-            subType={inputModal.subType}
             props={inputModal.props}
+            disabled={inputDisabled}
             onSend={(type, val) => {
               onChatInputSend(type, val);
             }}

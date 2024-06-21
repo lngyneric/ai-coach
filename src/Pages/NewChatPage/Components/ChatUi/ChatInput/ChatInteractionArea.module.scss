@@ -1,0 +1,14 @@
+.chatInputArea {
+  position: absolute;
+  bottom: 0;
+  left: 0;
+  width: 100%;
+  background: transparent;
+  padding: 10px 0;
+  transition: opacity 0.5s ease;
+  opacity: 1;
+
+  &.disabled {
+    opacity: 0.5;
+  }
+}
