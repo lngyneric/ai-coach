@@ -1,4 +1,4 @@
-import { useState } from 'react';
+import { useState, useEffect } from 'react';
 import { message } from 'antd';
 import { Input } from '@chatui/core';
 import SubButton from 'Components/SubButton.jsx';
@@ -30,6 +30,16 @@ export const ChatInputText = ({ onClick, type, disabled = false }) => {
     onClick?.(outputType, input.trim());
     setInput('');
   };
+
+  useEffect(() => {
+    if (!disabled) {
+      const elem = document.querySelector(`.${styles.inputField}`)
+
+      if (elem) {
+        elem.focus();
+      }
+    }
+  });
 
   return (
     <div className={styles.inputTextWrapper}>

@@ -10,7 +10,7 @@ export const CourseCatalog = ({
   lessons = [],
   collapse = false,
   onCollapse = ({ id }) => {},
-  onChapterSelect = ({ id }) => {},
+  onLessonSelect = ({ id }) => {},
 }) => {
   return (
     <div
@@ -34,7 +34,7 @@ export const CourseCatalog = ({
               status={e.status}
               selected={e.selected}
               canLearning={e.canLearning}
-              onSelect={onChapterSelect}
+              onSelect={onLessonSelect}
             />
           );
         })}

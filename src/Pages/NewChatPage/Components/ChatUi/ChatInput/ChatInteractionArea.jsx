@@ -8,6 +8,7 @@ import ChatButtonGroup from './ChatButtonGroup.jsx';
 import ChatInputButton from './ChatInputButton.jsx';
 import { INTERACTION_TYPE, INTERACTION_DISPLAY_TYPE } from '@constants/courseContants.js';
 import classNames from 'classnames';
+import { useState } from 'react';
 
 const INTERACTION_DISPLAY_MAP = {
   [INTERACTION_TYPE.CONTINUE]: INTERACTION_DISPLAY_TYPE.BUTTON,
@@ -31,7 +32,7 @@ export const ChatInteractionArea = ({
     if (disabled) {
       return;
     }
-    onSend?.(type, val);
+    onSend?.(type, val, props.scriptId);
   }
 
   const genRenderControl = () => {

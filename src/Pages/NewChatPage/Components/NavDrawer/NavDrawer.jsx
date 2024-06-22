@@ -55,8 +55,8 @@ const NavDrawer = ({
   showType = NAV_SHOW_TYPE_NORMAL,
   onLoginClick = () => {},
   lessonTree,
-  onLessonCollapse = () => {},
-  onChapterSelect = () => {},
+  onChapterCollapse = () => {},
+  onLessonSelect = () => {},
 }) => {
   const { frameLayout, hasLogin } = useContext(AppContext);
   const [isCollapse, setIsCollapse] = useState(false);
@@ -102,9 +102,9 @@ const NavDrawer = ({
               <CourseCatalogList
                 catalogs={lessonTree?.catalogs || []}
                 catalogCount={lessonTree?.catalogCount || 0}
-                chapterCount={lessonTree?.chapterCount || 0}
-                onLessonCollapse={onLessonCollapse}
-                onChapterSelect={onChapterSelect}
+                lessonCount={lessonTree?.lessonCount || 0}
+                onChapterCollapse={onChapterCollapse}
+                onLessonSelect={onLessonSelect}
               />
             ) : (
               <NavBody onLoginClick={onLoginClick} />

@@ -12,29 +12,28 @@ import ChatUi from './Components/ChatUi/ChatUi.jsx';
 import LoginModal from './Components/Login/LoginModal.jsx';
 import { useLessonTree } from './hooks/useLessonTree.js';
 import { useCourseStore } from '@stores/useCourseStore';
-import Tu from './Tu.jsx';
 
 // 课程学习主页面
 const NewChatPage = (props) => {
-  const { frameLayout, updateFrameLayout } = useUiLayoutStore((state) => state);
+  const {frameLayout, updateFrameLayout } = useUiLayoutStore((state) => state);
   const [loginModalOpen, setLoginModalOpen] = useState(false);
-  const [firstLoading, setFirstLoading] = useState(true);
-  const { hasLogin, userInfo, checkLogin } = useUserStore((state) => state);
-  const [ensureLogin, setEnsureLogin] = useState(false);
+  const [initialized, setInitialized] = useState(false);
+  const {hasLogin, userInfo, checkLogin} = useUserStore((state) => state);
   const {
     tree,
     loadTree,
     reloadTree,
-    setCurr,
-    setCurrCatalog,
+    updateSelectedLesson,
     toggleCollapse,
     checkChapterAvaiableStatic,
     getCurrElementStatic,
     updateChapter,
+    getChapterByLesson,
   } = useLessonTree();
   const { cid } = useParams();
   const [ currChapterId, setCurrChapterId] = useState(null);
   const { lessonId, changeCurrLesson } = useCourseStore((state) => state);
+  const [loading, setLoading] = useState(false);
   const navigate = useNavigate();
 
   // 判断布局类型
@@ -59,33 +58,32 @@ const NewChatPage = (props) => {
   useEffect(() => {
     (async () => {
       await checkLogin();
-      setEnsureLogin(true);
+      setInitialized(true);
     })();
   }, []);
 
+
   // 定位当前课程位置
   useEffect(() => {
-    if (!ensureLogin) {
+    if (!initialized) {
       return
     }
     (async () => {
       let nextTree;
-      if (firstLoading || !tree) {
-        nextTree = await loadTree();
+      if (!tree) {
+        setLoading(true)
+        nextTree = await loadTree(cid, lessonId);
       } else {
-        nextTree = await reloadTree();
+        setLoading(true)
+        nextTree = await reloadTree(cid, lessonId);
       }
-      setFirstLoading(false);
+
+      setLoading(false);
       if (cid) {
         if (!checkChapterAvaiableStatic(nextTree, cid)) {
           navigate('/newchat');
         } else {
           setCurrChapterId(cid);
-          const data = getCurrElementStatic(nextTree);
-
-          if (data.lesson) {
-            setCurr(data.lesson.id);
-          }
         }
       } else {
         const data = getCurrElementStatic(nextTree);
@@ -98,10 +96,10 @@ const NewChatPage = (props) => {
         }
       }
     })();
-  }, [hasLogin, cid, ensureLogin]);
+  }, [hasLogin, cid, initialized]);
 
   useEffect(() => {
-    setCurr(lessonId);
+    updateSelectedLesson(lessonId);
   }, [lessonId]);
 
   const onLoginModalClose = async () => {
@@ -121,6 +119,20 @@ const NewChatPage = (props) => {
     reloadTree();
   }
 
+  const onLessonSelect = ({id}) => {
+    const chapter = getChapterByLesson(id);
+    if (!chapter) {
+      return;
+    }
+
+    changeCurrLesson(id);
+    setTimeout(() => {
+      if (chapter.id !== currChapterId) {
+        navigate(`/newchat/${chapter.id}`)
+      }
+    }, 0)
+  }
+
   return (
     <div className={classNames(styles.newChatPage)}>
       <AppContext.Provider
@@ -128,14 +140,15 @@ const NewChatPage = (props) => {
       >
         <Skeleton
           style={{ width: '100%', height: '100%' }}
-          loading={firstLoading}
+          loading={!initialized}
           paragraph={true}
           rows={10}
         >
           <NavDrawer
             onLoginClick={() => setLoginModalOpen(true)}
             lessonTree={tree}
-            onLessonCollapse={toggleCollapse}
+            onChapterCollapse={toggleCollapse}
+            onLessonSelect={onLessonSelect}
           />
           {
             <ChatUi

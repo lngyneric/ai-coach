@@ -13,9 +13,9 @@ export const ChatButtonGroup = ({ type, props = [], onClick = (val) => {}, disab
     <div className={styles.buttonGroupWrapper}>
       <div className={styles.ChatButtonGroup}>
         {
-          buttons.map((e) => {
+          buttons.map((e, i) => {
             return <MainButton
-              key={e.id}
+              key={i}
               onClick={() => onClick?.(INTERACTION_OUTPUT_TYPE.SELECT, e.value)}
               style={{margin: '10px 0 0 10px'}}
               disabled={disabled}

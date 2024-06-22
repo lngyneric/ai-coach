@@ -10,6 +10,20 @@
   :global(.MessageList) {
     padding-bottom: 50px;
 
+    :global(.Bubble.text) {
+      white-space: normal;
+      p {
+        line-height: 1.5em;
+      }
+      & > p {
+        margin-bottom: 1.5em;
+
+        &:last-child {
+          margin-bottom: 0;
+        }
+      }
+    }
+
     :global(.Bubble.text ol), :global(.Bubble.text ul) {
       white-space: normal;
       padding-inline-start: 1em;

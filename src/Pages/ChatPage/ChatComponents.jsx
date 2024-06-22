@@ -9,7 +9,7 @@ import React, { useEffect, forwardRef, useImperativeHandle } from "react";
 // import { SendMsg } from "../../Service/SSE";
 import { runScript } from "../../Api/study";
 import { UploadEvent } from "../../Api/UploadEvent";
-import { ReactMarkdown } from "react-markdown/lib/react-markdown";
+import ReactMarkdown from "react-markdown";
 
 import { Prism as SyntaxHighlighter } from "react-syntax-highlighter";
 import { vscDarkPlus } from "react-syntax-highlighter/dist/esm/styles/prism";
@@ -91,7 +91,7 @@ const ChatComponents = forwardRef(({ onTitleUpdate, className ,lessonStatusUpdat
   const [chatId, setChatId] = React.useState("");
   const [scriptId, setScriptId] = React.useState("");
   const [inputPlaceholder, setInputPlaceholder] = React.useState("请输入");
-  const [inputDisabled, setInputDisabled] = React.useState(false);
+  const [inputDisabled, setInputDisabled] = React.useState(true);
   const [lessonId, setLessonId] = React.useState("");
 
   function handleSend(type, val) {

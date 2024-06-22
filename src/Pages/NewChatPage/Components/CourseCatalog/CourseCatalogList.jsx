@@ -5,9 +5,9 @@ import styles from "./CourseCatalogList.module.scss";
 export const CourseCatalogList = ({
   catalogs = [],
   catalogCount = 0,
-  chapterCount = 0,
-  onLessonCollapse = ({ id }) => {},
-  onChapterSelect = ({ id }) => {},
+  lessonCount = 0,
+  onChapterCollapse = ({ id }) => {},
+  onLessonSelect = ({ id }) => {},
 }) => {
   return (
     <div className={styles.courseCatalogList}>
@@ -21,7 +21,7 @@ export const CourseCatalogList = ({
           <div className={styles.titleName}>课程列表</div>
         </div>
         <div className={styles.chapterCount}>
-          {chapterCount}节/{catalogCount}章
+          {lessonCount}节/{catalogCount}章
         </div>
       </div>
       <div className={styles.listRow}>
@@ -33,8 +33,8 @@ export const CourseCatalogList = ({
               name={catalog.name}
               lessons={catalog.lessons}
               collapse={catalog.collapse}
-              onCollapse={onLessonCollapse}
-              onChapterSelect={onChapterSelect}
+              onCollapse={onChapterCollapse}
+              onLessonSelect={onLessonSelect}
             />
           );
         })}
