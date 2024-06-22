@@ -90,33 +90,27 @@ export const useLessonTree = () => {
 
   const setSelectedStateStatic = (tree, chapterId, lessonId) => {
     let selectedCorrect = false;
-    if (lessonId) {
-      const lesson = tree.catalogs.reduce((acc, c) => {
-        if (acc) {
-          return acc;
-        }
-
-        const lesson = c.lessons.find(v => v.id === lessonId);
-        return lesson;
-      }, null);
-
-      if (lesson) {
-        clearSelectedStateStatic(tree);
-        lesson.selected = true;
-        selectedCorrect = true;
-      }
-    } else if (chapterId) {
-      const catalog = tree.catalogs.find(v => v.id === chapterId);
-      if (catalog && checkChapterCanLearning(catalog)) {
-        const lesson = catalog.lessons.find(l => checkChapterCanLearning(l));
-
-        if (lesson) {
-          clearSelectedStateStatic(tree);
-          lesson.selected = true;
-          selectedCorrect = true;
-        }
-      }
+    const chapter = tree.catalogs.find(v => v.id === chapterId);
+    if (!chapter) {
+      return
     }
+
+    let lesson = null;
+    if (lessonId) {
+      lesson = chapter.lessons.find(v => v.id === lessonId);
+    }
+
+    if (!lesson) {
+      lesson = chapter.lessons.find(v => v.status === LESSON_STATUS.LEARNING || v.status === LESSON_STATUS.PREPARE_LEARNING);
+    }
+
+    if (!lesson) {
+      return
+    }
+
+    clearSelectedStateStatic(tree);
+    lesson.selected = true;
+    selectedCorrect = true;
 
     return selectedCorrect
   }

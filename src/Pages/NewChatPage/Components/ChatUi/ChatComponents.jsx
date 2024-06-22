@@ -237,6 +237,8 @@ const ChatComponents = forwardRef(
         return;
       }
 
+      setTyping(false);
+      setInputDisabled(true);
       setLessonEnd(false);
       resetList();
 
@@ -345,8 +347,9 @@ const ChatComponents = forwardRef(
     const nextStep = ({ chatId, lessonId, val, type, scriptId }) => {
       setLastSendMsg({ chatId, lessonId, val, type, scriptId });
       let lastMsg = null;
+      let isEnd = false;
+
       runScript(chatId, lessonId, val, type, scriptId, (response) => {
-        let isEnd = false;
         setLessonEnd((v) => {
           isEnd = v;
           return v;
@@ -406,6 +409,7 @@ const ChatComponents = forwardRef(
             const { status, lesson_id: lessonId } = response.content;
             if (status === LESSON_STATUS.COMPLETED) {
               setLessonEnd(true);
+              setTyping(false);
               isEnd = true;
             }
             if (status === LESSON_STATUS.PREPARE_LEARNING) {

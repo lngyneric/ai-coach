@@ -83,7 +83,12 @@ const NewChatPage = (props) => {
         if (!checkChapterAvaiableStatic(nextTree, cid)) {
           navigate('/newchat');
         } else {
+          const data = getCurrElementStatic(nextTree);
+          if (data) {
+            changeCurrLesson(data.lesson.id);
+          }
           setCurrChapterId(cid);
+          console.log('next chapter', cid, data.lesson.id);
         }
       } else {
         const data = getCurrElementStatic(nextTree);
