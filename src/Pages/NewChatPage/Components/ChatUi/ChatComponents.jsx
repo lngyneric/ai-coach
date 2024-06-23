@@ -272,6 +272,7 @@ const ChatComponents = forwardRef(
 
       if (ui) {
         const nextInputModal = convertEventInputModal(ui);
+        setInputDisabled(false);
         setInputModal(nextInputModal);
       }
 
