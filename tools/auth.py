@@ -7,6 +7,10 @@ from yaml.loader import SafeLoader
 
 def login():
 
+    # 初始化登录成功欢迎记录
+    if 'is_login_welcome' not in st.session_state:
+        st.session_state.is_login_welcome = False
+
     with open('auth_config.yml') as file:
         config = yaml.load(file, Loader=SafeLoader)
 
@@ -29,7 +33,9 @@ def login():
     )
 
     if login_result[1]:
-        st.toast(f'欢迎回来，{st.session_state["name"]}', icon='🎈')
+        if not st.session_state.is_login_welcome:
+            st.toast(f'欢迎回来，{st.session_state["name"]}', icon='🎈')
+            st.session_state.is_login_welcome = True
         return login_result
     else:
         return False

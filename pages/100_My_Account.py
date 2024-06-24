@@ -35,6 +35,7 @@ if st.session_state["authentication_status"]:
     # 退出登录
     if st.button('退出登录', use_container_width=True):
         authenticator.logout(location='unrendered')
+        st.session_state.is_login_welcome = False
 
     add_vertical_space(2)
 
