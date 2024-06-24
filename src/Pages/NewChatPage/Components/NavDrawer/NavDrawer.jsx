@@ -65,6 +65,8 @@ const NavDrawer = ({
   );
   const [feedbackModalOpen, setFeedbackModalOpen] = useState(false);
 
+  const alwaysShowLessonTree = !!parseInt(process.env.REACT_APP_ALWAYS_SHOW_LESSON_TREE); 
+
   const onHeaderCloseClick = () => {
     console.log("onHeaderCloseClick");
   };
@@ -98,7 +100,7 @@ const NavDrawer = ({
         />
         <div className={styles.bodyWrapper} style={{ flex: "1 1 0", overflowY: "auto",  }}>
           {!isCollapse &&
-            (hasLogin ? (
+            ((hasLogin || alwaysShowLessonTree) ? (
               <CourseCatalogList
                 catalogs={lessonTree?.catalogs || []}
                 catalogCount={lessonTree?.catalogCount || 0}
@@ -139,6 +141,7 @@ const NavDrawer = ({
           open={popupModalState === POPUP_WINDOW_STATE_SETTING}
           style={popupWindowStyle}
           onClose={onPopupModalClose}
+          onLoginClick={onLoginClick}
         />
         <FeedbackModal
           open={feedbackModalOpen}

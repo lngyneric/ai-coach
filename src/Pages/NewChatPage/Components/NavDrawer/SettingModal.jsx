@@ -9,9 +9,13 @@ import { Modal } from 'antd';
 import JobSettingModal from '../Settings/JobSettingModal.jsx';
 import { useState } from 'react';
 
-export const SettingModal = ({ open, onClose, style }) => {
+export const SettingModal = ({
+  open,
+  onClose,
+  style,
+  onLoginClick = () => {},
+}) => {
   const { hasLogin, userInfo, logout } = useUserStore((state) => state);
-
   const [tryOpen, setTryOpen] = useState(false);
 
   const onLogoutClick = async () => {
@@ -30,6 +34,10 @@ export const SettingModal = ({ open, onClose, style }) => {
     console.log('onTryOk', val);
   };
 
+  const onLoginRowClick = () => {
+    onLoginClick?.();
+  };
+
   return (
     <>
       <JobSettingModal
@@ -42,7 +50,10 @@ export const SettingModal = ({ open, onClose, style }) => {
 
       <PopupModal open={open} onClose={onClose} wrapStyle={{ ...style }}>
         <div className={styles.settingModal}>
-          <div className={classNames(styles.settingRow, styles.loginRow)}>
+          <div
+            className={classNames(styles.settingRow, styles.loginRow)}
+            onClick={onLoginRowClick}
+          >
             <div className={styles.loginLeft}>
               <Avatar src={avatar} size={20} />
               <div className={styles.userName}>
