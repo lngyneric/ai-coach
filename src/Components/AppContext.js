@@ -1,5 +1,5 @@
 import { createContext } from "react";
-import { THEME_LIGHT, FRAME_LAYOUT_PC } from '@constants/uiContants';
+import { THEME_LIGHT, FRAME_LAYOUT_PC } from '@constants/uiConstants';
 
 export const AppContext = createContext({
   hasLogin: false,

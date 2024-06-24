@@ -1,6 +1,6 @@
 import styles from './NavBody.module.scss';
 import LogoCircle from '@Components/logo/LogoCircle';
-import { productName, slogan } from '@constants/productContants';
+import { productName, slogan } from '@constants/productConstants';
 import MainButton from '@Components/MainButton.jsx';
 
 export const NavBody = ({ 

@@ -18,7 +18,7 @@ import {
   FRAME_LAYOUT_PAD,
   FRAME_LAYOUT_PAD_INTENSIVE,
   FRAME_LAYOUT_MOBILE,
-} from "@constants/uiContants";
+} from "@constants/uiConstants";
 
 /**
  * 导航栏展示形式

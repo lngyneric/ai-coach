@@ -24,7 +24,7 @@ import {
   INTERACTION_OUTPUT_TYPE,
   RESP_EVENT_TYPE,
   CHAT_MESSAGE_TYPE,
-} from 'constants/courseContants.js';
+} from 'constants/courseConstants.js';
 import classNames from 'classnames';
 import { useUserStore } from '@stores/useUserStore.js';
 import { fixMarkdown, fixMarkdownStream } from '@Utils/markdownUtils.js';

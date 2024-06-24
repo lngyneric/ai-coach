@@ -5,7 +5,7 @@ import SubButton from 'Components/SubButton.jsx';
 import {
   INTERACTION_TYPE,
   INTERACTION_OUTPUT_TYPE,
-} from '@constants/courseContants.js';
+} from '@constants/courseConstants.js';
 
 import styles from './ChatInputText.module.scss';
 

@@ -7,6 +7,7 @@ import { useUserStore } from '@stores/useUserStore.js';
 import { Modal } from 'antd';
 
 import JobSettingModal from '../Settings/JobSettingModal.jsx';
+import SexSettingModal from '../Settings/SexSettingModal.jsx';
 import { useState } from 'react';
 
 export const SettingModal = ({
@@ -40,7 +41,7 @@ export const SettingModal = ({
 
   return (
     <>
-      <JobSettingModal
+      <SexSettingModal
         open={tryOpen}
         onClose={() => {
           setTryOpen(false);

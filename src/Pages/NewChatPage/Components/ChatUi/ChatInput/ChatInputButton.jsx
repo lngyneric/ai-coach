@@ -1,7 +1,7 @@
 import {
   INTERACTION_OUTPUT_TYPE,
   INTERACTION_TYPE,
-} from 'constants/courseContants.js';
+} from 'constants/courseConstants.js';
 import styles from './ChatInputButton.module.scss';
 import MainButton from 'Components/MainButton.jsx';
 import { useEffect } from 'react';

@@ -3,7 +3,7 @@ import { useParams, useNavigate } from 'react-router-dom';
 import classNames from 'classnames';
 import styles from './NewChatPage.module.scss';
 import { Skeleton } from 'antd';
-import { calcFrameLayout } from '@constants/uiContants.js';
+import { calcFrameLayout } from '@constants/uiConstants.js';
 import { useUiLayoutStore } from '@stores/useUiLayoutStore.js';
 import { useUserStore } from '@stores/useUserStore.js';
 import { AppContext } from '@Components/AppContext.js';

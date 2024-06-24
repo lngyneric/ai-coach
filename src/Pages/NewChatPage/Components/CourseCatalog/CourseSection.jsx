@@ -1,6 +1,6 @@
 import classNames from "classnames";
 import styles from "./CourseSection.module.scss";
-import { LESSON_STATUS } from "constants/courseContants.js";
+import { LESSON_STATUS } from "constants/courseConstants.js";
 
 export const CourseSection = ({
   id,

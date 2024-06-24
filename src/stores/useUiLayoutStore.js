@@ -1,6 +1,6 @@
 import { create } from 'zustand';
 import { isMobile } from 'react-device-detect';
-import { FRAME_LAYOUT_PC } from '@constants/uiContants.js';
+import { FRAME_LAYOUT_PC } from '@constants/uiConstants.js';
 
 export const useUiLayoutStore = create((set) => ({
   frameLayout: FRAME_LAYOUT_PC,
