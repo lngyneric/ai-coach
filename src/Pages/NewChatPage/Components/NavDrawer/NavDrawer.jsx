@@ -2,7 +2,7 @@
  * 左侧导航控件容器
  */
 import { AppContext } from "@Components/AppContext.js";
-import { useContext, useState } from "react";
+import { useContext, useState, useRef } from "react";
 
 import NavHeader from "./NavHeader.jsx";
 import NavBody from "./NavBody.jsx";
@@ -66,6 +66,7 @@ const NavDrawer = ({
   const [feedbackModalOpen, setFeedbackModalOpen] = useState(false);
 
   const alwaysShowLessonTree = !!parseInt(process.env.REACT_APP_ALWAYS_SHOW_LESSON_TREE); 
+  const footerRef = useRef(null);
 
   const onHeaderCloseClick = () => {
     console.log("onHeaderCloseClick");
@@ -75,7 +76,10 @@ const NavDrawer = ({
     setIsCollapse(isCollapse);
   };
 
-  const onPopupModalClose = () => {
+  const onPopupModalClose = (e) => {
+    if (footerRef.current && footerRef.current.containElement(e.target)) {
+      return
+    }
     setPopupModalState(POPUP_WINDOW_STATE_CLOSE);
   };
 
@@ -98,7 +102,7 @@ const NavDrawer = ({
           onToggle={onHeaderToggleClick}
           isCollapse={isCollapse}
         />
-        <div className={styles.bodyWrapper} style={{ flex: "1 1 0", overflowY: "auto",  }}>
+        <div className={styles.bodyWrapper}>
           {!isCollapse &&
             ((hasLogin || alwaysShowLessonTree) ? (
               <CourseCatalogList
@@ -113,15 +117,28 @@ const NavDrawer = ({
             ))}
         </div>
         <NavFooter
+          ref={footerRef}
           isCollapse={isCollapse}
           onFilingClick={() => {
-            setPopupModalState(POPUP_WINDOW_STATE_FILING);
+            if (popupModalState === POPUP_WINDOW_STATE_FILING) {
+              setPopupModalState(POPUP_WINDOW_STATE_CLOSE);
+            } else {
+              setPopupModalState(POPUP_WINDOW_STATE_FILING);
+            }
           }}
           onThemeClick={() => {
-            setPopupModalState(POPUP_WINDOW_STATE_THEME);
+            if (popupModalState === POPUP_WINDOW_STATE_THEME) {
+              setPopupModalState(POPUP_WINDOW_STATE_CLOSE);
+            } else {
+              setPopupModalState(POPUP_WINDOW_STATE_THEME);
+            }
           }}
           onSettingsClick={() => {
-            setPopupModalState(POPUP_WINDOW_STATE_SETTING);
+            if (popupModalState === POPUP_WINDOW_STATE_SETTING) {
+              setPopupModalState(POPUP_WINDOW_STATE_CLOSE);
+            } else {
+              setPopupModalState(POPUP_WINDOW_STATE_SETTING);
+            }
           }}
         />
         <FillingModal

@@ -3,7 +3,7 @@ import styles from './PopupModal.module.scss'
 
 export const PopupModal = ({ 
   open = false, 
-  onClose = () => {},
+  onClose = (event) => {},
   children, 
   style, 
   wrapStyle, 
@@ -13,7 +13,7 @@ export const PopupModal = ({
   // 点击其他区域关闭弹出窗口
   const handleClickOutside = (event) => {
     if (popupRef.current && !popupRef.current.contains(event.target)) {
-      onClose?.();
+      onClose?.(event);
     }
   };
 
