@@ -1,0 +1,28 @@
+.ChangeAvatar {
+  display: flex;
+  justify-content: center;
+  align-items: center;
+
+  .avatarUpload {
+    width: 0;
+    height: 0;
+    display: block;
+  }
+
+  .avatarContainer {
+    width: 100px;
+    height: 100px;
+    position: relative;
+    cursor: pointer;
+
+
+    .editIcon {
+      position: absolute;
+      display: block;
+      bottom: 0;
+      right: 0;
+      width: 40px;
+      height: 40px;
+    }
+  }
+}

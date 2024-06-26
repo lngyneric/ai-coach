@@ -4,9 +4,16 @@
   background: #F8FBFC;
   flex: 1 1 auto;
   justify-content: center;
+  position: relative;
 
   .chatComponents {
     width: 100%;
     max-width: 1000px;
+  }
+
+  .UserSettings {
+    position: absolute;
+    width: 100%;
+    height: 100%;
   }
 }

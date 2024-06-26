@@ -35,7 +35,7 @@ export const useUserStore = create((set) => ({
 
     if (userInfoStore.get()) {
       set(() => ({
-        userInfo: JSON.parse(userInfoStore.get()),
+        userInfo: userInfoStore.get(),
       }));
     }
 
@@ -50,6 +50,7 @@ export const useUserStore = create((set) => ({
         }));
 
         tokenTool.set({ token: tokenTool.get().token, faked: false });
+        userInfoStore.set(userInfo);
       } else {
         set(() => ({
           hasLogin: false,
@@ -84,4 +85,16 @@ export const useUserStore = create((set) => ({
       };
     })
   },
+
+  // 更新用户信息
+  updateUserInfo: (userInfo) => {
+    set((state) => {
+      return {
+        userInfo: {
+          ...state.userInfo,
+          ...userInfo,
+        }
+      }
+    });
+  }
 }));

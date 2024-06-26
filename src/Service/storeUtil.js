@@ -1,4 +1,4 @@
-import store, { get, remove }  from 'store';
+import store from 'store';
 
 const TOKEN_KEY = 'token';
 const USERINFO_KEY = 'userinfo';

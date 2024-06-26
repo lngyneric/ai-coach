@@ -48,6 +48,8 @@ export const RESP_EVENT_TYPE = {
   CHECKCODE: 'checkcode', // 输入短信验证码
   ORDER: 'order', // 购买课程
   ORDER_SUCCESS: 'order_success',
+  USER_LOGIN: 'user_login', // 用户登录成功
+  PROFILE_UPDATE: 'profile_update', // 用户信息更新
 }
 
 // chat message 类型

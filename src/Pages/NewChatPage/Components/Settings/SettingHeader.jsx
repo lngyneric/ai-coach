@@ -1,13 +1,13 @@
 import { Button, Breadcrumb } from 'antd';
-
 import styles from './SettingHeader.module.scss';
+import classNames from 'classnames';
 
-export const SettingHeader = ({ onBackClick }) => {
+export const SettingHeader = ({ className, onBackClick }) => {
   return (
-    <div className={styles.settingHeader}>
+    <div className={classNames(styles.settingHeader, className) }>
       <Breadcrumb items={[
-        { title: <Button type="link" onClick={onBackClick}>主页</Button> },
-        { title: '个人信息' },
+        { title: <span>主页</span> },
+        { title: <span>个人信息</span>},
       ]}/>
     </div>
   )

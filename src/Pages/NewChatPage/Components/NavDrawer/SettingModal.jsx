@@ -6,8 +6,8 @@ import Icon1 from '@Assets/newchat/light/icon16-edit.svg';
 import { useUserStore } from '@stores/useUserStore.js';
 import { Modal } from 'antd';
 
-import JobSettingModal from '../Settings/JobSettingModal.jsx';
 import SexSettingModal from '../Settings/SexSettingModal.jsx';
+import BirthdaySettingModal from '../Settings/BirthdaySettingModal.jsx';
 import { useState } from 'react';
 
 export const SettingModal = ({
@@ -36,12 +36,14 @@ export const SettingModal = ({
   };
 
   const onLoginRowClick = () => {
-    onLoginClick?.();
+    if (!hasLogin) {
+      onLoginClick?.();
+    }
   };
 
   return (
     <>
-      <SexSettingModal
+      <BirthdaySettingModal
         open={tryOpen}
         onClose={() => {
           setTryOpen(false);

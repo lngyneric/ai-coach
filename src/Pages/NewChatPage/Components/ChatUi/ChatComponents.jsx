@@ -161,7 +161,7 @@ const convertEventInputModal = ({ type, content }) => {
   }
 };
 
-const ChatComponents = forwardRef(
+export const ChatComponents = forwardRef(
   (
     {
       className,
@@ -185,7 +185,7 @@ const ChatComponents = forwardRef(
     const { userInfo } = useContext(AppContext);
     const [inputModal, setInputModal] = useState(null);
     const [_, setLessonEnd] = useState(false);
-    const { hasLogin, checkLogin } = useUserStore((state) => state);
+    const { hasLogin, checkLogin, updateUserInfo } = useUserStore((state) => state);
     const [loginInChat, setLoginInChat] = useState(false);
     const [loaded, setLoaded] = useState(false);
     const [lastSendMsg, setLastSendMsg] = useState(null);
@@ -409,9 +409,9 @@ const ChatComponents = forwardRef(
           } else if (response.type === RESP_EVENT_TYPE.CHAPTER_UPDATE) {
             const { status, lesson_id: lessonId } = response.content;
             if (status === LESSON_STATUS.COMPLETED) {
+              isEnd = true;
               setLessonEnd(true);
               setTyping(false);
-              isEnd = true;
             }
             if (status === LESSON_STATUS.PREPARE_LEARNING) {
               setInputModal({
@@ -423,6 +423,11 @@ const ChatComponents = forwardRef(
               });
               setInputDisabled(false);
             }
+          } else if (response.type === RESP_EVENT_TYPE.USER_LOGIN) {
+            checkLogin();
+          } else if (response.type === RESP_EVENT_TYPE.PROFILE_UPDATE) {
+            const content = response.content;
+            updateUserInfo({[content.key]: content.value});
           }
         } catch (e) {}
       });
@@ -447,7 +452,6 @@ const ChatComponents = forwardRef(
 
         if (type === INTERACTION_OUTPUT_TYPE.CHECKCODE) {
           setLoginInChat(true);
-          await checkLogin();
         }
       }
       setInputDisabled(true);

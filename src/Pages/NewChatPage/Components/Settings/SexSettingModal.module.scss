@@ -1,5 +1,4 @@
 .SexSettingModal {
-
 }
 
 .sexWrapper {
@@ -22,6 +21,10 @@
     &:global(.selected) {
       background-color: var(--color-2);
       cursor: default;
+
+      .itemTitle {
+        color: var(--color-4);
+      }
     }
 
     .itemIcon {

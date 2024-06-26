@@ -1,12 +1,19 @@
-import ChatComponents from "./ChatComponents.jsx";
+import ChatComponents from './ChatComponents.jsx';
 import styles from './ChatUi.module.scss';
+import UserSettings from '../Settings/UserSettings.jsx';
 
 /**
  * 聊天区的整体画布
  */
-export const ChatUi = ({ chapterId, lessonUpdate, onGoChapter, onPurchased }) => {
+export const ChatUi = ({
+  chapterId,
+  lessonUpdate,
+  onGoChapter,
+  onPurchased,
+  showUserSettings = true,
+}) => {
   return (
-    <div className={styles.ChatUi} >
+    <div className={styles.ChatUi}>
       {
         <ChatComponents
           chapterId={chapterId}
@@ -16,6 +23,7 @@ export const ChatUi = ({ chapterId, lessonUpdate, onGoChapter, onPurchased }) =>
           onPurchased={onPurchased}
         />
       }
+      {showUserSettings && <UserSettings className={styles.UserSettings} />}
     </div>
   );
 };
