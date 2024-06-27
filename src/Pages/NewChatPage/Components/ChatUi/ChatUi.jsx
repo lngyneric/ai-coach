@@ -10,7 +10,7 @@ export const ChatUi = ({
   lessonUpdate,
   onGoChapter,
   onPurchased,
-  showUserSettings = true,
+  showUserSettings = false,
 }) => {
   return (
     <div className={styles.ChatUi}>

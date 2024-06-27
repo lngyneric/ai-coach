@@ -11,6 +11,8 @@ import {
 import SettingPage from "../Pages/SettingPage/SettingPage";
 import BeforeEach from "./BeforeEach";
 import NewChatPage from "../Pages/NewChatPage/NewChatPage.jsx";
+import UserAgreementPage from "Pages/UserAgreementPage/UserAgreementPage.jsx";
+import PrivacyPolicyPage from "Pages/PrivacyPolicyPage/PrivacyPolicyPage.jsx";
 
 /**
  * @description 用于存放导航栏的需要权限的路由，同时 系统的导航菜单也是基于此路由表进行渲染的
@@ -23,7 +25,7 @@ const authRoutes = [
   //   title: "学习",
   //   icon: <ReadOutlined></ReadOutlined>,
   // },
-// <<<<<<< HEAD
+  // <<<<<<< HEAD
   // {
   //   path: "/schedele",
   //   element: <SchedeleComponent></SchedeleComponent>,
@@ -36,20 +38,20 @@ const authRoutes = [
   //   title: "日程",
   //   icon: <ScheduleOutlined></ScheduleOutlined>,
   // },
-// =======
-//   {
-//     path: "/schedele",
-//     element: <SchedeleComponent></SchedeleComponent>,
-//     title: "日程",
-//     icon: <ScheduleOutlined></ScheduleOutlined>,
-//   },
+  // =======
+  //   {
+  //     path: "/schedele",
+  //     element: <SchedeleComponent></SchedeleComponent>,
+  //     title: "日程",
+  //     icon: <ScheduleOutlined></ScheduleOutlined>,
+  //   },
   // {
   //   path: "/schedeleDemo",
   //   element: <SchedulePage></SchedulePage>,
   //   title: "日程demo",
   //   icon: <ScheduleOutlined></ScheduleOutlined>,
   // },
-// >>>>>>> master
+  // >>>>>>> master
   // {
   //   path: "/todo",
   //   element: <ToDoComponent></ToDoComponent>,
@@ -89,6 +91,14 @@ const routes = [
       </BeforeEach>
     ),
     children: authRoutes,
+  },
+  {
+    path: '/useraggrement',
+    element: <UserAgreementPage />
+  },
+  {
+    path: '/privacypolicy',
+    element: <PrivacyPolicyPage />
   },
   {
     path: "/chat",
