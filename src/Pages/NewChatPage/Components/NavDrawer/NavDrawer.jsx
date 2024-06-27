@@ -149,12 +149,12 @@ const NavDrawer = ({
         />
         <ThemeWindow
           open={popupModalState === POPUP_WINDOW_STATE_THEME}
-          className={styles.popUpWindowExpand}
+          className={popupWindowClassname()}
           onClose={onPopupModalClose}
         />
         <SettingModal
           open={popupModalState === POPUP_WINDOW_STATE_SETTING}
-          className={styles.popUpWindowExpand}
+          className={popupWindowClassname()}
           onClose={onPopupModalClose}
           onLoginClick={onLoginClick}
         />

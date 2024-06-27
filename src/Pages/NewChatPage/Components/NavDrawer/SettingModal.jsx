@@ -15,6 +15,7 @@ export const SettingModal = ({
   onClose,
   style,
   onLoginClick = () => {},
+  className,
 }) => {
   const { hasLogin, userInfo, logout } = useUserStore((state) => state);
   const [tryOpen, setTryOpen] = useState(false);
@@ -51,7 +52,7 @@ export const SettingModal = ({
         onOk={(v) => onTryOk(v)}
       />
 
-      <PopupModal open={open} onClose={onClose} wrapStyle={{ ...style }}>
+      <PopupModal open={open} onClose={onClose} wrapStyle={{ ...style }} className={className}>
         <div className={styles.settingModal}>
           <div
             className={classNames(styles.settingRow, styles.loginRow)}
