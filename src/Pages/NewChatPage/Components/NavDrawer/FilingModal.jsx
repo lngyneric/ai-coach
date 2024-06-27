@@ -3,9 +3,9 @@ import { Button } from 'antd';
 
 import styles from './FilingModal.module.scss';
 
-export const FillingModal = ({ open, onClose, style, onFeedbackClick }) => {
+export const FillingModal = ({ open, onClose, style, onFeedbackClick, className }) => {
   return (
-    <PopupModal open={open} onClose={onClose} wrapStyle={{ ...style}}>
+    <PopupModal open={open} onClose={onClose} wrapStyle={{...style}} className={className} >
       <div className={styles.filingModal}>
         <div>北京xxxx有限公司</div>
         <div>北京朝阳区望京xx大厦xx层xx02</div>

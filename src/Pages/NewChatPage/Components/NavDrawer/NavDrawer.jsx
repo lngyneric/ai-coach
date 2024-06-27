@@ -1,24 +1,24 @@
 /*
  * 左侧导航控件容器
  */
-import { AppContext } from "@Components/AppContext.js";
-import { useContext, useState, useRef } from "react";
+import { AppContext } from '@Components/AppContext.js';
+import { useContext, useState, useRef } from 'react';
 
-import NavHeader from "./NavHeader.jsx";
-import NavBody from "./NavBody.jsx";
-import NavFooter from "./NavFooter.jsx";
-import FillingModal from "./FilingModal.jsx";
-import ThemeWindow from "./ThemeWindow.jsx";
-import SettingModal from "./SettingModal.jsx";
-import CourseCatalogList from "../CourseCatalog/CourseCatalogList.jsx";
-import styles from "./NavDrawer.module.scss";
-import FeedbackModal from "../FeedbackModal/FeedbackModal.jsx";
+import NavHeader from './NavHeader.jsx';
+import NavBody from './NavBody.jsx';
+import NavFooter from './NavFooter.jsx';
+import FillingModal from './FilingModal.jsx';
+import ThemeWindow from './ThemeWindow.jsx';
+import SettingModal from './SettingModal.jsx';
+import CourseCatalogList from '../CourseCatalog/CourseCatalogList.jsx';
+import styles from './NavDrawer.module.scss';
+import FeedbackModal from '../FeedbackModal/FeedbackModal.jsx';
 
 import {
   FRAME_LAYOUT_PAD,
   FRAME_LAYOUT_PAD_INTENSIVE,
   FRAME_LAYOUT_MOBILE,
-} from "@constants/uiConstants";
+} from '@constants/uiConstants';
 
 /**
  * 导航栏展示形式
@@ -38,18 +38,18 @@ export const POPUP_WINDOW_STATE_FILING = 1;
 
 const calcNavWidth = (frameLayout) => {
   if (frameLayout === FRAME_LAYOUT_MOBILE) {
-    return "100%";
+    return '100%';
   }
   if (frameLayout === FRAME_LAYOUT_PAD_INTENSIVE) {
-    return "280px";
+    return '280px';
   }
   if (frameLayout === FRAME_LAYOUT_PAD) {
-    return "25%";
+    return '25%';
   }
-  return "280px";
+  return '280px';
 };
 
-const COLLAPSE_WIDTH = "60px";
+const COLLAPSE_WIDTH = '60px';
 
 const NavDrawer = ({
   showType = NAV_SHOW_TYPE_NORMAL,
@@ -65,11 +65,13 @@ const NavDrawer = ({
   );
   const [feedbackModalOpen, setFeedbackModalOpen] = useState(false);
 
-  const alwaysShowLessonTree = !!parseInt(process.env.REACT_APP_ALWAYS_SHOW_LESSON_TREE); 
+  const alwaysShowLessonTree = !!parseInt(
+    process.env.REACT_APP_ALWAYS_SHOW_LESSON_TREE
+  );
   const footerRef = useRef(null);
 
   const onHeaderCloseClick = () => {
-    console.log("onHeaderCloseClick");
+    console.log('onHeaderCloseClick');
   };
 
   const onHeaderToggleClick = ({ isCollapse }) => {
@@ -78,18 +80,14 @@ const NavDrawer = ({
 
   const onPopupModalClose = (e) => {
     if (footerRef.current && footerRef.current.containElement(e.target)) {
-      return
+      return;
     }
     setPopupModalState(POPUP_WINDOW_STATE_CLOSE);
   };
 
-  const popupWindowStyle = {
-    left: "50%",
-    transform: "translate(-50%)",
-    width: "250px",
-    top: "auto",
-    bottom: 80,
-  };
+  const popupWindowClassname = () => {
+    return isCollapse ? styles.popUpWindowCollapse : styles.popUpWindowExpand;
+  }
 
   return (
     <div
@@ -104,7 +102,7 @@ const NavDrawer = ({
         />
         <div className={styles.bodyWrapper}>
           {!isCollapse &&
-            ((hasLogin || alwaysShowLessonTree) ? (
+            (hasLogin || alwaysShowLessonTree ? (
               <CourseCatalogList
                 catalogs={lessonTree?.catalogs || []}
                 catalogCount={lessonTree?.catalogCount || 0}
@@ -143,7 +141,7 @@ const NavDrawer = ({
         />
         <FillingModal
           open={popupModalState === POPUP_WINDOW_STATE_FILING}
-          style={popupWindowStyle}
+          className={popupWindowClassname()}
           onClose={onPopupModalClose}
           onFeedbackClick={() => {
             setFeedbackModalOpen(true);
@@ -151,12 +149,12 @@ const NavDrawer = ({
         />
         <ThemeWindow
           open={popupModalState === POPUP_WINDOW_STATE_THEME}
-          style={popupWindowStyle}
+          className={styles.popUpWindowExpand}
           onClose={onPopupModalClose}
         />
         <SettingModal
           open={popupModalState === POPUP_WINDOW_STATE_SETTING}
-          style={popupWindowStyle}
+          className={styles.popUpWindowExpand}
           onClose={onPopupModalClose}
           onLoginClick={onLoginClick}
         />

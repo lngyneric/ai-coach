@@ -16,4 +16,22 @@
       display: none;
     }
   }
+
+  .popUpWindowExpand {
+    transform: translate(-50%);
+    width: 250px;
+    top: auto;
+    bottom: 80px;
+    left: 50%;
+    z-index: 999;
+  }
+
+  .popUpWindowCollapse {
+    width: 250px;
+    top: auto;
+    bottom: 10px;
+    left: 70px;
+    z-index: 999;
+  }
 }
+

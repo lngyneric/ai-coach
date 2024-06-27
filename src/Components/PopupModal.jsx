@@ -1,4 +1,5 @@
 import { useState, useEffect, useRef } from 'react';
+import classNames from 'classnames';
 import styles from './PopupModal.module.scss'
 
 export const PopupModal = ({ 
@@ -6,7 +7,8 @@ export const PopupModal = ({
   onClose = (event) => {},
   children, 
   style, 
-  wrapStyle, 
+  wrapStyle,
+  className
 }) => {
   const popupRef = useRef(null);
 
@@ -26,7 +28,7 @@ export const PopupModal = ({
   }, []);
 
   return (
-    <div className={styles.popupModalWrapper} style={wrapStyle}>
+    <div className={classNames(styles.popupModalWrapper, className)} style={wrapStyle}>
       {open && <div style={style} className={styles.popupModal} ref={popupRef}>{ children }</div>}
     </div>
   );
