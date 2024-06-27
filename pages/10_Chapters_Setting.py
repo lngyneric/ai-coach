@@ -115,8 +115,8 @@ def stdf_manage(df, title, has_delete=True):
 
     if event.selection['rows']:
         selected_chapter = df.iloc[event.selection['rows'][0]]
-        selected_chapter
-        selected_chapter.name
+        # selected_chapter
+        # selected_chapter.name
 
         cols = st.columns(3 if has_delete else 2)
         with cols[0]:
