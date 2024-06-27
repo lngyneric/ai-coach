@@ -41,6 +41,9 @@ class ConfigManager:
             _cfg_db = config['db']
             self.SQLITE_DB_PATH = _cfg_db['sqlite']['path']
 
+            _cfg_api = config['api']
+            self.API_URL = _cfg_api[f'{os.getenv("ENV")}_url']
+
 
     def set_default_model(self, model):
         self.DEFAULT_MODEL = model
