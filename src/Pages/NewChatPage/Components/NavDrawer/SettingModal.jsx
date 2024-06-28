@@ -2,11 +2,8 @@ import { Avatar } from 'antd';
 import PopupModal from '@Components/PopupModal';
 import styles from './SettingModal.module.scss';
 import classNames from 'classnames';
-import Icon1 from '@Assets/newchat/light/icon16-edit.svg';
 import { useUserStore } from '@stores/useUserStore.js';
 import { Modal } from 'antd';
-
-import SexSettingModal from '../Settings/SexSettingModal.jsx';
 import BirthdaySettingModal from '../Settings/BirthdaySettingModal.jsx';
 import { useState } from 'react';
 
@@ -52,7 +49,12 @@ export const SettingModal = ({
         onOk={(v) => onTryOk(v)}
       />
 
-      <PopupModal open={open} onClose={onClose} wrapStyle={{ ...style }} className={className}>
+      <PopupModal
+        open={open}
+        onClose={onClose}
+        wrapStyle={{ ...style }}
+        className={className}
+      >
         <div className={styles.settingModal}>
           <div
             className={classNames(styles.settingRow, styles.loginRow)}
@@ -64,15 +66,7 @@ export const SettingModal = ({
                 {hasLogin ? userInfo?.name || '' : '未登录'}
               </div>
             </div>
-            <img src={Icon1} alt="" />
-          </div>
-          <div className={styles.settingRow}>
-            <div>账号安全</div>
-            <img
-              className={styles.rowIcon}
-              src={require('@Assets/newchat/light/icon16-account.png')}
-              alt=""
-            />
+            <img className={styles.rowIcon} src={require('@Assets/newchat/light/icon16-edit.png')} alt="" />
           </div>
           <div
             className={styles.settingRow}

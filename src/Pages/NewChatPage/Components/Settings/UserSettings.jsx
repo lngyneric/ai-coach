@@ -10,7 +10,6 @@ import ChangeAvatar from './ChangeAvatar.jsx';
 
 export const UserSettings = ({ onClose, className }) => {
   const [form] = Form.useForm();
-
   const onSaveSettingsClick = () => {};
 
   return (
