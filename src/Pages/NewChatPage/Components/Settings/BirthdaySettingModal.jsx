@@ -1,7 +1,7 @@
 import { useState } from 'react';
 import styles from './BirthdaySettingModal.module.scss';
 import SettingBaseModal from './SettingBaseModal.jsx';
-import { DatePickerView } from 'antd-mobile';
+import { DatePickerView, Modal } from 'antd-mobile';
 import { useEffect } from 'react';
 
 export const BirthdaySettingModal = ({
@@ -11,15 +11,10 @@ export const BirthdaySettingModal = ({
   initialValues = {},
 }) => {
   const [value, setValue] = useState(new Date());
-  const [showPicker, setShowPicker] = useState(false);
+  const [showPicker, setShowPicker] = useState(true);
   const onOkClick = () => {};
   const now = new Date();
 
-  useEffect(() => {
-    setTimeout(() => {
-      setShowPicker(true);
-    }, 2000);
-  }, []);
 
   return (
     <SettingBaseModal
@@ -27,15 +22,15 @@ export const BirthdaySettingModal = ({
       open={open}
       onClose={onClose}
       onOk={onOkClick}
+      loading={!showPicker}
+      closeOnMaskClick={true}
     >
-      {showPicker && (
-        <DatePickerView
-          defaultValue={now}
-          onChange={(val) => {
-            setValue(val);
-          }}
-        />
-      )}
+      <DatePickerView
+        defaultValue={now}
+        onChange={(val) => {
+          setValue(val);
+        }}
+      />
     </SettingBaseModal>
   );
 };

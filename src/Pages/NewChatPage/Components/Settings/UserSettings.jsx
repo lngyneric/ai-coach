@@ -7,13 +7,23 @@ import SettingHeader from './SettingHeader.jsx';
 import { Form } from 'antd';
 import classNames from 'classnames';
 import ChangeAvatar from './ChangeAvatar.jsx';
+import IndustrySettingModal from './IndustrySettingModal.jsx';
+import JobSettingModal from './JobSettingModal.jsx';
+import SexSettingModal from './SexSettingModal.jsx';
+import { useState } from 'react';
 
 export const UserSettings = ({ onClose, className }) => {
   const [form] = Form.useForm();
   const onSaveSettingsClick = () => {};
+  const [industrySettingModalOpen, setIndustrySettingModalOpen] = useState(false);
+  const [jobSettingModalOpen, setJobSettingModalOpen] = useState(false);
+  const [sexSettingModalOpen, setSexSettingModalOpen] = useState(false);
 
   return (
     <>
+      <IndustrySettingModal open={industrySettingModalOpen} onClose={() => setIndustrySettingModalOpen(false)} />
+      <SexSettingModal open={sexSettingModalOpen} onClose={() => setSexSettingModalOpen(false)} />
+      <JobSettingModal open={jobSettingModalOpen} onClose={() => setJobSettingModalOpen(false)} />
       <div className={classNames(styles.UserSettings, className)}>
         <SettingHeader onBackClick={onClose} className={styles.settingHeader} />
         <div className={styles.settingBody}>
@@ -28,7 +38,7 @@ export const UserSettings = ({ onClose, className }) => {
                 placeholder="请输入姓名"
               />
             </div>
-            <div className={classNames(styles.settingSelect, styles.inputUnit)}>
+            <div className={classNames(styles.settingSelect, styles.inputUnit)} onClick={sets => setSexSettingModalOpen(true)}>
               <input
                 type="text"
                 className={styles.inputElement}
@@ -54,12 +64,13 @@ export const UserSettings = ({ onClose, className }) => {
                 alt="icon"
               />
             </div>
-            <div className={classNames(styles.settingSelect, styles.inputUnit)}>
+            <div className={classNames(styles.settingSelect, styles.inputUnit)} onClick={() => setIndustrySettingModalOpen(true)}>
               <input
                 type="text"
                 className={styles.inputElement}
                 placeholder="请选择行业"
                 disabled={true}
+                onClick={() => setIndustrySettingModalOpen(true)}
               />
               <img
                 className={styles.icon}
@@ -67,7 +78,7 @@ export const UserSettings = ({ onClose, className }) => {
                 alt="icon"
               />
             </div>
-            <div className={classNames(styles.settingSelect, styles.inputUnit)}>
+            <div className={classNames(styles.settingSelect, styles.inputUnit)} onClick={() => setJobSettingModalOpen(true)}>
               <input
                 type="text"
                 className={styles.inputElement}
