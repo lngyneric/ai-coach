@@ -211,6 +211,18 @@ if login():
     '> 章节类型：401-体验课； 402-正式课； 405-隐藏分支课'
     df_chapters_api = DataFrame([chapter.__dict__ for chapter in load_chapters_from_api()])
 
+    if st.button('⬆️🔄 批量全部更新 🔄⬆️', type='primary', use_container_width=True):
+        for index, row in df_chapters_api.iterrows():
+            update_chapter_from_api(
+                table_id=row['lark_table_id'],
+                view_id=row['lark_view_id'],
+                title=row['name'],
+                index=row['id'],
+                lesson_type=row['chapter_type']
+            )
+            time.sleep(0.1)
+        st.success('批量更新完成', icon='🎉')
+
     # 提取出体验章节， chapter_type == 401
     df_chapters_trial = df_chapters_api[df_chapters_api['chapter_type'] == 401]
     df_chapters_trial.set_index('id', inplace=True)

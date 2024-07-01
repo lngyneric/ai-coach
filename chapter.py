@@ -91,10 +91,10 @@ def update_chapter_from_api(table_id, view_id, title, index, lesson_type):
 
     if response.status_code == 200:
         print(response.json())
-        streamlit.toast("Data updated successfully", icon="🎉")
+        streamlit.toast(f"《{title}》更新成功", icon="🎉")
     else:
         print(f"Failed to update data: {response.status_code}")
-        streamlit.toast(f"Failed to update data: {response.status_code}", icon="🚨")
+        streamlit.toast(f"《{title}》更新失败，错误码: {response.status_code}", icon="🚨")
 
 
 def delete_chapter_from_api(table_id):
@@ -108,10 +108,10 @@ def delete_chapter_from_api(table_id):
 
     if response.status_code == 200:
         print(response.json())
-        streamlit.toast("Data deleted successfully", icon="🎉")
+        streamlit.toast("删除成功", icon="🎉")
     else:
         print(f"Failed to delete data: {response.status_code}")
-        streamlit.toast(f"Failed to delete data: {response.status_code}", icon="🚨")
+        streamlit.toast(f"删除失败，错误码: {response.status_code}", icon="🚨")
 
 
 if __name__ == '__main__':
