@@ -10,7 +10,8 @@ export const ChatUi = ({
   lessonUpdate,
   onGoChapter,
   onPurchased,
-  showUserSettings = true,
+  showUserSettings = false,
+  onUserSettingsClose = () => {},
 }) => {
   return (
     <div className={styles.ChatUi}>
@@ -23,7 +24,12 @@ export const ChatUi = ({
           onPurchased={onPurchased}
         />
       }
-      {showUserSettings && <UserSettings className={styles.UserSettings} />}
+      {showUserSettings && (
+        <UserSettings
+          className={styles.UserSettings}
+          onHomeClick={onUserSettingsClose}
+        />
+      )}
     </div>
   );
 };

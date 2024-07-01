@@ -76,7 +76,7 @@ const MarkdownBubble = (props) => {
             );
           },
           img(props) {
-            return <Image {...props} width={320}></Image>;
+            return <Image {...props} width={400} preview={false}></Image>;
           },
         }}
       ></ReactMarkdown>

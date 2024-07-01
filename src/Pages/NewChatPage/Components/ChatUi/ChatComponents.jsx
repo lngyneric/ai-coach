@@ -81,13 +81,16 @@ const MarkdownBubble = (props) => {
                 ></SyntaxHighlighter>
               </div>
             ) : (
-              <code {...props} className={className}>
+              <code
+                {...props}
+                className={classNames(className, styles.inlineCode)}
+              >
                 {children}
               </code>
             );
           },
-          img(props) {
-            return <Image {...props} width={320}></Image>;
+          img(imgProps) {
+            return <Image {...imgProps} width={'70%'} preview={!props.isStreaming}></Image>;
           },
         }}
       />
@@ -172,25 +175,31 @@ export const ChatComponents = forwardRef(
     },
     ref
   ) => {
-    const { messages, appendMsg, setTyping, updateMsg, resetList } =
-      useMessages([]);
-
     const [chatId, setChatId] = useState('');
-    const { lessonId: currLessonId, changeCurrLesson } = useCourseStore(
-      (state) => state
-    );
     const [lessonId, setLessonId] = useState(null);
-    const [inputPlaceholder, setInputPlaceholder] = useState('请输入');
     const [inputDisabled, setInputDisabled] = useState(false);
-    const { userInfo } = useContext(AppContext);
     const [inputModal, setInputModal] = useState(null);
     const [_, setLessonEnd] = useState(false);
-    const { hasLogin, checkLogin, updateUserInfo } = useUserStore((state) => state);
+    // 是否是再聊天框内进行登录
     const [loginInChat, setLoginInChat] = useState(false);
     const [loaded, setLoaded] = useState(false);
     const [lastSendMsg, setLastSendMsg] = useState(null);
     const [loadedData, setLoadedData] = useState(false);
+    // 是否在流式输出内容
+    const [isStreaming, setIsStreaming] = useState(false);
+    
 
+    const { userInfo } = useContext(AppContext);
+    const { lessonId: currLessonId, changeCurrLesson } = useCourseStore(
+      (state) => state
+    );
+
+    const { messages, appendMsg, setTyping, updateMsg, resetList } =
+      useMessages([]);
+
+    const { hasLogin, checkLogin, updateUserInfo } = useUserStore(
+      (state) => state
+    );
     // debugger
     useEffect(() => {
       if (window.ztDebug) {
@@ -237,6 +246,7 @@ export const ChatComponents = forwardRef(
         return;
       }
 
+      setIsStreaming(false);
       setTyping(false);
       setInputDisabled(true);
       setLessonEnd(false);
@@ -361,6 +371,7 @@ export const ChatComponents = forwardRef(
             if (isEnd) {
               return;
             }
+            setIsStreaming(true);
             if (lastMsg !== null && lastMsg.type === 'text') {
               const currText = fixMarkdownStream(
                 lastMsg.content,
@@ -380,6 +391,8 @@ export const ChatComponents = forwardRef(
               appendMsg(lastMsg);
             }
           } else if (response.type === RESP_EVENT_TYPE.TEXT_END) {
+              setIsStreaming(false);
+              setTyping(false);
             if (isEnd) {
               return;
             }
@@ -427,7 +440,7 @@ export const ChatComponents = forwardRef(
             checkLogin();
           } else if (response.type === RESP_EVENT_TYPE.PROFILE_UPDATE) {
             const content = response.content;
-            updateUserInfo({[content.key]: content.value});
+            updateUserInfo({ [content.key]: content.value });
           }
         } catch (e) {}
       });
@@ -454,8 +467,9 @@ export const ChatComponents = forwardRef(
           setLoginInChat(true);
         }
       }
-      setInputDisabled(true);
+
       setTyping(true);
+      setInputDisabled(true);
       nextStep({ chatId, lessonId, type, val, scriptId });
     };
 
@@ -465,7 +479,7 @@ export const ChatComponents = forwardRef(
         return <></>;
       }
       if (type === CHAT_MESSAGE_TYPE.TEXT) {
-        return <MarkdownBubble content={content} />;
+        return <MarkdownBubble content={content} isStreaming={isStreaming} />;
       }
       return <></>;
     };
@@ -511,9 +525,8 @@ export const ChatComponents = forwardRef(
           renderMessageContent={renderMessageContent}
           renderBeforeMessageList={renderBeforeMessageList}
           recorder={{ canRecord: true }}
-          placeholder={inputPlaceholder}
           inputOptions={{ disabled: inputDisabled }}
-          Composer={({ onChange, onSubmit, value }) => {
+          Composer={() => {
             return <></>;
           }}
         />
