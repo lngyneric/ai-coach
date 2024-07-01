@@ -40,6 +40,7 @@ def edit_chapter(df: DataFrame, chapter_id, staff=False):
             params = {
                 'name': st.text_input('章节名称', df.loc[chapter_id, 'name']),
                 'lark_table_id': st.text_input('飞书表格 ID', df.loc[chapter_id, 'lark_table_id']),
+                'lark_view_id': st.text_input('飞书表格 ViewID', df.loc[chapter_id, 'lark_view_id']),
                 'chapter_type': st.text_input('章节类型', df.loc[chapter_id, 'chapter_type']),
             }
             chapter_id = st.text_input('lesson_no(index)', chapter_id)
@@ -61,7 +62,7 @@ def edit_chapter(df: DataFrame, chapter_id, staff=False):
                 # df.loc[chapter_id] = params
                 update_chapter_from_api(
                     params['lark_table_id'],
-                    # params['lark_view_id'],
+                    params['lark_view_id'],
                     params['name'],
                     chapter_id,
                     params['chapter_type']
@@ -97,12 +98,12 @@ def stdf_manage(df, title, has_delete=True):
     event = st.dataframe(
         df,
         height=None,
-        column_order=['id', 'name', 'lark_table_id', 'chapter_type'],
+        column_order=['id', 'name', 'lark_table_id', 'lark_view_id', 'chapter_type'],
         column_config={
             'id': 'lesson_no',
             'name': '章节名称',
             'lark_table_id': '飞书表格 ID',
-            # 'lark_view_id': '飞书表格 ViewID',
+            'lark_view_id': '飞书表格 ViewID',
             # 'rank': '排序权重',
             'chapter_type': '章节类型'
         },
@@ -123,7 +124,7 @@ def stdf_manage(df, title, has_delete=True):
             if st.button(f'⬆️ 更新 {selected_chapter["name"]}', use_container_width=True):
                 update_chapter_from_api(
                     table_id=selected_chapter['lark_table_id'],
-                    # view_id = selected_chapter['lark_view_id'],
+                    view_id = selected_chapter['lark_view_id'],
                     title=selected_chapter['name'],
                     index=selected_chapter.name,
                     lesson_type=selected_chapter['chapter_type']

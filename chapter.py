@@ -51,7 +51,7 @@ def load_chapters_from_api() -> list[Chapter]:
                 id=item['lesson_no'],
                 name=item['lesson_name'],
                 lark_table_id=item['feishu_id'],
-                lark_view_id=None,
+                lark_view_id=cfg.DEF_LARK_VIEW_ID,
                 rank=int(item['lesson_no']),
                 chapter_type=item['lesson_type']
             ))
@@ -76,12 +76,12 @@ LESSON_TYPES = {
 }
 
 
-def update_chapter_from_api(table_id, title, index, lesson_type):
+def update_chapter_from_api(table_id, view_id, title, index, lesson_type):
     url = f'{cfg.API_URL}/lesson/update_lesson'
     params = {
         'doc_id': cfg.LARK_APP_TOKEN,
         'table_id': table_id,
-        # 'view_id': view_id,
+        'view_id': view_id,
         'title': title,
         'index': index,
         'lesson_type': lesson_type,
@@ -115,6 +115,12 @@ def delete_chapter_from_api(table_id):
 
 
 if __name__ == '__main__':
+
+    # 从API获取章节信息
+    chapters = load_chapters_from_api()
+
+
+    # 从本地数据库获取
     # chapters = load_chapters_from_sqlite()
     #
     # for chapter in chapters:
@@ -142,7 +148,7 @@ if __name__ == '__main__':
 
     # 测试删除章节
     # delete_chapter_from_api('tblkkj1WaozcngwQ')
-    delete_chapter_from_api('tblQhi1ZutfUhW2T')
+    # delete_chapter_from_api('tblQhi1ZutfUhW2T')
 
 
 
