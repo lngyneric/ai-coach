@@ -57,6 +57,7 @@ const NavDrawer = ({
   lessonTree,
   onChapterCollapse = () => {},
   onLessonSelect = () => {},
+  onGoToSetting = () => {},
 }) => {
   const { frameLayout, hasLogin } = useContext(AppContext);
   const [isCollapse, setIsCollapse] = useState(false);
@@ -157,6 +158,7 @@ const NavDrawer = ({
           className={popupWindowClassname()}
           onClose={onPopupModalClose}
           onLoginClick={onLoginClick}
+          onGoToSetting={onGoToSetting}
         />
         <FeedbackModal
           open={feedbackModalOpen}

@@ -33,6 +33,7 @@ const NewChatPage = (props) => {
   const { cid } = useParams();
   const [ currChapterId, setCurrChapterId] = useState(null);
   const { lessonId, changeCurrLesson } = useCourseStore((state) => state);
+  const [showUserSettings, setShowUserSettings] = useState(false);
   const [loading, setLoading] = useState(false);
   const navigate = useNavigate();
 
@@ -124,6 +125,10 @@ const NewChatPage = (props) => {
     reloadTree();
   }
 
+  const onGoToSetting = () => {
+    setShowUserSettings(true);
+  }
+
   const onLessonSelect = ({id}) => {
     const chapter = getChapterByLesson(id);
     if (!chapter) {
@@ -154,6 +159,7 @@ const NewChatPage = (props) => {
             lessonTree={tree}
             onChapterCollapse={toggleCollapse}
             onLessonSelect={onLessonSelect}
+            onGoToSetting={onGoToSetting}
           />
           {
             <ChatUi
@@ -161,6 +167,8 @@ const NewChatPage = (props) => {
               lessonUpdate={onLessonUpdate}
               onGoChapter={onGoChapter}
               onPurchased={onPurchased}
+              showUserSettings={showUserSettings}
+              onUserSettingsClose={() => setShowUserSettings(false)}
             />
           }
         </Skeleton>

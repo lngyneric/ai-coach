@@ -11,6 +11,7 @@ export const SettingModal = ({
   onClose,
   style,
   onLoginClick = () => {},
+  onGoToSetting = () => {},
   className,
 }) => {
   const { hasLogin, userInfo, logout } = useUserStore((state) => state);
@@ -30,6 +31,8 @@ export const SettingModal = ({
   const onLoginRowClick = () => {
     if (!hasLogin) {
       onLoginClick?.();
+    } else {
+      onGoToSetting?.();
     }
   };
 

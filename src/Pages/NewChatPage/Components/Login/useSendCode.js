@@ -1,7 +1,7 @@
 import { useState, useRef } from 'react';
 import { sendSmsCode } from '@Api/user.js';
 
-const DEFAULT_COUNTDOWN = 5;
+const DEFAULT_COUNTDOWN = 60;
 const DEFAULT_COUNTDOWN_INTERVAL = 1000;
 
 export const useSendCode = ({ countDownTime = DEFAULT_COUNTDOWN }) => {

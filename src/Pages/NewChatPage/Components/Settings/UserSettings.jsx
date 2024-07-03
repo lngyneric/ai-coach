@@ -12,7 +12,7 @@ import JobSettingModal from './JobSettingModal.jsx';
 import SexSettingModal from './SexSettingModal.jsx';
 import { useState } from 'react';
 
-export const UserSettings = ({ onClose, className }) => {
+export const UserSettings = ({ onHomeClick, className }) => {
   const [form] = Form.useForm();
   const onSaveSettingsClick = () => {};
   const [industrySettingModalOpen, setIndustrySettingModalOpen] = useState(false);
@@ -25,7 +25,7 @@ export const UserSettings = ({ onClose, className }) => {
       <SexSettingModal open={sexSettingModalOpen} onClose={() => setSexSettingModalOpen(false)} />
       <JobSettingModal open={jobSettingModalOpen} onClose={() => setJobSettingModalOpen(false)} />
       <div className={classNames(styles.UserSettings, className)}>
-        <SettingHeader onBackClick={onClose} className={styles.settingHeader} />
+        <SettingHeader onHomeClick={onHomeClick} className={styles.settingHeader} />
         <div className={styles.settingBody}>
           <div className={styles.centerWrapper}>
             <ChangeAvatar img={''} />

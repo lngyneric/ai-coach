@@ -59,18 +59,10 @@ export const ChatInputText = ({ onClick, type, disabled = false }) => {
                 onSendClick();
               }
             }}
-          />
+          >
+          </Input>
+          <img src={require('@Assets/newchat/light/icon-send.png')} alt="" className={styles.sendIcon} onClick={onSendClick} />
         </div>
-        <SubButton
-          onClick={onSendClick}
-          width={100}
-          height={32}
-          style={{ marginLeft: '15px' }}
-          disabled={disabled}
-        >
-          提交
-        </SubButton>
-
         {contextHolder}
       </div>
     </div>
