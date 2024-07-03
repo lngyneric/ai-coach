@@ -98,13 +98,21 @@ const MarkdownBubble = (props) => {
   );
 };
 
-const createMessage = ({ id = 0, role, content, type = 'text', userInfo }) => {
+const createMessage = ({ id = 0, role, content, type = CHAT_MESSAGE_TYPE.TEXT, userInfo }) => {
   const mid = id || genUuid();
+  if (type === CHAT_MESSAGE_TYPE.LESSON_SEPARATOR) {
+    return {
+      _id: mid,
+      id: mid,
+      type: CHAT_MESSAGE_TYPE.LESSON_SEPARATOR,
+      content: content,
+    }
+  }
   const position = role === USER_ROLE.STUDENT ? 'right' : 'left';
   let avatar = robotAvatar;
 
   if (role === USER_ROLE.STUDENT) {
-    avatar = userInfo?.avatar || require('@Assets/newchat/light/user.png');
+    avatar = null;
   }
   return {
     _id: mid,
@@ -118,13 +126,25 @@ const createMessage = ({ id = 0, role, content, type = 'text', userInfo }) => {
 };
 
 const convertMessage = (serverMessage, userInfo) => {
-  return createMessage({
-    id: serverMessage.id,
-    role: serverMessage.script_role,
-    content: fixMarkdown(serverMessage.script_content),
-    type: serverMessage.script_type,
-    userInfo,
-  });
+  if (serverMessage.script_type === CHAT_MESSAGE_TYPE.TEXT) {
+    return createMessage({
+      id: serverMessage.id,
+      role: serverMessage.script_role,
+      content: fixMarkdown(serverMessage.script_content),
+      type: serverMessage.script_type,
+      userInfo,
+    });
+  } else if (serverMessage.script_type === CHAT_MESSAGE_TYPE.LESSON_SEPARATOR) {
+    return createMessage({
+      id: serverMessage.id,
+      role: serverMessage.script_role,
+      content: { lessonId: serverMessage.lesson_id },
+      type: serverMessage.script_type,
+      userInfo,
+    });
+  }
+
+  return {};
 };
 
 const convertEventInputModal = ({ type, content }) => {
@@ -241,6 +261,12 @@ export const ChatComponents = forwardRef(
       }
     }, [currLessonId]);
 
+    const fixRecordData = (records) => {
+      let lessonId = '';
+
+      return records;
+    }
+
     const resetAndLoadData = async () => {
       if (!chapterId) {
         return;
@@ -266,16 +292,25 @@ export const ChatComponents = forwardRef(
         return;
       }
 
+      let lesson_id = 0;
       records.forEach((v, i) => {
-        const newMessage = convertMessage(
-          {
-            ...v,
-            id: i,
-            script_type: 'text',
-          },
-          userInfo
-        );
-        appendMsg(newMessage);
+        if (v.script_type === CHAT_MESSAGE_TYPE.LESSON_SEPARATOR) {
+          const newMessage = convertMessage({
+            script_role: '',
+            
+          });
+        } else {
+          const newMessage = convertMessage(
+            {
+              ...v,
+              id: i,
+              script_type: CHAT_MESSAGE_TYPE.TEXT,
+            },
+            userInfo
+          );
+          appendMsg(newMessage);
+        }
+
       });
 
       setLessonId(records[records.length - 1].lesson_id);
@@ -475,6 +510,9 @@ export const ChatComponents = forwardRef(
 
     const renderMessageContent = (msg) => {
       const { content, type } = msg;
+      if (type === CHAT_MESSAGE_TYPE.LESSON_SEPARATOR) {
+        return <div>less</div>
+      }
       if (content === undefined) {
         return <></>;
       }

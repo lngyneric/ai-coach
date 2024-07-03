@@ -55,4 +55,5 @@ export const RESP_EVENT_TYPE = {
 // chat message 类型
 export const CHAT_MESSAGE_TYPE ={
   TEXT: 'text',
+  LESSON_SEPARATOR: 'lessonSeparator',
 }

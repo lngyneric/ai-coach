@@ -19,6 +19,9 @@
 
     .inputField {
       display: block;
+      font-size: var(--font-size-3);
+      padding: 8px 16px;
+      color: var(--font-color-main);
     }
   }
 }

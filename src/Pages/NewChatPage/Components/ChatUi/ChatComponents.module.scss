@@ -7,6 +7,7 @@
     background-color: var(--color-4);
 
 
+
     .inlineCode {
       padding: 2px 4px;
       font-size: 0.9em;
@@ -19,7 +20,24 @@
   :global(.MessageList) {
     padding-bottom: 50px;
 
+    --brand-3: var(--color-2);
 
+    :global(.Message.right) {
+      color: var(--color-4);
+    }
+
+    :global(.Message.left) {
+      color: var(--font-color-main);
+      font-size: var(--font-size-3);
+
+      :global(.Bubble) {
+        background-color: transparent;
+      }
+
+      :global(.Avatar) {
+        border: 1px solid rgba(0, 0, 0, 0.05);
+      }
+    }
 
     :global(.Bubble.text) {
       white-space: normal;
@@ -32,6 +50,8 @@
         &:last-child {
           margin-bottom: 0;
         }
+
+        margin-bottom: 1em;
       }
     }
 
