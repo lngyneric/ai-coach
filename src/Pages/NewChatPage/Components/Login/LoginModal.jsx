@@ -72,7 +72,6 @@ export const LoginModal = ({
     try {
       const { smsCode } = await codeForm.validateFields();
 
-      console.log('onCodeFromkOkClick', aggrement, smsCode);
       if (!aggrement) {
         messageApi.error('请勾选同意协议');
         return;

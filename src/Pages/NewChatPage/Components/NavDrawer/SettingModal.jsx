@@ -4,7 +4,6 @@ import styles from './SettingModal.module.scss';
 import classNames from 'classnames';
 import { useUserStore } from '@stores/useUserStore.js';
 import { Modal } from 'antd';
-import BirthdaySettingModal from '../Settings/BirthdaySettingModal.jsx';
 import { useState } from 'react';
 
 export const SettingModal = ({
@@ -15,23 +14,18 @@ export const SettingModal = ({
   className,
 }) => {
   const { hasLogin, userInfo, logout } = useUserStore((state) => state);
-  const [tryOpen, setTryOpen] = useState(false);
 
-  const onLogoutClick = async () => {
+  const onLogoutClick = async (e) => {
     await Modal.confirm({
       title: '确认退出登录？',
       content: '确认退出登录么',
       onOk: async () => {
         await logout();
-        onClose();
+        onClose?.(e);
       },
     });
   };
   const avatar = userInfo?.avatar || require('@Assets/newchat/light/user.png');
-
-  const onTryOk = (val) => {
-    console.log('onTryOk', val);
-  };
 
   const onLoginRowClick = () => {
     if (!hasLogin) {
@@ -41,14 +35,6 @@ export const SettingModal = ({
 
   return (
     <>
-      <BirthdaySettingModal
-        open={tryOpen}
-        onClose={() => {
-          setTryOpen(false);
-        }}
-        onOk={(v) => onTryOk(v)}
-      />
-
       <PopupModal
         open={open}
         onClose={onClose}
@@ -71,7 +57,6 @@ export const SettingModal = ({
           <div
             className={styles.settingRow}
             onClick={() => {
-              setTryOpen(true);
             }}
           >
             <div>会员管理</div>
