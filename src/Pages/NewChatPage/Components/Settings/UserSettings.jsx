@@ -11,13 +11,13 @@ import IndustrySettingModal from './IndustrySettingModal.jsx';
 import JobSettingModal from './JobSettingModal.jsx';
 import SexSettingModal from './SexSettingModal.jsx';
 import { useState } from 'react';
+import { useCallback } from 'react';
 
 export const UserSettings = ({ onHomeClick, className }) => {
-  const [form] = Form.useForm();
-  const onSaveSettingsClick = () => {};
   const [industrySettingModalOpen, setIndustrySettingModalOpen] = useState(false);
   const [jobSettingModalOpen, setJobSettingModalOpen] = useState(false);
   const [sexSettingModalOpen, setSexSettingModalOpen] = useState(false);
+  const onSaveSettingsClick = useCallback(() => {}, []);
 
   return (
     <>
@@ -64,7 +64,7 @@ export const UserSettings = ({ onHomeClick, className }) => {
                 alt="icon"
               />
             </div>
-            <div className={classNames(styles.settingSelect, styles.inputUnit)} onClick={() => setIndustrySettingModalOpen(true)}>
+            <div className={classNames(styles.settingSelect, styles.inputUnit)}>
               <input
                 type="text"
                 className={styles.inputElement}
@@ -72,23 +72,13 @@ export const UserSettings = ({ onHomeClick, className }) => {
                 disabled={true}
                 onClick={() => setIndustrySettingModalOpen(true)}
               />
-              <img
-                className={styles.icon}
-                src={require('@Assets/newchat/light/icon16-arrow-down.png')}
-                alt="icon"
-              />
             </div>
-            <div className={classNames(styles.settingSelect, styles.inputUnit)} onClick={() => setJobSettingModalOpen(true)}>
+            <div className={classNames(styles.settingSelect, styles.inputUnit)} >
               <input
                 type="text"
                 className={styles.inputElement}
                 placeholder="请选择职业"
                 disabled={true}
-              />
-              <img
-                className={styles.icon}
-                src={require('@Assets/newchat/light/icon16-arrow-down.png')}
-                alt="icon"
               />
             </div>
           </div>

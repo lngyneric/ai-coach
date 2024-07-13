@@ -10,7 +10,7 @@ export const ChatUi = ({
   lessonUpdate,
   onGoChapter,
   onPurchased,
-  showUserSettings = false,
+  showUserSettings = true,
   onUserSettingsClose = () => {},
 }) => {
   return (

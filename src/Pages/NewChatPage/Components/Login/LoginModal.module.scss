@@ -6,6 +6,7 @@
     .title {
       text-align: center;
       font-size: var(--font-size-2);
+      font-weight: var(--font-weight-bold);
     }
 
     .formWrapper {
@@ -49,10 +50,15 @@
     display: flex;
     flex-flow: column;
     align-items: center;
+    font-size: var(--font-size-5);
 
     .aggrement {
       display: flex;
       flex-flow: row wrap;
+
+      :global(.ant-checkbox-wrapper) {
+        font-size: var(--font-size-5);
+      }
 
       .text {
         margin-left: 0.5em;
