@@ -13,6 +13,7 @@ import SettingModal from './SettingModal.jsx';
 import CourseCatalogList from '../CourseCatalog/CourseCatalogList.jsx';
 import styles from './NavDrawer.module.scss';
 import FeedbackModal from '../FeedbackModal/FeedbackModal.jsx';
+import classNames from 'classnames';
 
 import {
   FRAME_LAYOUT_PAD,
@@ -36,20 +37,23 @@ export const POPUP_WINDOW_STATE_THEME = 2;
 export const POPUP_WINDOW_STATE_SETTING = 3;
 export const POPUP_WINDOW_STATE_FILING = 1;
 
+const NAV_DRAWER_MAX_WIDTH = '280px';
+const NAV_DRAWER_COLLAPSE_WIDTH = '60px';
+
 const calcNavWidth = (frameLayout) => {
   if (frameLayout === FRAME_LAYOUT_MOBILE) {
     return '100%';
   }
   if (frameLayout === FRAME_LAYOUT_PAD_INTENSIVE) {
-    return '280px';
+    return NAV_DRAWER_MAX_WIDTH;
   }
   if (frameLayout === FRAME_LAYOUT_PAD) {
     return '25%';
   }
-  return '280px';
+  return NAV_DRAWER_MAX_WIDTH;
 };
 
-const COLLAPSE_WIDTH = '60px';
+const COLLAPSE_WIDTH = NAV_DRAWER_COLLAPSE_WIDTH;
 
 const NavDrawer = ({
   showType = NAV_SHOW_TYPE_NORMAL,
@@ -88,11 +92,11 @@ const NavDrawer = ({
 
   const popupWindowClassname = () => {
     return isCollapse ? styles.popUpWindowCollapse : styles.popUpWindowExpand;
-  }
+  };
 
   return (
     <div
-      className={styles.navDrawerWrapper}
+      className={classNames(styles.navDrawerWrapper, frameLayout === FRAME_LAYOUT_MOBILE ? styles.mobile : '')}
       style={{ width: isCollapse ? COLLAPSE_WIDTH : calcNavWidth(frameLayout) }}
     >
       <div className={styles.navDrawer}>

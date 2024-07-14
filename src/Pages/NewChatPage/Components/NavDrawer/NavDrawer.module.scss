@@ -33,5 +33,19 @@
     left: 70px;
     z-index: 999;
   }
+
+  &.mobile {
+    width: 100%;
+    height: 100%;
+    display: none;
+
+    .navDrawer {
+      height: 100%;
+      display: flex;
+      flex-flow: column nowrap;
+      position: relative;
+    }
+
+  }
 }
 

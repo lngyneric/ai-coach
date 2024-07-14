@@ -1,6 +1,10 @@
+import { AppContext } from '@Components/AppContext.js';
+import { useContext } from 'react';
 import ChatComponents from './ChatComponents.jsx';
 import styles from './ChatUi.module.scss';
 import UserSettings from '../Settings/UserSettings.jsx';
+import { FRAME_LAYOUT_MOBILE } from 'constants/uiConstants.js';
+import classNames from 'classnames';
 
 /**
  * 聊天区的整体画布
@@ -13,8 +17,15 @@ export const ChatUi = ({
   showUserSettings = true,
   onUserSettingsClose = () => {},
 }) => {
+  const { frameLayout } = useContext(AppContext);
+
   return (
-    <div className={styles.ChatUi}>
+    <div
+      className={classNames(
+        styles.ChatUi,
+        frameLayout === FRAME_LAYOUT_MOBILE ? styles.mobile : ''
+      )}
+    >
       {
         <ChatComponents
           chapterId={chapterId}

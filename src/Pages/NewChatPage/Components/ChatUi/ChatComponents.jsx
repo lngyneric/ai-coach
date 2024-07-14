@@ -31,6 +31,7 @@ import { fixMarkdown, fixMarkdownStream } from '@Utils/markdownUtils.js';
 import { testPurchaseOrder } from '@Api/order.js';
 import remarkGfm from 'remark-gfm';
 import rehypeRaw from 'rehype-raw';
+import { FRAME_LAYOUT_MOBILE } from 'constants/uiConstants.js';
 
 const USER_ROLE = {
   TEACHER: '老师',
@@ -40,6 +41,7 @@ const USER_ROLE = {
 const robotAvatar = require('@Assets/chat/sunner_icon.jpg');
 
 const MarkdownBubble = (props) => {
+  const { mobileStyle } = props;
   const onCopy = (content) => {
     navigator.clipboard.writeText(content);
   };
@@ -73,7 +75,7 @@ const MarkdownBubble = (props) => {
                   children={String(children).replace(/\n$/, '')}
                   style={vscDarkPlus}
                   language={match[1]}
-                  showLineNumbers={true}
+                  showLineNumbers={!mobileStyle}
                   wrapLines={false}
                   onCopy={() => {
                     onCopy(children);
@@ -90,7 +92,13 @@ const MarkdownBubble = (props) => {
             );
           },
           img(imgProps) {
-            return <Image {...imgProps} width={'70%'} preview={!props.isStreaming}></Image>;
+            return (
+              <Image
+                {...imgProps}
+                width={mobileStyle ? '100%' : '70%'}
+                preview={!props.isStreaming}
+              ></Image>
+            );
           },
         }}
       />
@@ -98,7 +106,13 @@ const MarkdownBubble = (props) => {
   );
 };
 
-const createMessage = ({ id = 0, role, content, type = CHAT_MESSAGE_TYPE.TEXT, userInfo }) => {
+const createMessage = ({
+  id = 0,
+  role,
+  content,
+  type = CHAT_MESSAGE_TYPE.TEXT,
+  userInfo,
+}) => {
   const mid = id || genUuid();
   if (type === CHAT_MESSAGE_TYPE.LESSON_SEPARATOR) {
     return {
@@ -106,9 +120,11 @@ const createMessage = ({ id = 0, role, content, type = CHAT_MESSAGE_TYPE.TEXT, u
       id: mid,
       type: CHAT_MESSAGE_TYPE.LESSON_SEPARATOR,
       content: content,
-    }
+    };
   }
   const position = role === USER_ROLE.STUDENT ? 'right' : 'left';
+
+
   let avatar = robotAvatar;
 
   if (role === USER_ROLE.STUDENT) {
@@ -207,9 +223,8 @@ export const ChatComponents = forwardRef(
     const [loadedData, setLoadedData] = useState(false);
     // 是否在流式输出内容
     const [isStreaming, setIsStreaming] = useState(false);
-    
 
-    const { userInfo } = useContext(AppContext);
+    const { userInfo, frameLayout } = useContext(AppContext);
     const { lessonId: currLessonId, changeCurrLesson } = useCourseStore(
       (state) => state
     );
@@ -220,6 +235,8 @@ export const ChatComponents = forwardRef(
     const { hasLogin, checkLogin, updateUserInfo } = useUserStore(
       (state) => state
     );
+
+    const mobileStyle = frameLayout === FRAME_LAYOUT_MOBILE;
     // debugger
     useEffect(() => {
       if (window.ztDebug) {
@@ -265,7 +282,7 @@ export const ChatComponents = forwardRef(
       let lessonId = '';
 
       return records;
-    }
+    };
 
     const resetAndLoadData = async () => {
       if (!chapterId) {
@@ -297,7 +314,6 @@ export const ChatComponents = forwardRef(
         if (v.script_type === CHAT_MESSAGE_TYPE.LESSON_SEPARATOR) {
           const newMessage = convertMessage({
             script_role: '',
-            
           });
         } else {
           const newMessage = convertMessage(
@@ -310,7 +326,6 @@ export const ChatComponents = forwardRef(
           );
           appendMsg(newMessage);
         }
-
       });
 
       setLessonId(records[records.length - 1].lesson_id);
@@ -426,8 +441,8 @@ export const ChatComponents = forwardRef(
               appendMsg(lastMsg);
             }
           } else if (response.type === RESP_EVENT_TYPE.TEXT_END) {
-              setIsStreaming(false);
-              setTyping(false);
+            setIsStreaming(false);
+            setTyping(false);
             if (isEnd) {
               return;
             }
@@ -511,13 +526,13 @@ export const ChatComponents = forwardRef(
     const renderMessageContent = (msg) => {
       const { content, type } = msg;
       if (type === CHAT_MESSAGE_TYPE.LESSON_SEPARATOR) {
-        return <div>less</div>
+        return <div>less</div>;
       }
       if (content === undefined) {
         return <></>;
       }
       if (type === CHAT_MESSAGE_TYPE.TEXT) {
-        return <MarkdownBubble content={content} isStreaming={isStreaming} />;
+        return <MarkdownBubble content={content} isStreaming={isStreaming} mobileStyle={mobileStyle} />;
       }
       return <></>;
     };
@@ -556,7 +571,13 @@ export const ChatComponents = forwardRef(
     };
 
     return (
-      <div className={classNames(styles.chatComponents, className)}>
+      <div
+        className={classNames(
+          styles.chatComponents,
+          className,
+          mobileStyle ? styles.mobile : ''
+        )}
+      >
         <Chat
           navbar={null}
           messages={messages}

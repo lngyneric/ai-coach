@@ -65,6 +65,7 @@ export const ChatInteractionArea = ({
   return (
     <div className={classNames(styles.chatInputArea, disabled && styles.disabled)}>
       {genRenderControl()}
+      <div className={styles.tipText}>内容由 AI 大模型生成，无法确保真实准确，仅供学习参考</div>
     </div>
   );
 };

@@ -71,4 +71,11 @@
     }
   }
 
+  &.mobile {
+    :global(.Message.left) {
+      :global(.Bubble) {
+        margin-right: 0;
+      }
+    }
+  }
 }

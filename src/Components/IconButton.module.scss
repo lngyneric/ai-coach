@@ -1,0 +1,9 @@
+.IconButton {
+  display: flex;  
+  justify-content: center;
+  align-items: center;
+
+  .innerIcon {
+    display: block;
+  }
+}

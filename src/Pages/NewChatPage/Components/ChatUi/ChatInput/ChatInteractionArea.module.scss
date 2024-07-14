@@ -4,11 +4,19 @@
   left: 0;
   width: 100%;
   background: transparent;
-  padding: 10px 0;
+  padding-top: 10px;
   transition: opacity 0.8s ease;
   opacity: 1;
 
   &.disabled {
     opacity: 0.3;
+  }
+
+  .tipText {
+    color: var(--color-8);
+    font-size: var(--font-size-5);
+    display: flex;
+    justify-content: center;
+    padding: 12px;
   }
 }
