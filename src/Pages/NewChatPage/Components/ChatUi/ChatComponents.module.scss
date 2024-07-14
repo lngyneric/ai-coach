@@ -3,10 +3,14 @@
   height: 100%;
   position: relative;
 
+  .ChatMobileHeader {
+    position: absolute;
+    top: 0;
+    left: 0;
+  }
+
   :global(.MessageContainer) {
     background-color: var(--color-4);
-
-
 
     .inlineCode {
       padding: 2px 4px;
@@ -72,9 +76,13 @@
   }
 
   &.mobile {
-    :global(.Message.left) {
-      :global(.Bubble) {
-        margin-right: 0;
+    :global(.MessageList) {
+      padding-bottom: 50px;
+
+      :global(.Message.left) {
+        :global(.Bubble) {
+          margin-right: 0;
+        }
       }
     }
   }

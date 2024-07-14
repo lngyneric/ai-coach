@@ -32,6 +32,7 @@ import { testPurchaseOrder } from '@Api/order.js';
 import remarkGfm from 'remark-gfm';
 import rehypeRaw from 'rehype-raw';
 import { FRAME_LAYOUT_MOBILE } from 'constants/uiConstants.js';
+import ChatMobileHeader from './ChatMobileHeader.jsx';
 
 const USER_ROLE = {
   TEACHER: '老师',
@@ -578,6 +579,7 @@ export const ChatComponents = forwardRef(
           mobileStyle ? styles.mobile : ''
         )}
       >
+        <ChatMobileHeader className={styles.ChatMobileHeader} />
         <Chat
           navbar={null}
           messages={messages}
