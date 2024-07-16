@@ -10,8 +10,11 @@ import ChangeAvatar from './ChangeAvatar.jsx';
 import IndustrySettingModal from './IndustrySettingModal.jsx';
 import JobSettingModal from './JobSettingModal.jsx';
 import SexSettingModal from './SexSettingModal.jsx';
+
 import { useState } from 'react';
 import { useCallback } from 'react';
+
+import { getUserProfile } from 'Api/user';
 
 export const UserSettings = ({ onHomeClick, className }) => {
   const [industrySettingModalOpen, setIndustrySettingModalOpen] = useState(false);

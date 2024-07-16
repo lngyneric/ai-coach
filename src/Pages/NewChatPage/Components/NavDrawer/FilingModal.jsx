@@ -18,8 +18,8 @@ export const FillingModal = ({
       className={className}
     >
       <div className={styles.filingModal}>
-        <div>北京xxxx有限公司</div>
-        <div>北京朝阳区望京xx大厦xx层xx02</div>
+        <div>北京潺潺山木科技有限公司</div>
+        <div>北京朝阳区望京东煌大厦19层163室</div>
         <div>
           <a
             className={styles.miitLink}
@@ -27,7 +27,7 @@ export const FillingModal = ({
             target="_blank"
             rel="noreferrer"
           >
-            京ICP备2024060606
+            京ICP备2024076754号-1
           </a>
         </div>
         <div className={styles.gonganRow}>

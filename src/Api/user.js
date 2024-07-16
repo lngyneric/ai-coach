@@ -134,3 +134,11 @@ export const verifySmsCode = ({ mobile, sms_code }) => {
     data: { mobile, sms_code },
   });
 }
+
+
+export const getUserProfile = () => {
+  return request({
+    url: '/api/user/get_profile',
+    method: 'get',
+  });
+}
