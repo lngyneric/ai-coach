@@ -1,0 +1,14 @@
+{
+<<<<<<< HEAD
+  "[python]": {
+    "editor.defaultFormatter": "ms-python.autopep8"
+  },
+  "python.formatting.provider": "none"
+}
+=======
+    "[python]": {
+        "editor.defaultFormatter": "ms-python.autopep8"
+    },
+    "python.formatting.provider": "none"
+}
+>>>>>>> 8b63071 (save tmp;)
