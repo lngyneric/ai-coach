@@ -1,0 +1,21 @@
+cookie:
+  expiry_days: 7
+  key: eKr_0pdK5bK3L3SFSLU0fLUI7gMFsGnDMNgE19YHKNU
+  name: codesifu_user_reauth_cookie
+credentials:
+  usernames:
+    '017':
+      email: 15510550064@163.com
+      failed_login_attempts: 0
+      logged_in: false
+      name: '017'
+      password: $2b$12$810mLb3tPE.NwStl/ZhUteclUE3gblTU71kdqTQgx2BB2gGgS4zQi
+    kenrick:
+      email: Kenrick.Zhou@gmail.com
+      failed_login_attempts: 0
+      logged_in: false
+      name: Kenrick Zhou
+      password: $2b$12$1/k65V6qYCKNpiUhcllbDe7sLWS3J.x6ThjuLg3kJnzCeW7.LdzDe
+pre-authorized:
+  emails:
+  - melsby@gmail.com
