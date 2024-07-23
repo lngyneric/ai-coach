@@ -1,0 +1,81 @@
+{
+  "name": "chatui",
+  "version": "0.1.0",
+  "private": true,
+  "dependencies": {
+    "@ant-design/icons": "^5.1.4",
+    "@babel/core": "^7.0.0-0",
+    "@babel/plugin-syntax-flow": "^7.14.5",
+    "@babel/plugin-transform-react-jsx": "^7.14.9",
+    "@chatui/core": "^2.4.2",
+    "@craco/craco": "^7.1.0",
+    "@fullcalendar/bootstrap5": "^6.1.8",
+    "@fullcalendar/core": "^6.1.8",
+    "@fullcalendar/daygrid": "^6.1.8",
+    "@fullcalendar/interaction": "^6.1.8",
+    "@fullcalendar/react": "^6.1.8",
+    "@fullcalendar/timegrid": "^6.1.8",
+    "@nanostores/react": "github:ai/react",
+    "@testing-library/dom": "^9.3.1",
+    "@testing-library/jest-dom": "^5.16.5",
+    "@testing-library/react": "^13.4.0",
+    "@testing-library/user-event": "^13.5.0",
+    "@types/react": "^18.2.14",
+    "ai": "^3.1.27",
+    "antd": "^5.6.3",
+    "axios": "^1.4.0",
+    "bootstrap": "^5.3.1",
+    "bootstrap-icons": "^1.10.5",
+    "classnames": "^2.5.1",
+    "craco-alias": "^3.0.1",
+    "dayjs": "^1.11.9",
+    "dotenv-cli": "^7.2.1",
+    "immer": "^10.1.1",
+    "js-cookie": "^3.0.5",
+    "moment": "^2.29.4",
+    "react": "^18.2.0",
+    "react-device-detect": "^2.2.3",
+    "react-dom": "^18.2.0",
+    "react-infinite-scroll-component": "^6.1.0",
+    "react-markdown": "^8.0.7",
+    "react-router-dom": "^6.14.0",
+    "react-scripts": "5.0.1",
+    "react-syntax-highlighter": "^15.5.0",
+    "sass": "^1.77.4",
+    "sse": "^0.0.8",
+    "sse.js": "^0.6.1",
+    "store": "^2.0.12",
+    "swiper": "^10.3.0",
+    "typescript": "^5.1.6",
+    "web-vitals": "^2.1.4",
+    "zustand": "^4.5.2"
+  },
+  "scripts": {
+    "start:dev": "dotenv -e .local.single.env -e .env.dev craco start",
+    "start:dev-local": "dotenv -e .local.single.env -e .env.dev-local craco start",
+    "build": "dotenv -e .local.single.env -e .env.prop craco build",
+    "test": "craco test",
+    "eject": "craco eject"
+  },
+  "eslintConfig": {
+    "extends": [
+      "react-app",
+      "react-app/jest"
+    ]
+  },
+  "browserslist": {
+    "production": [
+      ">0.2%",
+      "not dead",
+      "not op_mini all"
+    ],
+    "development": [
+      "last 1 chrome version",
+      "last 1 firefox version",
+      "last 1 safari version"
+    ]
+  },
+  "devDependencies": {
+    "@types/store": "^2.0.2"
+  }
+}

@@ -1,0 +1,40 @@
+.document_list_container {
+  width: 300px;
+  height: 100%;
+  overflow-y: auto;
+  background-color: #fff;
+  border-radius: 8px;
+  position: relative;
+}
+.document_list {
+  padding: 16px;
+}
+
+.documnet_list_header {
+  padding: 8px 16px;
+  position: sticky;
+  top: 0;
+  width: 100%;
+  z-index: 1;
+  background-color: #fff;
+  box-shadow: -2px 2px 5px #d3dada;
+  display: flex;
+  justify-content: space-between;
+  gap: 8px;
+}
+.document_list_body {
+  min-height: calc(100% - 48px);
+}
+.document_list_body__empty {
+  min-height: calc(100% - 48px);
+  display: flex;
+  justify-content: center;
+  align-items: center;
+}
+
+.chat-list_footer {
+  position: sticky;
+  bottom: 0;
+  padding: 16px;
+  background-color: #fff;
+}
