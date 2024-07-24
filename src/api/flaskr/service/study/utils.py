@@ -56,7 +56,7 @@ def get_lesson_system(lesson_id:str)->str:
             parent_lesson = AILesson.query.filter(AILesson.lesson_no == parent_no).first()
             if parent_lesson:
                 lesson_ids.append(parent_lesson.lesson_id)
-        scripts = AILessonScript.query.filter(AILessonScript.lesson_id.in_(lesson_ids) == True,AILessonScript.script_content_type==SCRIPT_TYPE_SYSTEM).all()
+        scripts = AILessonScript.query.filter(AILessonScript.lesson_id.in_(lesson_ids) == True,AILessonScript.script_type==SCRIPT_TYPE_SYSTEM).all()
         if len(scripts)>0:
             for script in scripts:
                 if script.lesson_id == lesson_id:
