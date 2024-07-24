@@ -20,7 +20,6 @@ from ..common import USER_NOT_FOUND,USER_PASSWORD_ERROR,USER_ALREADY_EXISTS,USER
 import jwt
 import time
 from captcha.image import ImageCaptcha 
-from marshmallow_dataclass import dataclass
 import oss2
 
 
