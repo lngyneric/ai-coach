@@ -88,8 +88,7 @@ def register_user_handler(app:Flask,path_prefix:str)->Flask:
 
         app.logger.info('request.endpoint:'+str(request.endpoint))
         app.logger.info('request.path:'+str(request.path))
-        app.logger.info('request.url:'+str(request.access_route))
-        if request.endpoint in ['login', 'register','require_reset_code','reset_password','invoke','update_lesson'] or request.endpoint in by_pass_login_func:
+        if request.endpoint in ['login', 'register','require_reset_code','reset_password','invoke','update_lesson'] or request.endpoint in by_pass_login_func or request.endpoint is None:
             # 在登录和注册处理函数中绕过登录态验证
             return
             # 检查装饰器标记，跳过Token校验

@@ -1,8 +1,6 @@
 
 from dataclasses import fields
 import typing
-from marshmallow_dataclass import dataclass
-from marshmallow import Schema, fields
 import ast
 import inspect
 swagger_config = {
@@ -26,7 +24,6 @@ swagger_config = {
 
 def parse_comments(cls):
     """通过解析类的源码提取字段的注释。"""
-    print(cls.__name__)
     source = inspect.getsource(cls)
     tree = ast.parse(source)
     comments = {}
@@ -95,12 +92,10 @@ def register_schema_to_swagger(cls):
 
     schema = {
         'type': 'object',
+        'description': comments.get(cls.__name__, ""),
         'properties': properties,
         'required': required
     }
     swagger_config['components']['schemas'][cls.__name__] = schema
-
-    # return schema
     
-    # return schema_cls
     return cls
