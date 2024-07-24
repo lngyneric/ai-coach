@@ -91,12 +91,13 @@ def get_study_record(app:Flask,user_id:str,lesson_id:str)->StudyRecordDTO:
         attend_scripts = AICourseLessonAttendScript.query.filter(AICourseLessonAttendScript.attend_id.in_(attend_ids)).order_by(AICourseLessonAttendScript.id).all()
         app.logger.info("attend_scripts:{}".format(len(attend_scripts)))
         index = len(attend_scripts)-1
+       
+        if len(attend_scripts) == 0:
+            return StudyRecordDTO(None)
         lesson_id = attend_scripts[-1].lesson_id
         while lesson_id not in lesson_ids:
             lesson_id = attend_scripts[index].lesson_id
             index -= 1
-        if len(attend_scripts) == 0:
-            return StudyRecordDTO(None)
         items =  [StudyRecordItemDTO(i.script_index,ROLE_VALUES[i.script_role],0,i.script_content,i.lesson_id if i.lesson_id in lesson_ids else lesson_id,i.id) for i in attend_scripts]
         ret = StudyRecordDTO(items)
         last_script_id = attend_scripts[-1].script_id
