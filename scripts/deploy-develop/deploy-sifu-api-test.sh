@@ -77,7 +77,7 @@ fi
 # 使用更新的镜像和自定义容器名称运行新容器
 CONTAINER_NAME="sifu_api_v1_$TIMESTAMP"
 echo "Starting a new container with the name $CONTAINER_NAME..."
-docker run -p $TARGET_PORT:5800 --name "$CONTAINER_NAME" -d "$FULL_IMAGE_NAME" -v /data/logs/api:/var/log/
+docker run  -v /data/logs/api:/var/log/ -p $TARGET_PORT:5800 --name "$CONTAINER_NAME" -d "$FULL_IMAGE_NAME" 
 
 
 sh $script_dir/send_feishu.sh "sifu_api_v1 部署成功" "$CONTAINER_NAME $FULL_IMAGE_NAME 部署成功！"
