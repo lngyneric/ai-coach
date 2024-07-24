@@ -77,6 +77,7 @@ OUTPUT_HANDLERS = {
 def handle_output(app:Flask,user_id:str,attend:AICourseLessonAttend,script_info:AILessonScript,input:str,trace:Trace,trace_args
 ):
     if script_info.script_type in OUTPUT_HANDLERS:
+        app.logger.info("generation output lesson_id:{}  script type:{},user_id:{},script_index:{}".format(script_info.lesson_id, script_info.script_type,user_id,script_info.script_index))
         yield from OUTPUT_HANDLERS[script_info.script_type](app,user_id,attend,script_info,trace,trace_args)
         yield make_script_dto("text_end","",script_info.script_id)
     else:
