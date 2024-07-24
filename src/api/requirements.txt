@@ -97,14 +97,14 @@ motor==3.5.1
 multidict==6.0.5
 mypy-extensions==1.0.0
 nest-asyncio==1.6.0
-numpy==2.0.1
+numpy==1.26.4
 openai==1.37.0
 openapi-core==0.19.2
 openapi-schema-validator==0.6.2
 openapi-spec-validator==0.7.1
 orjson==3.10.6
 oss2==2.18.6
-packaging==24.1
+packaging==23.2
 pandas==2.2.2
 parse==1.20.2
 parso==0.8.4
@@ -131,7 +131,6 @@ pymongo==4.8.0
 PyMySQL==1.1.1
 pyppdf==0.1.2
 pyppeteer==2.0.0
-pysandbox==66.0.2
 python-dateutil==2.9.0.post0
 python-dotenv==1.0.1
 pytz==2024.1
@@ -160,9 +159,9 @@ typing-inspect==0.9.0
 typing_extensions==4.12.2
 tzdata==2024.1
 ujson==5.10.0
-urllib3==2.2.2
+urllib3==1.26.19
 wcwidth==0.2.13
-websockets==12.0
+websockets==10.4
 Werkzeug==3.0.3
 wrapt==1.16.0
 yarl==1.9.4
