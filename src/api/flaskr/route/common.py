@@ -7,7 +7,6 @@ from ..service.common import AppException
 import json
 import traceback
 
-from marshmallow_dataclass import dataclass
 
 from typing import TypeVar, Generic
 

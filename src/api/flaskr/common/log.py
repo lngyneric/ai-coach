@@ -30,7 +30,7 @@ def init_log(app:Flask)->Flask:
     log_dir = os.path.dirname(log_file)
     if not os.path.exists(log_dir):
         os.makedirs(log_dir)
-
+    print("log_file:{}".format(log_file))
     # 按天切割日志 
     file_handler = TimedRotatingFileHandler(app.config['LOGGING_PATH'], when='midnight', backupCount=7)
     file_handler.setFormatter(formatter)

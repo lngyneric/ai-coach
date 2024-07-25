@@ -1,7 +1,6 @@
 from flask import Flask
 from flask_sqlalchemy import SQLAlchemy
 from redis import Redis
-from pymilvus import connections
 
 db = SQLAlchemy()
 def init_db(app : Flask):

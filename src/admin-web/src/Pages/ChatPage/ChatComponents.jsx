@@ -9,7 +9,7 @@ import React, { useEffect, forwardRef, useImperativeHandle } from "react";
 // import { SendMsg } from "../../Service/SSE";
 import { RunScript } from "../../Api/study";
 import { UploadEvent } from "../../Api/UploadEvent";
-import { ReactMarkdown } from "react-markdown/lib/react-markdown";
+import  Markdown from 'react-markdown' ;
 
 import { Prism as SyntaxHighlighter } from "react-syntax-highlighter";
 import { vscDarkPlus } from "react-syntax-highlighter/dist/esm/styles/prism";
@@ -37,7 +37,7 @@ const MarkdownBubble = (props) => {
   };
   return (
     <Bubble>
-      <ReactMarkdown
+      <Markdown
         children={props.content}
         components={{
           code({ node, inline, className, children, ...props }) {
@@ -80,7 +80,7 @@ const MarkdownBubble = (props) => {
             return <Image {...props} width={320}></Image>;
           },
         }}
-      ></ReactMarkdown>
+      ></Markdown>
     </Bubble>
   );
 };
