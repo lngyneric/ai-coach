@@ -82,6 +82,7 @@ def get_study_record(app:Flask,user_id:str,lesson_id:str)->StudyRecordDTO:
             lesson_infos = AILesson.query.filter(AILesson.lesson_no.like(lesson_info.lesson_no+'%')).all()
             lesson_ids = [lesson.lesson_id for lesson in lesson_infos]
         app.logger.info("lesson_ids:{}".format(lesson_ids))
+        print("lesson_ids:{}".format(lesson_ids))
         attend_infos = AICourseLessonAttend.query.filter(AICourseLessonAttend.user_id==user_id,  AICourseLessonAttend.lesson_id.in_(lesson_ids)).order_by(AICourseLessonAttend.id).all()
         if not attend_infos:
             return None
@@ -89,47 +90,55 @@ def get_study_record(app:Flask,user_id:str,lesson_id:str)->StudyRecordDTO:
         app.logger.info("attend_ids:{}".format(attend_ids))
         attend_scripts = AICourseLessonAttendScript.query.filter(AICourseLessonAttendScript.attend_id.in_(attend_ids)).order_by(AICourseLessonAttendScript.id).all()
         app.logger.info("attend_scripts:{}".format(len(attend_scripts)))
+        index = len(attend_scripts)-1
+       
         if len(attend_scripts) == 0:
             return StudyRecordDTO(None)
-        items =  [StudyRecordItemDTO(i.script_index,ROLE_VALUES[i.script_role],0,i.script_content,i.lesson_id,i.id) for i in attend_scripts]
+        lesson_id = attend_scripts[-1].lesson_id
+        while lesson_id not in lesson_ids:
+            lesson_id = attend_scripts[index].lesson_id
+            index -= 1
+        items =  [StudyRecordItemDTO(i.script_index,ROLE_VALUES[i.script_role],0,i.script_content,i.lesson_id if i.lesson_id in lesson_ids else lesson_id,i.id) for i in attend_scripts]
         ret = StudyRecordDTO(items)
         last_script_id = attend_scripts[-1].script_id
+       
+
 
         last_script = AILessonScript.query.filter_by(script_id=last_script_id).first()
         app.logger.info("last_script:{}".format(last_script)) 
         if last_script.script_ui_type == UI_TYPE_INPUT:
-            ret.ui = StudyUIDTO("input",last_script.script_ui_content,last_script.lesson_id)
+            ret.ui = StudyUIDTO("input",last_script.script_ui_content,lesson_id)
         elif last_script.script_ui_type == UI_TYPE_BUTTON:
             btn = [{
                         "label":last_script.script_ui_content,
                         "value":last_script.script_ui_content,
                         "type":INPUT_TYPE_CONTINUE
                     }]
-            ret.ui = StudyUIDTO("buttons",{"title":"接下来","buttons":btn},last_script.lesson_id)
+            ret.ui = StudyUIDTO("buttons",{"title":"接下来","buttons":btn},lesson_id)
         elif last_script.script_ui_type == UI_TYPE_CONTINUED:
-            ret.ui = StudyUIDTO("buttons",{"title":"继续","buttons":[{"label":"继续","value":"继续","type":INPUT_TYPE_CONTINUE}]},last_script.lesson_id)
+            ret.ui = StudyUIDTO("buttons",{"title":"继续","buttons":[{"label":"继续","value":"继续","type":INPUT_TYPE_CONTINUE}]},lesson_id)
         elif last_script.script_ui_type == UI_TYPE_BRANCH:
-            ret.ui = StudyUIDTO("buttons",{"title":"继续","buttons":[{"label":"继续","value":"继续","type":INPUT_TYPE_BRANCH}]},last_script.lesson_id)
+            ret.ui = StudyUIDTO("buttons",{"title":"继续","buttons":[{"label":"继续","value":"继续","type":INPUT_TYPE_BRANCH}]},lesson_id)
         elif last_script.script_ui_type == UI_TYPE_SELECTION:
             btns = json.loads(last_script.script_other_conf)["btns"]
             # 每一个增加Type
             for btn in btns:
                 btn["type"] = INPUT_TYPE_SELECT
-            ret.ui = StudyUIDTO("buttons",{"title":last_script.script_ui_content,"buttons":btns},last_script.lesson_id)
+            ret.ui = StudyUIDTO("buttons",{"title":last_script.script_ui_content,"buttons":btns},lesson_id)
         elif last_script.script_ui_type == UI_TYPE_PHONE:
-            ret.ui = StudyUIDTO(INPUT_TYPE_PHONE,last_script.script_ui_content,last_script.lesson_id)
+            ret.ui = StudyUIDTO(INPUT_TYPE_PHONE,last_script.script_ui_content,lesson_id)
         elif last_script.script_ui_type == UI_TYPE_CHECKCODE:
             expires = get_sms_code_info(app,user_id,False)
-            ret.ui = StudyUIDTO(INPUT_TYPE_CHECKCODE,expires,last_script.lesson_id)
+            ret.ui = StudyUIDTO(INPUT_TYPE_CHECKCODE,expires,lesson_id)
         elif last_script.script_ui_type == UI_TYPE_LOGIN:
-            ret.ui = StudyUIDTO(INPUT_TYPE_LOGIN,last_script.script_ui_content,last_script.lesson_id)
+            ret.ui = StudyUIDTO(INPUT_TYPE_LOGIN,last_script.script_ui_content,lesson_id)
         elif last_script.script_ui_type == UI_TYPE_TO_PAY:
             order =  init_buy_record(app,user_id,lesson_info.course_id,999)
             btn = [{
                         "label":last_script.script_ui_content,
                         "value":order.record_id
                     }]
-            ret.ui = StudyUIDTO("order",{"title":"买课！","buttons":btn},last_script.lesson_id)
+            ret.ui = StudyUIDTO("order",{"title":"买课！","buttons":btn},lesson_id)
             # ret.ui = StudyUIDTO("buttons",{"title":"继续","buttons":[{"label":"继续","value":"继续"}]},last_script.lesson_id)
         
         return ret

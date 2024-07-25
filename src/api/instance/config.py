@@ -1,5 +1,5 @@
-SQLALCHEMY_DATABASE_URI = 'mysql://root:Pa88word@127.0.0.1:13306/ai_asistant?charset=utf8mb4'
-# SQLALCHEMY_DATABASE_URI = 'mysql://sifu_test:P14FQWzjcKNWKvZ4@rm-2ze59ehub1no8i221vo.mysql.rds.aliyuncs.com/agi-sifu-test'
+# SQLALCHEMY_DATABASE_URI = 'mysql://root:Pa88word@127.0.0.1:13306/ai_asistant?charset=utf8mb4'
+SQLALCHEMY_DATABASE_URI = 'mysql://sifu_test:P14FQWzjcKNWKvZ4@rm-2ze59ehub1no8i221vo.mysql.rds.aliyuncs.com/agi-sifu-test'
 SQLALCHEMY_POOL_SIZE = 20
 SQLALCHEMY_POOL_TIMEOUT = 30
 SQLALCHEMY_POOL_RECYCLE = 3600
@@ -83,4 +83,7 @@ ERNIE_API_SECRET = "pnYqxxwDdhtvET2B8qNVhRHrIlqwJbKD"
 
 
 BIGMODEL_API_KEY = "0d7c11000eb9d12b5c04b3e5b6f1c40f.hoY57xpYtGnCmLxM"
+
+
+SWAGGER_ENABLED=True
 
