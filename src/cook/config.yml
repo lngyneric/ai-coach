@@ -4,20 +4,20 @@ simulate_streaming_random_sleep:
 
 llm:
 #  default_vendor: wenxin
-  default_model: ERNIE-Speed-8K
+  default_model: ERNIE-4.0-8K-Preview-0518
   qianfan:
     models:
       - ERNIE-4.0-8K-0329
       - ERNIE-4.0-8K-Preview-0518
       - ERNIE-3.5-8K-0329
-      - ERNIE-Speed-8K
-    default_temperature: 0.8  # (0, 1.0]，官方文档默认 0.8，但Langchain源码里默认 0.95
+#      - ERNIE-Speed-8K
+    default_temperature: 0.4  # (0, 1.0]，官方文档默认 0.8，但Langchain源码里默认 0.95
   zhipu:
     models:
       - GLM-4-0520
       - GLM-4
       - GLM-3-Turbo
-    default_temperature: 0.8  # (0, 1.0), 官方默认 0.95
+    default_temperature: 0.4  # (0, 1.0), 官方默认 0.95
   openai:
     models:
 #      - gpt-4
@@ -29,12 +29,14 @@ llm:
       - gpt-3.5-turbo-0125
 
     organization: org-fC5Q2f4MQIEaTOa3k8vTQu6G
-    default_temperature: 1  # [0, 2.0]
+    default_temperature: 0.4  # [0, 2.0]
 
 lark:
   app_token: LLwmbSyMcakFVJsM5yacT5Gqnse
-  default_table_id: tblgad2Ru33lJUPy  # 试学课 test02
-#  default_table_id: tbl2ww1H5VCfQzxL  # 试学课
+  default_table_id: tblk9OFSKLeUPunv  # 《剧本》：00-了解 AI 编程这回事
+
+#  app_token: MOpQbqTG3ai5I3sqymUcMK1rnti  # 《剧本v2(0718)》
+#  default_table_id: tblm5XfXmxv2VFhN  # 《剧本v2(0718)》：01- 如何向 AI 提项目需求？
 #  table_id: tblMGLpPFYWU0gIK  # 试学课 test01
 #  table_id: tbltsSzDfJQm6dne  # 在自己电脑上运行Python
   default_view_id: vewlGkI2Jp
