@@ -37,7 +37,6 @@ def generation_attend(app:Flask,attend:AICourseLessonAttendDTO,script_info:AILes
     return attendScript
 
 def check_phone_number(app,user_id,input):
-    # 检查手机号是否合法
     if not re.match(r'^1[3-9]\d{9}$', input):
         return False
     return True
@@ -64,7 +63,7 @@ def get_lesson_system(lesson_id:str)->str:
             return scripts[0].script_prompt
         return None
 
-
+g
 def fmt(o):
     if isinstance(o, datetime.datetime):
         return o.isoformat()
