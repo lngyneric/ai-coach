@@ -146,6 +146,9 @@ importers:
       web-vitals:
         specifier: ^2.1.4
         version: 2.1.4
+      ws:
+        specifier: ^8.18.0
+        version: 8.18.0
       zustand:
         specifier: ^4.5.2
         version: 4.5.2(@types/react@18.3.3)(immer@10.1.1)(react@18.3.1)
@@ -6715,8 +6718,8 @@ packages:
       utf-8-validate:
         optional: true
 
-  ws@8.17.0:
-    resolution: {integrity: sha512-uJq6108EgZMAl20KagGkzCKfMEjxmKvZHG7Tlq0Z6nOky7YF7aq4mOx6xK8TJ/i1LeK4Qus7INktacctDgY8Ow==}
+  ws@8.18.0:
+    resolution: {integrity: sha512-8VbfWfHLbbwu3+N6OKsOMpBdT4kXPDDB9cJk2bJ6mh9ucxdlnNvH1e+roYkKmN9Nxw2yjz7VzeO9oOz2zJ04Pw==}
     engines: {node: '>=10.0.0'}
     peerDependencies:
       bufferutil: ^4.0.1
@@ -8784,7 +8787,7 @@ snapshots:
 
   '@vue/compiler-core@3.4.27':
     dependencies:
-      '@babel/parser': 7.24.6
+      '@babel/parser': 7.24.8
       '@vue/shared': 3.4.27
       entities: 4.5.0
       estree-walker: 2.0.2
@@ -8797,7 +8800,7 @@ snapshots:
 
   '@vue/compiler-sfc@3.4.27':
     dependencies:
-      '@babel/parser': 7.24.6
+      '@babel/parser': 7.24.8
       '@vue/compiler-core': 3.4.27
       '@vue/compiler-dom': 3.4.27
       '@vue/compiler-ssr': 3.4.27
@@ -14557,7 +14560,7 @@ snapshots:
       sockjs: 0.3.24
       spdy: 4.0.2
       webpack-dev-middleware: 5.3.4(webpack@5.91.0)
-      ws: 8.17.0
+      ws: 8.18.0
     optionalDependencies:
       webpack: 5.91.0
     transitivePeerDependencies:
@@ -14847,7 +14850,7 @@ snapshots:
 
   ws@7.5.9: {}
 
-  ws@8.17.0: {}
+  ws@8.18.0: {}
 
   xml-name-validator@3.0.0: {}
 
