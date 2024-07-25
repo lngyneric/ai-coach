@@ -62,8 +62,6 @@ def get_lesson_system(lesson_id:str)->str:
                     return script.script_prompt
             return scripts[0].script_prompt
         return None
-
-g
 def fmt(o):
     if isinstance(o, datetime.datetime):
         return o.isoformat()
