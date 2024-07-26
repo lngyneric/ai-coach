@@ -40,13 +40,13 @@ class LLMStreamResponse:
 
 
 def invoke_llm(app:Flask,span:StatefulSpanClient,model:str,message:str,system:str=None,json:bool=False,**kwargs)->Generator[LLMStreamResponse,None,None]:
-    app.logger.info(f"invoke_llm [{model}] {message}")
+    app.logger.info(f"invoke_llm [{model}] {message} ,system:{system} ,json:{json} ,kwargs:{kwargs}")
     kwargs.update({"stream":True})
     model = model.strip() 
 
     generation_input = []
     if system:
-        generation_input.append({"role": "system", "content": system})
+        generation_input.append({"role": "system", "content": system}) 
     generation_input.append({"role": "user", "content": message})
     generation = span.generation( model=model,input=generation_input) 
     response_text = ""
