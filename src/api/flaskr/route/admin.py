@@ -273,7 +273,7 @@ def register_admin_handler(app:Flask,path_prefix:str)->Flask:
         return make_common_response(get_user_list(app,page_index,page_size,query))
     
     @app.route(path_prefix+'/fix-lesson',methods=['GET'])
-    @by_pass_login_func
+    @bypass_token_validation
     def fix_lesson():
         """
         修复课程用户关系
