@@ -88,7 +88,6 @@ def invoke_llm(app:Flask,span:StatefulSpanClient,model:str,message:str,system:st
         if kwargs.get("temperature",None) is  not None:
             kwargs["temperature"]=str(kwargs["temperature"])
         response = invoke_glm(app,model.lower(),message,system,**kwargs)
-        kwargs["temperature"]=str(kwargs["temperature"])
         for res in response:
             response_text += res.choices[0].delta.content
             if res.usage:
