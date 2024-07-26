@@ -1,4 +1,5 @@
 import json
+from flaskr.service.order.funs import fix_attend_info
 from flask import Flask, request, jsonify, make_response
 
 from flaskr.service.common.models import raise_param_error
@@ -270,6 +271,32 @@ def register_admin_handler(app:Flask,path_prefix:str)->Flask:
         query = request.get_json().get('query',{})
 
         return make_common_response(get_user_list(app,page_index,page_size,query))
+    
+    @app.route(path_prefix+'/fix-lesson',methods=['GET'])
+    @by_pass_login_func
+    def fix_lesson():
+        """
+        修复课程用户关系
+        ---
+        tags:
+            - 用户
+        responses:
+            200:
+                description: 修复成功
+                content:
+                    application/json:
+                        schema:
+                            properties:
+                                code:
+                                    type: integer
+                                    description: 返回码
+                                message:
+                                    type: string
+                                    description: 返回信息
+        """
+        course_id = request.args.get('course_id',None)
+        user_id = request.args.get('user_id',None)
+        return make_common_response(fix_attend_info(app,user_id,course_id))
     return app
 
 

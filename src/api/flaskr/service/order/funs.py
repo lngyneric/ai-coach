@@ -137,3 +137,28 @@ def init_trial_lesson(app:Flask ,user_id:str,course_id:str)->list[AICourseLesson
             response.append(AICourseLessonAttendDTO(attend.attend_id,attend.lesson_id,attend.course_id,attend.user_id,attend.status,lesson.lesson_index))
         db.session.commit()
     return response
+
+
+def fix_attend_info(app:Flask,user_id:str,course_id:str):
+     with app.app_context():
+        # todo: 事务处理 & 并发锁
+        app.logger.info('fix attend info for user:{} course:{}'.format(user_id,course_id))
+        lessons = AILesson.query.filter(AILesson.course_id==course_id,AILesson.status==1,AILesson.lesson_type != LESSON_TYPE_TRIAL).all()
+        fix_lessons = []
+        for lesson in lessons:
+            attend = AICourseLessonAttend.query.filter(AICourseLessonAttend.user_id==user_id,AICourseLessonAttend.lesson_id==lesson.lesson_id).first()
+            if attend:
+                continue
+            attend = AICourseLessonAttend()
+            attend.attend_id = str(get_uuid(app))
+            attend.course_id = course_id
+            attend.lesson_id = lesson.lesson_id
+            attend.user_id = user_id
+            if lesson.lesson_no in ['01','0101']:
+                attend.status = ATTEND_STATUS_NOT_STARTED
+            else:
+                attend.status = ATTEND_STATUS_LOCKED
+            fix_lessons.append(AICourseLessonAttendDTO(attend.attend_id,attend.lesson_id,attend.course_id,attend.user_id,attend.status,lesson.lesson_index))
+            db.session.add(attend)
+        db.session.commit()
+        return fix_lessons

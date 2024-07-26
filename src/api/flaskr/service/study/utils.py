@@ -79,9 +79,9 @@ def get_lesson_and_attend_info(app:Flask,parent_no,course_id,user_id):
     if len(lessons)==0:
         return [] 
     attend_infos = AICourseLessonAttend.query.filter(AICourseLessonAttend.lesson_id.in_([lesson.lesson_id for lesson in lessons]),AICourseLessonAttend.user_id == user_id ).all()
-    app.logger.info("attends:{}".format(",".join("'"+a.attend_id+"'" for a in attend_infos)))
     attend_lesson_infos = [{'attend':attend,'lesson': [lesson for lesson in lessons if lesson.lesson_id == attend.lesson_id][0]} for attend in attend_infos]
     attend_lesson_infos =  sorted(attend_lesson_infos, key=lambda x: (len(x['lesson'].lesson_no), x['lesson'].lesson_no)) 
+    app.logger.info("attends:{}".format(",".join("'"+a['lesson'].lesson_no+"'" for a in attend_lesson_infos)))
     return attend_lesson_infos
 
 # 从文本中提取json对象
@@ -125,6 +125,9 @@ def get_fmt_prompt(app:Flask,user_id:str,profile_tmplate:str,input:str=None,prof
     for key in keys:
         if key in profiles:
             fmt_keys[key] = profiles[key]
+        else:
+            fmt_keys[key] = '目前未知'
+            app.logger.info('key not found:'+key+ ' ,user_id:'+user_id)
     app.logger.info(fmt_keys)
     if len(fmt_keys) == 0:
         if len(profile_tmplate) == 0:
@@ -210,7 +213,9 @@ def update_attend_lesson_info(app:Flask,attend_id:str)->list[AILessonAttendDTO]:
     res.append(AILessonAttendDTO(lesson_no,lesson.lesson_name,lesson.lesson_id,ATTEND_STATUS_VALUES[ATTEND_STATUS_COMPLETED]))
     if len(parent_no)>2:
         parent_no = parent_no[:2]
+    app.logger.info('parent_no:'+parent_no)
     attend_lesson_infos =  get_lesson_and_attend_info(app,parent_no,lesson.course_id,attend_info.user_id)
+
     if attend_lesson_infos[-1]['attend'].attend_id == attend_id:
         # 最后一个已经完课
         # 整体章节完课

@@ -86,8 +86,7 @@ def get_ernie_response(app,model,msg,**args)->Generator[ErnieStreamResponse,None
                 return
             parsed_data = json.loads(json_data)
             yield ErnieStreamResponse(**parsed_data)
-    print(response)
-    app.logger.error('ernie response data: {}'.format(response))
+    
 
 def get_erine_models(app:Flask)->list[str]:
     return list(URLS.keys())
