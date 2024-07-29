@@ -113,8 +113,12 @@ def invoke_glm(app:Flask,model,messages,**args)->Generator[ChatResponse,None,Non
     print("response")
     print(response)
     if response.status_code != 200:
-        app.logger.error('zhipu response status code: {}'.format(response.status_code))
-        app.logger.error('zhipu response data: {}'.format(response.text))
+        try:
+            app.logger.error('zhipu response status code: {}'.format(response.status_code))
+            app.logger.error('zhipu response data: {}'.format(response.text))
+        except Exception as e:
+            app.logger.error('zhipu response error: {}'.format(e))
+            pass
         # raise Exception('zhipu response status code: {}'.format(response.status_code))
 
     app.logger.error('ernie response data: {}'.format(response))
