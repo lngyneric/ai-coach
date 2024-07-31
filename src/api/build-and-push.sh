@@ -24,7 +24,7 @@ REGISTRY="registry.cn-beijing.aliyuncs.com/agix"
 
 # 构建 Docker 镜像
 echo "Building Docker image..."
-docker build -t "$IMAGE_NAME:$IMAGE_TAG" -f "$DOCKERFILE_PATH" .
+docker buildx build --platform linux/amd64 -t "$IMAGE_NAME:$IMAGE_TAG" -f "$DOCKERFILE_PATH" .
 
 # 给 Docker 镜像打标签
 echo "Tagging Docker image..."
