@@ -31,6 +31,7 @@ const generateUUID = () => {
 };
 const quickOperstionList = [];
 
+
 const MarkdownBubble = (props) => {
   const onCopy = (content) => {
     console.log(content);

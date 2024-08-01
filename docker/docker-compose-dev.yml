@@ -1,0 +1,56 @@
+version: '3.5'
+
+services:
+  ai-shifu-api-dev:
+    container_name: ai-shifu-api-dev
+    image: ai-shifu-api-dev:latest
+    command:  flask --app flaskr run  --debug --host=0.0.0 --port=5800
+    environment:
+      - FLASK_APP=flaskr
+      - FLASK_ENV=development
+      - FLASK_RUN_PORT=5800
+    volumes:
+      - ../src/api/flaskr:/app/flaskr
+  ai-shifu-web-dev:
+    container_name:  ai-shifu-web-dev
+    image: ai-shifu-web-dev:latest
+    command:  pnpm run start:dev
+    depends_on:
+      - ai-shifu-api-dev
+    volumes:
+      - ../src/web:/usr/src/app
+  ai-shifu-admin-api-dev:
+    container_name: ai-shifu-admin-api-dev
+    image: ai-shifu-admin-api-dev:latest
+    command:  flask --app flaskr run  --debug --host=0.0.0 --port=5800
+    environment:
+      - FLASK_APP=flaskr
+      - FLASK_ENV=development
+      - FLASK_RUN_PORT=5800
+    volumes:
+      - ../src/admin-api/flaskr:/app/flaskr
+  ai-shifu-admin-web-dev: 
+    container_name:  ai-shifu-admin-web-dev
+    image: ai-shifu-admin-web-dev:latest
+    command:  pnpm run start:dev
+    depends_on:
+      - ai-shifu-api-dev
+    volumes:
+      - ../src/admin-web:/usr/src/app
+    # ports: 
+    #  - "5000:5000"
+  ai-shifu-nginx-dev-dev:
+    container_name: ai-shifu-nginx-dev
+    image: nginx:latest
+    ports: 
+      - "8080:8080"
+      - "8081:8081"
+    depends_on:
+      - ai-shifu-web-dev 
+      - ai-shifu-api-dev
+      - ai-shifu-admin-web-dev
+      - ai-shifu-admin-api-dev
+    restart: always
+    volumes:
+      - ./nginx.dev.conf:/etc/nginx/nginx.conf
+
