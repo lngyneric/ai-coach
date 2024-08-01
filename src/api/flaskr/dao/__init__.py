@@ -2,7 +2,7 @@ from flask import Flask
 from flask_sqlalchemy import SQLAlchemy
 from redis import Redis
 
-db = SQLAlchemy()
+# db = SQLAlchemy()
 def init_db(app : Flask):
     global db
     app.logger.info('init db')
@@ -11,6 +11,7 @@ def init_db(app : Flask):
         app.config['SQLALCHEMY_DATABASE_URI'] = 'mysql://'+app.config['MYSQL_USER']+':'+app.config['MYSQL_PASSWORD']+'@'+app.config['MYSQL_HOST']+':'+str(app.config['MYSQL_PORT'])+'/'+app.config['MYSQL_DB']
     else:
         app.logger.info('init dbconfig from config')
+    db = SQLAlchemy()
     db.init_app(app)
     
 def init_redis(app:Flask):
@@ -33,5 +34,4 @@ def run_with_redis(ctx,key,timeout:int,func):
             finally:
                 lock.release()
         else:
-            # app.logger.info('run_with_redis lock failed')
             return None

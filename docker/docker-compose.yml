@@ -5,6 +5,10 @@ services:
     container_name: ai-shifu-api
     image: ai-shifu-api:latest
     command:  gunicorn -w 4 -b 0.0.0.0:5800 "flaskr:create_app()"  --timeout 300 --log-level debug --access-logfile /var/log/app.log  --capture-output
+    environment:
+      - FLASK_APP=flaskr
+      - FLASK_ENV=development
+      - FLASK_RUN_PORT=5800
   ai-shifu-web:
     container_name:  ai-shifu-web
     image: ai-shifu-web:latest

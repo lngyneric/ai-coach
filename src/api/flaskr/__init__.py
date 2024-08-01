@@ -8,9 +8,7 @@ from flask_cors import CORS
 
 import pymysql
 pymysql.install_as_MySQLdb()
-
 from flasgger import Swagger
-
 
 
 
