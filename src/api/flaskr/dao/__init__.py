@@ -5,7 +5,12 @@ from redis import Redis
 db = SQLAlchemy()
 def init_db(app : Flask):
     global db
-   
+    app.logger.info('init db')
+    if app.config.get('MYSQL_HOST',None) != None and app.config.get('MYSQL_PORT',None)!= None and app.config.get('MYSQL_DB',None) != None and app.config['MYSQL_USER'] != None and app.config.get('MYSQL_PASSWORD') != None:
+        app.logger.info('init dbconfig from env')
+        app.config['SQLALCHEMY_DATABASE_URI'] = 'mysql://'+app.config['MYSQL_USER']+':'+app.config['MYSQL_PASSWORD']+'@'+app.config['MYSQL_HOST']+':'+str(app.config['MYSQL_PORT'])+'/'+app.config['MYSQL_DB']
+    else:
+        app.logger.info('init dbconfig from config')
     db.init_app(app)
     
 def init_redis(app:Flask):

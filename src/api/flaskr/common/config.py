@@ -26,10 +26,12 @@ class Config(FlaskConfig):
             return os.environ[key]
         return self.parent.__getattr__(key)
     def get(self, key: Any, default: Any = None) -> Any:
+        print("get attr=======",key)
         if key in os.environ:
             return os.environ[key]
         return self.parent.get(key,default)
     def __call__(self, *args: Any, **kwds: Any) -> Any:
+
         return self.parent.__call__(*args, **kwds)
     def setdefault(self, key: Any, default: Any = None) -> Any:
         return self.parent.setdefault(key,default)
