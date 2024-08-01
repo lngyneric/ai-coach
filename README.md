@@ -40,3 +40,10 @@ cd docker
 ```
 
 ## 如何贡献
+
+
+## 联系我们
+
+## 贡献者
+
+[![GitHub contributors](https://img.shields.io/github/contributors/ai-shifu/ai-shifu?style=social)](https://github.com/ai-shifu/ai-shifu/graphs/contributors)
