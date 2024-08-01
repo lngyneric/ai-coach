@@ -1,0 +1,75 @@
+pipeline {
+  agent {
+    node {
+      label 'base'
+    }
+
+  }
+  stages {
+    stage('拉取代码') {
+      agent none
+      steps {
+        container('base') {
+          git(url: 'https://chaoren399:agp_1fb3acf786b8e6df2487f2b3fbfe3f15@codeup.aliyun.com/605b01c1fde602776f0825c0/openai/smart-home-plugins.git', credentialsId: 'codeup-token', branch: 'master', changelog: true, poll: false)
+          sh 'ls'
+        }
+
+      }
+    }
+
+    stage('构建smart-home-plugins镜像') {
+      agent none
+      steps {
+        container('base') {
+          sh 'docker build -t smart-home-plugins -f Dockerfile_prod  .'
+        }
+
+      }
+    }
+
+    stage('推送smart-home-plugins镜像') {
+      agent none
+      steps {
+        sh 'ls'
+        container('base') {
+          withCredentials([usernamePassword(credentialsId : 'aliyun-jingxiang-kattgatt' ,passwordVariable : 'DOCKER_PWD_VAR' ,usernameVariable : 'DOCKER_USER_VAR' ,)]) {
+            // sh 'echo "i love kattgatt"'
+            sh 'echo "$DOCKER_PWD_VAR" | docker login $REGISTRY -u "$DOCKER_USER_VAR" --password-stdin'
+            sh 'docker tag smart-home-plugins:latest $REGISTRY/$DOCKERHUB_NAMESPACE/smart-home-plugins:RELEASE-$BUILD_NUMBER'
+            sh 'docker push  $REGISTRY/$DOCKERHUB_NAMESPACE/smart-home-plugins:RELEASE-$BUILD_NUMBER'
+          }
+
+        }
+
+      }
+    }
+
+    stage('smart-home-plugins部署到dev环境') {
+      agent none
+      steps {
+        container('base') {
+          withCredentials([
+                                                                                                                                                                      kubeconfigFile(
+                                                                                                                                                                                                      credentialsId: env.KUBECONFIG_CREDENTIAL_ID,
+                                                                                                                                                                                                      variable: 'KUBECONFIG')
+                                                                                                                                                                                      ]) {
+                sh 'envsubst < deploy/deploy_prod.yml | kubectl apply -f -'
+              }
+
+            }
+
+          }
+        }
+
+      }
+      environment {
+        DOCKER_CREDENTIAL_ID = 'dockerhub-id'
+        GITHUB_CREDENTIAL_ID = 'github-id'
+        KUBECONFIG_CREDENTIAL_ID = 'demo-kubeconfig'
+        REGISTRY = 'registry.cn-hangzhou.aliyuncs.com'
+        DOCKERHUB_NAMESPACE = 'kattgatt-app-prod'
+        ALIYUNHUB_NAMESPACE = 'kattgatt-app-prod'
+        GITHUB_ACCOUNT = 'kubesphere'
+        APP_NAME = 'devops-java-sample'
+      }
+    }

@@ -1,0 +1,65 @@
+kind: Deployment
+apiVersion: apps/v1
+metadata:
+  name: smart-home-plugins-test
+  namespace: openai-test
+  labels:
+    app: smart-home-plugins-test
+  annotations:
+    deployment.kubernetes.io/revision: '12'
+    kubesphere.io/creator: project-admin-test
+spec:
+  replicas: 1
+  selector:
+    matchLabels:
+      app: smart-home-plugins-test
+  template:
+    metadata:
+      creationTimestamp: null
+      labels:
+        app: smart-home-plugins-test
+      annotations:
+        kubesphere.io/creator: project-admin-test
+        kubesphere.io/imagepullsecrets: '{"container-ipolr8":"aliyun-registy-secret-kattgatt"}'
+        logging.kubesphere.io/logsidecar-config: '{}'
+    spec:
+      volumes:
+        - name: host-time
+          hostPath:
+            path: /etc/localtime
+            type: ''
+      containers:
+        - name: container-ipolr8
+#          image: registry.cn-hangzhou.aliyuncs.com/kattgatt-app/smart-home-plugins:SNAPSHOT-16
+
+          image: $REGISTRY/$DOCKERHUB_NAMESPACE/smart-home-plugins:SNAPSHOT-$BUILD_NUMBER
+          ports:
+            - name: tcp-5800
+              containerPort: 5800
+              protocol: TCP
+          resources: {}
+          volumeMounts:
+            - name: host-time
+              readOnly: true
+              mountPath: /etc/localtime
+          terminationMessagePath: /dev/termination-log
+          terminationMessagePolicy: File
+          imagePullPolicy: IfNotPresent
+      restartPolicy: Always
+      terminationGracePeriodSeconds: 30
+      dnsPolicy: ClusterFirst
+      nodeSelector:
+        kubernetes.io/hostname: worker4
+      serviceAccountName: default
+      serviceAccount: default
+      securityContext: {}
+      imagePullSecrets:
+        - name: aliyun-registy-secret-kattgatt
+      schedulerName: default-scheduler
+  strategy:
+    type: RollingUpdate
+    rollingUpdate:
+      maxUnavailable: 25%
+      maxSurge: 25%
+  revisionHistoryLimit: 10
+  progressDeadlineSeconds: 600

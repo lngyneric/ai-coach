@@ -15,6 +15,14 @@ services:
     command:  ["serve", "-s", "build", "-l", "5000"]
     depends_on:
       - ai-shifu-api
+  ai-shifu-admin-api:
+    container_name: ai-shifu-admin-api
+    image: ai-shifu-admin-api:latest
+    command:  gunicorn -w 4 -b 0.0.0.0:5800 "flaskr:create_app()"  --timeout 300 --log-level debug --access-logfile /var/log/app.log  --capture-output
+    environment:
+      - FLASK_APP=flaskr
+      - FLASK_ENV=development
+      - FLASK_RUN_PORT=5800
   ai-shifu-admin-web: 
     container_name:  ai-shifu-admin-web
     image: ai-shifu-admin-web:latest
@@ -31,33 +39,10 @@ services:
       - "8081:8081"
     depends_on:
       - ai-shifu-web
-      - ai-shifu-admin-web
       - ai-shifu-api
+      - ai-shifu-admin-web
+      - ai-shifu-admin-api
     restart: always
     volumes:
       - ./nginx.conf:/etc/nginx/nginx.conf
-  # chat-plugin-nginx:
-  #   container_name: chat-plugin-nginx
-  #   image: nginx:latest
-  #   ports: 
-  #     - "8080:8080"
-  #   depends_on:
-  #     - chat-plugin-ui
-  #     - chat-plugin-background
-  #   restart: always
-  #   volumes:
-  #     - ./nginx.conf:/etc/nginx/nginx.conf
-  # mysql-server:
-  #   container_name: mysql-server
-  #   image: mysql:latest
-  #   environment:
-  #     MYSQL_ROOT_PASSWORD: Pa88word
-  #     MYSQL_DATABASE: ai_asistant
-  #   volumes:
-  #     - ${DOCKER_VOLUME_DIRECTORY:-.}/volumes/mysql:/var/lib/mysql
-  #     - ./smart-home-plugins/db/init.sql:/docker-entrypoint-initdb.d/init.sql 
-  # redis-server:
-  #   container_name: redis-server
-  #   image: redis:latest
-  #   restart: always
 
