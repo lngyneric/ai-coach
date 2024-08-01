@@ -12,11 +12,7 @@ COPY package*.json ./
 # 复制项目源代码
 COPY . .
 
-#RUN npm install --force
-# RUN npm install -g pnpm
-# RUN pnpm install --registry=http://registry.npm.taobao.org --force
 RUN pnpm install --registry=http://registry.npm.taobao.org
-# RUN npm install  --force
 
 
 
@@ -24,8 +20,6 @@ RUN pnpm install --registry=http://registry.npm.taobao.org
 # 构建项目
 RUN pnpm run build
 
-
-# 安装serve工具，用于运行构建好的项目
 RUN pnpm install -g serve
 
 
