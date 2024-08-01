@@ -8,7 +8,7 @@ RANDOM_STRING=$(openssl rand -hex 2)
 # 组合组件生成镜像标签
 IMAGE_TAG="v1-$GIT_COMMIT-$RANDOM_STRING"
 LATETST_TAG="latest"
-IMAGE_NAME="sifu-api"
+IMAGE_NAME="ai-shifu-api"
 DOCKERFILE_PATH="Dockerfile"
 
 
