@@ -199,11 +199,11 @@ def run_script(app: Flask, user_id: str, course_id: str, lesson_id: str=None,inp
             except BreakException as e:
                 return
         else:
+                    app.logger.info("script_info is None,to update attend")
                     attends =  update_attend_lesson_info(app,attend.attend_id)
                     for attend_update in attends:
                             if len(attend_update.lesson_no) > 2:
                                 yield make_script_dto("lesson_update",attend_update.__json__(),"")
                             else:
                                 yield make_script_dto("chapter_update",attend_update.__json__(),"") 
-                    app.logger.info("script_info is None")
         db.session.commit()

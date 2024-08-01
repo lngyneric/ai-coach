@@ -84,15 +84,8 @@ def get_chat_response(app:Flask, msg:str)->Generator[ChatResponse,None,None]:
         yield res
 
 
-def invoke_glm(app:Flask,model,message,system=None,**args)->Generator[ChatResponse,None,None]:
+def invoke_glm(app:Flask,model,messages,**args)->Generator[ChatResponse,None,None]:
 
-    app.logger.info("input data: model:{},message:{},system:{}".format(model,message,system))
-
-    messages = []
-
-    if system:
-        message.append({"content":system,"role":"system"})
-    messages.append({"content":message,"role":"user"})
     data = {
         "model": model,
         "messages": messages,
@@ -100,6 +93,8 @@ def invoke_glm(app:Flask,model,message,system=None,**args)->Generator[ChatRespon
     }
 
     data = {**data,**args}
+
+    print("ssss")
     
     headers = {"Authorization": "Bearer "+get_config("BIGMODEL_API_KEY") }
     response = requests.post(URLS[model], json=data, headers=headers,stream=True)
@@ -112,10 +107,21 @@ def invoke_glm(app:Flask,model,message,system=None,**args)->Generator[ChatRespon
             json_data = res[5:].strip()
             # 尝试解析 JSON 数据
             if(json_data.replace(' ','') == '[DONE]'):
-                return
+                break
             parsed_data = json.loads(json_data)
             yield ChatResponse(**parsed_data)
+    print("response")
+    print(response)
+    if response.status_code != 200:
+        try:
+            app.logger.error('zhipu response status code: {}'.format(response.status_code))
+            app.logger.error('zhipu response data: {}'.format(response.text))
+        except Exception as e:
+            app.logger.error('zhipu response error: {}'.format(e))
+            pass
+        # raise Exception('zhipu response status code: {}'.format(response.status_code))
 
+    app.logger.error('ernie response data: {}'.format(response))
 
 def get_zhipu_models(app:Flask)->list[str]:
     return list(URLS.keys())

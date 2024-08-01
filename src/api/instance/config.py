@@ -5,8 +5,6 @@ SQLALCHEMY_POOL_TIMEOUT = 30
 SQLALCHEMY_POOL_RECYCLE = 3600
 SQLALCHEMY_MAX_OVERFLOW = 20
 
-PLUGIN_CHAT_SYSTEM_MSG = "你是小卡AI助手"#，总是给用户正确并且接近自然人的回答，并且为用户安排一些事情,优先使用中文回答"#,你使用save_memory和search来拥有和人类一样的记忆,注意：不要调用不存在/未声明的函数或是工具"
-# http://127.0.0.1:5800/api/lesson/update_lesson?doc_id=LLwmbSyMcakFVJsM5yacT5Gqnse&table_id=tblDUfFbHGnM4LQl&view_id=vewlGkI2Jp&title=通义灵码&index=8&lesson_type=405
 
 SENDCLOUD_USER = "geyunfei_hit_test_4168kb"
 SENDCLOUD_KEY = "8dc379ed9a133f1edb24cc343d8fda54"
@@ -83,7 +81,6 @@ ERNIE_API_SECRET = "pnYqxxwDdhtvET2B8qNVhRHrIlqwJbKD"
 
 
 BIGMODEL_API_KEY = "0d7c11000eb9d12b5c04b3e5b6f1c40f.hoY57xpYtGnCmLxM"
-
 
 SWAGGER_ENABLED=True
 
