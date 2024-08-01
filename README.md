@@ -3,8 +3,6 @@
 
 
 [![GitHub stars](https://img.shields.io/github/stars/ai-shifu/ai-shifu?style=social)](https://github.com/ai-shifu/ai-shifu/stargazers)
-
-
 [![GitHub followers](https://img.shields.io/github/followers/ai-shifu?style=social)](https://github.com/ai-shifu?tab=followers)
 
 ## 我们是谁
