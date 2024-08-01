@@ -9,6 +9,12 @@
 
 ## 我们在干什么
 
+
+
+## 贡献者
+
+[![GitHub contributors](https://img.shields.io/github/contributors/ai-shifu/ai-shifu?style=social)](https://github.com/ai-shifu/ai-shifu/graphs/contributors)
+
 ## 如何开始
 
 clone 项目到本地
@@ -43,7 +49,3 @@ cd docker
 
 
 ## 联系我们
-
-## 贡献者
-
-[![GitHub contributors](https://img.shields.io/github/contributors/ai-shifu/ai-shifu?style=social)](https://github.com/ai-shifu/ai-shifu/graphs/contributors)

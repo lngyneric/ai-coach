@@ -10,5 +10,4 @@ docker build ./ -t ai-shifu-admin-api-dev
 cd ..
 cd ..
 cd docker
-docker compose -f ./docker-compose-dev.yml 
- up 
+docker compose -f ./docker-compose-dev.yml up 
