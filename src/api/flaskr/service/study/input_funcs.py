@@ -57,9 +57,6 @@ def handle_input_text(app:Flask,user_id:str,attend:AICourseLessonAttend,script_i
         for key in profile_tosave:
             yield make_script_dto("profile_update",{"key":key,"value":profile_tosave[key]},script_info.script_id)
             time.sleep(0.01)
-        # input = None
-        # next = True
-        # input_type = None 
         span.end()
         db.session.commit() 
         
@@ -135,9 +132,6 @@ def handle_input_select(app:Flask,user_id:str,attend:AICourseLessonAttend,script
     log_script.script_content = input
     log_script.script_role = ROLE_STUDENT
     db.session.add(log_script)
-    # input = None
-    # next = True
-    # input_type = None
     span = trace.span(name="user_select",input=input)
     span.end()
     db.session.commit()
@@ -147,8 +141,6 @@ def handle_input_phone(app:Flask,user_id:str,attend:AICourseLessonAttend,script_
     log_script.script_content = input
     log_script.script_role = ROLE_STUDENT
     db.session.add(log_script)
-    # input = None
-    input_type =  None 
     span = trace.span(name="user_input_phone",input=input)
     response_text ="请输入正确的手机号" 
     if not check_phone_number(app,user_id,input):
@@ -162,7 +154,6 @@ def handle_input_phone(app:Flask,user_id:str,attend:AICourseLessonAttend,script_
         log_script.script_role = ROLE_TEACHER
         db.session.add(log_script)
         span.end(output=response_text)
-        # span.end()
         db.session.commit()
         raise BreakException
     span.end()
@@ -175,7 +166,6 @@ def handle_input_checkcode(app:Flask,user_id:str,attend:AICourseLessonAttend,scr
         input = None
         span = trace.span(name="user_input_phone",input=input)
         span.end()
-        
     except AppException as e:
         for i in e.message:
             yield make_script_dto("text",i,script_info.script_id)
@@ -189,10 +179,10 @@ def handle_input_checkcode(app:Flask,user_id:str,attend:AICourseLessonAttend,scr
         raise BreakException
 
 def handle_input_login(app:Flask,user_id:str,attend:AICourseLessonAttend,script_info:AILessonScript,input:str,trace:Trace,trace_args):
+    #todo
     yield make_script_dto(INPUT_TYPE_LOGIN,{"phone":ret.userInfo.mobile,"user_id":ret.userInfo.user_id},script_info.script_id)
 
 def handle_input_start(app:Flask,user_id:str,attend:AICourseLessonAttend,script_info:AILessonScript,input:str,trace:Trace,trace_args):
-    # yield make_script_dto("text","",script_info.script_id)
     return None
 
 UI_HANDLE_MAP = {

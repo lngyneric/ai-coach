@@ -46,14 +46,13 @@ def create_app(test_config=None):
     from . import api
     api.init_langfuse(app)
   
-    # ensure the instance folder exists
     try:
         os.makedirs(app.instance_path)
     except OSError:
         pass
     
 
-    # 初始化rute 
+    # 初始化route
     from . import route
     prefix = app.config.get('PATH_PREFIX','')
     app = route.register_common_handler(app)

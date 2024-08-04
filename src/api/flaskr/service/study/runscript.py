@@ -45,7 +45,7 @@ def run_script(app: Flask, user_id: str, course_id: str, lesson_id: str=None,inp
         else:
             # 获取课程记录
             app.logger.info("user_id:{},course_id:{},lesson_id:{}".format(user_id,course_id,lesson_id))
-            attend_info = AICourseLessonAttend.query.filter_by(user_id=user_id, course_id=course_id,lesson_id=lesson_id).first()
+            attend_info = AICourseLessonAttend.query.filter(AICourseLessonAttend.user_id==user_id, AICourseLessonAttend.course_id ==course_id,AICourseLessonAttend.lesson_id==lesson_id).first()
             if not attend_info:
                 # 没有课程记录
                 for i in "请购买课程":

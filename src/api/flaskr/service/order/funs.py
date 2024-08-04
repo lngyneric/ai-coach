@@ -9,6 +9,7 @@ from ..lesson.models import AILesson
 from .models import AICourseLessonAttend
 from ...util.uuid import generate_id as get_uuid
 from ..lesson.const import *
+import pingpp
 
 @register_schema_to_swagger
 class AICourseLessonAttendDTO:
