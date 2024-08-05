@@ -4,7 +4,7 @@ from oss2.credentials import EnvironmentVariableCredentialsProvider
 from tools.utils import *
 from tools.dev_tools import *
 from tools.auth import login
-from script import *
+from models.script import *
 from init import cfg
 
 _ = load_dotenv(find_dotenv())

@@ -5,12 +5,7 @@ import yaml
 from yaml.loader import SafeLoader
 
 
-def login():
-
-    # 初始化登录成功欢迎记录
-    if 'is_login_welcome' not in st.session_state:
-        st.session_state.is_login_welcome = False
-
+def get_authenticator():
     with open('auth_config.yml') as file:
         config = yaml.load(file, Loader=SafeLoader)
 
@@ -21,6 +16,15 @@ def login():
         config['cookie']['expiry_days'],
         config['pre-authorized']
     )
+    return authenticator, config
+
+
+def login():
+    authenticator, config = get_authenticator()
+
+    # 初始化登录成功欢迎记录
+    if 'is_login_welcome' not in st.session_state:
+        st.session_state.is_login_welcome = False
 
     login_result = authenticator.login(
         max_login_attempts=5,
@@ -36,7 +40,7 @@ def login():
         if not st.session_state.is_login_welcome:
             st.toast(f'欢迎回来，{st.session_state["name"]}', icon='🎈')
             st.session_state.is_login_welcome = True
-        return login_result
+        return authenticator, config
     else:
         return False
 

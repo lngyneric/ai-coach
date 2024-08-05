@@ -1,8 +1,8 @@
 import streamlit as st
 from streamlit_extras.add_vertical_space import add_vertical_space
 
-from chapter import *
-from script import *
+from models.chapter import *
+from models.script import *
 from tools.utils import load_scripts_and_system_role
 
 

@@ -3,8 +3,14 @@ import yaml
 
 
 class ConfigManager:
-    def __init__(self, config_path='config.yml'):
-        self.config_path = config_path
+    def __init__(self, config_filename='config.yml'):
+        # 获取当前文件的绝对路径
+        current_file_path = os.path.abspath(__file__)
+        # 获取当前文件所在的目录
+        self.PROJ_DIR = os.path.dirname(current_file_path)
+        print(f'PROJ_DIR: {self.PROJ_DIR}')
+        # 构建配置文件的完整路径
+        self.config_path = os.path.join(self.PROJ_DIR, config_filename)
 
         with open(self.config_path, 'rb') as f:
             config = yaml.safe_load(f)
@@ -39,7 +45,7 @@ class ConfigManager:
             self.IMG_OSS_BUCKET = _cfg_fileupload['img_oss_bucket']
 
             _cfg_db = config['db']
-            self.SQLITE_DB_PATH = _cfg_db['sqlite']['path']
+            self.SQLITE_DB_PATH = os.path.join(self.PROJ_DIR, _cfg_db['sqlite']['path'])
 
             _cfg_api = config['api']
             self.API_URL = _cfg_api[f'{os.getenv("ENV")}_url']
