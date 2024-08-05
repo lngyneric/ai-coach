@@ -1,5 +1,6 @@
 import json
 import os
+from re import A
 import time
 import logging
 from flask import Flask, Response, g,request,send_from_directory,make_response
@@ -54,6 +55,7 @@ def create_app(test_config=None):
 
     # 初始化route
     from . import route
+
     prefix = app.config.get('PATH_PREFIX','')
     app = route.register_common_handler(app)
     app = route.register_user_handler(app,prefix+'/user')
@@ -63,6 +65,8 @@ def create_app(test_config=None):
     app = route.register_tools_handler(app,prefix+'/tools')
     app = route.register_order_handler(app,prefix+'/order')
     app = route.register_admin_handler(app,prefix+'/admin')
+
+    
 
     ## 初始化swagger
 

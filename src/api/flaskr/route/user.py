@@ -296,6 +296,11 @@ def register_user_handler(app:Flask,path_prefix:str)->Flask:
         
         """
         return make_common_response(get_user_profile_labels(app,request.user.user_id))
+    @app.route('/health',methods=['GET'])
+    @bypass_token_validation
+    def health():
+        app.logger.info('health')
+        return make_common_response('ok')
     return app
 
 
