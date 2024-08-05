@@ -8,6 +8,7 @@ import lark_oapi as lark
 from lark_oapi.api.auth.v3 import *
 from lark_oapi.api.bitable.v1 import *
 
+from tools.lark import get_bitable_records
 
 _ = load_dotenv(find_dotenv())
 LARK_APP_ID = os.environ.get('LARK_APP_ID')
@@ -94,81 +95,18 @@ class Script:
 
 
 
-def get_lark_client() -> lark.Client:
-    """ 获取 飞书 client 对象
-    :return: client
-    """
-    client = (lark.Client.builder()
-              .app_id(LARK_APP_ID)
-              .app_secret(LARK_APP_SECRET)
-              .log_level(lark.LogLevel.DEBUG)
-              .build())
-    return client
 
 
-def get_tenant_access_token():
-    client = get_lark_client()
 
-    # 构造请求对象
-    request = (InternalTenantAccessTokenRequest.builder()
-               .request_body(InternalTenantAccessTokenRequestBody.builder()
-                             .app_id(LARK_APP_ID)
-                             .app_secret(LARK_APP_SECRET)
-                             .build())
-               .build())
 
-    # 发起请求
-    response: InternalTenantAccessTokenResponse = client.auth.v3.tenant_access_token.internal(request)
-
-    # 处理失败返回
-    if not response.success():
-        lark.logger.error(
-            f"client.auth.v3.tenant_access_token.internal failed, "
-            f"code: {response.code}, msg: {response.msg}, log_id: {response.get_log_id()}")
-        return
-
-    # 处理业务结果
-    lark.logger.info(lark.JSON.marshal(response.raw.content, indent=4))
-
-    # 解析 token
-    data = json.loads(response.raw.content)
-    token = data.get('tenant_access_token', "Tenant access token not found")
-
-    return token
 
 
 def load_scripts_from_bitable(app_token, table_id, view_id) -> List[Script]:
     logging.info(f'开始加载剧本记录：app_token={app_token}, table_id={table_id}, view_id={view_id}')
-    client = get_lark_client()
-
-    # 构造请求对象
-    request = (SearchAppTableRecordRequest.builder()
-               .app_token(app_token)
-               .table_id(table_id)
-               .page_size(100)
-               .request_body(SearchAppTableRecordRequestBody.builder()
-                             .view_id(view_id)
-                             .build())
-               .build())
-
-    # 发起请求
-    response: SearchAppTableRecordResponse = client.bitable.v1.app_table_record.search(request)
-
-    # 处理失败返回
-    if not response.success():
-        lark.logger.error(
-            f"client.bitable.v1.app_table_record.search failed, code: {response.code}, msg: {response.msg}, log_id: {response.get_log_id()}")
-        return
-
-    # 处理业务结果
-    lark.logger.info(lark.JSON.marshal(response.data, indent=4))
-
-
-    logging.info(f"是否有更多：{response.data.has_more}")
-    logging.info(f"共有 {response.data.total} 条记录")
+    items = get_bitable_records(app_token, table_id, view_id)
 
     script_list = []
-    for item in response.data.items:
+    for item in items:
         try:
             id = item.record_id
             if not item.fields:
@@ -213,9 +151,6 @@ def load_scripts_from_bitable(app_token, table_id, view_id) -> List[Script]:
 
 
 if __name__ == '__main__':
-    token = get_tenant_access_token()
-    print(token)
-
     from init import cfg
     script_list = load_scripts_from_bitable(cfg.LARK_APP_TOKEN, cfg.DEF_LARK_TABLE_ID, cfg.DEF_LARK_VIEW_ID)
     print(script_list)

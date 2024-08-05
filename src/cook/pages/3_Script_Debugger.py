@@ -1,13 +1,10 @@
 from uuid import uuid4
-import threading
 import concurrent.futures
-
-from streamlit.runtime.scriptrunner import add_script_run_ctx
 
 from tools.auth import login
 from tools.utils import *
 from tools.dev_tools import *
-from script import *
+from models.script import *
 from init import cfg
 
 _ = load_dotenv(find_dotenv())

@@ -2,7 +2,6 @@ import requests
 import sqlite3
 
 import streamlit
-from pandas import DataFrame
 
 from init import cfg
 
