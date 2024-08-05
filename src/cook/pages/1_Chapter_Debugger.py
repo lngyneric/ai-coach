@@ -50,6 +50,11 @@ if 'has_started' not in st.session_state:
 
 # ======================================================
 
+# ==================== Sidebar ====================
+with st.sidebar:
+    if st.button('Clean all cache', use_container_width=True):
+        st.cache_data.clear()
+
 
 # ==================== 主体框架 ====================
 # 需要登录
@@ -63,9 +68,9 @@ if login():
     if not st.session_state.has_started:
         courses = get_courses_by_user_from_sqlite(st.session_state["username"])
 
-        col1, col2 = st.columns(2)
+        col1, col2, col3 = st.columns([2, 2, 1])
         with col1:
-            selected_course = st.selectbox('选择课程', (course.course_name for course in courses))
+            selected_course = st.selectbox('选择课程:', (course.course_name for course in courses))
 
         if selected_course:
             st.session_state.lark_app_token = next(
@@ -73,8 +78,12 @@ if login():
             tables = get_bitable_tables(st.session_state.lark_app_token)
 
             with col2:
-                select_table = st.selectbox('选择剧本', (
+                select_table = st.selectbox('选择剧本:', (
                     table.name for table in tables if not table.name.startswith('字典-')))
+
+            with col3:
+                select_progress = st.number_input('开始位置:', value=2, min_value=1, step=1)
+
 
         if st.button('启动剧本', type='primary', use_container_width=True):
             st.session_state.lark_table_id = next(
@@ -90,6 +99,7 @@ if login():
 
             # 加载剧本及系统角色
             load_scripts_and_system_role(st.session_state.lark_app_token, st.session_state.lark_table_id)
+            st.session_state.progress = select_progress - (2 if 'system_role' in st.session_state else 1)
 
             # 获取剧本总长度，并在结束时停止
             if st.session_state.progress >= st.session_state.script_list_len:

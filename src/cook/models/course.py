@@ -1,7 +1,7 @@
 import requests
 import sqlite3
 
-import streamlit
+import streamlit as st
 from pandas import DataFrame
 
 from init import cfg
@@ -29,6 +29,7 @@ def get_all_courses_from_sqlite() -> list[Course]:
     return all_courses
 
 
+@st.cache_data(show_spinner="Get courses from DB...")
 def get_courses_by_user_from_sqlite(user_name) -> list[Course]:
     courses = []
     conn = sqlite3.connect(cfg.SQLITE_DB_PATH)
@@ -48,6 +49,8 @@ def insert_course(user_name, course_name, lark_app_token):
     conn.commit()
     conn.close()
 
+    get_courses_by_user_from_sqlite.clear()
+
 
 def del_course_by_course_id(course_id):
     conn = sqlite3.connect(cfg.SQLITE_DB_PATH)
@@ -55,6 +58,8 @@ def del_course_by_course_id(course_id):
     cursor.execute('DELETE FROM `courses` WHERE id=?', (course_id,))
     conn.commit()
     conn.close()
+
+    get_courses_by_user_from_sqlite.clear()
 
 
 def update_course_by_course_id(course_id, user_name, course_name, lark_app_token):
@@ -65,6 +70,8 @@ def update_course_by_course_id(course_id, user_name, course_name, lark_app_token
                    (user_name, course_name, lark_app_token, course_id))
     conn.commit()
     conn.close()
+
+    get_courses_by_user_from_sqlite.clear()
 
 
 if __name__ == '__main__':

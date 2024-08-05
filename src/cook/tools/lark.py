@@ -3,6 +3,7 @@ import os
 import json
 from enum import Enum
 
+import streamlit as st
 from dotenv import load_dotenv, find_dotenv
 import lark_oapi as lark
 from lark_oapi.api.auth.v3 import *
@@ -57,6 +58,7 @@ def get_tenant_access_token():
     return token
 
 
+@st.cache_data(show_spinner="Fetching bitables from Lark...")
 def get_bitable_tables(app_token) -> Optional[list[AppTable]]:
     client = get_lark_client()
 
