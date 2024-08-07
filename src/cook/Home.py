@@ -15,7 +15,7 @@ st.set_page_config(
 add_vertical_space(3)
 """
 ## 首次使用
-请前往个人中心，使用初始密码登录后，修改密码，然后开始使用。
+前往个人中心，使用初始密码登录后，修改密码。  (⬇️ 这是个真按钮，能点 ⬇️)
 """
 if st.button('前往个人中心（My Account）', type='primary', use_container_width=True):
     st.switch_page("pages/100_My_Account.py")
@@ -34,7 +34,7 @@ add_vertical_space(3)
 add_vertical_space(3)
 """
 ## 章节剧本线性调试器
-模拟用户端的体验，顺序的进行调试
+模拟用户端的体验，顺序的进行调试。  (⬇️ 这是个真按钮，能点 ⬇️)
 """
 if st.button('前往章节剧本线性调试器（Chapter Debugger）', type='primary', use_container_width=True):
     st.switch_page("pages/1_Chapter_Debugger.py")

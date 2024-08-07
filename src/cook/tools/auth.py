@@ -29,7 +29,7 @@ def login():
     login_result = authenticator.login(
         max_login_attempts=5,
         fields={
-            'Form name': '管理员登录',
+            'Form name': '登录',
             'Username': '用户名',
             'Password': '密码',
             'Login': '登录'
