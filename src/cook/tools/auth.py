@@ -42,7 +42,7 @@ def login():
             st.session_state.is_login_welcome = True
         return authenticator, config
     else:
-        return False
+        return False, False
 
 
 
