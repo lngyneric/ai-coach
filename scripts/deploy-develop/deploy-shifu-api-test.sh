@@ -79,7 +79,6 @@ CONTAINER_NAME="sifu_api_v1_$TIMESTAMP"
 echo "Starting a new container with the name $CONTAINER_NAME..."
 docker run  -v /data/logs/api:/var/log/ -p $TARGET_PORT:5800 --name "$CONTAINER_NAME" -d "$FULL_IMAGE_NAME" 
 
-
 sh $script_dir/send_feishu.sh "sifu_api_v1 部署成功" "$CONTAINER_NAME $FULL_IMAGE_NAME 部署成功！"
 # 打印容器日志
 echo "Container logs for $CONTAINER_NAME:"
