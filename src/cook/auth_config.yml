@@ -18,8 +18,15 @@ credentials:
       password: $2b$12$PXvcCwh8eZEGBxz.upGnCuzlsdZn1qT3gXZuj/w7XDYksJQFOSIOm
     sunner:
       email: sunner@gmail.com
+      failed_login_attempts: 3
       logged_in: false
       name: 'Sun Zhigang'
+      password: ai-shifu
+    yfge:
+      email: geyunfei@gmail.com
+      failed_login_attempts: 3
+      logged_in: false
+      name: 'yfge'
       password: ai-shifu
 pre-authorized:
   emails:
