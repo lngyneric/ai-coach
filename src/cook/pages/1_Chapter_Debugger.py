@@ -18,7 +18,7 @@ st.set_page_config(
 )
 # 页面内的大标题小标题
 '# Chapter Debugger ⌨️🧙‍♂️⌨️'  # 📚
-st.caption('📚 加载章节剧本进行线性调试')
+st.caption('📚 加载章节剧本模拟用户体验进行线性调试')
 
 
 # ========== Debug 初始化 ==========
