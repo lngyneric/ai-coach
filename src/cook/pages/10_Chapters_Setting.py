@@ -23,7 +23,7 @@ st.set_page_config(
 # '---'
 
 
-@st.experimental_dialog('✏️ 修改 章节剧本文档')
+@st.dialog('✏️ 修改 章节剧本文档')
 def edit_chapter(df: DataFrame, chapter_id, staff=False):
     with st.form('edit_row'):
         # df
@@ -72,7 +72,7 @@ def edit_chapter(df: DataFrame, chapter_id, staff=False):
 
 
 
-@st.experimental_dialog('⚠️ 确认删除吗?')
+@st.dialog('⚠️ 确认删除吗?')
 def delete_chapter(df: DataFrame, chapter_id, staff=False):
     with st.form('delete_row'):
         st.text_input('章节名称', df.loc[chapter_id, 'name'], disabled=True)

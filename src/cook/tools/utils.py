@@ -81,13 +81,13 @@ def streaming_from_template(chat_box, template, variables,
         prompt = prompt.format(**variables)
     else:
         prompt = template
-    logging.debug(f'调用LLM（Human）：{prompt}')
+    logging.debug(f'调用LLM（Human）：\n{prompt}')
     llm_input = [HumanMessage(prompt)]
 
     # 有配置 系统角色 且 不是检查用户输入内容的Prompt时，加入系统角色
     if 'system_role' in st.session_state and parse_keys is None:
         llm_input.append(SystemMessage(st.session_state.system_role))
-        logging.debug(f'调用LLM（System）：{st.session_state.system_role}')
+        logging.debug(f'调用LLM（System）：\n{st.session_state.system_role}')
 
     full_result = ''
     parse_json = ''
