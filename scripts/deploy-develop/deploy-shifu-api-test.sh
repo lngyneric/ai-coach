@@ -32,7 +32,7 @@ cd /item/ai-shifu/src/api || exit
 # 组合组件生成镜像标签
 IMAGE_TAG="v1-$GIT_COMMIT-$RANDOM_STRING"
 IMAGE_NAME="sifu-api"
-DOCKERFILE_PATH="Dockerfile_test"
+DOCKERFILE_PATH="Dockerfile"
 
 # 设置 Docker 镜像仓库信息
 REGISTRY="registry.cn-beijing.aliyuncs.com/agix"
@@ -47,7 +47,7 @@ docker tag "$IMAGE_NAME:$IMAGE_TAG" "$REGISTRY/$IMAGE_NAME:$IMAGE_TAG"
 
 # 推送 Docker 镜像到仓库
 echo "Pushing Docker image to registry..."
-docker push "$REGISTRY/$IMAGE_NAME:$IMAGE_TAG"
+docker push "$REGISTRY/$IMAGE_NAME:$IMAGE_TAG" 
 
 # 部署 Docker 容器
 # 固定变量
@@ -75,9 +75,9 @@ else
 fi
 
 # 使用更新的镜像和自定义容器名称运行新容器
-CONTAINER_NAME="sifu_api_v1_$TIMESTAMP"
+CONTAINER_NAME="sifu_api_v1_$TIMESTAMP" 
 echo "Starting a new container with the name $CONTAINER_NAME..."
-docker run  -v /data/logs/api:/var/log/ -p $TARGET_PORT:5800 --name "$CONTAINER_NAME" -d "$FULL_IMAGE_NAME" 
+docker run  -v /data/logs/api:/var/log/ -p $TARGET_PORT:5800 --name "$CONTAINER_NAME" -d "$FULL_IMAGE_NAME"  --env-file  .env
 
 sh $script_dir/send_feishu.sh "sifu_api_v1 部署成功" "$CONTAINER_NAME $FULL_IMAGE_NAME 部署成功！"
 # 打印容器日志
