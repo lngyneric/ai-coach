@@ -4,11 +4,11 @@ services:
   ai-shifu-api-dev:
     container_name: ai-shifu-api-dev
     image: ai-shifu-api-dev:latest
-    command:  gunicorn -w 4 -b 0.0.0.0:5800 "flaskr:create_app()" --timeout 300 --log-level debug --access-logfile /var/log/app.log --capture-output
+    command: flask run --debug  
     env_file:
       - ./.env
     volumes:
-      - ../src/api/flaskr:/app/flaskr
+      - ../src/api/:/app/
   ai-shifu-web-dev:
     container_name:  ai-shifu-web-dev
     image: ai-shifu-web-dev:latest

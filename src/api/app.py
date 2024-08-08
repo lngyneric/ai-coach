@@ -1,10 +1,15 @@
 import json
 import os
-from re import A
+from re import A, M
 import time
 import logging
 from flask import Flask, Response, g,request,send_from_directory,make_response
 from flask_cors import CORS
+from dotenv import load_dotenv
+from flask_migrate import Migrate
+
+
+
 
 
 import pymysql
@@ -13,48 +18,28 @@ from flasgger import Swagger
 
 
 
-def create_app(test_config=None):
+def create_app()->Flask:
+
+    load_dotenv()
 
     # 在程序开始时调用 patch_pyppeteer()
     app = Flask(__name__, instance_relative_config=True)
     CORS(app, resources={r"/*": {"supports_credentials": True}})
-    app.logger.info('config: {}'.format(test_config))
-    app.config.from_mapping(
-        SECRET_KEY='dev',
-        DATABASE=os.path.join(app.instance_path, 'flaskr.sqlite'),
-    )
-    if test_config is None:
-        app.config.from_pyfile('config.py', silent=True)
-    else:
-        app.logger.info('test_config is not None, load the '+test_config+'_config.py')
-        app.config.from_pyfile(test_config+'_config.py', silent=True)
-
-    ##  加载配置文件å
-    from .common import Config,init_log
-    app.config = Config(app.config)
+    from flaskr.common import Config,init_log
+    app.config = Config(app.config,app)
     ## 初始化日志
     init_log(app)
     ## 初始化数据库
-    from . import dao
-
-
-
-    
+    from flaskr import dao
     dao.init_db(app)
     dao.init_redis(app)
+    Migrate(app,dao.db)
 
     ## 初始化其他API
-    from . import api
+    from flaskr import api
     api.init_langfuse(app)
-  
-    try:
-        os.makedirs(app.instance_path)
-    except OSError:
-        pass
-    
-
     # 初始化route
-    from . import route
+    from flaskr import route
 
     prefix = app.config.get('PATH_PREFIX','')
     app = route.register_common_handler(app)
@@ -64,15 +49,13 @@ def create_app(test_config=None):
     app = route.register_dict_handler(app,prefix+'/dict')
     app = route.register_tools_handler(app,prefix+'/tools')
     app = route.register_order_handler(app,prefix+'/order')
-    app = route.register_admin_handler(app,prefix+'/admin')
-
-    
-
     ## 初始化swagger
-
     if app.config.get('SWAGGER_ENABLED',False):
-        from .common import swagger_config
+        from flaskr.common import swagger_config
         app.logger.info('swagger init ...')
         swagger = Swagger(app,config=swagger_config,merge=True)
-
     return app
+app = create_app()
+if __name__ == '__main__':
+    
+    app.run(host='0.0.0.0',port=5000,debug=True)
