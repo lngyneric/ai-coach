@@ -1,6 +1,5 @@
 import { SSE } from "sse.js";
 import axios from "axios";
-import Cookies from "js-cookie";
 import { message } from "antd";
 import { tokenStore } from "./storeUtil.js";
 /**
@@ -56,7 +55,7 @@ console.log('api base url: ', process.env.REACT_APP_BASEURL);
  * */
 const axiosrequest = axios.create({
   baseURL:process.env.REACT_APP_BASEURL,
-  withCredentials: true, // 跨域请求时发送 cookies
+  withCredentials: false, // 跨域请求时发送 cookies
   headers:{"Content-Type":"application/json"}
 });
 

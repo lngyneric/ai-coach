@@ -52,7 +52,7 @@ export const SettingModal = ({
             <div className={styles.loginLeft}>
               <Avatar src={avatar} size={20} />
               <div className={styles.userName}>
-                {hasLogin ? userInfo?.name || '' : '未登录'}
+                {hasLogin ? userInfo?.name || '默认名称' : '未登录'}
               </div>
             </div>
             <img className={styles.rowIcon} src={require('@Assets/newchat/light/icon16-edit.png')} alt="" />

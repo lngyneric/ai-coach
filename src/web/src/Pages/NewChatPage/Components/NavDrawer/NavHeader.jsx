@@ -1,5 +1,5 @@
 import styles from "./NavHeader.module.scss";
-import LogoCircle from "Components/logo/LogoCircle.jsx";
+import LogoSquare from "Components/logo/LogoSquare.jsx";
 import { productName } from '@constants/productConstants';
 import classNames from 'classnames';
 
@@ -13,7 +13,8 @@ export const NavHeader = ({
   return (
     <div className={classNames(styles.navHeader, isCollapse ? styles.collapse : '')}>
       <div className={styles.logoArea}>
-        <LogoCircle size={24} />
+
+        <LogoSquare size={24} />
         {!isCollapse && <div className={styles.productName}>{productName}</div>}
       </div>
         
