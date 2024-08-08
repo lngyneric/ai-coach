@@ -1,15 +1,18 @@
 import decimal
 from typing import List
 
+from numpy import char
+from sympy import product
+
 from flaskr.common.swagger import register_schema_to_swagger
 from .models import *
 from flask import Flask
 from ...dao import db
-from ..lesson.models import AILesson
+from ..lesson.models import AICourse, AILesson
 from .models import AICourseLessonAttend
 from ...util.uuid import generate_id as get_uuid
 from ..lesson.const import *
-import pingpp
+from .pingxx_order import create_pingxx_order
 
 @register_schema_to_swagger
 class AICourseLessonAttendDTO:
@@ -80,6 +83,69 @@ def init_buy_record(app: Flask,user_id:str,course_id:str,price:decimal.Decimal):
         return AICourseBuyRecordDTO(buy_record.record_id,buy_record.user_id,buy_record.course_id,buy_record.price,buy_record.status)
 
 
+
+
+
+
+
+
+def generate_charge(app: Flask,record_id:str,channel:str,cleint_ip:str):
+    with app.app_context():
+        app.logger.info('generate charge for record:{} channel:{}'.format(record_id,channel))
+        buy_record = AICourseBuyRecord.query.filter(AICourseBuyRecord.record_id==record_id).first()
+        course = AICourse.query.filter(AICourse.course_id==buy_record.course_id).first()
+        if buy_record:
+            app.logger.info('buy record found:{}'.format(buy_record))
+            if buy_record.status != BUY_STATUS_INIT:
+                app.logger.error('buy record:{} status is not init'.format(record_id))
+                return None
+            if not course:
+                app.logger.error('course:{} not found'.format(buy_record.course_id))
+                return None
+            amount = int(buy_record.price*100)
+            product_id = course.course_id
+            subject = course.course_name
+            body = course.course_name
+            order_no = buy_record.record_id
+            
+            pingpp_id = app.config.get('PINGPP_APP_ID')
+            if channel == 'wx_pub_qr':
+                extra = dict({"product_id":product_id})
+                charge =  create_pingxx_order(app, order_no, pingpp_id, channel, amount, cleint_ip, subject, body, extra)
+            elif channel == 'alipay_qr':
+                extra = dict({})
+                charge =  create_pingxx_order(app, order_no, pingpp_id, channel, amount, cleint_ip, subject, body, extra)
+            else:
+                app.logger.error('channel:{} not support'.format(channel))
+                return None
+            app.logger.info('charge created:{}'.format(charge))
+
+            pingxxOrder = PingxxOrder()
+            pingxxOrder.order_id = charge['order_id']
+            pingxxOrder.user_id = buy_record.user_id
+            pingxxOrder.course_id = buy_record.course_id
+            pingxxOrder.record_id = buy_record.record_id
+            pingxxOrder.pingxx_transaction_no = charge['transaction_no']
+            pingxxOrder.pingxx_app_id = charge['app']
+            pingxxOrder.pingxx_channel = charge['channel']
+            pingxxOrder.pingxx_id = charge['id']
+            pingxxOrder.channel = charge['channel']
+            pingxxOrder.amount = amount
+            pingxxOrder.currency = charge['currency']
+            pingxxOrder.subject = charge['subject']
+            pingxxOrder.body = charge['body']
+            pingxxOrder.order_no = charge['order_no']
+            pingxxOrder.client_ip = charge['client_ip']
+            pingxxOrder.extra = str(charge['extra'])
+            pingxxOrder.charge_id = charge['charge_id']
+            pingxxOrder.status = charge['status']
+            pingxxOrder.paid_at = charge['paid_at']
+            db.session.add(PingxxOrder)
+            db.session.commit()
+
+
+        
+            
 def success_buy_record(app: Flask,record_id:str):
     with app.app_context():
         # todo: 事务处理 & 并发锁
