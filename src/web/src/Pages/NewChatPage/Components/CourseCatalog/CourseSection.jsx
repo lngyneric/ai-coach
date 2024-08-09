@@ -1,6 +1,7 @@
 import classNames from "classnames";
 import styles from "./CourseSection.module.scss";
 import { LESSON_STATUS } from "constants/courseConstants.js";
+import { useCallback } from "react";
 
 export const CourseSection = ({
   id,
@@ -24,6 +25,14 @@ export const CourseSection = ({
     }
   };
 
+  const onSectionClick = useCallback(() => {
+    if (status === LESSON_STATUS.NOT_START || status === LESSON_STATUS.LOCKED) {
+      return
+    }
+
+    onSelect?.({id});
+  }, [status, onSelect, id]); 
+
   return (
     <div
       className={classNames(
@@ -31,7 +40,7 @@ export const CourseSection = ({
         selected && styles.selected,
         canLearning ? styles.available : styles.unavailable
       )}
-      onClick={() => onSelect({ id })}
+      onClick={onSectionClick}
     >
       <div className={classNames(styles.iconWrapper, genIconClassName())}>
         <div className={styles.topLine}></div>

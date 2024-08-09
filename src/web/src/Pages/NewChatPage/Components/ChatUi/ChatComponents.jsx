@@ -96,8 +96,9 @@ const MarkdownBubble = (props) => {
             return (
               <Image
                 {...imgProps}
-                width={mobileStyle ? '100%' : '70%'}
+                width={mobileStyle ? '100%' : '100%'}
                 preview={!props.isStreaming}
+                style={{borderRadius: '5px'}}
               ></Image>
             );
           },
@@ -579,7 +580,6 @@ export const ChatComponents = forwardRef(
           mobileStyle ? styles.mobile : ''
         )}
       >
-        <ChatMobileHeader className={styles.ChatMobileHeader} />
         <Chat
           navbar={null}
           messages={messages}
@@ -602,6 +602,7 @@ export const ChatComponents = forwardRef(
             }}
           />
         )}
+        { mobileStyle && <ChatMobileHeader className={styles.ChatMobileHeader} /> }
       </div>
     );
   }
