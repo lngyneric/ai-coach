@@ -1,6 +1,10 @@
 import logging
 import time
 
+import yaml
+from yaml.loader import SafeLoader
+import streamlit as st
+import streamlit_authenticator as stauth
 from streamlit_extras.bottom_container import bottom
 
 from models.course import get_courses_by_user_from_sqlite
@@ -62,14 +66,6 @@ with st.sidebar:
 
 
 # ==================== 主体框架 ====================
-# 需要登录
-import yaml
-from yaml.loader import SafeLoader
-import streamlit as st
-import streamlit_authenticator as stauth
-
-
-
 if not st.session_state.has_started:
 
     with open('auth_config.yml') as file:
