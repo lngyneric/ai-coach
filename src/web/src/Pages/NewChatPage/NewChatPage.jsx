@@ -3,15 +3,15 @@ import { useParams, useNavigate } from 'react-router-dom';
 import classNames from 'classnames';
 import styles from './NewChatPage.module.scss';
 import { Skeleton } from 'antd';
-import { calcFrameLayout } from '@constants/uiConstants.js';
-import { useUiLayoutStore } from '@stores/useUiLayoutStore.js';
-import { useUserStore } from '@stores/useUserStore.js';
-import { AppContext } from '@Components/AppContext.js';
+import { calcFrameLayout } from 'constants/uiConstants.js';
+import { useUiLayoutStore } from 'stores/useUiLayoutStore.js';
+import { useUserStore } from 'stores/useUserStore.js';
+import { AppContext } from 'Components/AppContext.js';
 import NavDrawer from './Components/NavDrawer/NavDrawer.jsx';
 import ChatUi from './Components/ChatUi/ChatUi.jsx';
 import LoginModal from './Components/Login/LoginModal.jsx';
 import { useLessonTree } from './hooks/useLessonTree.js';
-import { useCourseStore } from '@stores/useCourseStore';
+import { useCourseStore } from 'stores/useCourseStore';
 
 // 课程学习主页面
 const NewChatPage = (props) => {

@@ -1,6 +1,6 @@
 import MainButton from "Components/MainButton.jsx";
 import styles from './ChatButtonGroup.module.scss';
-import { INTERACTION_OUTPUT_TYPE } from '@constants/courseConstants.js';
+import { INTERACTION_OUTPUT_TYPE } from 'constants/courseConstants.js';
 
 
 /**

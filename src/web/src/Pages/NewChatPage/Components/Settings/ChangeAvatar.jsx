@@ -3,8 +3,7 @@ import classNames from 'classnames';
 import styles from './ChangeAvatar.module.scss';
 import { Avatar } from 'antd';
 import AvatarSettingModal from './AvatarSettingModal.jsx';
-import { convertFileToDataUrl } from '@Utils/imgUtils';
-import { useEffect } from 'react';
+import { convertFileToDataUrl } from 'Utils/imgUtils';
 
 export const ChangeAvatar = ({
   className,

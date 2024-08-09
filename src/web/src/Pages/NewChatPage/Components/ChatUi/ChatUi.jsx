@@ -1,4 +1,4 @@
-import { AppContext } from '@Components/AppContext.js';
+import { AppContext } from 'Components/AppContext.js';
 import { useContext } from 'react';
 import ChatComponents from './ChatComponents.jsx';
 import styles from './ChatUi.module.scss';

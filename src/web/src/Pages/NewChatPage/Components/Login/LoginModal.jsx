@@ -3,10 +3,10 @@ import { useState } from 'react';
 import { Modal, Input, Button, Checkbox, Form, message } from 'antd';
 import { useSendCode } from './useSendCode.js';
 import styles from './LoginModal.module.scss';
-import MainButton from '@Components/MainButton.jsx';
-import { calModalWidth } from '@Utils/common.js';
-import { genCheckCode } from '@Api/user.js';
-import { useUserStore } from '@stores/useUserStore.js';
+import MainButton from 'Components/MainButton.jsx';
+import { calModalWidth } from 'Utils/common.js';
+import { genCheckCode } from 'Api/user.js';
+import { useUserStore } from 'stores/useUserStore.js';
 import { useTranslation } from 'react-i18next';
 
 const MODAL_STEP = {

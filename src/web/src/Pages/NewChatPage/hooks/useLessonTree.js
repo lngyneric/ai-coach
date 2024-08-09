@@ -1,7 +1,7 @@
 import { useState } from "react";
-import { getLessonTree } from '@Api/lesson.js';
+import { getLessonTree } from 'Api/lesson.js';
 import { produce } from 'immer';
-import { LESSON_STATUS } from "@constants/courseConstants.js";
+import { LESSON_STATUS } from "constants/courseConstants.js";
 
 export const checkChapterCanLearning = ({ status }) => {
   return status === LESSON_STATUS.LEARNING || status === LESSON_STATUS.COMPLETED || status === LESSON_STATUS.PREPARE_LEARNING;

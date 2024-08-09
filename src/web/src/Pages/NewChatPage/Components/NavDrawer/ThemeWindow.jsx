@@ -1,4 +1,4 @@
-import PopupModal from '@Components/PopupModal';
+import PopupModal from 'Components/PopupModal';
 
 export const ThemeWindow = ({ open, onClose, style, className }) => {
   return (
