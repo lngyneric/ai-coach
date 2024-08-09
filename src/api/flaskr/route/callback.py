@@ -10,5 +10,5 @@ def register_callback_handler(app: Flask, path_prefix: str):
     def pingxx_callback():
         body = request.get_json( )
         app.logger.info('pingxx-callback: %s',body)
-        return make_common_response({'status':'ok'})
+        return 'pingxx callback success'
     return app
