@@ -12,6 +12,8 @@ from flask_migrate import Migrate
 
 
 
+
+
 from flasgger import Swagger
 
 
@@ -38,16 +40,9 @@ def create_app()->Flask:
     from flaskr import api
     api.init_langfuse(app)
     # 初始化route
-    from flaskr import route
-
-    prefix = app.config.get('PATH_PREFIX','')
-    app = route.register_common_handler(app)
-    app = route.register_user_handler(app,prefix+'/user')
-    app = route.register_lesson_handler(app,prefix+'/lesson')
-    app = route.register_study_handler(app,prefix+'/study')
-    app = route.register_dict_handler(app,prefix+'/dict')
-    app = route.register_tools_handler(app,prefix+'/tools')
-    app = route.register_order_handler(app,prefix+'/order')
+    from flaskr.route import register_route
+    app = register_route(app)
+    
     ## 初始化swagger
     if app.config.get('SWAGGER_ENABLED',False):
         from flaskr.common import swagger_config

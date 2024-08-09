@@ -12,3 +12,5 @@ def register_order_handler(app: Flask, path_prefix: str):
         return make_common_response(success_buy_record(app, order_id))
     
     return app
+
+
