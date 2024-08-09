@@ -1,6 +1,6 @@
 import { Modal } from 'antd-mobile';
-import { calModalWidth } from '@Utils/common.js';
-import { useUiLayoutStore } from '@stores/useUiLayoutStore.js';
+import { calModalWidth } from 'Utils/common.js';
+import { useUiLayoutStore } from 'stores/useUiLayoutStore.js';
 import MainButton from 'Components/MainButton.jsx';
 import styles from './SettingBaseModal.module.scss';
 

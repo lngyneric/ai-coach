@@ -2,7 +2,7 @@ import { useRef, useState } from 'react';
 import styles from './AvatarSettingModal.module.scss';
 import SettingBaseModal from './SettingBaseModal.jsx';
 import Cropper from 'react-easy-crop';
-import { genCroppedImg } from '@Utils/imgUtils';
+import { genCroppedImg } from 'Utils/imgUtils';
 
 export const AvatarSettingModal = ({
   open,

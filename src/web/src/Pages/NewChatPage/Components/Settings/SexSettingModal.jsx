@@ -2,7 +2,7 @@ import { useState } from 'react';
 import styles from './SexSettingModal.module.scss';
 import SettingBaseModal from './SettingBaseModal.jsx';
 import classNames from 'classnames';
-import { SEX } from '@constants/userConstants';
+import { SEX } from 'constants/userConstants';
 import { message } from 'antd';
 import { useCallback } from 'react';
 

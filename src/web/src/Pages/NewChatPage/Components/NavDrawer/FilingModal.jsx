@@ -1,4 +1,4 @@
-import PopupModal from '@Components/PopupModal';
+import PopupModal from 'Components/PopupModal';
 import { Button } from 'antd';
 
 import styles from './FilingModal.module.scss';

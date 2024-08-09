@@ -8,16 +8,16 @@ import {
   useState,
   useContext,
 } from 'react';
-import { runScript, getLessonStudyRecord } from '@Api/study';
+import { runScript, getLessonStudyRecord } from 'Api/study';
 import ReactMarkdown from 'react-markdown';
 import { Prism as SyntaxHighlighter } from 'react-syntax-highlighter';
 import { vscDarkPlus } from 'react-syntax-highlighter/dist/esm/styles/prism';
 import { CopyOutlined } from '@ant-design/icons';
-import { genUuid } from '@Utils/common.js';
+import { genUuid } from 'Utils/common.js';
 import ChatInteractionArea from './ChatInput/ChatInteractionArea.jsx';
 import { AppContext } from 'Components/AppContext.js';
 import styles from './ChatComponents.module.scss';
-import { useCourseStore } from '@stores/useCourseStore.js';
+import { useCourseStore } from 'stores/useCourseStore.js';
 import {
   LESSON_STATUS,
   INTERACTION_TYPE,
@@ -26,9 +26,9 @@ import {
   CHAT_MESSAGE_TYPE,
 } from 'constants/courseConstants.js';
 import classNames from 'classnames';
-import { useUserStore } from '@stores/useUserStore.js';
-import { fixMarkdown, fixMarkdownStream } from '@Utils/markdownUtils.js';
-import { testPurchaseOrder } from '@Api/order.js';
+import { useUserStore } from 'stores/useUserStore.js';
+import { fixMarkdown, fixMarkdownStream } from 'Utils/markdownUtils.js';
+import { testPurchaseOrder } from 'Api/order.js';
 import remarkGfm from 'remark-gfm';
 import rehypeRaw from 'rehype-raw';
 import { FRAME_LAYOUT_MOBILE } from 'constants/uiConstants.js';

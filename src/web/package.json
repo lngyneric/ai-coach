@@ -61,6 +61,7 @@
   "scripts": {
     "start:dev": "dotenv -e .local.single.env -e .env.dev craco start",
     "start:dev-local": "dotenv -e .local.single.env -e .env.dev-local craco start",
+    "lint:knip": "knip",
     "build": "dotenv -e .local.single.env -e .env.prod craco build",
     "test": "craco test",
     "eject": "craco eject"
@@ -86,6 +87,7 @@
   },
   "devDependencies": {
     "@types/store": "^2.0.2",
-    "eslint-config-prettier": "^9.1.0"
+    "eslint-config-prettier": "^9.1.0",
+    "knip": "^5.27.2"
   }
 }
