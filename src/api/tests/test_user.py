@@ -6,9 +6,9 @@ def test_get_user_profile(app):
 
 
     from flaskr.service.profile.funcs import get_user_profile_labels
-
-    resp =  get_user_profile_labels(app,"49037a81b0a54ac8a9c823bbec23f0e3")
-    print_json(resp)
+    with app.app_context():
+        resp =  get_user_profile_labels(app,"49037a81b0a54ac8a9c823bbec23f0e3")
+        print_json(resp)
 
 
 import random

@@ -89,7 +89,7 @@ def init_buy_record(app: Flask,user_id:str,course_id:str,price:decimal.Decimal):
 
 
 
-def generate_charge(app: Flask,record_id:str,channel:str,cleint_ip:str):
+def generate_charge(app: Flask,record_id:str,channel:str,client_ip:str):
     with app.app_context():
         app.logger.info('generate charge for record:{} channel:{}'.format(record_id,channel))
         buy_record = AICourseBuyRecord.query.filter(AICourseBuyRecord.record_id==record_id).first()
@@ -103,6 +103,7 @@ def generate_charge(app: Flask,record_id:str,channel:str,cleint_ip:str):
                 app.logger.error('course:{} not found'.format(buy_record.course_id))
                 return None
             amount = int(buy_record.price*100)
+
             product_id = course.course_id
             subject = course.course_name
             body = course.course_name
@@ -111,17 +112,17 @@ def generate_charge(app: Flask,record_id:str,channel:str,cleint_ip:str):
             pingpp_id = app.config.get('PINGPP_APP_ID')
             if channel == 'wx_pub_qr':
                 extra = dict({"product_id":product_id})
-                charge =  create_pingxx_order(app, order_no, pingpp_id, channel, amount, cleint_ip, subject, body, extra)
+                charge =  create_pingxx_order(app, order_no, pingpp_id, channel, amount, client_ip, subject, body, extra)
             elif channel == 'alipay_qr':
                 extra = dict({})
-                charge =  create_pingxx_order(app, order_no, pingpp_id, channel, amount, cleint_ip, subject, body, extra)
+                charge =  create_pingxx_order(app, order_no, pingpp_id, channel, amount, client_ip, subject, body, extra)
             else:
                 app.logger.error('channel:{} not support'.format(channel))
                 return None
             app.logger.info('charge created:{}'.format(charge))
 
             pingxxOrder = PingxxOrder()
-            pingxxOrder.order_id = charge['order_id']
+            pingxxOrder.order_id = str(get_uuid(app))
             pingxxOrder.user_id = buy_record.user_id
             pingxxOrder.course_id = buy_record.course_id
             pingxxOrder.record_id = buy_record.record_id
@@ -137,10 +138,11 @@ def generate_charge(app: Flask,record_id:str,channel:str,cleint_ip:str):
             pingxxOrder.order_no = charge['order_no']
             pingxxOrder.client_ip = charge['client_ip']
             pingxxOrder.extra = str(charge['extra'])
-            pingxxOrder.charge_id = charge['charge_id']
-            pingxxOrder.status = charge['status']
-            pingxxOrder.paid_at = charge['paid_at']
-            db.session.add(PingxxOrder)
+            pingxxOrder.charge_id = charge['id']
+            pingxxOrder.status = 0
+            # app.app_context().db.session.add(pingxxOrder)
+            # app.app_context().db.session.add(pingxxOrder)
+            db.session.add(pingxxOrder)
             db.session.commit()
 
 
