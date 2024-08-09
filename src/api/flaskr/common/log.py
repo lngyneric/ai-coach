@@ -12,10 +12,11 @@ class RequestFormatter(logging.Formatter):
         try:
             record.url = getattr(thread_local, 'url', 'No_URL')
             record.request_id = getattr(thread_local, 'request_id', 'No_Request_ID')
-            record.clent_ip = getattr(thread_local, 'client_ip', 'No_Client_IP')
+            record.client_ip = getattr(thread_local, 'client_ip', 'No_Client_IP')
         except RuntimeError:
             record.url = "No_URL"
             record.request_id = "No_Request_ID"
+            record.client_ip = "No_Client_IP"
         return super().format(record)
 
 def init_log(app:Flask)->Flask:
@@ -33,7 +34,7 @@ def init_log(app:Flask)->Flask:
         thread_local.client_ip = user_ip
 
 
-    log_format = '%(asctime)s [%(levelname)s] ai-shifu.com/ai-sifu %(name)s %(url)s %(request_id)s %(message)s'
+    log_format = '%(asctime)s [%(levelname)s] ai-shifu.com/ai-sifu %(name)s %(client_ip)s %(url)s %(request_id)s %(message)s'
     formatter = RequestFormatter(log_format)
     log_file = app.config.get('LOGGING_PATH', 'logs/ai-sifu.log')
     # 如果目录不存在，创建目录

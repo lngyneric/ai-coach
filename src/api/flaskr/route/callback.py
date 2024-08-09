@@ -1,4 +1,5 @@
-from flask import Flask, request
+from flask import Flask, make_response, request
+from h11 import Response
 
 from .common import bypass_token_validation, make_common_response
 
@@ -10,5 +11,9 @@ def register_callback_handler(app: Flask, path_prefix: str):
     def pingxx_callback():
         body = request.get_json( )
         app.logger.info('pingxx-callback: %s',body)
-        return 'pingxx callback success'
+        response = make_response("pingxx callback success")
+        response.mimetype = 'text/plain'
+        return response
+    
+        
     return app
