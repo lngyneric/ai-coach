@@ -5,6 +5,7 @@ simulate_streaming_random_sleep:
 llm:
 #  default_vendor: wenxin
   default_model: ERNIE-4.0-8K-Preview-0518
+  default_temperature: 0.4
   qianfan:
     models:
       - ERNIE-4.0-8K-0329
