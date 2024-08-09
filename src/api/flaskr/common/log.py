@@ -12,6 +12,7 @@ class RequestFormatter(logging.Formatter):
         try:
             record.url = getattr(thread_local, 'url', 'No_URL')
             record.request_id = getattr(thread_local, 'request_id', 'No_Request_ID')
+            record.clent_ip = getattr(thread_local, 'client_ip', 'No_Client_IP')
         except RuntimeError:
             record.url = "No_URL"
             record.request_id = "No_Request_ID"
@@ -22,6 +23,15 @@ def init_log(app:Flask)->Flask:
     def setup_logging():
         thread_local.request_id = uuid.uuid4().hex
         thread_local.url = request.path
+            # 尝试从 X-Forwarded-For 头部获取 IP 地址
+        if 'X-Forwarded-For' in request.headers:
+            user_ip = request.headers['X-Forwarded-For'].split(',')[0].strip()
+        else:
+            # 如果没有 X-Forwarded-For 头部，就使用 remote_addr
+            user_ip = request.remote_addr
+        request.client_ip = user_ip
+        thread_local.client_ip = user_ip
+
 
     log_format = '%(asctime)s [%(levelname)s] ai-shifu.com/ai-sifu %(name)s %(url)s %(request_id)s %(message)s'
     formatter = RequestFormatter(log_format)

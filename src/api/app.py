@@ -12,16 +12,15 @@ from flask_migrate import Migrate
 
 
 
-import pymysql
-pymysql.install_as_MySQLdb()
 from flasgger import Swagger
 
 
 
 def create_app()->Flask:
 
+    import pymysql
+    pymysql.install_as_MySQLdb()
     load_dotenv()
-
     # 在程序开始时调用 patch_pyppeteer()
     app = Flask(__name__, instance_relative_config=True)
     CORS(app, resources={r"/*": {"supports_credentials": True}})
@@ -55,6 +54,7 @@ def create_app()->Flask:
         app.logger.info('swagger init ...')
         swagger = Swagger(app,config=swagger_config,merge=True)
     return app
-app = create_app()
+
 if __name__ == '__main__':
+    app = create_app()
     app.run(host='0.0.0.0',port=5000,debug=True)

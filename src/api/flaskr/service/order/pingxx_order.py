@@ -18,7 +18,8 @@ def init_pingxx(app:Flask):
 
 
 def create_pingxx_order(app:Flask,order_no,app_id,channel,amount,client_ip,subject,body,extra=None):
-    app.logger.info('create pingxx order')
+    app.logger.info('create pingxx order,order_no:{} app_id:{} channel:{} amount:{} client_ip:{} subject:{} body:{} extra:{}'.format
+                    (order_no,app_id,channel,amount,client_ip,subject,body,extra))
     pingpp = init_pingxx(app)
     order = pingpp.Charge.create(
         order_no=order_no,
