@@ -2,6 +2,8 @@ import stat
 from uuid import uuid4
 import concurrent.futures
 
+from yaml.loader import SafeLoader
+import streamlit_authenticator as stauth
 from streamlit_extras.add_vertical_space import add_vertical_space
 
 from models.course import get_courses_by_user_from_sqlite
@@ -92,7 +94,24 @@ def debug_model2(model, temperature, script, variables, system_role, user_input)
 
 # ==================== 主体框架 ====================
 # 需要登录
-if login():
+# if login():
+with open('auth_config.yml') as file:
+    config = yaml.load(file, Loader=SafeLoader)
+
+# Pre-hashing all plain text passwords once
+# Hasher.hash_passwords(config['credentials'])
+
+authenticator = stauth.Authenticate(
+    config['credentials'],
+    config['cookie']['name'],
+    config['cookie']['key'],
+    config['cookie']['expiry_days'],
+    config['pre-authorized']
+)
+
+authenticator.login()
+
+if st.session_state['authentication_status']:
 
     # 初始化要调试的模型列表
     if 'debug_models' not in st.session_state:
@@ -244,12 +263,13 @@ if login():
                         height=count_lines(st.session_state.system_role)[1]*25,
                         label_visibility='collapsed')
                     if st.button('将系统角色更新至飞书', use_container_width=True):
-                        update_bitable_record(
-                            st.session_state.lark_app_token,
-                            st.session_state.lark_table_id,
-                            st.session_state.debug_script.id,
-                            '模版内容',
-                            st.session_state.system_role)
+                        if update_bitable_record(
+                                st.session_state.lark_app_token,
+                                st.session_state.lark_table_id,
+                                st.session_state.system_role_id,
+                                '模版内容',
+                                st.session_state.system_role):
+                            st.success('更新成功！')
                 system_role_needed_vars = extract_variables(st.session_state.system_role)
             else:
                 st.warning('未加载系统角色！')
@@ -261,12 +281,13 @@ if login():
                     height=count_lines(st.session_state.debug_script.template)[1] * 25,
                     label_visibility='collapsed')
                 if st.button('将剧本内容更新至飞书', use_container_width=True):
-                    update_bitable_record(
-                        st.session_state.lark_app_token,
-                        st.session_state.lark_table_id,
-                        st.session_state.debug_script.id,
-                        '模版内容',
-                        st.session_state.debug_script.template)
+                    if update_bitable_record(
+                            st.session_state.lark_app_token,
+                            st.session_state.lark_table_id,
+                            st.session_state.debug_script.id,
+                            '模版内容',
+                            st.session_state.debug_script.template):
+                        st.success('更新成功！')
 
 
         with col2:
@@ -319,9 +340,18 @@ if login():
                 '#### 需要用户输入'
                 col1, col2 = st.columns(2)
                 with col1:
-                    edited_check_template = st.text_area('检查模版内容',
-                                                         st.session_state.debug_script.check_template,
-                                                         height=count_lines(st.session_state.debug_script.check_template)[1] * 25)
+                    st.session_state.debug_script.check_template = st.text_area(
+                        '检查模版内容',
+                        st.session_state.debug_script.check_template,
+                        height=count_lines(st.session_state.debug_script.check_template)[1] * 25)
+                    if st.button('将检查模版内容更新至飞书', use_container_width=True):
+                        if update_bitable_record(
+                                st.session_state.lark_app_token,
+                                st.session_state.lark_table_id,
+                                st.session_state.debug_script.id,
+                                '检查模版内容',
+                                st.session_state.debug_script.check_template):
+                            st.success('更新成功！')
                 with col2:
                     st.session_state.debugger_user_input = st.text_input('用户输入', placeholder=st.session_state.debug_script.input_placeholder)
 
@@ -432,3 +462,8 @@ if login():
                             st.write(f'#### {model}， temp={temperature}')
                             st.write(result)
                     st.write('-----')
+
+elif st.session_state['authentication_status'] is False:
+    st.error('Username/password is incorrect')
+elif st.session_state['authentication_status'] is None:
+    st.warning('Please enter your username and password')

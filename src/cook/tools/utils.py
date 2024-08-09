@@ -274,6 +274,7 @@ def load_scripts_and_system_role(
                     prompt = template
 
                 st.session_state.system_role = prompt
+                st.session_state.system_role_id = system_role_script.id
 
             st.session_state.script_list_len = len(st.session_state.script_list)
 

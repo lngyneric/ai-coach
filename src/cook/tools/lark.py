@@ -133,10 +133,12 @@ def update_bitable_record(app_token, table_id, record_id, key, value):
     if not response.success():
         lark.logger.error(
             f"client.bitable.v1.app_table_record.update failed, code: {response.code}, msg: {response.msg}, log_id: {response.get_log_id()}")
-        return
+        return False
 
     # 处理业务结果
     lark.logger.info(lark.JSON.marshal(response.data, indent=4))
+
+    return True
 
 
 
