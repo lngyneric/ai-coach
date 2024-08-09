@@ -115,7 +115,7 @@ if st.session_state['authentication_status']:
 
     # 初始化要调试的模型列表
     if 'debug_models' not in st.session_state:
-        st.session_state.debug_models = []
+        st.session_state.debug_models = [(cfg.DEFAULT_MODEL, cfg.DEFAULT_TMP)]
 
     # 初始化要调试的单条剧本
     if 'debug_script' not in st.session_state:
@@ -129,8 +129,8 @@ if st.session_state['authentication_status']:
     with col1:
         models = []
         supported_models_without_default = [model for model in cfg.SUPPORT_MODELS if model != cfg.DEFAULT_MODEL]
-        if not st.session_state.debug_models:
-            st.session_state.debug_models.append((cfg.DEFAULT_MODEL, cfg.DEFAULT_TMP))
+        # if not st.session_state.debug_models:
+        #     st.session_state.debug_models.append((cfg.DEFAULT_MODEL, cfg.DEFAULT_TMP))
         model = st.selectbox('选择模型：', supported_models_without_default, index=cfg.SUPPORT_MODELS.index(cfg.DEFAULT_MODEL))
         temperature = 0
         if model in cfg.QIANFAN_MODELS:
