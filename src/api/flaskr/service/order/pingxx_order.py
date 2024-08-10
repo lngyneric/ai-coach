@@ -7,9 +7,7 @@ import os
 def init_pingxx(app:Flask):
     app.logger.info('init pingxx')
     pingpp.api_key = app.config['PINGPP_SECRET_KEY']
-    # pingpp.app_id = app.config['PINGXX_APP_ID']
     pingpp.private_key_path = app.config['PINGPP_PRIVATE_KEY_PATH']
-    # pingpp.pub_key_path = app.config['PINGXX_PUB_KEY_PATH']
     if os.path.exists(pingpp.private_key_path) == False:
         app.logger.error('private key not exists')
         return None
