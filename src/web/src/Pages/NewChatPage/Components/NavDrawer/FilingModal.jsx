@@ -2,6 +2,7 @@ import PopupModal from 'Components/PopupModal';
 import { Button } from 'antd';
 
 import styles from './FilingModal.module.scss';
+import { memo } from 'react';
 
 export const FillingModal = ({
   open,
@@ -72,4 +73,4 @@ export const FillingModal = ({
   );
 };
 
-export default FillingModal;
+export default memo(FillingModal);

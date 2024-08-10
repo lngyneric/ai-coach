@@ -4,5 +4,8 @@
     },
     "user": {
         "loginMainButton": "登录/注册"
+    },
+    "pay": {
+        "payModalTitle": "购买"
     }
 }

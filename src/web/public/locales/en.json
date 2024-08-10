@@ -4,5 +4,8 @@
     },
     "user": {
         "loginMainButton": "Login/Register"
+    },
+    "pay": {
+        "payModalTitle": "Payment"
     }
 }

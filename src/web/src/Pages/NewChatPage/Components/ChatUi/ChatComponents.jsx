@@ -33,6 +33,9 @@ import remarkGfm from 'remark-gfm';
 import rehypeRaw from 'rehype-raw';
 import { FRAME_LAYOUT_MOBILE } from 'constants/uiConstants.js';
 import ChatMobileHeader from './ChatMobileHeader.jsx';
+import PayModal from '../Pay/PayModal.jsx';
+import { useDisclosture } from 'common/hooks/useDisclosture.js';
+import { memo } from 'react';
 
 const USER_ROLE = {
   TEACHER: '老师',
@@ -98,7 +101,7 @@ const MarkdownBubble = (props) => {
                 {...imgProps}
                 width={mobileStyle ? '100%' : '100%'}
                 preview={!props.isStreaming}
-                style={{borderRadius: '5px'}}
+                style={{ borderRadius: '5px' }}
               ></Image>
             );
           },
@@ -125,7 +128,6 @@ const createMessage = ({
     };
   }
   const position = role === USER_ROLE.STUDENT ? 'right' : 'left';
-
 
   let avatar = robotAvatar;
 
@@ -239,6 +241,12 @@ export const ChatComponents = forwardRef(
     );
 
     const mobileStyle = frameLayout === FRAME_LAYOUT_MOBILE;
+    const {
+      open: payModalOpen,
+      onOpen: onPayModalOpen,
+      onClose: onPayModalClose,
+    } = useDisclosture();
+
     // debugger
     useEffect(() => {
       if (window.ztDebug) {
@@ -534,7 +542,13 @@ export const ChatComponents = forwardRef(
         return <></>;
       }
       if (type === CHAT_MESSAGE_TYPE.TEXT) {
-        return <MarkdownBubble content={content} isStreaming={isStreaming} mobileStyle={mobileStyle} />;
+        return (
+          <MarkdownBubble
+            content={content}
+            isStreaming={isStreaming}
+            mobileStyle={mobileStyle}
+          />
+        );
       }
       return <></>;
     };
@@ -602,10 +616,13 @@ export const ChatComponents = forwardRef(
             }}
           />
         )}
-        { mobileStyle && <ChatMobileHeader className={styles.ChatMobileHeader} /> }
+        {mobileStyle && (
+          <ChatMobileHeader className={styles.ChatMobileHeader} />
+        )}
+        <PayModal isOpen={payModalOpen} onCancel={onPayModalClose} />
       </div>
     );
   }
 );
 
-export default ChatComponents;
+export default memo(ChatComponents);

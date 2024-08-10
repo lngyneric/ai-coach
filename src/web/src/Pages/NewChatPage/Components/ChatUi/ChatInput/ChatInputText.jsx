@@ -7,6 +7,7 @@ import {
 } from 'constants/courseConstants.js';
 
 import styles from './ChatInputText.module.scss';
+import { memo } from 'react';
 
 const OUTPUT_TYPE_MAP = {
   [INTERACTION_TYPE.INPUT]: INTERACTION_OUTPUT_TYPE.TEXT,
@@ -68,4 +69,4 @@ export const ChatInputText = ({ onClick, type, disabled = false }) => {
   );
 };
 
-export default ChatInputText;
+export default memo(ChatInputText);

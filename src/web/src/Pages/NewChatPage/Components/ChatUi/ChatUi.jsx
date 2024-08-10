@@ -5,6 +5,7 @@ import styles from './ChatUi.module.scss';
 import UserSettings from '../Settings/UserSettings.jsx';
 import { FRAME_LAYOUT_MOBILE } from 'constants/uiConstants.js';
 import classNames from 'classnames';
+import { memo } from 'react';
 
 /**
  * 聊天区的整体画布
@@ -45,4 +46,4 @@ export const ChatUi = ({
   );
 };
 
-export default ChatUi;
+export default memo(ChatUi);

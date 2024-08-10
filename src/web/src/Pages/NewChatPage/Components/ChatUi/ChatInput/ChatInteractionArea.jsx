@@ -8,6 +8,7 @@ import ChatButtonGroup from './ChatButtonGroup.jsx';
 import ChatInputButton from './ChatInputButton.jsx';
 import { INTERACTION_TYPE, INTERACTION_DISPLAY_TYPE } from 'constants/courseConstants.js';
 import classNames from 'classnames';
+import { memo } from 'react';
 
 const INTERACTION_DISPLAY_MAP = {
   [INTERACTION_TYPE.CONTINUE]: INTERACTION_DISPLAY_TYPE.BUTTON,
@@ -69,4 +70,4 @@ export const ChatInteractionArea = ({
   );
 };
 
-export default ChatInteractionArea;
+export default memo(ChatInteractionArea);

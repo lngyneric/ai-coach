@@ -3,7 +3,6 @@ const config = {
   project: ['src/**/*.{js,jsx}!'],
   ignore: [
   ],
-  ignoreBinaries: ['only-allow'],
   paths: {
     'public/*': ['public/*'],
   },

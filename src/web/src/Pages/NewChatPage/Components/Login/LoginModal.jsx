@@ -8,6 +8,7 @@ import { calModalWidth } from 'Utils/common.js';
 import { genCheckCode } from 'Api/user.js';
 import { useUserStore } from 'stores/useUserStore.js';
 import { useTranslation } from 'react-i18next';
+import { memo } from 'react';
 
 const MODAL_STEP = {
   MOBILE: 1,
@@ -226,4 +227,4 @@ export const LoginModal = ({
   );
 };
 
-export default LoginModal;
+export default memo(LoginModal);
