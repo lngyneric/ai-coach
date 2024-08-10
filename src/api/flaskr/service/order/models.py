@@ -75,6 +75,7 @@ class PingxxOrder(db.Model):
     refund_id = Column(String(255), nullable=False, default='', comment='Refund ID')
     failure_code = Column(String(255), nullable=False, default='', comment='Failure code')
     failure_msg = Column(String(255), nullable=False, default='', comment='Failure message')
+    charge_object = Column(Text, nullable=False, comment='Charge object')
 
 
 # 折扣码
