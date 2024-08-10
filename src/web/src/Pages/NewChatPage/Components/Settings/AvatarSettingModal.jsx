@@ -3,6 +3,7 @@ import styles from './AvatarSettingModal.module.scss';
 import SettingBaseModal from './SettingBaseModal.jsx';
 import Cropper from 'react-easy-crop';
 import { genCroppedImg } from 'Utils/imgUtils';
+import { memo } from 'react';
 
 export const AvatarSettingModal = ({
   open,
@@ -52,4 +53,4 @@ export const AvatarSettingModal = ({
   );
 };
 
-export default AvatarSettingModal;
+export default memo(AvatarSettingModal);

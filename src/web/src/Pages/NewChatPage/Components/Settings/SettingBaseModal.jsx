@@ -3,6 +3,7 @@ import { calModalWidth } from 'Utils/common.js';
 import { useUiLayoutStore } from 'stores/useUiLayoutStore.js';
 import MainButton from 'Components/MainButton.jsx';
 import styles from './SettingBaseModal.module.scss';
+import { memo } from 'react';
 
 export const SettingBaseModal = ({
   open,
@@ -40,4 +41,4 @@ export const SettingBaseModal = ({
   );
 };
 
-export default SettingBaseModal;
+export default memo(SettingBaseModal);

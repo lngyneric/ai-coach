@@ -2,6 +2,7 @@ import styles from "./NavHeader.module.scss";
 import LogoSquare from "Components/logo/LogoSquare.jsx";
 import { productName } from 'constants/productConstants';
 import classNames from 'classnames';
+import { memo } from "react";
 
 export const NavHeader = ({
   showCollapseBtn = true,
@@ -28,4 +29,4 @@ export const NavHeader = ({
   );
 };
 
-export default NavHeader;
+export default memo(NavHeader);

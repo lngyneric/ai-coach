@@ -4,6 +4,7 @@ import styles from './SettingModal.module.scss';
 import classNames from 'classnames';
 import { useUserStore } from 'stores/useUserStore.js';
 import { Modal } from 'antd';
+import { memo } from 'react';
 
 export const SettingModal = ({
   open,
@@ -84,4 +85,4 @@ export const SettingModal = ({
   );
 };
 
-export default SettingModal;
+export default memo(SettingModal);

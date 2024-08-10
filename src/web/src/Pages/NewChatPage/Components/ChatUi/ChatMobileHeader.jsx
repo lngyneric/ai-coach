@@ -2,6 +2,7 @@ import styles from './ChatMobileHeader.module.scss';
 import IconButton from 'Components/IconButton.jsx';
 import MoeIcon from '@Assets/newchat/light/icon16-more2x.png';
 import classNames from 'classnames';
+import { memo } from 'react';
 
 export const ChatMobileHeader = (props) => {
   return <div className={classNames(styles.ChatMobileHeader, props.className)}>
@@ -10,4 +11,4 @@ export const ChatMobileHeader = (props) => {
   </div>
 }
 
-export default ChatMobileHeader;
+export default memo(ChatMobileHeader);
