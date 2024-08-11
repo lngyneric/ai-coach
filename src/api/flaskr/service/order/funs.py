@@ -10,6 +10,7 @@ from flaskr.common.swagger import register_schema_to_swagger
 from .models import *
 from flask import Flask
 from ...dao import db
+from ..common.models import *
 from ..lesson.models import AICourse, AILesson
 from .models import AICourseLessonAttend
 from ...util.uuid import generate_id as get_uuid
@@ -74,7 +75,7 @@ def init_buy_record(app: Flask,user_id:str,course_id:str):
         course_info = AICourse.query.filter(AICourse.course_id==course_id).first()
         if not course_info:
             app.logger.error('course:{} not found'.format(course_id))
-            return None
+            raise COURSE_NOT_FOUND
         origin_record = AICourseBuyRecord.query.filter(AICourseBuyRecord.user_id==user_id,AICourseBuyRecord.course_id==course_id,AICourseBuyRecord.status == BUY_STATUS_INIT).first()
         if origin_record:
             return AICourseBuyRecordDTO(origin_record.record_id,origin_record.user_id,origin_record.course_id,origin_record.price,origin_record.status)
@@ -117,59 +118,59 @@ def generate_charge(app: Flask,record_id:str,channel:str,client_ip:str)->BuyReco
     with app.app_context():
         app.logger.info('generate charge for record:{} channel:{}'.format(record_id,channel))
         buy_record = AICourseBuyRecord.query.filter(AICourseBuyRecord.record_id==record_id).first()
+        if not buy_record:
+            raise ORDER_NOT_FOUND
         course = AICourse.query.filter(AICourse.course_id==buy_record.course_id).first()
-        if buy_record:
-            app.logger.info('buy record found:{}'.format(buy_record))
-            if buy_record.status != BUY_STATUS_INIT:
-                app.logger.error('buy record:{} status is not init'.format(record_id))
-                return None
-            if not course:
-                app.logger.error('course:{} not found'.format(buy_record.course_id))
-                return None
-            amount = int(buy_record.price*100)
+        if not course:
+            raise COURSE_NOT_FOUND
+        app.logger.info('buy record found:{}'.format(buy_record))
+        if buy_record.status == BUY_STATUS_SUCCESS:
+            app.logger.error('buy record:{} status is not init'.format(record_id))
+            raise ORDER_HAS_PAID
+        amount = int(buy_record.price*100)
 
-            product_id = course.course_id
-            subject = course.course_name
-            body = course.course_name
-            order_no = str(get_uuid(app))
-            qr_url = None
-            pingpp_id = app.config.get('PINGPP_APP_ID')
-            if channel == 'wx_pub_qr':
-                extra = dict({"product_id":product_id})
-                charge =  create_pingxx_order(app, order_no, pingpp_id, channel, amount, client_ip, subject, body, extra)
-                qr_url = charge['credential']['wx_pub_qr']
-            elif channel == 'alipay_qr':
-                extra = dict({})
-                charge =  create_pingxx_order(app, order_no, pingpp_id, channel, amount, client_ip, subject, body, extra)
-                qr_url = charge['credential']['alipay_qr']
-            else:
-                app.logger.error('channel:{} not support'.format(channel))
-                return None
-            app.logger.info('charge created:{}'.format(charge))
-
-            pingxxOrder = PingxxOrder()
-            pingxxOrder.order_id = order_no
-            pingxxOrder.user_id = buy_record.user_id
-            pingxxOrder.course_id = buy_record.course_id
-            pingxxOrder.record_id = buy_record.record_id
-            pingxxOrder.pingxx_transaction_no = charge['transaction_no']
-            pingxxOrder.pingxx_app_id = charge['app']
-            pingxxOrder.pingxx_channel = charge['channel']
-            pingxxOrder.pingxx_id = charge['id']
-            pingxxOrder.channel = charge['channel']
-            pingxxOrder.amount = amount
-            pingxxOrder.currency = charge['currency']
-            pingxxOrder.subject = charge['subject']
-            pingxxOrder.body = charge['body']
-            pingxxOrder.order_no = charge['order_no']
-            pingxxOrder.client_ip = charge['client_ip']
-            pingxxOrder.extra = str(charge['extra'])
-            pingxxOrder.charge_id = charge['id']
-            pingxxOrder.status = 0
-            pingxxOrder.charge_object = str(charge)
-            db.session.add(pingxxOrder)
-            db.session.commit()
-            return BuyRecordDTO(buy_record.record_id,buy_record.user_id,buy_record.price,channel,qr_url)
+        product_id = course.course_id
+        subject = course.course_name
+        body = course.course_name
+        order_no = str(get_uuid(app))
+        qr_url = None
+        pingpp_id = app.config.get('PINGPP_APP_ID')
+        if channel == 'wx_pub_qr':
+            extra = dict({"product_id":product_id})
+            charge =  create_pingxx_order(app, order_no, pingpp_id, channel, amount, client_ip, subject, body, extra)
+            qr_url = charge['credential']['wx_pub_qr']
+        elif channel == 'alipay_qr':
+            extra = dict({})
+            charge =  create_pingxx_order(app, order_no, pingpp_id, channel, amount, client_ip, subject, body, extra)
+            qr_url = charge['credential']['alipay_qr']
+        else:
+            app.logger.error('channel:{} not support'.format(channel))
+            raise PAY_CHANNEL_NOT_SUPPORT
+        app.logger.info('charge created:{}'.format(charge))
+        buy_record.status = BUY_STATUS_TO_BE_PAID
+        pingxxOrder = PingxxOrder()
+        pingxxOrder.order_id = order_no
+        pingxxOrder.user_id = buy_record.user_id
+        pingxxOrder.course_id = buy_record.course_id
+        pingxxOrder.record_id = buy_record.record_id
+        pingxxOrder.pingxx_transaction_no = charge['transaction_no']
+        pingxxOrder.pingxx_app_id = charge['app']
+        pingxxOrder.pingxx_channel = charge['channel']
+        pingxxOrder.pingxx_id = charge['id']
+        pingxxOrder.channel = charge['channel']
+        pingxxOrder.amount = amount
+        pingxxOrder.currency = charge['currency']
+        pingxxOrder.subject = charge['subject']
+        pingxxOrder.body = charge['body']
+        pingxxOrder.order_no = charge['order_no']
+        pingxxOrder.client_ip = charge['client_ip']
+        pingxxOrder.extra = str(charge['extra'])
+        pingxxOrder.charge_id = charge['id']
+        pingxxOrder.status = 0
+        pingxxOrder.charge_object = str(charge)
+        db.session.add(pingxxOrder)
+        db.session.commit()
+        return BuyRecordDTO(buy_record.record_id,buy_record.user_id,buy_record.price,channel,qr_url)
 
 
 
@@ -274,9 +275,7 @@ def query_buy_record(app: Flask,record_id:str)->AICourseBuyRecordDTO:
         buy_record = AICourseBuyRecord.query.filter(AICourseBuyRecord.record_id==record_id).first()
         if buy_record:
             return AICourseBuyRecordDTO(buy_record.record_id,buy_record.user_id,buy_record.course_id,buy_record.price,buy_record.status)
-        else:
-            app.logger.error('record:{} not found'.format(record_id))
-        return None
+        raise ORDER_NOT_FOUND
 
 def fix_attend_info(app:Flask,user_id:str,course_id:str):
      with app.app_context():
