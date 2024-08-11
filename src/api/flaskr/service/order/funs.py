@@ -65,7 +65,8 @@ class AICourseBuyRecordDTO:
             "user_id": self.user_id,
             "course_id": self.course_id,
             "price": str(self.price),
-            "status":  self.status
+            "status":  self.status,
+            "status_desc": BUY_STATUS_VALUES[self.status]
         }
 
 def init_buy_record(app: Flask,user_id:str,course_id:str):
