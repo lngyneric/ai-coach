@@ -97,6 +97,8 @@ def register_user_handler(app:Flask,path_prefix:str)->Flask:
             token = request.args.get('token',None)
         if not token:
             token = request.headers.get('Token',None)
+        if not token and request.get_json():
+            token = request.get_json().get('token',None)
             # app.logger.info('headers token:'+str(token))
         token = str(token)
         if not token and request.endpoint in by_pass_login_func:
