@@ -64,8 +64,8 @@ class AICourseBuyRecordDTO:
             "record_id": self.record_id,
             "user_id": self.user_id,
             "course_id": self.course_id,
-            "price": self.price,
-            "status":  sself.status
+            "price": str(self.price),
+            "status":  self.status
         }
 
 def init_buy_record(app: Flask,user_id:str,course_id:str):
@@ -76,11 +76,11 @@ def init_buy_record(app: Flask,user_id:str,course_id:str):
             return None
         origin_record = AICourseBuyRecord.query.filter(AICourseBuyRecord.user_id==user_id,AICourseBuyRecord.course_id==course_id,AICourseBuyRecord.status == BUY_STATUS_INIT).first()
         if origin_record:
-            return origin_record
+            return AICourseBuyRecordDTO(origin_record.record_id,origin_record.user_id,origin_record.course_id,origin_record.price,origin_record.status)
         buy_record = AICourseBuyRecord()
         buy_record.user_id = user_id
         buy_record.course_id = course_id
-        buy_record.price =  course_info.price
+        buy_record.price =  course_info.course_price
         buy_record.status = BUY_STATUS_INIT
         buy_record.record_id = str(get_uuid(app))
         db.session.add(buy_record)
@@ -107,7 +107,7 @@ class BuyRecordDTO:
         return {
             "record_id": self.record_id,
             "user_id": self.user_id,
-            "price": self.price,
+            "price": str(self.price),
             "channel": self.channel,
             "qr_url": self.qr_url
         }
