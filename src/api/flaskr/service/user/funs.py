@@ -88,7 +88,16 @@ def validate_user(app:Flask, token: str) -> UserInfo:
         if(token == None):
             raise USER_NOT_LOGIN
         try:
-            user_id = jwt.decode(token, app.config['SECRET_KEY'], algorithms=['HS256'])['user_id']
+            app.logger.info("env:"+app.config.get('ENVERIMENT','prod'))
+            if app.config.get('ENVERIMENT','prod') == 'dev':
+                user_id = token
+                user = User.query.filter_by(user_id=user_id).first()
+                if user:
+                    return UserInfo(user_id=user.user_id, username=user.username, name=user.name, email=user.email, mobile=user.mobile,model=user.default_model, user_state=user.user_state)
+                else:
+                    raise USER_TOKEN_EXPIRED
+            else:
+                user_id = jwt.decode(token, app.config['SECRET_KEY'], algorithms=['HS256'])['user_id']
             redis_token = redis.get(app.config["REDIS_KEY_PRRFIX_USER"] + user_id);
             if(redis_token == None):
                 raise USER_TOKEN_EXPIRED 
