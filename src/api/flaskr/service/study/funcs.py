@@ -133,13 +133,12 @@ def get_study_record(app:Flask,user_id:str,lesson_id:str)->StudyRecordDTO:
         elif last_script.script_ui_type == UI_TYPE_LOGIN:
             ret.ui = StudyUIDTO(INPUT_TYPE_LOGIN,last_script.script_ui_content,lesson_id)
         elif last_script.script_ui_type == UI_TYPE_TO_PAY:
-            order =  init_buy_record(app,user_id,lesson_info.course_id,999)
+            order =  init_buy_record(app,user_id,lesson_info.course_id)
             btn = [{
                         "label":last_script.script_ui_content,
-                        "value":order.record_id
+                        "value":order.order_id
                     }]
             ret.ui = StudyUIDTO("order",{"title":"买课！","buttons":btn},lesson_id)
-            # ret.ui = StudyUIDTO("buttons",{"title":"继续","buttons":[{"label":"继续","value":"继续"}]},last_script.lesson_id)
         
         return ret
 # 重置用户信息
