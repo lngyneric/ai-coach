@@ -273,7 +273,6 @@ def init_trial_lesson(app:Flask ,user_id:str,course_id:str)->list[AICourseLesson
     return response
 
 
-
 def query_buy_record(app: Flask,record_id:str)->AICourseBuyRecordDTO:
     with app.app_context():
         app.logger.info('query buy record:"{}"'.format(record_id))
