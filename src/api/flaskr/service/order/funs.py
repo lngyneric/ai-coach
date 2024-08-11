@@ -46,14 +46,14 @@ class AICourseLessonAttendDTO:
 
 @register_schema_to_swagger
 class AICourseBuyRecordDTO:
-    record_id:str
+    order_id:str
     user_id:str
     course_id:str
     price:str
     status:int
 
     def __init__(self, record_id, user_id, course_id, price, status):
-        self.record_id = record_id
+        self.order_id = record_id
         self.user_id = user_id
         self.course_id = course_id
         self.price = str(price)
@@ -61,7 +61,7 @@ class AICourseBuyRecordDTO:
 
     def __json__(self):
         return {
-            "record_id": self.record_id,
+            "order_id": self.order_id,
             "user_id": self.user_id,
             "course_id": self.course_id,
             "price": str(self.price),
@@ -92,28 +92,25 @@ def init_buy_record(app: Flask,user_id:str,course_id:str):
 
 @register_schema_to_swagger
 class BuyRecordDTO:
-    record_id:str # 订单id
+    order_id:str # 订单id
     user_id:str # 用户id
     price:str # 价格
     channel :str # 支付渠道
     qr_url :str # 二维码地址
     def __init__(self, record_id, user_id, price,channel,qr_url):
-        self.record_id = record_id
+        self.order_id = record_id
         self.user_id = user_id
         self.price = price
         self.channel = channel
         self.qr_url = qr_url
     def __json__(self):
         return {
-            "record_id": self.record_id,
+            "order_id": self.order_id,
             "user_id": self.user_id,
             "price": str(self.price),
             "channel": self.channel,
             "qr_url": self.qr_url
         }
-
-
-
 
 def generate_charge(app: Flask,record_id:str,channel:str,client_ip:str)->BuyRecordDTO:
     with app.app_context():
