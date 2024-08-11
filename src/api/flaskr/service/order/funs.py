@@ -56,7 +56,7 @@ class AICourseBuyRecordDTO:
     discount:str
 
 
-    def __init__(self, record_id, user_id, course_id, price, status,discount=None):
+    def __init__(self, record_id, user_id, course_id, price, status,discount=0):
         self.order_id = record_id
         self.user_id = user_id
         self.course_id = course_id
