@@ -14,7 +14,7 @@ from operator import ge
 import random
 import string
 
-from ...service.order.funs import AICourseBuyRecordDTO, BuyRecordDTO
+from ...service.order.funs import AICourseBuyRecordDTO, BuyRecordDTO, success_buy_record
 
 from .models import AICourseBuyRecord, Discount, DiscountRecord
 from ...dao import db
@@ -118,4 +118,7 @@ def use_discount_code(app:Flask, user_id, discount_code, order_id):
             buy_record.discount_value = buy_record.price * discountRecord.discount_value
         buy_record.updated = datetime.now()
         db.session.commit()
+        if buy_record.discount_value >= buy_record.price:
+            return success_buy_record(app, buy_record.record_id)
+
         return AICourseBuyRecordDTO(buy_record.record_id,buy_record.user_id,buy_record.course_id,buy_record.price,buy_record.status,buy_record.discount_value)
