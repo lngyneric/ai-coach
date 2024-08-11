@@ -275,6 +275,10 @@ export const ChatComponents = forwardRef(
             scriptId,
           });
         };
+
+        window.ztDebug.openPayModal = () => {
+          onPayModalOpen();
+        }
       }
 
       return () => {
@@ -477,7 +481,7 @@ export const ChatComponents = forwardRef(
           } else if (response.type === RESP_EVENT_TYPE.LESSON_UPDATE) {
             lessonUpdateResp(response, isEnd);
           } else if (response.type === RESP_EVENT_TYPE.ORDER) {
-            setInputModal(convertEventInputModal(response));
+            payModalOpen();
             setInputDisabled(false);
           } else if (response.type === RESP_EVENT_TYPE.CHAPTER_UPDATE) {
             const { status, lesson_id: lessonId } = response.content;
@@ -619,7 +623,7 @@ export const ChatComponents = forwardRef(
         {mobileStyle && (
           <ChatMobileHeader className={styles.ChatMobileHeader} />
         )}
-        <PayModal isOpen={payModalOpen} onCancel={onPayModalClose} />
+        <PayModal open={payModalOpen} onCancel={onPayModalClose} />
       </div>
     );
   }

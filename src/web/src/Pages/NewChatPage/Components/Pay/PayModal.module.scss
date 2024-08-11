@@ -1,1 +1,66 @@
-.payModal {}
+.payModal {
+  .payModalContent {
+    display: flex;
+    flex-flow: row nowrap;
+
+    .introSection {
+      flex: 0 0 auto;
+      width: 450px;
+    }
+    .paySection {
+      flex: 0 0 auto;
+      width: 300px;
+
+      .payInfoTitle {
+        font-size: var(--font-size-2);
+        text-align: center;
+      }
+    }
+
+    .payChannelWrapper {
+      display: flex;
+      flex-flow: row nowrap;
+      margin: 20px 0 0 0;
+      justify-content: center;
+      align-items: center;
+
+      .payChannelSelect {
+        margin-left: 20px;
+      }
+
+      .payChannelButton {
+        padding: 0 10px;
+        height: 2rem;
+        line-height: 2rem;
+        border: 1px solid var(--color-9);
+        border-radius: 5px;
+      }
+
+    }
+
+    .qrcodeWrapper {
+      margin-top: 20px;
+      display: flex;
+      justify-content: center;
+    }
+
+    .priceWrapper {
+      display: flex;
+      justify-content: center;
+
+      .price { 
+        font-size: var(--font-size-1);
+        font-weight: bold;
+
+        &.disabled {
+          color: var(--color-9);
+        }
+      }
+    }
+    .couponCodeWrapper {
+      display: flex;
+      justify-content: center;
+      margin-top: 1em;
+    }
+  }
+}
