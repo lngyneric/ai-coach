@@ -18,6 +18,14 @@ from flasgger import Swagger
 
 
 
+# 设置时区
+# fix windows platform
+if os.name == "nt":
+    os.system('tzutil /s "UTC"')
+else:
+    os.environ['TZ'] = 'UTC'
+    time.tzset()
+
 def create_app()->Flask:
 
     import pymysql
