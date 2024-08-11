@@ -68,16 +68,19 @@ class AICourseBuyRecordDTO:
             "status":  sself.status
         }
 
-def init_buy_record(app: Flask,user_id:str,course_id:str,price:decimal.Decimal):
+def init_buy_record(app: Flask,user_id:str,course_id:str):
     with app.app_context():
-        app.logger.info('init buy record for user:{} course:{} price:{}'.format(user_id,course_id,price))
+        course_info = AICourse.query.filter(AICourse.course_id==course_id).first()
+        if not course_info:
+            app.logger.error('course:{} not found'.format(course_id))
+            return None
         origin_record = AICourseBuyRecord.query.filter(AICourseBuyRecord.user_id==user_id,AICourseBuyRecord.course_id==course_id,AICourseBuyRecord.status == BUY_STATUS_INIT).first()
         if origin_record:
             return origin_record
         buy_record = AICourseBuyRecord()
         buy_record.user_id = user_id
         buy_record.course_id = course_id
-        buy_record.price = price
+        buy_record.price =  course_info.price
         buy_record.status = BUY_STATUS_INIT
         buy_record.record_id = str(get_uuid(app))
         db.session.add(buy_record)

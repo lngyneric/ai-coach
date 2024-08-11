@@ -1,6 +1,6 @@
 from flask import Flask, request
 from flaskr.route.common import make_common_response
-from flaskr.service.order import success_buy_record, generate_charge,query_buy_record
+from flaskr.service.order import success_buy_record, generate_charge,query_buy_record,init_buy_record
 
 
 
@@ -54,10 +54,43 @@ def register_order_handler(app: Flask, path_prefix: str):
         return make_common_response(generate_charge(app, order_id, channel, client_ip))
     
     @app.route(path_prefix+'/init-order', methods=['POST'])
-    def init_buy_record():
-        user_id = request.get_json().get('user_id', '')
+    def init_order():
+        """
+        初始化订单
+        ---
+        tags:
+
+            - 订单
+        parameters:
+            - in: body
+              name: body
+              required: true
+              schema:
+                type: object
+                properties:
+                    course_id:
+                        type: string
+                        description: 课程id
+        responses:
+            200:
+                description: 初始化订单成功
+                content:
+                    application/json:
+                        schema:
+                            properties:
+                                code:
+                                    type: integer
+                                    description: 返回码
+                                message:
+                                    type: string
+                                    description: 返回信息
+                                data:
+                                    $ref: "#/components/schemas/BuyRecordDTO"
+    
+        """
+        user_id = request.user.user_id
         course_id  = request.get_json().get('course_id', '')
-        return make_common_response(success_buy_record(app, user_id, lesson_id))
+        return make_common_response(init_buy_record(app, user_id, course_id))
     @app.route(path_prefix+'/query-order', methods=['POST'])
     def query_order():
         """

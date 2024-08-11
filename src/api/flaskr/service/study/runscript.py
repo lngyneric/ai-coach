@@ -178,7 +178,7 @@ def run_script(app: Flask, user_id: str, course_id: str, lesson_id: str=None,inp
                         yield make_script_dto(INPUT_TYPE_LOGIN,script_info.script_ui_content,script_info.script_id)
                         # 这里控制暂时是否启用登录
                     elif script_info.script_ui_type == UI_TYPE_TO_PAY:
-                        order =  init_buy_record(app,user_id,course_id,999)
+                        order =  init_buy_record(app,user_id,course_id)
                         btn = [{
                             "label":script_info.script_ui_content,
                             "value":order.record_id
