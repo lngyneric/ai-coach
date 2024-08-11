@@ -32,3 +32,4 @@ def create_pingxx_order(app:Flask,order_no,app_id,channel,amount,client_ip,subje
     )
     app.logger.info('create pingxx order done')
     return order
+

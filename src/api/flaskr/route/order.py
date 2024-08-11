@@ -1,4 +1,6 @@
 from flask import Flask, request
+from flaskr.service.common.models import raise_param_error
+from flaskr.service.order.discount import use_discount_code
 from flaskr.route.common import make_common_response
 from flaskr.service.order import success_buy_record, generate_charge,query_buy_record,init_buy_record
 
@@ -128,6 +130,52 @@ def register_order_handler(app: Flask, path_prefix: str):
                         """
         order_id = request.get_json().get('order_id', '')
         return make_common_response(query_buy_record(app, order_id))
+    
+    @app.route(path_prefix+'/apply-discount', methods=['POST'])
+    def apply_discount():
+        """
+        使用折扣码
+        ---
+        tags:
+            - 订单
+        parameters:
+            - in: body
+              name: body
+              required: true
+              schema:
+                type: object
+                properties:
+                    discount_code:
+                        type: string
+                        description: 折扣码
+                    order_id:
+                        type: string
+                        description: 订单id
+        responses:
+            200:
+                description: 使用折扣码成功
+                content:
+                    application/json:
+                        schema:
+                            properties:
+                                code:
+                                    type: integer
+                                    description: 返回码
+                                message:
+                                    type: string
+                                    description: 返回信息
+                                data:
+                                    $ref: "#/components/schemas/BuyRecordDTO"
+    
+        """
+        discount_code = request.get_json().get('discount_code', '')
+        if not discount_code:
+            raise_param_error('discount_code') 
+        order_id = request.get_json().get('order_id', '')
+        if not order_id:
+            raise_param_error('order_id')
+        user_id = request.user.user_id
+        return make_common_response(use_discount_code(app, user_id,discount_code, order_id))
     
     return app
 
