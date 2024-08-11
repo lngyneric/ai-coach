@@ -69,7 +69,7 @@ PROFILES_LABLES = {
         ]
     },
     "user_os":{
-        "lable":"用户操作系统",
+        "label":"用户操作系统",
     }
 }
 
@@ -141,8 +141,8 @@ def get_user_profile_labels(app:Flask,user_id:str):
     for user_profile in user_profiles:
         if user_profile.profile_key in PROFILES_LABLES:
             if result.get(user_profile.profile_key) is None:
+                app.logger.info("user_profile:{}".format(user_profile.profile_key))
                 result[user_profile.profile_key]={ 
-                    # "key": user_profile.profile_key,
                     "label": PROFILES_LABLES[user_profile.profile_key]["label"],
                     "type":  PROFILES_LABLES[key].get("type", "select" if "items" in PROFILES_LABLES[user_profile.profile_key]  else "text"),
                     "value": user_profile.profile_value,

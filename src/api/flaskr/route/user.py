@@ -84,7 +84,6 @@ def register_user_handler(app:Flask,path_prefix:str)->Flask:
     
     @app.before_request
     def before_request():
-
         app.logger.info('request.endpoint:'+str(request.endpoint))
         app.logger.info('request.path:'+str(request.path))
         if request.endpoint in ['login', 'register','require_reset_code','reset_password','invoke','update_lesson'] or request.endpoint in by_pass_login_func or request.endpoint is None:
