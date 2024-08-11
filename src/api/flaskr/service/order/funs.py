@@ -136,7 +136,7 @@ def generate_charge(app: Flask,record_id:str,channel:str,client_ip:str)->BuyReco
             if channel == 'wx_pub_qr':
                 extra = dict({"product_id":product_id})
                 charge =  create_pingxx_order(app, order_no, pingpp_id, channel, amount, client_ip, subject, body, extra)
-                quit_url = charge['credential']['wx_pub_qr']
+                qr_url = charge['credential']['wx_pub_qr']
             elif channel == 'alipay_qr':
                 extra = dict({})
                 charge =  create_pingxx_order(app, order_no, pingpp_id, channel, amount, client_ip, subject, body, extra)
