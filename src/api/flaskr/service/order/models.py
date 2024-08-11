@@ -1,8 +1,10 @@
+import dis
 from numpy import record
 from sqlalchemy import Column, String, Integer, TIMESTAMP, Text, Numeric, text, ForeignKey
 from sqlalchemy.dialects.mysql import BIGINT
 from sqlalchemy.ext.declarative import declarative_base
 from sqlalchemy.sql import func
+
 
 from ...dao import db
 from .consts import *
@@ -19,6 +21,7 @@ class AICourseBuyRecord(db.Model):
     user_id = Column(String(36), nullable=False, default='', comment='User UUID')
     price = Column(Numeric(10, 2), nullable=False, default='0.00', comment='Price of the course')
     pay_value = Column(Numeric(10, 2), nullable=False, default='0.00', comment='Payment value')
+    discount_value = Column(Numeric(10, 2), nullable=False, default='0.00', comment='Discount value')
     created = Column(TIMESTAMP, nullable=False, default=func.now(), comment='Creation time')
     updated = Column(TIMESTAMP, nullable=False, default=func.now(), onupdate=func.now(), comment='Update time')
     status = Column(Integer, nullable=False, default=0, comment='Status of the record')
@@ -84,7 +87,8 @@ class Discount(db.Model):
     id = Column(BIGINT, primary_key=True, autoincrement=True, comment='Unique ID')
     discount_id = Column(String(36), index=True, nullable=False, default='', comment='Discount UUID')
     discount_code = Column(String(36), index=True, nullable=False, default='', comment='Discount code')
-    discount_type = Column(Integer, nullable=False, default=0, comment='Discount type: 0-percent, 1-amount')
+    discount_type = Column(Integer, nullable=False, default=0, comment='Discount type: 701-fixed, 702-percent')
+    discount_apply_type = Column(Integer, nullable=False, default=0, comment='Discount apply type: 801-all, 802-specific')
     discount_value = Column(Numeric(10, 2), nullable=False, default='0.00', comment='Discount value')
     discount_limit = Column(Numeric(10, 2), nullable=False, default='0.00', comment='Discount limit')
     discount_start = Column(TIMESTAMP, nullable=False, default=func.now(), comment='Discount start time')
@@ -93,7 +97,7 @@ class Discount(db.Model):
     discount_filter = Column(Text, nullable=False, comment='Discount filter')
     discount_count = Column(BIGINT, nullable=False, default=0, comment='Discount count')
     discount_used = Column(BIGINT, nullable=False, default=0, comment='Discount used')
-    discount_generated_user = Column(BIGINT, nullable=False, default=0, comment='Discount generated user')
+    discount_generated_user = Column(String(36), nullable=False, default="", comment='Discount generated user')
     created = Column(TIMESTAMP, nullable=False, default=func.now(), comment='Creation time')
     updated = Column(TIMESTAMP, nullable=False, default=func.now(), onupdate=func.now(), comment='Update time')
     status = Column(Integer, nullable=False, default=0, comment='Status of the discount: 0-inactive, 1-active')
@@ -112,3 +116,6 @@ class DiscountRecord(db.Model):
     status = Column(Integer, nullable=False, default=0, comment='Status of the record: 0-inactive, 1-active')
     created = Column(TIMESTAMP, nullable=False, default=func.now(), comment='Creation time')
     updated = Column(TIMESTAMP, nullable=False, default=func.now(), onupdate=func.now(), comment='Update time')
+
+
+

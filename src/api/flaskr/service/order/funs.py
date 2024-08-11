@@ -1,6 +1,7 @@
 from calendar import c
 import decimal
 import json
+from re import S
 from typing import List
 
 from numpy import char
@@ -52,13 +53,16 @@ class AICourseBuyRecordDTO:
     course_id:str
     price:str
     status:int
+    discount:str
 
-    def __init__(self, record_id, user_id, course_id, price, status):
+
+    def __init__(self, record_id, user_id, course_id, price, status,discount=None):
         self.order_id = record_id
         self.user_id = user_id
         self.course_id = course_id
         self.price = str(price)
         self.status = status
+        self.discount = discount
 
     def __json__(self):
         return {
@@ -67,7 +71,8 @@ class AICourseBuyRecordDTO:
             "course_id": self.course_id,
             "price": str(self.price),
             "status":  self.status,
-            "status_desc": BUY_STATUS_VALUES[self.status]
+            "status_desc": BUY_STATUS_VALUES[self.status],
+            "discount": str(self.discount)
         }
 
 def init_buy_record(app: Flask,user_id:str,course_id:str):
@@ -127,7 +132,7 @@ def generate_charge(app: Flask,record_id:str,channel:str,client_ip:str)->BuyReco
         if buy_record.status == BUY_STATUS_SUCCESS:
             app.logger.error('buy record:{} status is not init'.format(record_id))
             raise ORDER_HAS_PAID
-        amount = int(buy_record.price*100)
+        amount = int((buy_record.price - buy_record.discount_value )*100)
 
         product_id = course.course_id
         subject = course.course_name
