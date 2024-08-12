@@ -110,6 +110,7 @@ class DiscountRecord(db.Model):
     discount_id = Column(String(36), index=True, nullable=False, default='', comment='Discount UUID')
     user_id = Column(String(36), index=True, nullable=False, default='', comment='User UUID')
     course_id = Column(String(36), index=True, nullable=False, default='', comment='Course UUID')
+    order_id = Column(String(36), index=True, nullable=False, default='', comment='Order UUID')
     discount_code = Column(String(36), nullable=False, default='', comment='Discount code')
     discount_type = Column(Integer, nullable=False, default=0, comment='Discount type: 0-percent, 1-amount')
     discount_value = Column(Numeric(10, 2), nullable=False, default='0.00', comment='Discount value')

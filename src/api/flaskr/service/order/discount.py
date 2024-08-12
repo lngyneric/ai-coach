@@ -108,10 +108,9 @@ def use_discount_code(app:Flask, user_id, discount_code, order_id):
             # return None
         discountRecord.status = DISCOUNT_STATUS_USED
         discountRecord.updated = datetime.now()
-        # discountRecord.discount_used = discountRecord.discount_used + 1
         discountRecord.updated = datetime.now()
-        discountRecord.order_id = order_id
         discountRecord.user_id = user_id
+        discountRecord.order_id = order_id
         if discount.discount_type == DISCOUNT_TYPE_FIXED:
             buy_record.discount_value = discountRecord.discount_value
         elif discount.discount_type == DISCOUNT_TYPE_PERCENT:
