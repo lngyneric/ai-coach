@@ -12,6 +12,13 @@ def test_buy_and_pay(app):
         course = AICourse.query.first()
         price = course.course_price
         user_id = user.user_id
-        record = init_buy_record(app,user_id,course.course_id,price)
+        record = init_buy_record(app,user_id,course.course_id)
         charge = generate_charge(app,
-                                record.record_id,'wx_pub_qr','237.0.0.1')
+                                record.order_id,'wx_pub_qr','237.0.0.1')
+        
+
+        
+        
+
+
+ 

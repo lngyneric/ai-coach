@@ -43,6 +43,8 @@ def create_app()->Flask:
     ## 初始化数据库
     from flaskr import dao
     dao.init_db(app)
+    # 初始化r 和ADMIN相关的表逻辑
+    from flaskr.service import admin
     dao.init_redis(app)
     Migrate(app,dao.db)
 
