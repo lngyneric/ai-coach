@@ -14,6 +14,12 @@
   :global(.MessageContainer) {
     background-color: var(--color-4);
 
+    :global(.PullToRefresh) {
+      &::-webkit-scrollbar {
+        display: none;
+      }
+    }
+
     .inlineCode {
       padding: 2px 4px;
       font-size: 0.9em;

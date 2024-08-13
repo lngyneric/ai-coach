@@ -11,14 +11,19 @@ import {
   PAY_CHANNEL_WECHAT,
   getPayChannelOptions,
 } from './constans.js';
-import { getPayUrl, initOrder, queryOrder } from 'Api/order.js';
+import {
+  getPayUrl,
+  initOrder,
+  queryOrder,
+  applyDiscountCode,
+} from 'Api/order.js';
 import { useEffect } from 'react';
 import classNames from 'classnames';
 import { useInterval } from 'react-use';
-import { useRef } from 'react';
+import { message } from 'antd';
 
 const DEFAULT_QRCODE = 'DEFAULT_QRCODE';
-const MAX_TIMEOUT = 1000 * 60 * 0.2;
+const MAX_TIMEOUT = 1000 * 60 * 3;
 const COUNTDOWN_INTERVAL = 1000;
 
 export const PayModal = ({ open = false, onCancel, onOk }) => {
@@ -31,15 +36,15 @@ export const PayModal = ({ open = false, onCancel, onOk }) => {
   const [payChannel, setPayChannel] = useState(PAY_CHANNEL_WECHAT);
   const [interval, setInterval] = useState(null);
   const [orderId, setOrderId] = useState('');
-
-  const timeoutRef = useRef();
+  const [countDwon, setCountDown] = useState(MAX_TIMEOUT);
+  const [messageApi, contextHolder] = message.useMessage();
 
   useInterval(async () => {
-    if (timeoutRef.current <= 0) {
+    if (countDwon <= 0) {
       setIsTimeout(true);
       setInterval(null);
     }
-    timeoutRef.current = timeoutRef.current - COUNTDOWN_INTERVAL;
+    setCountDown(countDwon - COUNTDOWN_INTERVAL);
 
     const { data: resp } = await queryOrder({ orderId });
 
@@ -49,13 +54,23 @@ export const PayModal = ({ open = false, onCancel, onOk }) => {
     }
   }, interval);
 
-  const onQrcodeRefresh = useCallback(() => {
-    loadPayInfo();
-  });
+  const refreshOrderQrcode = useCallback(
+    async (orderId) => {
+      const { data: qrcodeResp } = await getPayUrl({
+        channel: payChannel,
+        orderId,
+      });
+
+      setQrUrl(qrcodeResp.qr_url);
+      setCountDown(MAX_TIMEOUT);
+      setInterval(COUNTDOWN_INTERVAL);
+    },
+    [payChannel]
+  );
 
   const loadPayInfo = useCallback(async () => {
     setIsLoading(true);
-    setIsTimeout(false)
+    setIsTimeout(false);
     setQrUrl(DEFAULT_QRCODE);
     setPrice('0');
     setOrderId('');
@@ -69,17 +84,14 @@ export const PayModal = ({ open = false, onCancel, onOk }) => {
     setPrice(resp.price);
 
     const orderId = resp.order_id;
-    const { data: qrcodeResp } = await getPayUrl({
-      channel: payChannel,
-      orderId: orderId,
-    });
-
-    setQrUrl(qrcodeResp.qr_url);
     setOrderId(orderId);
-    timeoutRef.current = MAX_TIMEOUT;
-    setInterval(COUNTDOWN_INTERVAL);
+    await refreshOrderQrcode(orderId);
     setIsLoading(false);
-  }, [payChannel]);
+  }, [refreshOrderQrcode]);
+
+  const onQrcodeRefresh = useCallback(() => {
+    loadPayInfo();
+  }, [loadPayInfo]);
 
   const getQrcodeStatus = useCallback(() => {
     if (isLoading) {
@@ -117,12 +129,21 @@ export const PayModal = ({ open = false, onCancel, onOk }) => {
     onCouponCodeModalOpen();
   }, [onCouponCodeModalOpen]);
 
-  const onCouponCodeOk = useCallback(async () => {
-    // 调用接口
+  const onCouponCodeOk = useCallback(
+    async (values) => {
+      const { couponCode } = values;
+      const resp = await applyDiscountCode({ orderId, code: couponCode });
+      if (resp.code !== 0) {
+        messageApi.error(resp.message);
+        return;
+      }
+      onCouponCodeModalClose();
 
-    // 关闭购买弹窗
-    onOk?.();
-  }, [onOk]);
+      setCountDown(MAX_TIMEOUT);
+      setInterval(COUNTDOWN_INTERVAL);
+    },
+    [messageApi, onCouponCodeModalClose, orderId]
+  );
 
   const onPayChannelSelectChange = useCallback((e) => {
     setPayChannel(e);
@@ -154,7 +175,12 @@ export const PayModal = ({ open = false, onCancel, onOk }) => {
               />
             </div>
             <div className={styles.qrcodeWrapper}>
-              <QRCode size={200} value={qrUrl} status={getQrcodeStatus()} onRefresh={onQrcodeRefresh} />
+              <QRCode
+                size={200}
+                value={qrUrl}
+                status={getQrcodeStatus()}
+                onRefresh={onQrcodeRefresh}
+              />
             </div>
             <div className={styles.priceWrapper}>
               <div
@@ -179,6 +205,7 @@ export const PayModal = ({ open = false, onCancel, onOk }) => {
         onCancel={onCouponCodeModalClose}
         onOk={onCouponCodeOk}
       />
+      {contextHolder}
     </>
   );
 };
