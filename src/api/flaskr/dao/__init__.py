@@ -26,14 +26,17 @@ def init_redis(app:Flask):
         redis_client = Redis(host=app.config['REDIS_HOST'], port=app.config['REDIS_PORT'], db=app.config['REDIS_DB'])
     app.logger.info('init redis done')
 
-def run_with_redis(ctx,key,timeout:int,func):
-    with ctx:
+def run_with_redis(app,key,timeout:int,func,args):
+    with app.app_context():
         global redis_client
+        app.logger.info('run_with_redis start {}'.format(key))
         lock = redis_client.lock(key, timeout=timeout, blocking_timeout=timeout)
         if lock.acquire(blocking=False):
+            app.logger.info('run_with_redis get lock {}'.format(key))
             try:
-                return func()
+                return func(*args)
             finally:
                 lock.release()
         else:
+            app.logger.info('run_with_redis get lock failed {}'.format(key))
             return None
