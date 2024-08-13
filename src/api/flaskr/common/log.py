@@ -58,34 +58,29 @@ def init_log(app:Flask)->Flask:
     log_dir = os.path.dirname(log_file)
     if not os.path.exists(log_dir):
         os.makedirs(log_dir)
-    print("log_file:{}".format(log_file))
     # 按天切割日志 
     file_handler = TimedRotatingFileHandler(app.config['LOGGING_PATH'], when='midnight', backupCount=7)
     file_handler.setFormatter(formatter)
     # 控制台日志处理器
     console_handler = logging.StreamHandler()
     console_handler.setFormatter(formatter)
-   
-    print("app.logger.handlers:{}".format(app.logger.handlers))
-    print("main:{}".format(__name__))
-    
-    if __name__ != "__main__":
+    if 'gunicorn' in os.getenv('SERVER_SOFTWARE', ''):
         gunicorn_logger = logging.getLogger('gunicorn.info')
         if gunicorn_logger.handlers:
-            
+            for handler in gunicorn_logger.handlers:
+                handler.setFormatter(formatter)
             app.logger.handlers = gunicorn_logger.handlers.copy()  # 使用gunicorn的处理器
         else:
+            app.logger.handlers = []
             app.logger.addHandler(file_handler)  # 仅在没有gunicorn处理器时添加
-            app.logger.addHandler(console_handler)  # 控制台处理器始终添加
+        app.logger.addHandler(console_handler)  # 控制台处理器始终添加
         app.logger.setLevel(gunicorn_logger.level)
     else:
         app.logger.handlers = []  # 清空默认处理器
         app.logger.addHandler(file_handler)  # 如果是主程序，则添加
         app.logger.addHandler(console_handler)  # 控制台处理器始终添加
-   
     app.logger.setLevel(logging.INFO)
-
     app.logger.propagate = False  # 停止向上传播
     app.logger.setLevel(logging.INFO)
-   
+    app.logger.error('Logging setup complete')
     return app 
