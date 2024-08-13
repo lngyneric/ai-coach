@@ -171,17 +171,15 @@ const convertMessage = (serverMessage, userInfo) => {
 const convertEventInputModal = ({ type, content }) => {
   if (type === RESP_EVENT_TYPE.PHONE) {
     return {
-        type,
-        props: { content },
-    }
+      type,
+      props: { content },
+    };
   } else if (type === RESP_EVENT_TYPE.INPUT) {
     return {
       type,
       props: { content },
     };
-  } else if (
-    type === RESP_EVENT_TYPE.BUTTONS
-  ) {
+  } else if (type === RESP_EVENT_TYPE.BUTTONS) {
     const getBtnType = (type) => {
       if (type === INTERACTION_TYPE.ORDER) {
         return INTERACTION_TYPE.ORDER;
@@ -252,116 +250,146 @@ export const ChatComponents = forwardRef(
       onClose: onPayModalClose,
     } = useDisclosture();
 
-
-
     useEffect(() => {
       if (!lessonId) {
         setLessonId(currLessonId);
       }
     }, [currLessonId, lessonId]);
 
-    const initLoadedInteraction = useCallback((ui) => {
-      if (ui.type === INTERACTION_TYPE.ORDER) {
-        onPayModalOpen();
-      } else {
-        const nextInputModal = convertEventInputModal(ui);
-        setInputDisabled(false);
-        setInputModal(nextInputModal);
-      }
-    }, [onPayModalOpen]);
+    const initLoadedInteraction = useCallback(
+      (ui) => {
+        if (ui.type === INTERACTION_TYPE.ORDER) {
+          onPayModalOpen();
+        } else {
+          const nextInputModal = convertEventInputModal(ui);
+          setInputDisabled(false);
+          setInputModal(nextInputModal);
+        }
+      },
+      [onPayModalOpen]
+    );
 
-    const nextStep = useCallback( ({ chatId, lessonId, val, type, scriptId }) => {
-      setLastSendMsg({ chatId, lessonId, val, type, scriptId });
-      let lastMsg = null;
-      let isEnd = false;
-
-      runScript(chatId, lessonId, val, type, scriptId, (response) => {
-        setLessonEnd((v) => {
-          isEnd = v;
-          return v;
+    const lessonUpdateResp = useCallback(
+      (response, isEnd, nextStepFunc) => {
+        const content = response.content;
+        lessonUpdate?.({
+          id: content.lesson_id,
+          name: content.lesson_name,
+          status: content.status,
         });
 
-        try {
-          if (response.type === RESP_EVENT_TYPE.TEXT) {
-            if (isEnd) {
-              return;
-            }
-            setIsStreaming(true);
-            if (lastMsg !== null && lastMsg.type === 'text') {
-              const currText = fixMarkdownStream(
-                lastMsg.content,
-                response.content
-              );
-              lastMsg.content = lastMsg.content + currText;
-              updateMsg(lastMsg.id, lastMsg);
-            } else {
-              const id = genUuid();
-              lastMsg = createMessage({
-                id: id,
-                type: response.type,
-                role: USER_ROLE.TEACHER,
-                content: response.content,
-                userInfo,
-              });
-              appendMsg(lastMsg);
-            }
-          } else if (response.type === RESP_EVENT_TYPE.TEXT_END) {
-            setIsStreaming(false);
-            setTyping(false);
-            if (isEnd) {
-              return;
-            }
-            lastMsg = null;
-          } else if (
-            response.type === RESP_EVENT_TYPE.INPUT ||
-            response.type === RESP_EVENT_TYPE.PHONE ||
-            response.type === RESP_EVENT_TYPE.CHECKCODE
-          ) {
-            if (isEnd) {
-              return;
-            }
-            setInputModal({ type: response.type, props: response });
-            setInputDisabled(false);
-          } else if (response.type === RESP_EVENT_TYPE.BUTTONS) {
-            if (isEnd) {
-              return;
-            }
-            const model = convertEventInputModal(response);
-            setInputModal(model);
-            setInputDisabled(false);
-          } else if (response.type === RESP_EVENT_TYPE.LESSON_UPDATE) {
-            lessonUpdateResp(response, isEnd);
-          } else if (response.type === RESP_EVENT_TYPE.ORDER) {
-            payModalOpen();
-            setInputDisabled(false);
-          } else if (response.type === RESP_EVENT_TYPE.CHAPTER_UPDATE) {
-            const { status, lesson_id: lessonId } = response.content;
-            if (status === LESSON_STATUS.COMPLETED) {
-              isEnd = true;
-              setLessonEnd(true);
+        if (content.status === LESSON_STATUS.PREPARE_LEARNING && !isEnd) {
+          nextStepFunc({
+            chatId,
+            lessonId: content.lesson_id,
+            type: INTERACTION_OUTPUT_TYPE.START,
+            val: '',
+          });
+        }
+
+        if (content.status === LESSON_STATUS.LEARNING && !isEnd) {
+          setLessonId(content.lesson_id);
+          changeCurrLesson(content.lesson_id);
+        }
+      },
+      [changeCurrLesson, chatId, lessonUpdate]
+    );
+
+    const nextStep = useCallback(
+      ({ chatId, lessonId, val, type, scriptId }) => {
+        setLastSendMsg({ chatId, lessonId, val, type, scriptId });
+        let lastMsg = null;
+        let isEnd = false;
+
+        runScript(chatId, lessonId, val, type, scriptId, (response) => {
+          setLessonEnd((v) => {
+            isEnd = v;
+            return v;
+          });
+
+          try {
+            if (response.type === RESP_EVENT_TYPE.TEXT) {
+              if (isEnd) {
+                return;
+              }
+              setIsStreaming(true);
+              if (lastMsg !== null && lastMsg.type === 'text') {
+                const currText = fixMarkdownStream(
+                  lastMsg.content,
+                  response.content
+                );
+                lastMsg.content = lastMsg.content + currText;
+                updateMsg(lastMsg.id, lastMsg);
+              } else {
+                const id = genUuid();
+                lastMsg = createMessage({
+                  id: id,
+                  type: response.type,
+                  role: USER_ROLE.TEACHER,
+                  content: response.content,
+                  userInfo,
+                });
+                appendMsg(lastMsg);
+              }
+            } else if (response.type === RESP_EVENT_TYPE.TEXT_END) {
+              setIsStreaming(false);
               setTyping(false);
-            }
-            if (status === LESSON_STATUS.PREPARE_LEARNING) {
-              setInputModal({
-                type: INTERACTION_TYPE.NEXT_CHAPTER,
-                props: {
-                  label: '下一章',
-                  lessonId,
-                },
-              });
+              if (isEnd) {
+                return;
+              }
+              lastMsg = null;
+            } else if (
+              response.type === RESP_EVENT_TYPE.INPUT ||
+              response.type === RESP_EVENT_TYPE.PHONE ||
+              response.type === RESP_EVENT_TYPE.CHECKCODE
+            ) {
+              if (isEnd) {
+                return;
+              }
+              setInputModal({ type: response.type, props: response });
               setInputDisabled(false);
+            } else if (response.type === RESP_EVENT_TYPE.BUTTONS) {
+              if (isEnd) {
+                return;
+              }
+              const model = convertEventInputModal(response);
+              setInputModal(model);
+              setInputDisabled(false);
+            } else if (response.type === RESP_EVENT_TYPE.LESSON_UPDATE) {
+              lessonUpdateResp(response, isEnd, nextStep);
+            } else if (response.type === RESP_EVENT_TYPE.ORDER) {
+              payModalOpen();
+              setInputDisabled(false);
+            } else if (response.type === RESP_EVENT_TYPE.CHAPTER_UPDATE) {
+              const { status, lesson_id: lessonId } = response.content;
+              if (status === LESSON_STATUS.COMPLETED) {
+                isEnd = true;
+                setLessonEnd(true);
+                setTyping(false);
+              }
+              if (status === LESSON_STATUS.PREPARE_LEARNING) {
+                setInputModal({
+                  type: INTERACTION_TYPE.NEXT_CHAPTER,
+                  props: {
+                    label: '下一章',
+                    lessonId,
+                  },
+                });
+                setInputDisabled(false);
+              }
+            } else if (response.type === RESP_EVENT_TYPE.USER_LOGIN) {
+              checkLogin();
+            } else if (response.type === RESP_EVENT_TYPE.PROFILE_UPDATE) {
+              const content = response.content;
+              updateUserInfo({ [content.key]: content.value });
             }
-          } else if (response.type === RESP_EVENT_TYPE.USER_LOGIN) {
-            checkLogin();
-          } else if (response.type === RESP_EVENT_TYPE.PROFILE_UPDATE) {
-            const content = response.content;
-            updateUserInfo({ [content.key]: content.value });
-          }
-        } catch (e) {}
-      });
-    }, [appendMsg, checkLogin, payModalOpen, setTyping, updateMsg, updateUserInfo, userInfo]);
- 
-    const resetAndLoadData = useCallback( async () => {
+          } catch (e) {}
+        });
+      },
+      [appendMsg, checkLogin, lessonUpdateResp, payModalOpen, setTyping, updateMsg, updateUserInfo, userInfo]
+    );
+
+    const resetAndLoadData = useCallback(async () => {
       if (!chapterId) {
         return;
       }
@@ -411,7 +439,17 @@ export const ChatComponents = forwardRef(
       }
 
       setLoadedData(true);
-    }, [appendMsg, chapterId, chatId, currLessonId, initLoadedInteraction, nextStep, resetList, setTyping, userInfo]);
+    }, [
+      appendMsg,
+      chapterId,
+      chatId,
+      currLessonId,
+      initLoadedInteraction,
+      nextStep,
+      resetList,
+      setTyping,
+      userInfo,
+    ]);
 
     useEffect(() => {
       if (!loadedData) {
@@ -427,11 +465,6 @@ export const ChatComponents = forwardRef(
     }, [loadedData]);
 
     useEffect(() => {
-      // 在聊天内登录，不重新加载数据
-      if ((hasLogin && loginInChat) || !loaded) {
-        return;
-      }
-
       (async () => {
         await resetAndLoadData();
       })();
@@ -468,7 +501,7 @@ export const ChatComponents = forwardRef(
 
         window.ztDebug.openPayModal = () => {
           onPayModalOpen();
-        }
+        };
       }
 
       return () => {
@@ -476,56 +509,36 @@ export const ChatComponents = forwardRef(
       };
     }, [nextStep, onPayModalOpen]);
 
-    const lessonUpdateResp = useCallback( (response, isEnd) => {
-      const content = response.content;
-      lessonUpdate?.({
-        id: content.lesson_id,
-        name: content.lesson_name,
-        status: content.status,
-      });
 
-      if (content.status === LESSON_STATUS.PREPARE_LEARNING && !isEnd) {
-        nextStep({
-          chatId,
-          lessonId: content.lesson_id,
-          type: INTERACTION_OUTPUT_TYPE.START,
-          val: '',
-        });
-      }
+    const handleSend = useCallback(
+      async (type, val, scriptId) => {
+        if (
+          (type === INTERACTION_OUTPUT_TYPE.TEXT ||
+            type === INTERACTION_OUTPUT_TYPE.SELECT ||
+            type === INTERACTION_OUTPUT_TYPE.CONTINUE ||
+            type === INTERACTION_OUTPUT_TYPE.PHONE ||
+            type === INTERACTION_OUTPUT_TYPE.CHECKCODE) &&
+          val.trim()
+        ) {
+          const message = createMessage({
+            role: USER_ROLE.STUDENT,
+            content: val,
+            type: CHAT_MESSAGE_TYPE.TEXT,
+            userInfo,
+          });
+          appendMsg(message);
 
-      if (content.status === LESSON_STATUS.LEARNING && !isEnd) {
-        setLessonId(content.lesson_id);
-        changeCurrLesson(content.lesson_id);
-      }
-    }, [changeCurrLesson, chatId, lessonUpdate, nextStep]);
-
-    
-    const handleSend = useCallback(async (type, val, scriptId) => {
-      if (
-        (type === INTERACTION_OUTPUT_TYPE.TEXT ||
-          type === INTERACTION_OUTPUT_TYPE.SELECT ||
-          type === INTERACTION_OUTPUT_TYPE.CONTINUE ||
-          type === INTERACTION_OUTPUT_TYPE.PHONE ||
-          type === INTERACTION_OUTPUT_TYPE.CHECKCODE) &&
-        val.trim()
-      ) {
-        const message = createMessage({
-          role: USER_ROLE.STUDENT,
-          content: val,
-          type: CHAT_MESSAGE_TYPE.TEXT,
-          userInfo,
-        });
-        appendMsg(message);
-
-        if (type === INTERACTION_OUTPUT_TYPE.CHECKCODE) {
-          setLoginInChat(true);
+          if (type === INTERACTION_OUTPUT_TYPE.CHECKCODE) {
+            setLoginInChat(true);
+          }
         }
-      }
 
-      setTyping(true);
-      setInputDisabled(true);
-      nextStep({ chatId, lessonId, type, val, scriptId });
-    }, [appendMsg, chatId, lessonId, nextStep, setTyping, userInfo]);
+        setTyping(true);
+        setInputDisabled(true);
+        nextStep({ chatId, lessonId, type, val, scriptId });
+      },
+      [appendMsg, chatId, lessonId, nextStep, setTyping, userInfo]
+    );
 
     const onPayModalOk = useCallback(() => {
       handleSend(INTERACTION_OUTPUT_TYPE.ORDER, '');
@@ -618,7 +631,11 @@ export const ChatComponents = forwardRef(
         {mobileStyle && (
           <ChatMobileHeader className={styles.ChatMobileHeader} />
         )}
-        <PayModal open={payModalOpen} onCancel={onPayModalClose}  onOk={onPayModalOk}/>
+        <PayModal
+          open={payModalOpen}
+          onCancel={onPayModalClose}
+          onOk={onPayModalOk}
+        />
       </div>
     );
   }
