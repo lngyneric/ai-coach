@@ -30,7 +30,7 @@ def add_chapter(max_index_now):
             'name': st.text_input('章节名称'),
             'lark_table_id': st.text_input('飞书表格 ID'),
             'lark_view_id': st.text_input('飞书表格 ViewID', value=cfg.DEF_LARK_VIEW_ID),
-            'chapter_type': LESSON_TYPES[st.selectbox('章节类型', list(LESSON_TYPES.keys()))],
+            'chapter_type': LESSON_TYPES[st.selectbox('章节类型', list(LESSON_TYPES.keys()), index=1)],
             'id': st.number_input('lesson_no(index)', value=max_index_now + 1, step=1),
         }
 
@@ -225,7 +225,7 @@ if login():
     # # 正式环境
     # # with tab2:
 
-    add_vertical_space(3)
+    add_vertical_space(1)
     '-----'
     '## 👩🏻‍🎓 正式环境 章节配置'
     '> 章节类型：401-体验课； 402-正式课； 405-隐藏分支课'
@@ -272,6 +272,9 @@ if login():
     stdf_manage(df_chapters_norm, '正式章节配置')
     stdf_manage(df_chapters_hidden, '隐藏分支章节配置')
 
+
+    add_vertical_space(3)
+    '-----'
     if st.button(f'➕ 添加章节', use_container_width=True):
         add_chapter(max_index)
 
