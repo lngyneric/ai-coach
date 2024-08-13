@@ -38,9 +38,7 @@ class Config(FlaskConfig):
     def __call__(self, *args: Any, **kwds: Any) -> Any:
         return self.parent.__call__(*args, **kwds)
     def setdefault(self, key: Any, default: Any = None) -> Any:
-        print("setdefault ",key)
         if key in os.environ:
-            self.app.logger.info("setdefault {}={}".format(key,os.environ[key]))
             return os.environ[key]
         return self.parent.setdefault(key,default)
     

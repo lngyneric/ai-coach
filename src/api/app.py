@@ -33,7 +33,6 @@ def create_app()->Flask:
     import pymysql
     pymysql.install_as_MySQLdb()
     load_dotenv()
-    # 在程序开始时调用 patch_pyppeteer()
     app = Flask(__name__, instance_relative_config=True)
     CORS(app, resources={r"/*": {"supports_credentials": True}})
     from flaskr.common import Config,init_log
@@ -60,10 +59,12 @@ def create_app()->Flask:
         from flaskr.common import swagger_config
         app.logger.info('swagger init ...')
         swagger = Swagger(app,config=swagger_config,merge=True)
+
     return app
 
 
-print(__name__)
+
+print('main in app'+__name__)
 if __name__ == '__main__':
     app = create_app()
     app.run(host='0.0.0.0',port=5800,debug=True)
