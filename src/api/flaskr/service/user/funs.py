@@ -319,6 +319,6 @@ def upload_user_avatar(app:Flask,user_id:str,avatar)->str:
             file_id = str(uuid.uuid4()).replace('-', '')
             bucket.put_object(file_id, avatar,headers={'Content-Type': get_content_type(avatar.filename)})
             url =  base + '/' + file_id
-            user.avatar = url
+            user.user_avatar = url
             db.session.commit()
             return url
