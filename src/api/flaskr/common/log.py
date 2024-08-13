@@ -4,9 +4,25 @@ from flask import Flask,g ,request
 import uuid
 from logging.handlers import TimedRotatingFileHandler
 import threading
-thread_local = threading.local()
 
+from datetime import datetime
+import pytz
+thread_local = threading.local() 
 class RequestFormatter(logging.Formatter):
+    def formatTime(self, record, datefmt=None):
+        # 创建时区信息
+        bj_time = pytz.timezone('Asia/Shanghai')
+        
+        # 转换 record.created（一个浮点数时间戳）到北京时间
+        ct = datetime.fromtimestamp(record.created, bj_time)
+        if datefmt:
+            s = ct.strftime(datefmt)
+        else:
+            try:
+                s = ct.isoformat(timespec='milliseconds')
+            except TypeError:
+                s = ct.isoformat()
+        return s
     def format(self, record):
         # 尝试从请求上下文中获取 URL 和 request_id
         try:
@@ -33,9 +49,10 @@ def init_log(app:Flask)->Flask:
         request.client_ip = user_ip
         thread_local.client_ip = user_ip
 
-
+    
     log_format = '%(asctime)s [%(levelname)s] ai-shifu.com/ai-sifu %(name)s %(client_ip)s %(url)s %(request_id)s %(message)s'
     formatter = RequestFormatter(log_format)
+    
     log_file = app.config.get('LOGGING_PATH', 'logs/ai-sifu.log')
     # 如果目录不存在，创建目录
     log_dir = os.path.dirname(log_file)
@@ -45,23 +62,30 @@ def init_log(app:Flask)->Flask:
     # 按天切割日志 
     file_handler = TimedRotatingFileHandler(app.config['LOGGING_PATH'], when='midnight', backupCount=7)
     file_handler.setFormatter(formatter)
-    
+    # 控制台日志处理器
+    console_handler = logging.StreamHandler()
+    console_handler.setFormatter(formatter)
+   
     print("app.logger.handlers:{}".format(app.logger.handlers))
     print("main:{}".format(__name__))
     
     if __name__ != "__main__":
-        gunicorn_logger = logging.getLogger('gunicorn.error')
-        if len(gunicorn_logger.handlers) > 0:
-            for gunicorn_handler in gunicorn_logger.handlers:
-                print("gunicorn_handler:{}".format(gunicorn_handler)) 
-                app.logger.handlers.append(gunicorn_handler) 
-            app.logger.addHandler(file_handler)
-            app.logger.setLevel(gunicorn_logger.level)
-        for handler in app.logger.handlers:
-            handler.setFormatter(formatter)
+        gunicorn_logger = logging.getLogger('gunicorn.info')
+        if gunicorn_logger.handlers:
+            
+            app.logger.handlers = gunicorn_logger.handlers.copy()  # 使用gunicorn的处理器
+        else:
+            app.logger.addHandler(file_handler)  # 仅在没有gunicorn处理器时添加
+            app.logger.addHandler(console_handler)  # 控制台处理器始终添加
+        app.logger.setLevel(gunicorn_logger.level)
     else:
-        app.logger.addHandler(file_handler)
-        app.logger.setLevel(logging.INFO)
+        app.logger.handlers = []  # 清空默认处理器
+        app.logger.addHandler(file_handler)  # 如果是主程序，则添加
+        app.logger.addHandler(console_handler)  # 控制台处理器始终添加
+   
+    app.logger.setLevel(logging.INFO)
+
+    app.logger.propagate = False  # 停止向上传播
     app.logger.setLevel(logging.INFO)
    
     return app 
