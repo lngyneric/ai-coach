@@ -1,6 +1,7 @@
 
 
 
+from calendar import c
 import datetime
 import json
 import re
@@ -14,8 +15,8 @@ from ...api.llm import invoke_llm
 from ...service.common.models import AppException
 from ...service.lesson.const import CONTENT_TYPE_IMAGE, LESSON_TYPE_BRANCH_HIDDEN, SCRIPT_TYPE_FIX, SCRIPT_TYPE_PORMPT, SCRIPT_TYPE_SYSTEM, UI_TYPE_BRANCH, UI_TYPE_BUTTON, UI_TYPE_CHECKCODE, UI_TYPE_CONTINUED, UI_TYPE_INPUT, UI_TYPE_LOGIN, UI_TYPE_PHONE, UI_TYPE_SELECTION, UI_TYPE_TO_PAY
 from ...service.lesson.models import AICourse, AILesson, AILessonScript
-from ...service.order.consts import ATTEND_STATUS_BRANCH, ATTEND_STATUS_COMPLETED, ATTEND_STATUS_IN_PROGRESS, ATTEND_STATUS_NOT_STARTED, ATTEND_STATUS_VALUES
-from ...service.order.funs import AICourseLessonAttendDTO, init_buy_record, init_trial_lesson
+from ...service.order.consts import ATTEND_STATUS_BRANCH, ATTEND_STATUS_COMPLETED, ATTEND_STATUS_IN_PROGRESS, ATTEND_STATUS_NOT_STARTED, ATTEND_STATUS_VALUES, BUY_STATUS_SUCCESS
+from ...service.order.funs import AICourseLessonAttendDTO, init_buy_record, init_trial_lesson, query_buy_record, query_raw_buy_record
 from ...service.order.models import AICourseBuyRecord, AICourseLessonAttend
 from ...service.profile.funcs import get_user_profiles, save_user_profiles
 from ...service.study.const import INPUT_TYPE_BRANCH, INPUT_TYPE_CHECKCODE, INPUT_TYPE_CONTINUE, INPUT_TYPE_LOGIN, INPUT_TYPE_PHONE, INPUT_TYPE_SELECT, INPUT_TYPE_START, INPUT_TYPE_TEXT, ROLE_STUDENT, ROLE_TEACHER
@@ -81,15 +82,26 @@ def run_script(app: Flask, user_id: str, course_id: str, lesson_id: str=None,inp
                         yield make_script_dto("chapter_update",attend_update.__json__(),"") 
         if script_info:
             try:
-                # 处理用户输入
-                response = handle_input(app,user_id,input_type,attend,script_info,input,trace,trace_args)
-                if response:
-                    yield from response
+                check_paid = True   
+                # 如果是购课的脚本
+                if script_info.script_ui_type == UI_TYPE_TO_PAY:
+                    order = query_raw_buy_record(app,user_id,course_id)
+                    if order and order.status == BUY_STATUS_SUCCESS:
+                        # 如果已经购买
+                        check_paid = True
+                    else:
+                        check_paid = False
+
+                else:
+                    # 处理用户输入
+                    response = handle_input(app,user_id,input_type,attend,script_info,input,trace,trace_args)
+                    if response:
+                        yield from response
                 # 如果是Start或是Continue，就不需要再次获取脚本
                 if  input_type == INPUT_TYPE_START:
                     next = False
                 else:
-                    next = True
+                    next = check_paid
                 while True:
                     if next:
                         script_info,attend_updates = get_script(app,attend_id=attend.attend_id,next=next)

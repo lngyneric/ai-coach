@@ -12,7 +12,6 @@ class RequestFormatter(logging.Formatter):
     def formatTime(self, record, datefmt=None):
         # 创建时区信息
         bj_time = pytz.timezone('Asia/Shanghai')
-        
         # 转换 record.created（一个浮点数时间戳）到北京时间
         ct = datetime.fromtimestamp(record.created, bj_time)
         if datefmt:
@@ -24,7 +23,6 @@ class RequestFormatter(logging.Formatter):
                 s = ct.isoformat()
         return s
     def format(self, record):
-        # 尝试从请求上下文中获取 URL 和 request_id
         try:
             record.url = getattr(thread_local, 'url', 'No_URL')
             record.request_id = getattr(thread_local, 'request_id', 'No_Request_ID')
