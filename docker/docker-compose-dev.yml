@@ -4,7 +4,7 @@ services:
   ai-shifu-api-dev:
     container_name: ai-shifu-api-dev
     image: ai-shifu-api-dev:latest
-    command: flask run --debug  
+    command: flask run --debug  --host=0.0.0.0 --port=5800
     env_file:
       - ./.env
     volumes:

@@ -24,12 +24,15 @@ from ...service.study.dtos import AILessonAttendDTO, ScriptDTO
 from ...service.study.models import AICourseAttendAsssotion, AICourseLessonAttendScript
 from ...service.user.funs import send_sms_code_without_check, verify_sms_code_without_phone
 from ...service.user.models import User
-from ...dao import db
+from ...dao import db,redis_client
 from .utils import *
 from .input_funcs import BreakException, handle_input 
 from .output_funcs import handle_output
 
-def run_script(app: Flask, user_id: str, course_id: str, lesson_id: str=None,input:str=None,input_type:str=None,script_id:str = None)->Generator[ScriptDTO,None,None]:
+
+
+
+def run_script_inner(app: Flask, user_id: str, course_id: str, lesson_id: str=None,input:str=None,input_type:str=None,script_id:str = None)->Generator[ScriptDTO,None,None]:
     with app.app_context():
         course_info = AICourse.query.filter(AICourse.course_id == course_id).first()
         if not course_info:
@@ -218,3 +221,30 @@ def run_script(app: Flask, user_id: str, course_id: str, lesson_id: str=None,inp
                             else:
                                 yield make_script_dto("chapter_update",attend_update.__json__(),"") 
         db.session.commit()
+
+
+
+def run_script(app: Flask, user_id: str, course_id: str, lesson_id: str=None,input:str=None,input_type:str=None,script_id:str = None)->Generator[ScriptDTO,None,None]:
+    
+    timeout = 5*60
+    blocking_timeout = 1
+    lock_key = app.config.get("REDIS_KEY_PRRFIX") + ":run_script:" + user_id
+
+    lock = redis_client.lock(lock_key, timeout=timeout, blocking_timeout=blocking_timeout)
+    if lock.acquire(blocking=True):
+        try:
+            app.logger.info("run_script with lock")
+            yield from run_script_inner(app,user_id,course_id,lesson_id,input,input_type,script_id)
+        except Exception as e:
+            app.logger.error(e)
+            yield make_script_dto("text","系统错误",None)
+            yield make_script_dto("text_end","",None)
+        finally:
+            lock.release()
+            app.logger.info("run_script release lock")
+        return
+    else:
+
+        app.logger.info("lockfail")
+        yield make_script_dto("text_end","",None)
+    return
