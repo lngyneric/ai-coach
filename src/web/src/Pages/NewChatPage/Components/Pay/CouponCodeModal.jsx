@@ -8,7 +8,7 @@ export const CouponCodeModal = ({ open = false, onCancel, onOk }) => {
 
   const _onOk = useCallback(async () => {
     try {
-      const values = form.validateFields();
+      const values = await form.validateFields();
       onOk?.(values);
     } catch {}
   }, [form, onOk]);

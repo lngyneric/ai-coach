@@ -35,3 +35,15 @@ export const queryOrder = ({ orderId }) => {
   });
 }
 
+// 使用优惠码
+export const applyDiscountCode = ({ orderId, code }) => {
+  return request({
+    method: 'POST',
+    url: '/api/order/apply-discount',
+    data: {
+      discount_code: code,
+      order_id: orderId,
+    }
+  });
+}
+
