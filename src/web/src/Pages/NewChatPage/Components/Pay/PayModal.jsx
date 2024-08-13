@@ -38,6 +38,7 @@ export const PayModal = ({ open = false, onCancel, onOk }) => {
   const [orderId, setOrderId] = useState('');
   const [countDwon, setCountDown] = useState(MAX_TIMEOUT);
   const [messageApi, contextHolder] = message.useMessage();
+  const [couponCode, seteCouponCode] = useState('');
 
   useInterval(async () => {
     if (countDwon <= 0) {
@@ -51,7 +52,10 @@ export const PayModal = ({ open = false, onCancel, onOk }) => {
     if (resp.status === ORDER_STATUS.BUY_STATUS_SUCCESS) {
       setInterval(null);
       onOk?.();
+      return
     }
+
+    setPrice(resp.value_to_pay);
   }, interval);
 
   const refreshOrderQrcode = useCallback(
@@ -81,8 +85,7 @@ export const PayModal = ({ open = false, onCancel, onOk }) => {
       return;
     }
 
-    setPrice(resp.price);
-
+    setPrice(resp.value_to_pay);
     const orderId = resp.order_id;
     setOrderId(orderId);
     await refreshOrderQrcode(orderId);
@@ -159,6 +162,7 @@ export const PayModal = ({ open = false, onCancel, onOk }) => {
         className={styles.payModal}
         width={'800px'}
         closable={false}
+        maskClosable={false}
       >
         <div className={styles.payModalContent}>
           <div className={styles.introSection}></div>

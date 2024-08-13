@@ -20,6 +20,7 @@ export const CouponCodeModal = ({ open = false, onCancel, onOk }) => {
       width="400px"
       onOk={_onOk}
       className={styles.couponCodeModal}
+      maskClosable={false}
     >
       <Form form={form}>
         <Form.Item
