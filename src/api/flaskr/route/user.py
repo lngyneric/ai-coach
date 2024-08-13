@@ -292,6 +292,45 @@ def register_user_handler(app:Flask,path_prefix:str)->Flask:
         
         """
         return make_common_response(get_user_profile_labels(app,request.user.user_id))
+    
+    
+
+    @app.route(path_prefix+'/upload_avatar',methods=['POST'])
+    def upload_avatar():
+        """
+        上传头像
+        ---
+        tags:
+            - 用户
+        parameters:
+            - in: formData
+              name: avatar
+              type: file
+              required: true
+              description: 头像文件
+        responses:
+            200:
+                description: 上传成功
+                content:
+                    application/json:
+                        schema:
+                            properties:
+                                code:
+                                    type: integer
+                                    description: 返回码
+                                message:
+                                    type: string
+                                    description: 返回信息
+                                data:
+                                    type: string
+                                    description: 头像地址
+        """
+        avatar = request.files.get('avatar',None)
+        if not avatar:
+            raise_param_error('avatar')
+        return make_common_response(upload_user_avatar(app,request.user.user_id,avatar)) 
+
+    # 健康检查 
     @app.route('/health',methods=['GET'])
     @bypass_token_validation
     def health():

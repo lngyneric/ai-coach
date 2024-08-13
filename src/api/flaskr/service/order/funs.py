@@ -86,7 +86,7 @@ def init_buy_record(app: Flask,user_id:str,course_id:str):
             raise COURSE_NOT_FOUND
         origin_record = AICourseBuyRecord.query.filter(AICourseBuyRecord.user_id==user_id,AICourseBuyRecord.course_id==course_id,AICourseBuyRecord.status == BUY_STATUS_INIT).first()
         if origin_record:
-            return AICourseBuyRecordDTO(origin_record.record_id,origin_record.user_id,origin_record.course_id,origin_record.price,origin_record.status)
+            return AICourseBuyRecordDTO(origin_record.record_id,origin_record.user_id,origin_record.course_id,origin_record.price,origin_record.status,origin_record.discount_value)
         buy_record = AICourseBuyRecord()
         buy_record.user_id = user_id
         buy_record.course_id = course_id
@@ -206,7 +206,7 @@ def success_buy_record_from_pingxx(app: Flask,charge_id:str):
                     else:
                         attend.status = ATTEND_STATUS_LOCKED
                 db.session.commit()
-                return AICourseBuyRecordDTO(buy_record.record_id,buy_record.user_id,buy_record.course_id,buy_record.price,buy_record.status)
+                return AICourseBuyRecordDTO(buy_record.record_id,buy_record.user_id,buy_record.course_id,buy_record.price,buy_record.status,buy_record.discount_value)
             else:
                 app.logger.error('record:{} not found'.format(pingxx_order.record_id))
         else:
@@ -288,7 +288,7 @@ def query_buy_record(app: Flask,record_id:str)->AICourseBuyRecordDTO:
         app.logger.info('query buy record:"{}"'.format(record_id))
         buy_record = AICourseBuyRecord.query.filter(AICourseBuyRecord.record_id==record_id).first()
         if buy_record:
-            return AICourseBuyRecordDTO(buy_record.record_id,buy_record.user_id,buy_record.course_id,buy_record.price,buy_record.status)
+            return AICourseBuyRecordDTO(buy_record.record_id,buy_record.user_id,buy_record.course_id,buy_record.price,buy_record.status,buy_record.discount_value)
         raise ORDER_NOT_FOUND
 
 def fix_attend_info(app:Flask,user_id:str,course_id:str):
