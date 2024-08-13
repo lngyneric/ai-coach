@@ -1,19 +1,48 @@
 .payModal {
+  :global(.ant-modal-content) {
+    padding: 0;
+  }
+
   .payModalContent {
     display: flex;
     flex-flow: row nowrap;
 
     .introSection {
       flex: 0 0 auto;
-      width: 450px;
+      width: 430px;
+      height: 588px;
+      background-size: 100% 100%;
     }
     .paySection {
-      flex: 0 0 auto;
-      width: 300px;
+      flex: 1 1 auto;
+      padding-top: 40px;
+      color: var(--color-20);
 
       .payInfoTitle {
         font-size: var(--font-size-2);
         text-align: center;
+      }
+    }
+
+    .priceWrapper {
+      display: flex;
+      justify-content: center;
+
+      .price { 
+        font-size: var(--font-size-1);
+
+        &.disabled {
+          color: var(--color-9);
+        }
+
+        .priceSign {
+          font-size: var(--font-size-1);
+        }
+
+        .priceNumber {
+          font-size: var(--font-size-20);
+          font-weight: bold;
+        }
       }
     }
 
@@ -38,29 +67,40 @@
 
     }
 
+    .discountTipWrapper {
+      padding-top: 10px;
+      display: flex;
+      justify-content: center;
+
+      .discountTip {
+        height: 28px;
+        line-height: 28px;
+        padding: 0 15px;
+        font-size: var(--font-size-5);
+        background: linear-gradient(103deg, #E8CFA4 0%, #F1B87F 100%);
+        border-radius: 10px;
+      }
+    }
+
     .qrcodeWrapper {
       margin-top: 20px;
       display: flex;
       justify-content: center;
     }
 
-    .priceWrapper {
-      display: flex;
-      justify-content: center;
-
-      .price { 
-        font-size: var(--font-size-1);
-        font-weight: bold;
-
-        &.disabled {
-          color: var(--color-9);
-        }
-      }
-    }
     .couponCodeWrapper {
       display: flex;
       justify-content: center;
-      margin-top: 1em;
+      margin-top: 40px;
+
+      .couponCodeButton {
+        width: 200px;
+        height: 40px;
+        color: var(--color-2);
+        border: 0.5px solid var(--color-2);
+        backdrop-filter: blur(10px);
+        border-radius: 50px;
+      }
     }
   }
 }

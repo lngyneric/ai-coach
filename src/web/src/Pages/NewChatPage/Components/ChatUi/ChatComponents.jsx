@@ -37,6 +37,7 @@ import PayModal from '../Pay/PayModal.jsx';
 import { useDisclosture } from 'common/hooks/useDisclosture.js';
 import { memo } from 'react';
 import { useCallback } from 'react';
+import { use } from 'i18next';
 
 const USER_ROLE = {
   TEACHER: '老师',
@@ -46,7 +47,7 @@ const USER_ROLE = {
 const robotAvatar = require('@Assets/chat/sunner_icon.jpg');
 
 const MarkdownBubble = (props) => {
-  const { mobileStyle } = props;
+  const { mobileStyle, onImageLoaded } = props;
   const onCopy = (content) => {
     navigator.clipboard.writeText(content);
   };
@@ -100,9 +101,10 @@ const MarkdownBubble = (props) => {
             return (
               <Image
                 {...imgProps}
-                width={mobileStyle ? '100%' : '100%'}
-                preview={!props.isStreaming}
+                width={'100%'}
+                // preview={!props.isStreaming}
                 style={{ borderRadius: '5px' }}
+                onLoad={onImageLoaded}
               ></Image>
             );
           },
@@ -225,11 +227,12 @@ export const ChatComponents = forwardRef(
     const [_, setLessonEnd] = useState(false);
     // 是否是再聊天框内进行登录
     const [loginInChat, setLoginInChat] = useState(false);
-    const [loaded, setLoaded] = useState(false);
     const [_lastSendMsg, setLastSendMsg] = useState(null);
+    const [loadedChapterId, setLoadedChapterId] = useState('');
     const [loadedData, setLoadedData] = useState(false);
     // 是否在流式输出内容
     const [isStreaming, setIsStreaming] = useState(false);
+    const [initRecords, setInitRecords] = useState([]);
 
     const { userInfo, frameLayout } = useContext(AppContext);
     const { lessonId: currLessonId, changeCurrLesson } = useCourseStore(
@@ -386,89 +389,104 @@ export const ChatComponents = forwardRef(
           } catch (e) {}
         });
       },
-      [appendMsg, checkLogin, lessonUpdateResp, payModalOpen, setTyping, updateMsg, updateUserInfo, userInfo]
+      [
+        appendMsg,
+        checkLogin,
+        lessonUpdateResp,
+        payModalOpen,
+        setTyping,
+        updateMsg,
+        updateUserInfo,
+        userInfo,
+      ]
     );
 
-    const resetAndLoadData = useCallback(async () => {
-      if (!chapterId) {
-        return;
-      }
-
-      setIsStreaming(false);
-      setTyping(false);
-      setInputDisabled(true);
-      setLessonEnd(false);
-      resetList();
-
-      const resp = await getLessonStudyRecord(chapterId);
-      const records = resp.data.records;
-      const ui = resp.data.ui;
-
-      if (!records || records.length === 0) {
-        nextStep({
-          chatId,
-          lessonId: currLessonId,
-          type: INTERACTION_OUTPUT_TYPE.START,
-          val: '',
-        });
-        return;
-      }
-
-      records.forEach((v, i) => {
-        if (v.script_type === CHAT_MESSAGE_TYPE.LESSON_SEPARATOR) {
-          const newMessage = convertMessage({
-            script_role: '',
-          });
-        } else {
-          const newMessage = convertMessage(
-            {
-              ...v,
-              id: i,
-              script_type: CHAT_MESSAGE_TYPE.TEXT,
-            },
-            userInfo
-          );
-          appendMsg(newMessage);
-        }
-      });
-
-      setLessonId(records[records.length - 1].lesson_id);
-
-      if (ui) {
-        initLoadedInteraction(ui);
-      }
-
-      setLoadedData(true);
-    }, [
-      appendMsg,
-      chapterId,
-      chatId,
-      currLessonId,
-      initLoadedInteraction,
-      nextStep,
-      resetList,
-      setTyping,
-      userInfo,
-    ]);
-
-    useEffect(() => {
-      if (!loadedData) {
-        return;
-      }
+    const scrollToBottom = useCallback(() => {
       const inner = document.querySelector(
         `.${styles.chatComponents} .PullToRefresh-inner`
       );
       document
         .querySelector(`.${styles.chatComponents} .PullToRefresh`)
         .scrollTo(0, inner.clientHeight);
-      setLoadedData(false);
-    }, [loadedData]);
+    }, []);
+
+    const onImageLoaded = useCallback(() => {
+      scrollToBottom();
+    }, [scrollToBottom])
 
     useEffect(() => {
-      (async () => {
-        await resetAndLoadData();
-      })();
-    }, [hasLogin, loaded, loginInChat, resetAndLoadData]);
+      if (!loadedData) {
+        return;
+      }
+
+      scrollToBottom();
+
+      if (!initRecords || initRecords.length === 0) {
+        nextStep({
+          chatId,
+          lessonId: lessonId,
+          type: INTERACTION_OUTPUT_TYPE.START,
+          val: '',
+        });
+      }
+      setLoadedData(false);
+    }, [chatId, initRecords, lessonId, loadedData, nextStep, scrollToBottom]);
+
+    useEffect(() => {
+      async function resetAndLoadData() {
+        // 只有课程切换时才重置数据
+        if (!chapterId || loadedChapterId === chapterId) {
+          return;
+        }
+        setIsStreaming(false);
+        setTyping(false);
+        setInputDisabled(true);
+        setLessonEnd(false);
+        resetList();
+        setInitRecords(null);
+
+        const resp = await getLessonStudyRecord(chapterId);
+        const records = resp.data.records;
+        setInitRecords(records);
+        const ui = resp.data.ui;
+
+        if (records) {
+          records.forEach((v, i) => {
+            if (v.script_type === CHAT_MESSAGE_TYPE.LESSON_SEPARATOR) {
+            } else {
+              const newMessage = convertMessage(
+                {
+                  ...v,
+                  id: i,
+                  script_type: CHAT_MESSAGE_TYPE.TEXT,
+                },
+                userInfo
+              );
+              appendMsg(newMessage);
+            }
+          });
+
+          setLessonId(records[records.length - 1].lesson_id);
+        }
+
+        if (ui) {
+          initLoadedInteraction(ui);
+        }
+
+        setLoadedData(true);
+        setLoadedChapterId(chapterId);
+      }
+
+      resetAndLoadData();
+    }, [
+      appendMsg,
+      chapterId,
+      initLoadedInteraction,
+      loadedChapterId,
+      resetList,
+      setTyping,
+      userInfo,
+    ]);
 
     // debugger
     useEffect(() => {
@@ -509,7 +527,6 @@ export const ChatComponents = forwardRef(
       };
     }, [nextStep, onPayModalOpen]);
 
-
     const handleSend = useCallback(
       async (type, val, scriptId) => {
         if (
@@ -541,7 +558,7 @@ export const ChatComponents = forwardRef(
     );
 
     const onPayModalOk = useCallback(() => {
-      handleSend(INTERACTION_OUTPUT_TYPE.ORDER, '');
+      handleSend(INTERACTION_OUTPUT_TYPE.ORDER);
       onPayModalClose();
     }, [handleSend, onPayModalClose]);
 
@@ -559,6 +576,7 @@ export const ChatComponents = forwardRef(
             content={content}
             isStreaming={isStreaming}
             mobileStyle={mobileStyle}
+            onImageLoaded={onImageLoaded}
           />
         );
       }
@@ -589,7 +607,6 @@ export const ChatComponents = forwardRef(
       }
 
       if (type === INTERACTION_OUTPUT_TYPE.ORDER) {
-        await testPurchaseOrder({ orderId: val.orderId });
         setInputDisabled(true);
         onPurchased?.();
         return;
