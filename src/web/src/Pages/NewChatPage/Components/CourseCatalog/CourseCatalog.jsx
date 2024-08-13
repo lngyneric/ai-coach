@@ -1,12 +1,13 @@
-import classNames from "classnames";
-import CourseSection from "./CourseSection.jsx";
-import styles from "./CourseCatalog.module.scss";
+import classNames from 'classnames';
+import CourseSection from './CourseSection.jsx';
+import styles from './CourseCatalog.module.scss';
 
-import { useState } from "react";
+import { useState } from 'react';
+import { memo } from 'react';
 
 export const CourseCatalog = ({
   id = 0,
-  name = "",
+  name = '',
   lessons = [],
   collapse = false,
   onCollapse = ({ id }) => {},
@@ -16,11 +17,11 @@ export const CourseCatalog = ({
     <div
       className={classNames(styles.courseCatalog, collapse && styles.collapse)}
     >
-      <div className={styles.titleRow} onClick={() => onCollapse?.({id})}>
+      <div className={styles.titleRow} onClick={() => onCollapse?.({ id })}>
         <div>{name}</div>
         <img
           className={styles.collapseBtn}
-          src={require("@Assets/newchat/light/icon16-arrow-down.png")}
+          src={require('@Assets/newchat/light/icon16-arrow-down.png')}
           alt=""
         />
       </div>
@@ -43,4 +44,4 @@ export const CourseCatalog = ({
   );
 };
 
-export default CourseCatalog;
+export default memo(CourseCatalog);

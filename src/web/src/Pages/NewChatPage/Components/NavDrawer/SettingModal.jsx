@@ -1,10 +1,10 @@
 import { Avatar } from 'antd';
-import PopupModal from '@Components/PopupModal';
+import PopupModal from 'Components/PopupModal';
 import styles from './SettingModal.module.scss';
 import classNames from 'classnames';
-import { useUserStore } from '@stores/useUserStore.js';
+import { useUserStore } from 'stores/useUserStore.js';
 import { Modal } from 'antd';
-import { useState } from 'react';
+import { memo } from 'react';
 
 export const SettingModal = ({
   open,
@@ -85,4 +85,4 @@ export const SettingModal = ({
   );
 };
 
-export default SettingModal;
+export default memo(SettingModal);

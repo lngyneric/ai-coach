@@ -15,6 +15,7 @@ import { SettingRadioElement } from './SettingRadioElement.jsx';
 import { SettingInputElement } from './SettingInputElement.jsx';
 import { SEX_NAMES } from 'constants/userConstants.js';
 import SettingSelectElement from './SettingSelectElement.jsx';
+import { memo } from 'react';
 
 export const UserSettings = ({ onHomeClick, className }) => {
   const [industrySettingModalOpen, setIndustrySettingModalOpen] =
@@ -147,4 +148,4 @@ export const UserSettings = ({ onHomeClick, className }) => {
   );
 };
 
-export default UserSettings;
+export default memo(UserSettings);

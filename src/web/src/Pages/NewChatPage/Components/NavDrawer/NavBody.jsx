@@ -1,8 +1,9 @@
 import styles from './NavBody.module.scss';
 import LogoSquare from 'Components/logo/LogoSquare.jsx';
-import { productName, slogan } from '@constants/productConstants';
-import MainButton from '@Components/MainButton.jsx';
+import { productName, slogan } from 'constants/productConstants';
+import MainButton from 'Components/MainButton.jsx';
 import { useTranslation } from 'react-i18next';
+import { memo } from 'react';
 
 export const NavBody = ({ 
   onLoginClick = () => {},
@@ -18,4 +19,4 @@ export const NavBody = ({
   </div>)
 }
 
-export default NavBody;
+export default memo(NavBody);

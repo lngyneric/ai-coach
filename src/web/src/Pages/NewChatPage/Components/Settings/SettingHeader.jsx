@@ -1,6 +1,7 @@
 import { Breadcrumb } from 'antd';
 import styles from './SettingHeader.module.scss';
 import classNames from 'classnames';
+import { memo } from 'react';
 
 export const SettingHeader = ({ className, onHomeClick }) => {
   return (
@@ -21,4 +22,4 @@ export const SettingHeader = ({ className, onHomeClick }) => {
   );
 };
 
-export default SettingHeader;
+export default memo(SettingHeader);

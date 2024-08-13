@@ -1,7 +1,7 @@
 /*
  * 左侧导航控件容器
  */
-import { AppContext } from '@Components/AppContext.js';
+import { AppContext } from 'Components/AppContext.js';
 import { useContext, useState, useRef } from 'react';
 
 import NavHeader from './NavHeader.jsx';
@@ -19,7 +19,7 @@ import {
   FRAME_LAYOUT_PAD,
   FRAME_LAYOUT_PAD_INTENSIVE,
   FRAME_LAYOUT_MOBILE,
-} from '@constants/uiConstants';
+} from 'constants/uiConstants';
 
 /**
  * 导航栏展示形式
