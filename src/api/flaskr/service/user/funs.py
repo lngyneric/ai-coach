@@ -1,4 +1,5 @@
 import base64
+from cgi import FieldStorage
 from io import BytesIO
 import random
 import string
@@ -27,7 +28,7 @@ endpoint = "oss-cn-beijing.aliyuncs.com"
 
 ALI_API_ID="LTAI5tHek7vMAYvpYVn6cPyg"
 ALI_API_SECRET="uV6LPxtupiGRPzkJSp8gQHjQnb0pro"
-base = "https://kt-ai-assistant.oss-cn-beijing.aliyuncs.com"
+base = "https://avtar.agiclass.cn"
 auth = oss2.Auth(ALI_API_ID, ALI_API_SECRET)
 bucket = oss2.Bucket(auth, endpoint, 'pillow-avtar')
 
@@ -297,3 +298,27 @@ def verify_sms_code(app:Flask,user_id,phone:str,chekcode:str,updateToken=True)->
                 token = ""
             db.session.commit()
             return UserToken(UserInfo(user_id=user_info.user_id, username=user_info.username, name=user_info.name, email=user_info.email, mobile=user_info.mobile,model=user_info.default_model,user_state=user_info.user_state),token)
+
+
+
+def get_content_type(filename):
+    extension = filename.rsplit('.', 1)[1].lower()
+    if extension in ['jpg', 'jpeg']:
+        return 'image/jpeg'
+    elif extension == 'png':
+        return 'image/png'
+    elif extension == 'gif':
+        return 'image/gif'
+    return 'application/octet-stream'  
+
+def upload_user_avatar(app:Flask,user_id:str,avatar)->str:
+    with app.app_context():
+        user = User.query.filter(User.user_id==user_id).first()
+        if user:
+            # 上传头像
+            file_id = str(uuid.uuid4()).replace('-', '')
+            bucket.put_object(file_id, avatar,headers={'Content-Type': get_content_type(avatar.filename)})
+            url =  base + '/' + file_id
+            user.avatar = url
+            db.session.commit()
+            return url
