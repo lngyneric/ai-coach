@@ -189,10 +189,8 @@ def get_script(app:Flask,attend_id:str,next:bool) :
     if not script_info:
         app.logger.info('no script found')
         app.logger.info(attend_info.lesson_id)
-
         attend_info.status = ATTEND_STATUS_COMPLETED
         lesson = AILesson.query.filter(AILesson.lesson_id == attend_info.lesson_id).first()
-
         attend_infos.append(AILessonAttendDTO(lesson.lesson_no,lesson.lesson_name,lesson.lesson_id,ATTEND_STATUS_VALUES[ATTEND_STATUS_COMPLETED]))
     db.session.commit()
     return script_info,attend_infos
