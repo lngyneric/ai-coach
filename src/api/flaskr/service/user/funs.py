@@ -10,7 +10,7 @@ from flask_sqlalchemy import SQLAlchemy
 from ...service.common.dtos import UserInfo, UserToken
 from ...api.aliyun import send_sms_code_ali
 from ...common.swagger import register_schema_to_swagger
-from ...service.common.models import CHECK_CODE_ERROR, CHECK_CODE_EXPIRED, SMS_CHECK_ERROR, SMS_SEND_EXPIRED
+from ...service.common.models import CHECK_CODE_ERROR, CHECK_CODE_EXPIRED, SMS_CHECK_ERROR, SMS_SEND_EXPIRED,FILE_UPLOAD_ERROR,FILE_TYPE_NOT_SUPPORT,FILE_SIZE_EXCEED
 from ...service.common.dtos import USE_STATE_VALUES, USER_STATE_REGISTERED, USER_STATE_UNTEGISTERED
 from ...dao import db,redis_client as redis
 from ...api.sendcloud import send_email
@@ -21,13 +21,14 @@ from ..common import USER_NOT_FOUND,USER_PASSWORD_ERROR,USER_ALREADY_EXISTS,USER
 import jwt
 import time
 from captcha.image import ImageCaptcha 
+from flaskr.common.config import get_config
 import oss2
 
 
 endpoint = "oss-cn-beijing.aliyuncs.com"
 
-ALI_API_ID="LTAI5tHek7vMAYvpYVn6cPyg"
-ALI_API_SECRET="uV6LPxtupiGRPzkJSp8gQHjQnb0pro"
+ALI_API_ID= get_config("ALIBABA_CLOUD_ACCESS_KEY_ID")
+ALI_API_SECRET=get_config("ALIBABA_CLOUD_ACCESS_KEY_SECRET")
 base = "https://avtar.agiclass.cn"
 auth = oss2.Auth(ALI_API_ID, ALI_API_SECRET)
 bucket = oss2.Bucket(auth, endpoint, 'pillow-avtar')
@@ -89,20 +90,24 @@ def validate_user(app:Flask, token: str) -> UserInfo:
         if(token == None):
             raise USER_NOT_LOGIN
         try:
+            app.logger.info("token:"+token)
             app.logger.info("env:"+app.config.get('ENVERIMENT','prod'))
             if app.config.get('ENVERIMENT','prod') == 'dev':
                 user_id = token
                 user = User.query.filter_by(user_id=user_id).first()
                 if user:
                     return UserInfo(user_id=user.user_id, username=user.username, name=user.name, email=user.email, mobile=user.mobile,model=user.default_model, user_state=user.user_state)
-                else:
-                    raise USER_TOKEN_EXPIRED
             else:
                 user_id = jwt.decode(token, app.config['SECRET_KEY'], algorithms=['HS256'])['user_id']
+
+            app.logger.info("user_id:"+user_id) 
             redis_token = redis.get(app.config["REDIS_KEY_PRRFIX_USER"] + user_id);
             if(redis_token == None):
+                app.logger.info("redis_token is None")
                 raise USER_TOKEN_EXPIRED 
+            app.logger.info("redis_token_key:"+str(app.config["REDIS_KEY_PRRFIX_USER"] + user_id))
             set_token = str(redis.get(app.config["REDIS_KEY_PRRFIX_USER"] + user_id),encoding="utf-8")
+
             if set_token == token:
                 user = User.query.filter_by(user_id=user_id).first()
                 if user:
@@ -309,7 +314,7 @@ def get_content_type(filename):
         return 'image/png'
     elif extension == 'gif':
         return 'image/gif'
-    return 'application/octet-stream'  
+    raise FILE_TYPE_NOT_SUPPORT
 
 def upload_user_avatar(app:Flask,user_id:str,avatar)->str:
     with app.app_context():
@@ -317,6 +322,13 @@ def upload_user_avatar(app:Flask,user_id:str,avatar)->str:
         if user:
             # 上传头像
             file_id = str(uuid.uuid4()).replace('-', '')
+            # 得到原有的头像文件名
+            old_avatar = user.user_avatar
+            # 得到原有的头像文件名
+            if old_avatar:
+                old_file_id = old_avatar.split('/')[-1]
+                bucket.delete_object(old_file_id)    
+            app.logger.info("filename:"+avatar.filename+" file_size:"+str(avatar.content_length) )
             bucket.put_object(file_id, avatar,headers={'Content-Type': get_content_type(avatar.filename)})
             url =  base + '/' + file_id
             user.user_avatar = url
