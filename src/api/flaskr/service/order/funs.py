@@ -51,18 +51,20 @@ class AICourseBuyRecordDTO:
     order_id:str
     user_id:str
     course_id:str
-    price:str
+    price: str
     status:int
     discount:str
+    value_to_pay:str
 
 
-    def __init__(self, record_id, user_id, course_id, price, status,discount=0):
+    def __init__(self, record_id, user_id, course_id, price, status,discount = '0.00'):
         self.order_id = record_id
         self.user_id = user_id
         self.course_id = course_id
-        self.price = str(price)
+        self.price = price
         self.status = status
         self.discount = discount
+        self.value_to_pay = str(decimal.Decimal(price) - decimal.Decimal(discount))
 
     def __json__(self):
         return {
@@ -72,7 +74,8 @@ class AICourseBuyRecordDTO:
             "price": str(self.price),
             "status":  self.status,
             "status_desc": BUY_STATUS_VALUES[self.status],
-            "discount": str(self.discount)
+            "discount": str(self.discount),
+            "value_to_pay": str(self.value_to_pay)
         }
 
 def init_buy_record(app: Flask,user_id:str,course_id:str):

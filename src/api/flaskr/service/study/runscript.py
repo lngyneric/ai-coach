@@ -65,7 +65,6 @@ def run_script(app: Flask, user_id: str, course_id: str, lesson_id: str=None,inp
         trace = langfuse.trace(**trace_args)
         trace_args["output"]=""
         next = False
-        
        # 如果有用户输入,就得到当前这一条,否则得到下一条
         if script_id:
             # 如果有指定脚本
