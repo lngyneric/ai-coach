@@ -1,4 +1,5 @@
 from calendar import c
+from datetime import date
 import decimal
 import json
 from re import S
@@ -181,11 +182,9 @@ def generate_charge(app: Flask,record_id:str,channel:str,client_ip:str)->BuyReco
 
 
 
-def success_buy_record_from_pingxx(app: Flask,charge_id:str):
+def success_buy_record_from_pingxx(app: Flask,charge_id:str,body:dict):
     with app.app_context():
         lock = redis_client.lock('success_buy_record_from_pingxx'+charge_id,timeout=10,blocking_timeout=10)
-
-
 
         if not lock:
             app.logger.error('lock failed for charge:"{}"'.format(charge_id))
@@ -193,6 +192,9 @@ def success_buy_record_from_pingxx(app: Flask,charge_id:str):
             try:
                 app.logger.info('success buy record from pingxx charge:"{}"'.format(charge_id))
                 pingxx_order = PingxxOrder.query.filter(PingxxOrder.charge_id==charge_id).first()
+                pingxx_order.update = datetime.datetime.now()
+                pingxx_order.status = 1
+                pingxx_order.charge_object = json.dumps(body)
                 if pingxx_order:
                     buy_record = AICourseBuyRecord.query.filter(AICourseBuyRecord.record_id==pingxx_order.record_id).first()
                     if buy_record and buy_record.status == BUY_STATUS_TO_BE_PAID:

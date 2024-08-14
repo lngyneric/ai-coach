@@ -11,13 +11,12 @@ def register_callback_handler(app: Flask, path_prefix: str):
     def pingxx_callback():
         body = request.get_json( )
         app.logger.info('pingxx-callback: %s',body)
-
         type = body.get('type', '')
         if type == 'charge.succeeded':
             order_no = body.get('data', {}).get('object', {}).get('order_no', '')
             id = body.get('data', {}).get('object', {}).get('id', '')
             app.logger.info('pingxx-callback: charge.succeeded order_no: %s',order_no)
-            success_buy_record_from_pingxx(app, id )
+            success_buy_record_from_pingxx(app, id ,body)
             # 处理支付成功逻辑
             # do something
             
