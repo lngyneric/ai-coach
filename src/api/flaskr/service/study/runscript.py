@@ -7,7 +7,7 @@ import json
 import re
 import time
 from typing import Generator
-from flask import Flask
+from flask import Flask,Response,make_response
 from langchain.prompts import PromptTemplate
 from sqlalchemy import func
 from ...api.langfuse import langfuse_client as langfuse
@@ -32,7 +32,7 @@ from .output_funcs import handle_output
 
 
 
-def run_script_inner(app: Flask, user_id: str, course_id: str, lesson_id: str=None,input:str=None,input_type:str=None,script_id:str = None)->Generator[ScriptDTO,None,None]:
+def run_script_inner(app: Flask, user_id: str, course_id: str, lesson_id: str=None,input:str=None,input_type:str=None,script_id:str = None)->Generator[str,None,None]:
     with app.app_context():
         course_info = AICourse.query.filter(AICourse.course_id == course_id).first()
         if not course_info:

@@ -267,16 +267,17 @@ def verify_sms_code_without_phone(app:Flask,user_id:str,checkcode)->UserToken:
     with app.app_context():
         phone = redis.get(app.config["REDIS_KEY_PRRFIX_PHONE"]+user_id)
         if phone == None:
+            app.logger.info("cache user_id:"+user_id + " phone is None")
             user = User.query.filter(User.user_id == user_id).first()
             phone = user.mobile
         else:
             phone = str(phone,encoding="utf-8")
-            user = User.query.filter(User.mobile == phone).first()
+            user = User.query.filter(User.mobile == phone).order().first()
             if user:
                 user_id = user.user_id
-        return verify_sms_code(app,user_id,phone,checkcode,False)
+        return verify_sms_code(app,user_id,phone,checkcode)
 # 验证短信验证码
-def verify_sms_code(app:Flask,user_id,phone:str,chekcode:str,updateToken=True)->UserToken:
+def verify_sms_code(app:Flask,user_id,phone:str,chekcode:str)->UserToken:
     with app.app_context():
         app.logger.info("phone:"+phone+" chekcode:"+chekcode)
         check_save = redis.get(app.config["REDIS_KEY_PRRFIX_PHONE_CODE"] + phone)
@@ -297,10 +298,7 @@ def verify_sms_code(app:Flask,user_id,phone:str,chekcode:str,updateToken=True)->
                 user_info = User(user_id=user_id, username="", name="", email="", mobile=phone,default_model=app.config["OPENAI_DEFAULT_MODEL"])
                 user_info.user_state = USER_STATE_REGISTERED
                 db.session.add(user_info)
-            if updateToken:
-                token = generate_token(app,user_id=user_info.user_id)
-            else:
-                token = ""
+            token = generate_token(app,user_id=user_id)
             db.session.commit()
             return UserToken(UserInfo(user_id=user_info.user_id, username=user_info.username, name=user_info.name, email=user_info.email, mobile=user_info.mobile,model=user_info.default_model,user_state=user_info.user_state),token)
 

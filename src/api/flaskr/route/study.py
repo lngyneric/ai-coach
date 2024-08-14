@@ -56,7 +56,8 @@ def register_study_handler(app:Flask,path_prefix:str)->Flask:
         if course_id =="" or course_id is None:
             course_id = 'dfca19aab2654fe4882e002a58567240' 
         user_id = request.user.user_id
-        return Response(run_script(app,course_id=course_id,lesson_id=lesson_id,user_id=user_id,input=input,input_type=input_type,script_id = script_id), headers={'Cache-Control': 'no-cache'}, mimetype="text/event-stream")
+        
+        return Response(run_script(app,course_id=course_id,lesson_id=lesson_id,user_id=user_id,input=input,input_type=input_type,script_id = script_id), headers={'Cache-Control': 'no-cache','Set-Cookie': 'tt={};Path=/'.format("")}, mimetype="text/event-stream")
     # ensure the instance folder exists
    
 
