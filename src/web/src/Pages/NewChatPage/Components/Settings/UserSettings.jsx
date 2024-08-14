@@ -104,6 +104,10 @@ export const UserSettings = ({ onHomeClick, className, onClose }) => {
     });
   }, []);
 
+  const onChangeAvatarChanged = useCallback(({ dataUrl }) => {
+    setAvatar(dataUrl);
+  }, []);
+
   useEffect(() => {
     loadData();
   }, [loadData]);
@@ -117,7 +121,7 @@ export const UserSettings = ({ onHomeClick, className, onClose }) => {
         />
         <div className={styles.settingBody}>
           <div className={styles.centerWrapper}>
-            <ChangeAvatar image={avatar} />
+            <ChangeAvatar image={avatar} onChange={onChangeAvatarChanged} />
             <div className={styles.basicInfoTitle}>基础信息</div>
             <SettingInputElement
               title="昵称"
@@ -140,8 +144,6 @@ export const UserSettings = ({ onHomeClick, className, onClose }) => {
               onClick={onBirthClick}
               value={birth}
             />
-
-            <SettingRadioElement options={[{ label: 'item1', value: 1 }]} />
           </div>
         </div>
         <div className={styles.settingFooter}>
