@@ -87,7 +87,7 @@ export const PayModal = ({ open = false, onCancel, onOk }) => {
     setDiscount('');
 
     const { data: resp } = await initOrder();
-    if (resp.status !== ORDER_STATUS.BUY_STATUS_INIT) {
+    if (resp.status !== ORDER_STATUS.BUY_STATUS_INIT && resp.status !== ORDER_STATUS.BUY_STATUS_TO_BE_PAID) {
       return;
     }
 

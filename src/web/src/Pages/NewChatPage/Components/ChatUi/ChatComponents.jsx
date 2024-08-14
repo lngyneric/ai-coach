@@ -38,6 +38,7 @@ import { useDisclosture } from 'common/hooks/useDisclosture.js';
 import { memo } from 'react';
 import { useCallback } from 'react';
 import { use } from 'i18next';
+import { userInfoStore, tokenTool } from '@Service/storeUtil.js';
 
 const USER_ROLE = {
   TEACHER: '老师',
@@ -381,7 +382,9 @@ export const ChatComponents = forwardRef(
                 setInputDisabled(false);
               }
             } else if (response.type === RESP_EVENT_TYPE.USER_LOGIN) {
+              tokenTool.set({ token:response.content.token, faked: true });
               checkLogin();
+              
             } else if (response.type === RESP_EVENT_TYPE.PROFILE_UPDATE) {
               const content = response.content;
               updateUserInfo({ [content.key]: content.value });
