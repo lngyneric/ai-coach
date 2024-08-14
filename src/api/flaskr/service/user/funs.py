@@ -293,6 +293,7 @@ def verify_sms_code(app:Flask,user_id,phone:str,chekcode:str)->UserToken:
                 user_info.user_state = USER_STATE_REGISTERED 
             else:
                 user_info = User.query.filter_by(mobile=phone).first()
+                user_id = user_info.user_id
             if user_info is None:
                 user_id = str(uuid.uuid4()).replace('-', '')
                 user_info = User(user_id=user_id, username="", name="", email="", mobile=phone,default_model=app.config["OPENAI_DEFAULT_MODEL"])

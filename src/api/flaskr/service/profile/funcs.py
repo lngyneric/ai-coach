@@ -27,14 +27,17 @@ PROFILES_LABLES = {
         "label":"昵称",
         "mapping":"name"
     },
+    "user_background":{
+        "label":"用户背景"
+    },
     "sex":{
         "label":"性别",
         "mapping":"user_sex",
-        "items":["不告诉","男","女"],
+        "items":["保密","男性","女性"],
         "items_mapping":{
-            "不告诉":0,
-            "男":1,
-            "女":2
+            "保密":0,
+            "男性":1,
+            "女性":2
         }
     },
     "birth":{
