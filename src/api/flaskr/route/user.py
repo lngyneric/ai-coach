@@ -81,8 +81,6 @@ def register_user_handler(app:Flask,path_prefix:str)->Flask:
     
     @app.before_request
     def before_request():
-        app.logger.info('request.endpoint:'+str(request.endpoint))
-        app.logger.info('request.path:'+str(request.path))
         if request.endpoint in ['login', 'register','require_reset_code','reset_password','invoke','update_lesson'] or request.endpoint in by_pass_login_func or request.endpoint is None:
             # 在登录和注册处理函数中绕过登录态验证
             return
@@ -94,9 +92,8 @@ def register_user_handler(app:Flask,path_prefix:str)->Flask:
             token = request.args.get('token',None)
         if not token:
             token = request.headers.get('Token',None)
-        if not token and request.get_json():
+        if not token and request.method.upper() == "POST" and  request.is_json :
             token = request.get_json().get('token',None)
-            # app.logger.info('headers token:'+str(token))
         token = str(token)
         if not token and request.endpoint in by_pass_login_func:
             return
