@@ -220,6 +220,8 @@ def success_buy_record_from_pingxx(app: Flask,charge_id:str):
                 else:
                     app.logger.error('charge:{} not found'.format(charge_id))
                 return None
+            except Exception as e:
+                app.logger.error('success buy record from pingxx charge:"{}" error:{}'.format(charge_id,e))
             finally:
                 lock.release()
 
