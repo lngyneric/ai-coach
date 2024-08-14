@@ -1,5 +1,6 @@
 from flask import Flask
 
+
 from .models import UserProfile
 from ...dao import db
 from ..user.models import User
@@ -54,7 +55,11 @@ PROFILES_LABLES = {
     },
     "ai_tools":{
         "label":"编程工具",
-        "items":[ "GitHub Copilot","通义灵码"]
+        "items":[ "GitHub Copilot","通义灵码"],
+        "items_mapping":{
+            "GitHub_Copilot":"GitHub Copilot",
+            "通义灵码":"通义灵码"
+        }
     },
     "style":{
         "label":"授课风格",
@@ -79,8 +84,8 @@ PROFILES_LABLES = {
             "MacOS",
         ],
         "items_mapping":{
-            "Windows":"win",
-            "MacOS":"mac"
+            "win": "Windows",
+            "mac":"MacOS"
         }
     }
 }
@@ -156,6 +161,7 @@ def get_user_profile_labels(app:Flask,user_id:str):
         if user_profile.profile_key in PROFILES_LABLES:
             items = [l for l in result if l["key"] == user_profile.profile_key]
             item = items[0] if len(items) > 0 else None
+            app.logger.info("user_profile:{}-{}".format(user_profile.profile_key, user_profile.profile_value))
             if item is None:
                 item={ 
                     "key": user_profile.profile_key,
@@ -167,7 +173,35 @@ def get_user_profile_labels(app:Flask,user_id:str):
                 result.append(item)
             
             if PROFILES_LABLES[user_profile.profile_key].get("items_mapping"):
-                   item["value"] = PROFILES_LABLES[user_profile.profile_key]["items"][ user_profile.profile_value]
+                   item["value"] = PROFILES_LABLES[user_profile.profile_key]["items_mapping"][user_profile.profile_value]
             else:
                 item["value"] = user_profile.profile_value
     return result
+
+
+def update_user_profile_with_lable(app:Flask,user_id:str,profiles :list):
+    with app.app_context():
+        user_info = User.query.filter(User.user_id==user_id).first()
+        if user_info:
+            user_profiles = UserProfile.query.filter_by(user_id=user_id).all()
+            for profile in profiles:
+                user_profile_to_update = [p for p in user_profiles if p.profile_key == profile["key"]]
+                user_profile = user_profile_to_update[0] if len(user_profile_to_update) > 0 else None
+                profile_lable = PROFILES_LABLES.get(profile["key"], None)
+                profile_value = profile["value"]
+                profile_key = profile["key"]
+                if profile_lable:
+                    if profile_lable.get("items_mapping"):
+                        for k,v in profile_lable["items_mapping"].items():
+                            if v == profile_value:
+                                profile_value = k
+                    if profile_lable.get("mapping"):
+                        setattr(user_info, profile_lable["mapping"], profile_value)
+                if user_profile:
+                    user_profile.profile_value = profile_value
+                # else:
+                #     user_profile = UserProfile(user_id=user_id, profile_key=profile_key, profile_value=profile_value, profile_type=1)
+                #     db.session.add(user_profile)
+            db.session.commit()
+            return True
+    return False

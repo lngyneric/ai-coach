@@ -2,14 +2,13 @@ import json
 from flask import Flask, request, jsonify, make_response
 
 from flaskr.service.common.models import raise_param_error
-from flaskr.service.profile.funcs import get_user_profile_labels, get_user_profiles
+from flaskr.service.profile.funcs import get_user_profile_labels, update_user_profile_with_lable
 from ..service.user import *
 from functools import wraps
 from .common import make_common_response,bypass_token_validation,by_pass_login_func
 
 
 def register_user_handler(app:Flask,path_prefix:str)->Flask:
-
 
     @app.route(path_prefix+'/register', methods=['POST'])
     @bypass_token_validation
@@ -289,6 +288,47 @@ def register_user_handler(app:Flask,path_prefix:str)->Flask:
         
         """
         return make_common_response(get_user_profile_labels(app,request.user.user_id))
+    
+
+    @app.route(path_prefix+'/update_profile',methods=['POST'])
+    def update_profile():
+        """
+        更新用户信息
+        ---
+        tags:
+            - 用户
+        parameters:
+            - in: body
+              name: profiles
+              required: true
+              schema:
+                type: array
+                items:
+                    properties:
+                        key:
+                            type: string
+                            description: 属性名
+                        value:
+                            type: string
+                            description: 属性值
+        responses:
+            200:
+                description: 更新成功
+                content:
+                    application/json:
+                        schema:
+                            properties:
+                                code:
+                                    type: integer
+                                    description: 返回码
+                                message:
+                                    type: string
+                                    description: 返回信息
+        """
+        profiles = request.get_json().get('profiles',None)
+        if not profiles:
+            raise_param_error('profiles')
+        return make_common_response(update_user_profile_with_lable(app,request.user.user_id,profiles))
     
     
 
