@@ -27,7 +27,7 @@ export const AvatarSettingModal = ({
     onOk?.({ img });
   };
 
-  const onCropComplete = (croppedArea, croppedAreaPixels) => {
+  const onCropComplete = (_croppedArea, croppedAreaPixels) => {
     setCroppedAreaPixels(croppedAreaPixels);
   };
 

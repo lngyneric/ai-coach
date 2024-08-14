@@ -12,7 +12,7 @@ import { tokenStore } from "./storeUtil.js";
  */
 export const SendMsg = (token, chatId, text, onMessage) => {
   var source = new SSE(process.env.REACT_APP_BASEURL+"/chat/chat-assistant?token="+token, {
-    headers: { "Content-Type": "application/json" ,"Cookie":"token="+token},
+    headers: { "Content-Type": "application/json" },
     payload: JSON.stringify({
       token: token,
       msg: text,
@@ -56,7 +56,7 @@ console.log('api base url: ', process.env.REACT_APP_BASEURL);
 const axiosrequest = axios.create({
   baseURL:process.env.REACT_APP_BASEURL,
   withCredentials: false, // 跨域请求时发送 cookies
-  headers:{"Content-Type":"application/json"}
+  headers: {"Content-Type":"application/json"}
 });
 
 // 创建请求拦截器

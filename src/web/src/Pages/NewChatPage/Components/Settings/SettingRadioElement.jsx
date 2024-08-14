@@ -1,10 +1,11 @@
 import { Radio, Space } from 'antd';
-import { useCallback } from 'react';
-import { useEffect } from 'react';
-import { useState } from 'react';
+import { useEffect, memo, useState, useCallback  } from 'react';
+import styles from './SettingRadioElement.module.scss';
+import classNames from 'classnames';
 
 export const SettingRadioElement = ({
   title = '',
+  className = '',
   options = [],
   value = '',
   onChange = (e) => {},
@@ -24,7 +25,9 @@ export const SettingRadioElement = ({
   );
 
   return (
-    <div>
+    <div
+      className={classNames(styles.settingRadio, className)}
+    >
       <div>{title}</div>
       <div>
         <Radio.Group onChange={_onChange} value={curr}>
@@ -39,3 +42,5 @@ export const SettingRadioElement = ({
     </div>
   );
 };
+
+export default memo(SettingRadioElement);

@@ -16,15 +16,24 @@ import { SettingInputElement } from './SettingInputElement.jsx';
 import { SEX_NAMES } from 'constants/userConstants.js';
 import SettingSelectElement from './SettingSelectElement.jsx';
 import { memo } from 'react';
+import { getUserProfile } from 'Api/user.js';
+import { useEffect } from 'react';
+import BirthdaySettingModal from './BirthdaySettingModal.jsx';
 
 export const UserSettings = ({ onHomeClick, className }) => {
-  const [industrySettingModalOpen, setIndustrySettingModalOpen] =
-    useState(false);
-  const [jobSettingModalOpen, setJobSettingModalOpen] = useState(false);
   const [sexSettingModalOpen, setSexSettingModalOpen] = useState(false);
-  const onSaveSettingsClick = useCallback(() => {}, []);
+  const [birthModalOpen, setBirthModalOpen] = useState(false);
 
+  const onSaveSettingsClick = useCallback(() => {}, []);
+  // 头像
+  const [avatar, setAvatar] = useState(''); 
+  // 昵称
   const [nickName, setNickName] = useState('');
+  // 性别
+  const [sex, setSex] = useState('');
+  // 生日
+  const [birth, setBirth] = useState('');
+
   const onNickNameChanged = useCallback(
     (e) => {
       setNickName(e.target.value);
@@ -32,7 +41,6 @@ export const UserSettings = ({ onHomeClick, className }) => {
     [setNickName]
   );
 
-  const [sex, setSex] = useState('');
   const onSexSettingModalOk = useCallback(
     (e) => {
       setSex(e.sex);
@@ -43,40 +51,36 @@ export const UserSettings = ({ onHomeClick, className }) => {
 
   const onSexSelectClick = useCallback(() => {
     setSexSettingModalOpen(true);
-  }, [])
+  }, []);
 
-  const [industry, setIndustry] = useState('');
-  const onIndustryChanged = useCallback(
-    (e) => {
-      setIndustry(e.target.value);
-    },
-    [setIndustry]
-  );
+  const onBirthClick = useCallback(() => {
+    setBirthModalOpen(true);
+  },[])
 
-  const [job, setJob] = useState('');
-  const onJobChanged = useCallback(
-    (e) => {
-      setJob(e.target.value);
-    },
-    [setJob]
-  );
+  const onBackgroundChange = useCallback((e) => {}, []);
+
+  const loadData = useCallback(async () => {
+    const { data: respData } = await getUserProfile();
+    respData.forEach((v) => {
+      const keyArr = [];
+      if (v.key === 'nickname') {
+        setNickName(v.value);
+      } else if (v.key === 'avatar') {
+        setAvatar(v.value);
+      } else if (v.key === 'sex') {
+        setSex('sex');
+      } else if (v.key === 'birth') {
+        setBirth(v.value);
+      }
+    });
+  }, []);
+
+  useEffect(() => {
+    loadData();
+  }, [loadData]);
 
   return (
     <>
-      <IndustrySettingModal
-        open={industrySettingModalOpen}
-        onClose={() => setIndustrySettingModalOpen(false)}
-      />
-      <SexSettingModal
-        open={sexSettingModalOpen}
-        onOk={onSexSettingModalOk}
-        onClose={() => setSexSettingModalOpen(false)}
-        initialValues={{ sex }}
-      />
-      <JobSettingModal
-        open={jobSettingModalOpen}
-        onClose={() => setJobSettingModalOpen(false)}
-      />
       <div className={classNames(styles.UserSettings, className)}>
         <SettingHeader
           onHomeClick={onHomeClick}
@@ -84,19 +88,33 @@ export const UserSettings = ({ onHomeClick, className }) => {
         />
         <div className={styles.settingBody}>
           <div className={styles.centerWrapper}>
-            <ChangeAvatar img={''} />
+            <ChangeAvatar img={avatar} />
             <div className={styles.basicInfoTitle}>基础信息</div>
             <SettingInputElement
               title="昵称"
               placeholder="请输入姓名"
               onChange={onNickNameChanged}
+              className={styles.inputUnit}
+              value={nickName}
             />
             <SettingSelectElement
               title="性别"
               placeholder="请选择性别"
-              value={sex ? SEX_NAMES[sex] : SEX_NAMES.secret}
+              value={sex}
               className={styles.inputUnit}
               onClick={onSexSelectClick}
+            />
+            <SettingSelectElement
+              title="生日"
+              placeholder="请选择生日"
+              className={styles.inputUnit}
+              onClick={onBirthClick}
+            />
+            <SettingInputElement
+              title="生日"
+              placeholder="请选择生日"
+              className={styles.inputUnit}
+              value={birth}
             />
             <div className={classNames(styles.settingSelect, styles.inputUnit)}>
               <input
@@ -111,27 +129,8 @@ export const UserSettings = ({ onHomeClick, className }) => {
                 alt="icon"
               />
             </div>
-            <div className={classNames(styles.settingSelect, styles.inputUnit)}>
-              <input
-                type="text"
-                className={styles.inputElement}
-                placeholder="请选择行业"
-                value={industry}
-                onChange={onIndustryChanged}
-              />
-            </div>
-            <div className={classNames(styles.settingSelect, styles.inputUnit)}>
-              <input
-                type="text"
-                className={styles.inputElement}
-                placeholder="请选择职业"
-                value={job}
-                onChange={onJobChanged}
-              />
-            </div>
           </div>
-          <SettingInputElement />
-          <SettingRadioElement />
+          <SettingRadioElement options={[{ label: 'item1', value: 1 }]} />
         </div>
         <div className={styles.settingFooter}>
           <div className={styles.centerWrapper}>
@@ -144,6 +143,13 @@ export const UserSettings = ({ onHomeClick, className }) => {
           </div>
         </div>
       </div>
+      <BirthdaySettingModal opne={birthModalOpen} />
+      <SexSettingModal
+        open={sexSettingModalOpen}
+        onOk={onSexSettingModalOk}
+        onClose={() => setSexSettingModalOpen(false)}
+        initialValues={{ sex }}
+      />
     </>
   );
 };
