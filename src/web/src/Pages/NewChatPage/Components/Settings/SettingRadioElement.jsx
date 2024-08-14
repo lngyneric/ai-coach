@@ -28,13 +28,13 @@ export const SettingRadioElement = ({
     <div
       className={classNames(styles.settingRadio, className)}
     >
-      <div>{title}</div>
-      <div>
+      <div className={styles.title}>{title}</div>
+      <div className={styles.inputWrapper}>
         <Radio.Group onChange={_onChange} value={curr}>
           <Space direction="vertical">
             {options.map((v) => {
               const { label, value } = v;
-              <Radio value={value}>{label}</Radio>;
+              return <Radio value={value} checked={value === curr} className={styles.inputElement}>{label}</Radio>;
             })}
           </Space>
         </Radio.Group>
