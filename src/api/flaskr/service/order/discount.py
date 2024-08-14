@@ -33,15 +33,15 @@ def generate_discount_strcode(app:Flask):
         return discount_code
 
 
-def generate_discount_code(app:Flask , discount_value, course_id,discout_start, discount_end,discount_channel):
+def generate_discount_code(app:Flask , discount_value, course_id,discout_start, discount_end,discount_channel,discount_type,discount_apply_type):
     with app.app_context():
         discount_code  =generate_discount_strcode(app)
         discount = Discount()
         discount.discount_id = generate_id(app) 
         discount.course_id = course_id
         discount.discount_code = discount_code
-        discount.discount_type = DISCOUNT_TYPE_FIXED
-        discount.discount_apply_type = DISCOUNT_APPLY_TYPE_SPECIFIC
+        discount.discount_type = discount_type
+        discount.discount_apply_type = discount_apply_type
         discount.discount_value = discount_value
         discount.discount_limit = 0
         discount.discount_start = discout_start
@@ -97,15 +97,6 @@ def use_discount_code(app:Flask, user_id, discount_code, order_id):
         if discount.status == DISCOUNT_STATUS_INACTIVE:
             app.logger.error('discount not exists')
             return None
-        # if discount.discount_count <= discount.discount_used:
-
-        #     return None
-        # if discount.discount_start > datetime.now():
-            # return None
-        # if discount.discount_end < datetime.now():
-            # return None
-        # if dis discount.discount_limit < discountRecord.discount_value:
-            # return None
         discountRecord.status = DISCOUNT_STATUS_USED
         discountRecord.updated = datetime.now()
         discountRecord.updated = datetime.now()
