@@ -147,12 +147,11 @@ export const PayModal = ({ open = false, onCancel, onOk }) => {
         messageApi.error(resp.message);
         return;
       }
-      onCouponCodeModalClose();
 
-      setCountDown(MAX_TIMEOUT);
-      setInterval(COUNTDOWN_INTERVAL);
+      onCouponCodeModalClose();
+      refreshOrderQrcode();
     },
-    [messageApi, onCouponCodeModalClose, orderId]
+    [messageApi, onCouponCodeModalClose, orderId, refreshOrderQrcode]
   );
 
   const onPayChannelSelectChange = useCallback((e) => {

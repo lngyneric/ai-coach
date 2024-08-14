@@ -40,6 +40,7 @@ export const ChatUi = ({
         <UserSettings
           className={styles.UserSettings}
           onHomeClick={onUserSettingsClose}
+          onClose={onUserSettingsClose}
         />
       )}
     </div>

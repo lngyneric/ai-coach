@@ -6,33 +6,53 @@ import MainButton from 'Components/MainButton.jsx';
 import SettingHeader from './SettingHeader.jsx';
 import classNames from 'classnames';
 import ChangeAvatar from './ChangeAvatar.jsx';
-import IndustrySettingModal from './IndustrySettingModal.jsx';
-import JobSettingModal from './JobSettingModal.jsx';
 import SexSettingModal from './SexSettingModal.jsx';
 import { useState } from 'react';
 import { useCallback } from 'react';
 import { SettingRadioElement } from './SettingRadioElement.jsx';
 import { SettingInputElement } from './SettingInputElement.jsx';
-import { SEX_NAMES } from 'constants/userConstants.js';
 import SettingSelectElement from './SettingSelectElement.jsx';
 import { memo } from 'react';
-import { getUserProfile } from 'Api/user.js';
+import { getUserProfile, updateUserProfile } from 'Api/user.js';
 import { useEffect } from 'react';
 import BirthdaySettingModal from './BirthdaySettingModal.jsx';
+import { SEX, SEX_NAMES } from 'constants/userConstants.js';
 
-export const UserSettings = ({ onHomeClick, className }) => {
+export const UserSettings = ({ onHomeClick, className, onClose }) => {
   const [sexSettingModalOpen, setSexSettingModalOpen] = useState(false);
   const [birthModalOpen, setBirthModalOpen] = useState(false);
 
-  const onSaveSettingsClick = useCallback(() => {}, []);
   // 头像
-  const [avatar, setAvatar] = useState(''); 
+  const [avatar, setAvatar] = useState('');
   // 昵称
   const [nickName, setNickName] = useState('');
   // 性别
-  const [sex, setSex] = useState('');
+  const [sex, setSex] = useState(SEX_NAMES[SEX.SECRET]);
   // 生日
   const [birth, setBirth] = useState('');
+
+
+  const onSaveSettingsClick = useCallback(async () => {
+    const data = [];
+    data.push({
+      key: 'nickname',
+      value: nickName,
+    });
+    data.push({
+      key: 'avatar',
+      value: avatar,
+    });
+    data.push({
+      key: 'sex',
+      value: sex,
+    });
+    data.push({
+      key: 'birth',
+      value: birth,
+    });
+    await updateUserProfile(data);
+    onClose();
+  }, [avatar, birth, nickName, onClose, sex]);
 
   const onNickNameChanged = useCallback(
     (e) => {
@@ -55,20 +75,29 @@ export const UserSettings = ({ onHomeClick, className }) => {
 
   const onBirthClick = useCallback(() => {
     setBirthModalOpen(true);
-  },[])
+  }, []);
+
+  const onBirthdaySettingModalOk = useCallback(({ birthday }) => {
+    const v = `${birthday.getFullYear()}-${birthday.getMonth() + 1}-${birthday.getDate()}`
+    setBirth(v);
+    setBirthModalOpen(false);
+  }, []);
+
+  const onBirthdaySettingModalClose = useCallback(() => {
+    setBirthModalOpen(false);
+  });
 
   const onBackgroundChange = useCallback((e) => {}, []);
 
   const loadData = useCallback(async () => {
     const { data: respData } = await getUserProfile();
     respData.forEach((v) => {
-      const keyArr = [];
       if (v.key === 'nickname') {
         setNickName(v.value);
       } else if (v.key === 'avatar') {
         setAvatar(v.value);
       } else if (v.key === 'sex') {
-        setSex('sex');
+        setSex(v.value);
       } else if (v.key === 'birth') {
         setBirth(v.value);
       }
@@ -88,7 +117,7 @@ export const UserSettings = ({ onHomeClick, className }) => {
         />
         <div className={styles.settingBody}>
           <div className={styles.centerWrapper}>
-            <ChangeAvatar img={avatar} />
+            <ChangeAvatar image={avatar} />
             <div className={styles.basicInfoTitle}>基础信息</div>
             <SettingInputElement
               title="昵称"
@@ -109,28 +138,11 @@ export const UserSettings = ({ onHomeClick, className }) => {
               placeholder="请选择生日"
               className={styles.inputUnit}
               onClick={onBirthClick}
-            />
-            <SettingInputElement
-              title="生日"
-              placeholder="请选择生日"
-              className={styles.inputUnit}
               value={birth}
             />
-            <div className={classNames(styles.settingSelect, styles.inputUnit)}>
-              <input
-                type="text"
-                className={styles.inputElement}
-                placeholder="请选择生日"
-                readOnly={true}
-              />
-              <img
-                className={styles.icon}
-                src={require('@Assets/newchat/light/icon16-arrow-down.png')}
-                alt="icon"
-              />
-            </div>
+
+            <SettingRadioElement options={[{ label: 'item1', value: 1 }]} />
           </div>
-          <SettingRadioElement options={[{ label: 'item1', value: 1 }]} />
         </div>
         <div className={styles.settingFooter}>
           <div className={styles.centerWrapper}>
@@ -143,7 +155,11 @@ export const UserSettings = ({ onHomeClick, className }) => {
           </div>
         </div>
       </div>
-      <BirthdaySettingModal opne={birthModalOpen} />
+      <BirthdaySettingModal
+        open={birthModalOpen}
+        onOk={onBirthdaySettingModalOk}
+        onClose={onBirthdaySettingModalClose}
+      />
       <SexSettingModal
         open={sexSettingModalOpen}
         onOk={onSexSettingModalOk}
