@@ -299,18 +299,21 @@ def register_user_handler(app:Flask,path_prefix:str)->Flask:
             - 用户
         parameters:
             - in: body
-              name: profiles
+              name: body
               required: true
               schema:
-                type: array
-                items:
-                    properties:
-                        key:
-                            type: string
-                            description: 属性名
-                        value:
-                            type: string
-                            description: 属性值
+                type: object
+                properties:
+                    profiles:
+                        type: array
+                        items:
+                            properties:
+                                key:
+                                    type: string
+                                    description: 属性名
+                                value:
+                                    type: string
+                                    description: 属性值
         responses:
             200:
                 description: 更新成功
