@@ -196,7 +196,7 @@ def run_script_inner(app: Flask, user_id: str, course_id: str, lesson_id: str=No
                         order =  init_buy_record(app,user_id,course_id)
                         btn = [{
                             "label":script_info.script_ui_content,
-                            "value":order.record_id
+                            "value":order.order_id
                         }]
                         yield make_script_dto("order",{"title":"买课！","buttons":btn},script_info.script_id)
                     elif  script_info.script_ui_type == UI_TYPE_CONTINUED:
