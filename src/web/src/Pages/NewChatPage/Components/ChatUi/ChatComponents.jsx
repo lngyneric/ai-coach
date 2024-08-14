@@ -171,7 +171,7 @@ const convertMessage = (serverMessage, userInfo) => {
 };
 
 const convertEventInputModal = ({ type, content }) => {
-  if (type === RESP_EVENT_TYPE.PHONE) {
+  if (type === RESP_EVENT_TYPE.PHONE || type === RESP_EVENT_TYPE.CHECKCODE) {
     return {
       type,
       props: { content },
