@@ -6,6 +6,7 @@ import datetime
 import json
 import re
 import time
+import traceback
 from typing import Generator
 from flask import Flask,Response,make_response
 from langchain.prompts import PromptTemplate
@@ -236,7 +237,15 @@ def run_script(app: Flask, user_id: str, course_id: str, lesson_id: str=None,inp
             app.logger.info("run_script with lock")
             yield from run_script_inner(app,user_id,course_id,lesson_id,input,input_type,script_id)
         except Exception as e:
+            # 输出详细的错误信息
             app.logger.error(e)
+            # 输出异常信息
+            error_info = {
+                "name": type(e).__name__,
+                "description": str(e),
+                "traceback": traceback.format_exc()
+            }
+            app.logger.error(error_info)
             yield make_script_dto("text","系统错误",None)
             yield make_script_dto("text_end","",None)
         finally:

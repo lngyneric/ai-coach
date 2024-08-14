@@ -268,11 +268,11 @@ def verify_sms_code_without_phone(app:Flask,user_id:str,checkcode)->UserToken:
         phone = redis.get(app.config["REDIS_KEY_PRRFIX_PHONE"]+user_id)
         if phone == None:
             app.logger.info("cache user_id:"+user_id + " phone is None")
-            user = User.query.filter(User.user_id == user_id).first()
+            user = User.query.filter(User.user_id == user_id).order_by(User.id.asc()).first()
             phone = user.mobile
         else:
             phone = str(phone,encoding="utf-8")
-            user = User.query.filter(User.mobile == phone).order().first()
+            user = User.query.filter(User.mobile == phone).order_by(User.id.asc()).first()
             if user:
                 user_id = user.user_id
         return verify_sms_code(app,user_id,phone,checkcode)
