@@ -148,7 +148,7 @@ def reset_user_study_info(app:Flask,user_id:str):
         db.session.execute(text("delete from ai_course_buy_record where user_id = :user_id"),{"user_id":user_id})
         db.session.execute(text("delete from ai_course_lesson_attend where user_id = :user_id"),{"user_id":user_id})
         db.session.execute(text("delete from ai_course_lesson_attendscript where user_id = :user_id"),{"user_id":user_id})
-        db.session.execute(text("delete from ai_course_lesson_generation where user_id = :user_id"),{"user_id":user_id})
+        # db.session.execute(text("delete from ai_course_lesson_generation where user_id = :user_id"),{"user_id":user_id})
         db.session.execute(text("delete from user_profile where user_id = :user_id"),{"user_id":user_id})
         db.session.commit()
         return True
