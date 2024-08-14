@@ -162,7 +162,7 @@ def handle_input_checkcode(app:Flask,user_id:str,attend:AICourseLessonAttend,scr
     try:
         ret = verify_sms_code_without_phone(app,user_id,input)
         yield make_script_dto("profile_update",{"key":"phone","value":ret.userInfo.mobile},script_info.script_id)
-        yield make_script_dto("user_login",{"phone":ret.userInfo.mobile,"user_id":ret.userInfo.user_id},script_info.script_id)
+        yield make_script_dto("user_login",{"phone":ret.userInfo.mobile,"user_id":ret.userInfo.user_id,"token":ret.token},script_info.script_id)
         input = None
         span = trace.span(name="user_input_phone",input=input)
         span.end()
