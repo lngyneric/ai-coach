@@ -33,3 +33,9 @@ def create_pingxx_order(app:Flask,order_no,app_id,channel,amount,client_ip,subje
     app.logger.info('create pingxx order done')
     return order
 
+def retrieve_pingxx_order(app:Flask,charge_id):
+    app.logger.info('retrieve pingxx order,charge_id:{}'.format(charge_id))
+    pingpp = init_pingxx(app)
+    order = pingpp.Charge.retrieve(charge_id)
+    app.logger.info('retrieve pingxx order done')
+    return order
