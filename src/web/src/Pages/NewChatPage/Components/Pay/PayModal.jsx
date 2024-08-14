@@ -22,6 +22,8 @@ import classNames from 'classnames';
 import { useInterval } from 'react-use';
 import { message } from 'antd';
 
+import payInfoBg from 'Assets/newchat/pay-info-bg.png';
+
 const DEFAULT_QRCODE = 'DEFAULT_QRCODE';
 const MAX_TIMEOUT = 1000 * 60 * 3;
 const COUNTDOWN_INTERVAL = 1000;
@@ -38,7 +40,8 @@ export const PayModal = ({ open = false, onCancel, onOk }) => {
   const [orderId, setOrderId] = useState('');
   const [countDwon, setCountDown] = useState(MAX_TIMEOUT);
   const [messageApi, contextHolder] = message.useMessage();
-  const [couponCode, seteCouponCode] = useState('');
+  const [couponCode, setCouponCode] = useState('');
+  const [discount, setDiscount] = useState('');
 
   useInterval(async () => {
     if (countDwon <= 0) {
@@ -52,9 +55,10 @@ export const PayModal = ({ open = false, onCancel, onOk }) => {
     if (resp.status === ORDER_STATUS.BUY_STATUS_SUCCESS) {
       setInterval(null);
       onOk?.();
-      return
+      return;
     }
 
+    setDiscount(resp.discount);
     setPrice(resp.value_to_pay);
   }, interval);
 
@@ -79,6 +83,8 @@ export const PayModal = ({ open = false, onCancel, onOk }) => {
     setPrice('0');
     setOrderId('');
     setInterval(null);
+    setCouponCode('');
+    setDiscount('');
 
     const { data: resp } = await initOrder();
     if (resp.status !== ORDER_STATUS.BUY_STATUS_INIT) {
@@ -135,6 +141,7 @@ export const PayModal = ({ open = false, onCancel, onOk }) => {
   const onCouponCodeOk = useCallback(
     async (values) => {
       const { couponCode } = values;
+      setCouponCode(couponCode);
       const resp = await applyDiscountCode({ orderId, code: couponCode });
       if (resp.code !== 0) {
         messageApi.error(resp.message);
@@ -155,19 +162,37 @@ export const PayModal = ({ open = false, onCancel, onOk }) => {
   return (
     <>
       <Modal
-        title={t('pay.payModalTitle')}
+        title={null}
         open={open}
         footer={null}
         onCancel={_onCancel}
         className={styles.payModal}
-        width={'800px'}
+        width="700px"
+        height="588px"
         closable={false}
         maskClosable={false}
       >
         <div className={styles.payModalContent}>
-          <div className={styles.introSection}></div>
+          <div
+            className={styles.introSection}
+            style={{ backgroundImage: `url(${payInfoBg})` }}
+          ></div>
           <div className={styles.paySection}>
-            <div className={styles.payInfoTitle}>扫码支付</div>
+            <div className={styles.payInfoTitle}>首发特惠</div>
+            <div className={styles.priceWrapper}>
+              <div
+                className={classNames(
+                  styles.price,
+                  (isLoading || isTimeout) && styles.disabled
+                )}
+              >
+                <span className={styles.priceSign}>￥</span>
+                <span className={styles.priceNumber}>{price}</span>
+              </div>
+            </div>
+            <div className={styles.discountTipWrapper}>
+              <div className={styles.discountTip}>已节省： {discount || '0.00'}</div>
+            </div>
             <div className={styles.payChannelWrapper}>
               <span>支付方式：</span>
               <Select
@@ -180,35 +205,32 @@ export const PayModal = ({ open = false, onCancel, onOk }) => {
             </div>
             <div className={styles.qrcodeWrapper}>
               <QRCode
-                size={200}
+                size={183}
                 value={qrUrl}
                 status={getQrcodeStatus()}
                 onRefresh={onQrcodeRefresh}
+                bordered={false}
               />
             </div>
-            <div className={styles.priceWrapper}>
-              <div
-                className={classNames(
-                  styles.price,
-                  (isLoading || isTimeout) && styles.disabled
-                )}
-              >
-                ￥ {price}
-              </div>
-            </div>
             <div className={styles.couponCodeWrapper}>
-              <Button type="link" onClick={onCouponCodeClick}>
-                使用优惠券
+              <Button
+                type="link"
+                onClick={onCouponCodeClick}
+                className={styles.couponCodeButton}
+              >
+                {!couponCode ? '使用优惠券' : '修改优惠券'}
               </Button>
             </div>
           </div>
         </div>
       </Modal>
-      <CouponCodeModal
-        open={couponCodeModalOpen}
-        onCancel={onCouponCodeModalClose}
-        onOk={onCouponCodeOk}
-      />
+      {couponCodeModalOpen && (
+        <CouponCodeModal
+          open={couponCodeModalOpen}
+          onCancel={onCouponCodeModalClose}
+          onOk={onCouponCodeOk}
+        />
+      )}
       {contextHolder}
     </>
   );
