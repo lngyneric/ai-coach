@@ -1,4 +1,4 @@
-
+from enum import Enum
 
 BUY_STATUS_INIT = 501
 BUY_STATUS_SUCCESS = 502
@@ -99,3 +99,59 @@ DISCOUNT_STATUS_VALUES = {
     DISCOUNT_STATUS_USED:"已使用",
     DISCOUNT_STATUS_TIMEOUT:"已过期"
 }
+
+class DiscountStatus(Enum):
+    INACTIVE = 901
+    ACTIVE = 902
+    USED = 903
+    TIMEOUT = 904
+
+    def __str__(self):
+        return self.name
+    def __int__(self):
+        return self.value
+    def __get_str__(self):
+        return DISCOUNT_STATUS_VALUES[self.value]
+    def __get_int__(self):
+        return DISCOUNT_STATUS_TYPES[self.name]
+class DiscountType(Enum):
+    FIXED = 701
+    PERCENT = 702
+
+    def __str__(self):
+        return self.name
+    def __int__(self):
+        return self.value
+    def __get_str__(self):
+        return DISCOUNT_TYPE_VALUES[self.value]
+    def __get_int__(self):
+        return DISCOUNT_TYPE_TYPES[self.name]
+class DiscountApplyType(Enum):
+    ALL = 801
+    SPECIFIC = 802
+
+    def __str__(self):
+        return self.name
+    def __int__(self):
+        return self.value
+    def __get_str__(self):
+        return DISCOUNT_APPLY_TYPE_VALUES[self.value]
+    def __get_int__(self):
+        return DISCOUNT_APPLY_TYPE_TYPES[self.name]
+class AttendStatus(Enum):
+    NOT_STARTED = 601
+    IN_PROGRESS = 602
+    COMPLETED = 603
+    REFUND = 604
+    LOCKED = 605
+    UNAVAILABE = 606
+    BRANCH = 607
+
+    def __str__(self):
+        return self.name
+    def __int__(self):
+        return self.value
+    def __get_str__(self):
+        return ATTEND_STATUS_VALUES[self.value]
+    def __get_int__(self):
+        return ATTEND_STATUS_TYPES[self.name]

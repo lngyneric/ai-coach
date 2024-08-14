@@ -35,7 +35,7 @@ def create_app()->Flask:
     from flaskr import dao
     dao.init_db(app)
     # 初始化r 和ADMIN相关的表逻辑
-    from flaskr.service import admin
+    from flaskr.service.admin.models import AdminUser
     dao.init_redis(app)
     Migrate(app,dao.db)
 
@@ -45,18 +45,13 @@ def create_app()->Flask:
     # 初始化route
     from flaskr.route import register_route
     app = register_route(app)
-    
     ## 初始化swagger
     if app.config.get('SWAGGER_ENABLED',False):
         from flaskr.common import swagger_config
         app.logger.info('swagger init ...')
         swagger = Swagger(app,config=swagger_config,merge=True)
-
     return app
 
-
-
-print('main in app'+__name__)
 if __name__ == '__main__':
     app = create_app()
     app.run(host='0.0.0.0',port=5800,debug=True)
