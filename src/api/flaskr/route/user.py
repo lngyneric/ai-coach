@@ -2,14 +2,13 @@ import json
 from flask import Flask, request, jsonify, make_response
 
 from flaskr.service.common.models import raise_param_error
-from flaskr.service.profile.funcs import get_user_profile_labels, get_user_profiles
+from flaskr.service.profile.funcs import get_user_profile_labels, update_user_profile_with_lable
 from ..service.user import *
 from functools import wraps
 from .common import make_common_response,bypass_token_validation,by_pass_login_func
 
 
 def register_user_handler(app:Flask,path_prefix:str)->Flask:
-
 
     @app.route(path_prefix+'/register', methods=['POST'])
     @bypass_token_validation
@@ -81,8 +80,6 @@ def register_user_handler(app:Flask,path_prefix:str)->Flask:
     
     @app.before_request
     def before_request():
-        app.logger.info('request.endpoint:'+str(request.endpoint))
-        app.logger.info('request.path:'+str(request.path))
         if request.endpoint in ['login', 'register','require_reset_code','reset_password','invoke','update_lesson'] or request.endpoint in by_pass_login_func or request.endpoint is None:
             # 在登录和注册处理函数中绕过登录态验证
             return
@@ -94,9 +91,8 @@ def register_user_handler(app:Flask,path_prefix:str)->Flask:
             token = request.args.get('token',None)
         if not token:
             token = request.headers.get('Token',None)
-        if not token and request.get_json():
+        if not token and request.method.upper() == "POST" and  request.is_json :
             token = request.get_json().get('token',None)
-            # app.logger.info('headers token:'+str(token))
         token = str(token)
         if not token and request.endpoint in by_pass_login_func:
             return
@@ -175,7 +171,10 @@ def register_user_handler(app:Flask,path_prefix:str)->Flask:
         if not tmp_id:
             raise_param_error('temp_id')
         user_token = generate_temp_user(app,tmp_id,source)
+        
         resp = make_response(make_common_response(user_token))
+        resp.headers.add('Set-Cookie', 'token={};Path=/'.format(user_token.token))
+    
         return resp
 
     @app.route(path_prefix+'/generate_chk_code',methods=['POST'])
@@ -289,6 +288,50 @@ def register_user_handler(app:Flask,path_prefix:str)->Flask:
         
         """
         return make_common_response(get_user_profile_labels(app,request.user.user_id))
+    
+
+    @app.route(path_prefix+'/update_profile',methods=['POST'])
+    def update_profile():
+        """
+        更新用户信息
+        ---
+        tags:
+            - 用户
+        parameters:
+            - in: body
+              name: body
+              required: true
+              schema:
+                type: object
+                properties:
+                    profiles:
+                        type: array
+                        items:
+                            properties:
+                                key:
+                                    type: string
+                                    description: 属性名
+                                value:
+                                    type: string
+                                    description: 属性值
+        responses:
+            200:
+                description: 更新成功
+                content:
+                    application/json:
+                        schema:
+                            properties:
+                                code:
+                                    type: integer
+                                    description: 返回码
+                                message:
+                                    type: string
+                                    description: 返回信息
+        """
+        profiles = request.get_json().get('profiles',None)
+        if not profiles:
+            raise_param_error('profiles')
+        return make_common_response(update_user_profile_with_lable(app,request.user.user_id,profiles))
     
     
 
