@@ -58,7 +58,11 @@ PROFILES_LABLES = {
     },
     "style":{
         "label":"授课风格",
-        "items":[]
+        "items":[
+            "幽默风趣",
+            "严肃专业",
+            "鼓励温暖"
+        ]
     },
     "programming":{
         "label": "编程熟悉程度",
@@ -70,6 +74,14 @@ PROFILES_LABLES = {
     },
     "user_os":{
         "label":"用户操作系统",
+         "items":[
+            "Windows",
+            "MacOS",
+        ],
+        "items_mapping":{
+            "Windows":"win",
+            "MacOS":"mac"
+        }
     }
 }
 
@@ -120,38 +132,42 @@ def get_user_profiles(app:Flask,user_id:str,keys:list=None)->dict:
 
 
 
+
 def get_user_profile_labels(app:Flask,user_id:str):
     user_profiles = UserProfile.query.filter_by(user_id=user_id).all()
     user_info = User.query.filter(User.user_id==user_id).first()
-    result = {}
+    result = []
     if user_info:
         for key in PROFILES_LABLES:
             print(key)
             if PROFILES_LABLES[key].get("mapping"):
-                result[key] ={
-                    # "key": key,
+                item = {
+                    "key": key,
                     "label": PROFILES_LABLES[key]["label"],
                     "type":  PROFILES_LABLES[key].get("type", "select" if "items" in PROFILES_LABLES[key]  else "text"),
                     "value": getattr(user_info, PROFILES_LABLES[key]["mapping"]),
                     "items": PROFILES_LABLES[key].get("items")
                 }
                 if PROFILES_LABLES[key].get("items_mapping"):
-                    result[key]["value"] = PROFILES_LABLES[key]["items"][getattr(user_info, PROFILES_LABLES[key]["mapping"])]
+                    item["value"] = PROFILES_LABLES[key]["items"][getattr(user_info, PROFILES_LABLES[key]["mapping"])]
+                result.append(item)
 
     for user_profile in user_profiles:
         if user_profile.profile_key in PROFILES_LABLES:
-            if result.get(user_profile.profile_key) is None:
-                app.logger.info("user_profile:{}".format(user_profile.profile_key))
-                result[user_profile.profile_key]={ 
+            items = [l for l in result if l["key"] == user_profile.profile_key]
+            item = items[0] if len(items) > 0 else None
+            if item is None:
+                item={ 
+                    "key": user_profile.profile_key,
                     "label": PROFILES_LABLES[user_profile.profile_key]["label"],
-                    "type":  PROFILES_LABLES[key].get("type", "select" if "items" in PROFILES_LABLES[user_profile.profile_key]  else "text"),
+                    "type":  PROFILES_LABLES[user_profile.profile_key].get("type", "select" if "items" in PROFILES_LABLES[user_profile.profile_key]  else "text"),
                     "value": user_profile.profile_value,
                     "items":PROFILES_LABLES[user_profile.profile_key]["items"] if "items" in PROFILES_LABLES[user_profile.profile_key] else None
                 }
-                if PROFILES_LABLES[user_profile.profile_key].get("items_mapping"):
-                    result[key]["value"] = PROFILES_LABLES[key]["items"][ user_profile.profile_value]
+                result.append(item)
+            
+            if PROFILES_LABLES[user_profile.profile_key].get("items_mapping"):
+                   item["value"] = PROFILES_LABLES[user_profile.profile_key]["items"][ user_profile.profile_value]
             else:
-                result[user_profile.profile_key]["value"] = user_profile.profile_value
-     
-                
+                item["value"] = user_profile.profile_value
     return result

@@ -9,6 +9,7 @@ services:
       - ./.env
     volumes:
       - ../src/api/:/app/
+      - /Users/geyunfei/dev/agiclass/keys/pingxx_test_key.gem:/app/pingxx_key.gem
   ai-shifu-web-dev:
     container_name:  ai-shifu-web-dev
     image: ai-shifu-web-dev:latest
