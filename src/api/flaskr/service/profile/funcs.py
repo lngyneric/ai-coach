@@ -27,6 +27,9 @@ PROFILES_LABLES = {
         "label":"昵称",
         "mapping":"name"
     },
+    "user_background":{
+        "label":"用户背景"
+    },
     "sex":{
         "label":"性别",
         "mapping":"user_sex",
