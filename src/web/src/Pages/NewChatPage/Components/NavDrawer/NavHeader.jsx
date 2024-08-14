@@ -1,8 +1,9 @@
-import styles from "./NavHeader.module.scss";
-import LogoSquare from "Components/logo/LogoSquare.jsx";
+import styles from './NavHeader.module.scss';
+import LogoSquare from 'Components/logo/LogoSquare.jsx';
 import { productName } from 'constants/productConstants';
 import classNames from 'classnames';
-import { memo } from "react";
+import { memo } from 'react';
+import LogoWithText from 'Components/logo/LogoWithText.jsx';
 
 export const NavHeader = ({
   showCollapseBtn = true,
@@ -12,19 +13,36 @@ export const NavHeader = ({
   onClose = () => {},
 }) => {
   return (
-    <div className={classNames(styles.navHeader, isCollapse ? styles.collapse : '')}>
+    <div
+      className={classNames(
+        styles.navHeader,
+        isCollapse ? styles.collapse : ''
+      )}
+    >
       <div className={styles.logoArea}>
-
-        <LogoSquare size={24} />
-        {!isCollapse && <div className={styles.productName}>{productName}</div>}
+        {!isCollapse && <LogoWithText direction="row" size={30} />}
       </div>
-        
-      {showCollapseBtn 
-        && (<div className={styles.actionBtn} onClick={() => onToggle?.({ isCollapse: !isCollapse })}>
-          <img src={require('@Assets/newchat/light/icon16-expand.png')} alt="展开/折叠" className={classNames(styles.icon)} />
-        </div>)}
-      {showCloseBtn && <div className={styles.actionBtn} onClick={onClose}>X</div>}
-      
+
+      {showCollapseBtn && (
+        <div
+          className={styles.actionBtn}
+          onClick={() => onToggle?.({ isCollapse: !isCollapse })}
+        >
+          <img
+            src={require('@Assets/newchat/light/icon16-expand.png')}
+            alt="展开/折叠"
+            className={classNames(styles.icon)}
+          />
+        </div>
+      )}
+      { isCollapse && (
+        <LogoWithText direction="col" size={30} />
+      )}
+      {showCloseBtn && (
+        <div className={styles.actionBtn} onClick={onClose}>
+          X
+        </div>
+      )}
     </div>
   );
 };
