@@ -2,7 +2,7 @@ import { useState } from 'react';
 import styles from './SexSettingModal.module.scss';
 import SettingBaseModal from './SettingBaseModal.jsx';
 import classNames from 'classnames';
-import { SEX } from 'constants/userConstants';
+import { SEX, SEX_NAMES } from 'constants/userConstants';
 import { message } from 'antd';
 import { useCallback } from 'react';
 import { memo } from 'react';
@@ -16,9 +16,9 @@ export const SexSettingModal = ({
   const [selectedSex, setSelectedSex] = useState(initialValues.sex);
   const [messageApi, contextHolder] = message.useMessage();
 
-  const checkSelected = (sex) => {
+  const checkSelected = useCallback((sex) => {
     return sex === selectedSex;
-  };
+  }, [selectedSex]);
   const getSelectedClassName = (sex) => {
     return checkSelected(sex) ? 'selected' : '';
   };
@@ -54,7 +54,7 @@ export const SexSettingModal = ({
     return checkSelected(sex)
       ? require('@Assets/newchat/light/icon16-account-hl@2x.png')
       : require('@Assets/newchat/light/icon16-account.png');
-  });
+  }, [checkSelected]);
 
   return (
     <SettingBaseModal
@@ -65,43 +65,43 @@ export const SexSettingModal = ({
     >
       <div className={styles.sexWrapper}>
         <div
-          className={classNames(styles.sexItem, getSelectedClassName(SEX.MALE))}
-          onClick={() => setSelectedSex(SEX.MALE)}
+          className={classNames(styles.sexItem, getSelectedClassName(SEX_NAMES[SEX.MALE]))}
+          onClick={() => setSelectedSex(SEX_NAMES[SEX.MALE])}
         >
           <img
             className={styles.itemIcon}
-            src={sexMaleIcon(SEX.MALE)}
+            src={sexMaleIcon(SEX_NAMES[SEX.MALE])}
             alt="male"
           />
-          <div className={styles.itemTitle}>男性</div>
+          <div className={styles.itemTitle}>{SEX_NAMES[SEX.MALE]}</div>
         </div>
         <div
           className={classNames(
             styles.sexItem,
-            getSelectedClassName(SEX.FEMALE)
+            getSelectedClassName(SEX_NAMES[SEX.FEMALE])
           )}
-          onClick={() => setSelectedSex(SEX.FEMALE)}
+          onClick={() => setSelectedSex(SEX_NAMES[SEX.FEMALE])}
         >
           <img
             className={styles.itemIcon}
-            src={sexFemaleIcon(SEX.FEMALE)}
+            src={sexFemaleIcon(SEX_NAMES[SEX.FEMALE])}
             alt="female"
           />
-          <div className={styles.itemTitle}>女性</div>
+          <div className={styles.itemTitle}>{SEX_NAMES[SEX.FEMALE]}</div>
         </div>
         <div
           className={classNames(
             styles.sexItem,
-            getSelectedClassName(SEX.SECRET)
+            getSelectedClassName(SEX_NAMES[SEX.SECRET])
           )}
-          onClick={() => setSelectedSex(SEX.SECRET)}
+          onClick={() => setSelectedSex(SEX_NAMES[SEX.SECRET])}
         >
           <img
             className={styles.itemIcon}
-            src={sexSecretIcon(SEX.SECRET)}
+            src={sexSecretIcon(SEX_NAMES[SEX.SECRET])}
             alt="secret"
           />
-          <div className={styles.itemTitle}>保密</div>
+          <div className={styles.itemTitle}>{SEX_NAMES[SEX.SECRET]}</div>
         </div>
       </div>
       {contextHolder}

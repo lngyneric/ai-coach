@@ -20,9 +20,8 @@ export const SettingBaseModal = ({
     <Modal
       visible={open}
       onClose={onClose}
-      destroyOnClose={true}
-      closeOnMaskClick={true}
       className={styles.SettingBaseModal}
+      closeOnMaskClick={true}
       content={
         <div
           style={{ width: calModalWidth({ inMobile, width: defaultWidth }) }}
