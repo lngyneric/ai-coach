@@ -8,7 +8,6 @@ export const BirthdaySettingModal = ({
   open,
   onClose,
   onOk = ({ birthday }) => {},
-  initialValues = {},
 }) => {
   const [value, setValue] = useState(new Date());
   const [showPicker, setShowPicker] = useState(true);

@@ -136,9 +136,20 @@ export const verifySmsCode = ({ mobile, sms_code }) => {
 }
 
 
+// 获取用户详细信息
 export const getUserProfile = () => {
   return request({
     url: '/api/user/get_profile',
     method: 'get',
   });
+}
+
+// 上传头像
+export const uploadAvatar = (file) => {
+  return request({
+    headers: { 'Content-Type': 'application/x-www-form-urlencoded' },
+    method: 'POST',
+    url: '/api/user/upload_avatar',
+    data: file,
+  })
 }

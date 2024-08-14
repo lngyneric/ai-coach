@@ -47,7 +47,7 @@ const USER_ROLE = {
 
 const robotAvatar = require('@Assets/chat/sunner_icon.jpg');
 
-const MarkdownBubble = (props) => {
+const MarkdownBubble = memo((props) => {
   const { mobileStyle, onImageLoaded } = props;
   const onCopy = (content) => {
     navigator.clipboard.writeText(content);
@@ -103,7 +103,7 @@ const MarkdownBubble = (props) => {
               <Image
                 {...imgProps}
                 width={'100%'}
-                // preview={!props.isStreaming}
+                preview={!props.isStreaming}
                 style={{ borderRadius: '5px' }}
                 onLoad={onImageLoaded}
               ></Image>
@@ -113,7 +113,7 @@ const MarkdownBubble = (props) => {
       />
     </Bubble>
   );
-};
+});
 
 const createMessage = ({
   id = 0,
@@ -243,9 +243,7 @@ export const ChatComponents = forwardRef(
     const { messages, appendMsg, setTyping, updateMsg, resetList } =
       useMessages([]);
 
-    const { hasLogin, checkLogin, updateUserInfo } = useUserStore(
-      (state) => state
-    );
+    const { checkLogin, updateUserInfo } = useUserStore((state) => state);
 
     const mobileStyle = frameLayout === FRAME_LAYOUT_MOBILE;
     const {
@@ -255,9 +253,7 @@ export const ChatComponents = forwardRef(
     } = useDisclosture();
 
     useEffect(() => {
-      if (!lessonId) {
-        setLessonId(currLessonId);
-      }
+      setLessonId(currLessonId);
     }, [currLessonId, lessonId]);
 
     const initLoadedInteraction = useCallback(
@@ -362,7 +358,7 @@ export const ChatComponents = forwardRef(
             } else if (response.type === RESP_EVENT_TYPE.LESSON_UPDATE) {
               lessonUpdateResp(response, isEnd, nextStep);
             } else if (response.type === RESP_EVENT_TYPE.ORDER) {
-              payModalOpen();
+              onPayModalOpen();
               setInputDisabled(false);
             } else if (response.type === RESP_EVENT_TYPE.CHAPTER_UPDATE) {
               const { status, lesson_id: lessonId } = response.content;
@@ -382,9 +378,8 @@ export const ChatComponents = forwardRef(
                 setInputDisabled(false);
               }
             } else if (response.type === RESP_EVENT_TYPE.USER_LOGIN) {
-              tokenTool.set({ token:response.content.token, faked: true });
+              tokenTool.set({ token: response.content.token, faked: true });
               checkLogin();
-              
             } else if (response.type === RESP_EVENT_TYPE.PROFILE_UPDATE) {
               const content = response.content;
               updateUserInfo({ [content.key]: content.value });
@@ -392,16 +387,7 @@ export const ChatComponents = forwardRef(
           } catch (e) {}
         });
       },
-      [
-        appendMsg,
-        checkLogin,
-        lessonUpdateResp,
-        payModalOpen,
-        setTyping,
-        updateMsg,
-        updateUserInfo,
-        userInfo,
-      ]
+      [appendMsg, checkLogin, lessonUpdateResp, onPayModalOpen, setTyping, updateMsg, updateUserInfo, userInfo]
     );
 
     const scrollToBottom = useCallback(() => {
@@ -415,7 +401,7 @@ export const ChatComponents = forwardRef(
 
     const onImageLoaded = useCallback(() => {
       scrollToBottom();
-    }, [scrollToBottom])
+    }, [scrollToBottom]);
 
     useEffect(() => {
       if (!loadedData) {
@@ -565,26 +551,31 @@ export const ChatComponents = forwardRef(
       onPayModalClose();
     }, [handleSend, onPayModalClose]);
 
-    const renderMessageContent = (msg) => {
-      const { content, type } = msg;
-      if (type === CHAT_MESSAGE_TYPE.LESSON_SEPARATOR) {
-        return <div>less</div>;
-      }
-      if (content === undefined) {
+    const renderMessageContent = useCallback(
+      (msg) => {
+        const { content, type } = msg;
+        if (type === CHAT_MESSAGE_TYPE.LESSON_SEPARATOR) {
+          return <></>;
+        }
+
+        if (content === undefined) {
+          return <></>;
+        }
+
+        if (type === CHAT_MESSAGE_TYPE.TEXT) {
+          return (
+            <MarkdownBubble
+              content={content}
+              isStreaming={isStreaming}
+              mobileStyle={mobileStyle}
+              onImageLoaded={onImageLoaded}
+            />
+          );
+        }
         return <></>;
-      }
-      if (type === CHAT_MESSAGE_TYPE.TEXT) {
-        return (
-          <MarkdownBubble
-            content={content}
-            isStreaming={isStreaming}
-            mobileStyle={mobileStyle}
-            onImageLoaded={onImageLoaded}
-          />
-        );
-      }
-      return <></>;
-    };
+      },
+      [isStreaming, mobileStyle, onImageLoaded]
+    );
 
     useImperativeHandle(ref, () => ({}));
 

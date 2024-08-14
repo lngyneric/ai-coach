@@ -3,6 +3,7 @@ import styles from './SettingInputElement.module.scss';
 import classNames from 'classnames';
 import { useCallback } from 'react';
 import { useEffect } from 'react';
+import { memo } from 'react';
 
 export const SettingInputElement = ({
   value = '',
@@ -39,3 +40,5 @@ export const SettingInputElement = ({
     </div>
   );
 };
+
+export default memo(SettingInputElement)
