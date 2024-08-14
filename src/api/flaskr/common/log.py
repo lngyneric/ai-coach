@@ -4,7 +4,7 @@ from flask import Flask,g ,request
 import uuid
 from logging.handlers import TimedRotatingFileHandler
 import threading
-
+import socket
 from datetime import datetime
 import pytz
 thread_local = threading.local() 
@@ -47,8 +47,9 @@ def init_log(app:Flask)->Flask:
         request.client_ip = user_ip
         thread_local.client_ip = user_ip
 
+    host_name = socket.gethostname()
     
-    log_format = '%(asctime)s [%(levelname)s] ai-shifu.com/ai-sifu %(name)s %(client_ip)s %(url)s %(request_id)s %(message)s'
+    log_format = '%(asctime)s [%(levelname)s] ai-shifu.com/ai-sifu '+host_name+' %(client_ip)s %(url)s %(request_id)s %(message)s'
     formatter = RequestFormatter(log_format)
     
     log_file = app.config.get('LOGGING_PATH', 'logs/ai-sifu.log')

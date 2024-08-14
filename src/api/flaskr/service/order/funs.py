@@ -4,13 +4,13 @@ import json
 from re import S
 from typing import List
 
-from numpy import char
+from numpy import block, char
 from sympy import product
 
 from flaskr.common.swagger import register_schema_to_swagger
 from .models import *
 from flask import Flask
-from ...dao import db
+from ...dao import db,redis_client
 from ..common.models import *
 from ..lesson.models import AICourse, AILesson
 from .models import AICourseLessonAttend
@@ -136,7 +136,6 @@ def generate_charge(app: Flask,record_id:str,channel:str,client_ip:str)->BuyReco
             app.logger.error('buy record:{} status is not init'.format(record_id))
             raise ORDER_HAS_PAID
         amount = int((buy_record.price - buy_record.discount_value )*100)
-
         product_id = course.course_id
         subject = course.course_name
         body = course.course_name
@@ -184,35 +183,45 @@ def generate_charge(app: Flask,record_id:str,channel:str,client_ip:str)->BuyReco
 
 def success_buy_record_from_pingxx(app: Flask,charge_id:str):
     with app.app_context():
-        app.logger.info('success buy record from pingxx charge:"{}"'.format(charge_id))
-        pingxx_order = PingxxOrder.query.filter(PingxxOrder.charge_id==charge_id).first()
-        if pingxx_order:
-            buy_record = AICourseBuyRecord.query.filter(AICourseBuyRecord.record_id==pingxx_order.record_id).first()
-            if buy_record:
-                buy_record.status = BUY_STATUS_SUCCESS
-                lessons = AILesson.query.filter(AILesson.course_id==buy_record.course_id,AILesson.status==1,AILesson.lesson_type != LESSON_TYPE_TRIAL).all()
-                for lesson in lessons:
-                    app.logger.info('init lesson attend for user:{} lesson:{}'.format(buy_record.user_id,lesson.lesson_id))
-                    attend = AICourseLessonAttend.query.filter(AICourseLessonAttend.user_id==buy_record.user_id,AICourseLessonAttend.lesson_id==lesson.lesson_id).first()
-                    if attend:
-                        continue
-                    attend = AICourseLessonAttend()
-                    attend.attend_id = str(get_uuid(app))
-                    attend.course_id = buy_record.course_id
-                    attend.lesson_id = lesson.lesson_id
-                    attend.user_id = buy_record.user_id
-                    if lesson.lesson_no in ['01','0101']:
-                        attend.status = ATTEND_STATUS_NOT_STARTED
-                    else:
-                        attend.status = ATTEND_STATUS_LOCKED
-                db.session.commit()
-                return AICourseBuyRecordDTO(buy_record.record_id,buy_record.user_id,buy_record.course_id,buy_record.price,buy_record.status,buy_record.discount_value)
-            else:
-                app.logger.error('record:{} not found'.format(pingxx_order.record_id))
-        else:
-            app.logger.error('charge:{} not found'.format(charge_id))
-        return None
+        lock = redis_client.lock('success_buy_record_from_pingxx'+charge_id,timeout=10,blocking_timeout=10)
 
+
+
+        if not lock:
+            app.logger.error('lock failed for charge:"{}"'.format(charge_id))
+        if lock.acquire(blocking=True):
+            try:
+                app.logger.info('success buy record from pingxx charge:"{}"'.format(charge_id))
+                pingxx_order = PingxxOrder.query.filter(PingxxOrder.charge_id==charge_id).first()
+                if pingxx_order:
+                    buy_record = AICourseBuyRecord.query.filter(AICourseBuyRecord.record_id==pingxx_order.record_id).first()
+                    if buy_record and buy_record.status == BUY_STATUS_TO_BE_PAID:
+                        buy_record.status = BUY_STATUS_SUCCESS
+                        lessons = AILesson.query.filter(AILesson.course_id==buy_record.course_id,AILesson.status==1,AILesson.lesson_type != LESSON_TYPE_TRIAL).all()
+                        for lesson in lessons:
+                            app.logger.info('init lesson attend for user:{} lesson:{}'.format(buy_record.user_id,lesson.lesson_id))
+                            attend = AICourseLessonAttend.query.filter(AICourseLessonAttend.user_id==buy_record.user_id,AICourseLessonAttend.lesson_id==lesson.lesson_id).first()
+                            if attend:
+                                continue
+                            attend = AICourseLessonAttend()
+                            attend.attend_id = str(get_uuid(app))
+                            attend.course_id = buy_record.course_id
+                            attend.lesson_id = lesson.lesson_id
+                            attend.user_id = buy_record.user_id
+                            if lesson.lesson_no in ['01','0101']:
+                                attend.status = ATTEND_STATUS_NOT_STARTED
+                            else:
+                                attend.status = ATTEND_STATUS_LOCKED
+                            db.session.add(attend)
+                        db.session.commit()
+                        return AICourseBuyRecordDTO(buy_record.record_id,buy_record.user_id,buy_record.course_id,buy_record.price,buy_record.status,buy_record.discount_value)
+                    else:
+                        app.logger.error('record:{} not found'.format(pingxx_order.record_id))
+                else:
+                    app.logger.error('charge:{} not found'.format(charge_id))
+                return None
+            finally:
+                lock.release()
 
         
             
