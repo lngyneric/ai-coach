@@ -33,7 +33,7 @@ const MainLayout = () => {
             marginRight: 42,
           }}
         >
-         AI 私教 
+        哎！师傅 - AI 学习社区
         </div>
         <Divider
           type="vertical"
