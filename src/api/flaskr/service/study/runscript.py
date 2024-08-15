@@ -27,7 +27,8 @@ from ...service.user.funs import send_sms_code_without_check, verify_sms_code_wi
 from ...service.user.models import User
 from ...dao import db,redis_client
 from .utils import *
-from .input_funcs import BreakException, handle_input 
+from .common import BreakException, handle_input
+from .input_funcs import *
 from .output_funcs import handle_output
 
 
@@ -48,7 +49,7 @@ def run_script_inner(app: Flask, user_id: str, course_id: str, lesson_id: str=No
                 app.logger.info("{}".format(attend))
                 lesson_id = attend.lesson_id
         else:
-            # 获取课程记录
+            # get attend info
             app.logger.info("user_id:{},course_id:{},lesson_id:{}".format(user_id,course_id,lesson_id))
             attend_info = AICourseLessonAttend.query.filter(AICourseLessonAttend.user_id==user_id, AICourseLessonAttend.course_id ==course_id,AICourseLessonAttend.lesson_id==lesson_id).first()
             if not attend_info:
