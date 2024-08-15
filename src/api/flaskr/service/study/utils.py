@@ -13,7 +13,7 @@ from ...api.llm import invoke_llm
 from ...service.common.models import AppException
 from ...service.lesson.const import CONTENT_TYPE_IMAGE, LESSON_TYPE_BRANCH_HIDDEN, SCRIPT_TYPE_FIX, SCRIPT_TYPE_PORMPT, SCRIPT_TYPE_SYSTEM, UI_TYPE_BRANCH, UI_TYPE_BUTTON, UI_TYPE_CHECKCODE, UI_TYPE_CONTINUED, UI_TYPE_INPUT, UI_TYPE_LOGIN, UI_TYPE_PHONE, UI_TYPE_SELECTION, UI_TYPE_TO_PAY
 from ...service.lesson.models import AICourse, AILesson, AILessonScript
-from ...service.order.consts import ATTEND_STATUS_BRANCH, ATTEND_STATUS_COMPLETED, ATTEND_STATUS_IN_PROGRESS, ATTEND_STATUS_NOT_STARTED, ATTEND_STATUS_VALUES
+from ...service.order.consts import ATTEND_STATUS_BRANCH, ATTEND_STATUS_COMPLETED, ATTEND_STATUS_IN_PROGRESS, ATTEND_STATUS_LOCKED, ATTEND_STATUS_NOT_STARTED, ATTEND_STATUS_VALUES
 from ...service.order.funs import AICourseLessonAttendDTO, init_buy_record, init_trial_lesson
 from ...service.order.models import AICourseBuyRecord, AICourseLessonAttend
 from ...service.profile.funcs import get_user_profiles, save_user_profiles
@@ -217,21 +217,21 @@ def update_attend_lesson_info(app:Flask,attend_id:str)->list[AILessonAttendDTO]:
     if attend_lesson_infos[-1]['attend'].attend_id == attend_id:
         # 最后一个已经完课
         # 整体章节完课
-        attend_lesson_infos[0]['attend'].status = ATTEND_STATUS_COMPLETED
-        res.append(AILessonAttendDTO(attend_lesson_infos[0]['lesson'].lesson_no,attend_lesson_infos[0]['lesson'].lesson_name,attend_lesson_infos[0]['lesson'].lesson_id,ATTEND_STATUS_VALUES[ATTEND_STATUS_COMPLETED]))
+        if attend_lesson_infos[0]['attend'].status == ATTEND_STATUS_IN_PROGRESS:
+            attend_lesson_infos[0]['attend'].status = ATTEND_STATUS_COMPLETED
+            res.append(AILessonAttendDTO(attend_lesson_infos[0]['lesson'].lesson_no,attend_lesson_infos[0]['lesson'].lesson_name,attend_lesson_infos[0]['lesson'].lesson_id,ATTEND_STATUS_VALUES[ATTEND_STATUS_COMPLETED]))
         # 找到下一章节进行解锁
         next_no = str(int(parent_no)+1).zfill(2)
         next_lessons = get_lesson_and_attend_info(app,next_no,lesson.course_id,attend_info.user_id)
         if len(next_lessons) > 0 :
             # 解锁
             for next_lesson_attend in next_lessons:
-                if next_lesson_attend['lesson'].lesson_no == next_no:
+                if next_lesson_attend['lesson'].lesson_no == next_no and next_lesson_attend['attend'].status== ATTEND_STATUS_LOCKED:
                     next_lesson_attend['attend'].status = ATTEND_STATUS_NOT_STARTED
                     res.append(AILessonAttendDTO(next_lesson_attend['lesson'].lesson_no,next_lesson_attend['lesson'].lesson_name,next_lesson_attend['lesson'].lesson_id,ATTEND_STATUS_VALUES[ATTEND_STATUS_NOT_STARTED]))
-                if next_lesson_attend['lesson'].lesson_no == next_no+'01':
+                if next_lesson_attend['lesson'].lesson_no == next_no+'01'and  next_lesson_attend['attend'].status== ATTEND_STATUS_LOCKED:
                     next_lesson_attend['attend'].status = ATTEND_STATUS_NOT_STARTED
                     res.append(AILessonAttendDTO(next_lesson_attend['lesson'].lesson_no,next_lesson_attend['lesson'].lesson_name,next_lesson_attend['lesson'].lesson_id,ATTEND_STATUS_VALUES[ATTEND_STATUS_NOT_STARTED]))
-
     for i in range(len(attend_lesson_infos)):
         app.logger.info(i)
         if i>0 and  attend_lesson_infos[i-1]['attend'].attend_id == attend_id:
