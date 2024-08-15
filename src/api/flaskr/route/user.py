@@ -6,6 +6,7 @@ from flaskr.service.profile.funcs import get_user_profile_labels, update_user_pr
 from ..service.user import *
 from functools import wraps
 from .common import make_common_response,bypass_token_validation,by_pass_login_func
+from flaskr.dao import db
 
 
 def register_user_handler(app:Flask,path_prefix:str)->Flask:
@@ -328,7 +329,9 @@ def register_user_handler(app:Flask,path_prefix:str)->Flask:
         profiles = request.get_json().get('profiles',None)
         if not profiles:
             raise_param_error('profiles')
-        return make_common_response(update_user_profile_with_lable(app,request.user.user_id,profiles))
+        ret = update_user_profile_with_lable(app,request.user.user_id,profiles)
+        db.session.commit()
+        return make_common_response(ret)
     
     
 
