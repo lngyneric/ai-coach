@@ -19,6 +19,9 @@
         display: none;
       }
     }
+    :global(.BackBottom) {
+      display: none;
+    }
   }
 
   :global(.MessageList) {

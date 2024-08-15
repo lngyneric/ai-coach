@@ -17,6 +17,9 @@ import { getUserProfile, updateUserProfile } from 'Api/user.js';
 import { useEffect } from 'react';
 import BirthdaySettingModal from './BirthdaySettingModal.jsx';
 import { SEX, SEX_NAMES } from 'constants/userConstants.js';
+import DynamicSettingItem from './DynamicSettingItem.jsx';
+
+const fixed_keys = ['nickname', 'avatar', 'sex', 'birth'];
 
 export const UserSettings = ({ onHomeClick, className, onClose }) => {
   const [sexSettingModalOpen, setSexSettingModalOpen] = useState(false);
@@ -31,6 +34,7 @@ export const UserSettings = ({ onHomeClick, className, onClose }) => {
   // 生日
   const [birth, setBirth] = useState('');
 
+  const [dynFormData, setDynFormData] = useState([]);
 
   const onSaveSettingsClick = useCallback(async () => {
     const data = [];
@@ -50,9 +54,15 @@ export const UserSettings = ({ onHomeClick, className, onClose }) => {
       key: 'birth',
       value: birth,
     });
+    dynFormData.forEach((v) => {
+      data.push({
+        key: v.key,
+        value: v.value,
+      });
+    });
     await updateUserProfile(data);
     onClose();
-  }, [avatar, birth, nickName, onClose, sex]);
+  }, [avatar, birth, dynFormData, nickName, onClose, sex]);
 
   const onNickNameChanged = useCallback(
     (e) => {
@@ -78,16 +88,16 @@ export const UserSettings = ({ onHomeClick, className, onClose }) => {
   }, []);
 
   const onBirthdaySettingModalOk = useCallback(({ birthday }) => {
-    const v = `${birthday.getFullYear()}-${birthday.getMonth() + 1}-${birthday.getDate()}`
+    const v = `${birthday.getFullYear()}-${
+      birthday.getMonth() + 1
+    }-${birthday.getDate()}`;
     setBirth(v);
     setBirthModalOpen(false);
   }, []);
 
   const onBirthdaySettingModalClose = useCallback(() => {
     setBirthModalOpen(false);
-  });
-
-  const onBackgroundChange = useCallback((e) => {}, []);
+  }, []);
 
   const loadData = useCallback(async () => {
     const { data: respData } = await getUserProfile();
@@ -102,10 +112,23 @@ export const UserSettings = ({ onHomeClick, className, onClose }) => {
         setBirth(v.value);
       }
     });
+    setDynFormData(respData.filter((v) => !fixed_keys.includes(v.key)));
   }, []);
 
   const onChangeAvatarChanged = useCallback(({ dataUrl }) => {
     setAvatar(dataUrl);
+  }, []);
+
+  const onDynamicSettingItemChange = useCallback((key, value) => {
+    setDynFormData((prev) => {
+      return prev.map((v) => {
+        if (v.key === key) {
+          v.value = value;
+        }
+
+        return v;
+      });
+    });
   }, []);
 
   useEffect(() => {
@@ -144,6 +167,16 @@ export const UserSettings = ({ onHomeClick, className, onClose }) => {
               onClick={onBirthClick}
               value={birth}
             />
+            {dynFormData.map((item) => {
+              return (
+                <DynamicSettingItem
+                  key={item.key}
+                  settingItem={item}
+                  onChange={onDynamicSettingItemChange}
+                  className={styles.inputUnit}
+                />
+              );
+            })}
           </div>
         </div>
         <div className={styles.settingFooter}>

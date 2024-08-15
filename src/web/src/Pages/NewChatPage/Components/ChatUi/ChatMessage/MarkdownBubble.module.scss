@@ -1,12 +1,10 @@
-.markdownBubble {
-  :global(.MessageContainer) {
-    .inlineCode {
-      padding: 2px 4px;
-      font-size: 0.9em;
-      color: var(--color-2);
-      background-color: var(--color-3);
-      border-radius: 4px;
-      font-family: var(--main-font-family);
-    }
+:global(.MessageContainer) {
+  .inlineCode {
+    padding: 2px 4px;
+    color: var(--color-2);
+    font-size: 1em;
+    background-color: var(--color-3);
+    border-radius: 4px;
+    font-family: var(--main-font-family);
   }
 }
