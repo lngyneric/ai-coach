@@ -242,7 +242,7 @@ def send_sms_code_without_check(app:Flask,user_id:str,phone:str)->str:
         redis.set(app.config["REDIS_KEY_PRRFIX_PHONE"]+user_id,phone,ex=app.config.get("PHONE_EXPIRE_TIME",60*30))
         redis.set(app.config["REDIS_KEY_PRRFIX_PHONE_CODE"] + phone, random_string,ex=app.config['PHONE_CODE_EXPIRE_TIME'])
         send_sms_code_ali(app,phone,random_string)
-        db.session.commit()
+        db.session.flush()
         return {
             "expire_in":app.config['PHONE_CODE_EXPIRE_TIME'],
             "phone":phone
@@ -300,7 +300,7 @@ def verify_sms_code(app:Flask,user_id,phone:str,chekcode:str)->UserToken:
                 db.session.add(user_info)
             user_id = user_info.user_id
             token = generate_token(app,user_id=user_id)
-            db.session.commit()
+            db.session.flush()
             return UserToken(UserInfo(user_id=user_info.user_id, username=user_info.username, name=user_info.name, email=user_info.email, mobile=user_info.mobile,model=user_info.default_model,user_state=user_info.user_state),token)
 
 def get_content_type(filename):
