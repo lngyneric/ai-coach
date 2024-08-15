@@ -139,7 +139,7 @@ def handle_input_select(app:Flask,user_id:str,attend:AICourseLessonAttend,script
 def handle_input_phone(app:Flask,user_id:str,attend:AICourseLessonAttend,script_info:AILessonScript,input:str,trace:Trace,trace_args):
     log_script = generation_attend(app,attend,script_info)
     log_script.script_content = input
-    log_script.script_role = ROLE_STUDENT
+    log_script.script_role = ROLE_STUDENT # type: ignore
     db.session.add(log_script)
     span = trace.span(name="user_input_phone",input=input)
     response_text ="请输入正确的手机号" 
