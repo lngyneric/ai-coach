@@ -8,8 +8,8 @@ export const useUserStore = create((set) => ({
   hasLogin: false,
   userInfo: null,
 
-  login: async ({mobile, smsCode}) => {
-    const res = await verifySmsCode({mobile, sms_code: smsCode });
+  login: async ({ mobile, smsCode }) => {
+    const res = await verifySmsCode({ mobile, sms_code: smsCode });
     const { userInfo, token } = res.data;
     tokenTool.set({ token, faked: false });
 
@@ -59,7 +59,7 @@ export const useUserStore = create((set) => ({
         }));
       }
     } catch (err) {
-      if ((err.status && err.status === 403) || (err.code && err.code === 1005)) {
+      if ((err.status && err.status === 403) || (err.code && err.code === 1005) || (err.code && err.code === 1001)) {
         const res = await registerTmp({ temp_id: genUuid() });
         const token = res.data.token;
         tokenTool.set({ token, faked: true });
