@@ -1,9 +1,8 @@
 import classNames from 'classnames';
 import CourseSection from './CourseSection.jsx';
 import styles from './CourseCatalog.module.scss';
-
-import { useState } from 'react';
 import { memo } from 'react';
+import { useCallback } from 'react';
 
 export const CourseCatalog = ({
   id = 0,
@@ -12,7 +11,12 @@ export const CourseCatalog = ({
   collapse = false,
   onCollapse = ({ id }) => {},
   onLessonSelect = ({ id }) => {},
+  onTrySelect = ({ chapterId, lessonId}) => {}
 }) => {
+  const _onTrySelect = useCallback(({ id: lessonId }) => {
+    onTrySelect?.({ chapterId: id, lessonId });
+  }, [id, onTrySelect]); 
+
   return (
     <div
       className={classNames(styles.courseCatalog, collapse && styles.collapse)}
@@ -36,6 +40,7 @@ export const CourseCatalog = ({
               selected={e.selected}
               canLearning={e.canLearning}
               onSelect={onLessonSelect}
+              onTrySelect={_onTrySelect}
             />
           );
         })}

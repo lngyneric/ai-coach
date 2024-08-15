@@ -19,7 +19,7 @@ export const tracking = async (eventName, eventData) => {
     if (!umami) {
       return
     }
-    umami.tracking(eventName, eventData);
+    umami.track(eventName, eventData);
   } catch (error) { }
 };
 

@@ -1,8 +1,8 @@
 import { create } from 'zustand';
-import { getUserInfo, registerTmp } from '@Api/user.js';
-import { userInfoStore, tokenTool } from '@Service/storeUtil.js';
-import { genUuid } from '@Utils/common.js';
-import { verifySmsCode } from '@Api/user.js';
+import { getUserInfo, registerTmp } from 'Api/user.js';
+import { userInfoStore, tokenTool } from 'Service/storeUtil.js';
+import { genUuid } from 'Utils/common.js';
+import { verifySmsCode } from 'Api/user.js';
 
 export const useUserStore = create((set) => ({
   hasLogin: false,
@@ -96,5 +96,10 @@ export const useUserStore = create((set) => ({
         }
       }
     });
+  },
+
+  refreshUserInfo: async () => {
+    const res = await getUserInfo();
+    const userInfo = res.data;
   }
 }));
