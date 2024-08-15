@@ -69,7 +69,9 @@ axiosrequest.interceptors.request.use(async(config)=>{
 axiosrequest.interceptors.response.use(
   response => {
     if(response.data.code !== 0) {
-      message.error({content:response.data.message});
+      if (![1001].includes(response.data.code)) {
+        message.error({content:response.data.message});
+      }
       const apiError = new CustomEvent("apiError", {detail:response.data, bubbles:true,});
       document.dispatchEvent(apiError);
       return Promise.reject(response.data);
