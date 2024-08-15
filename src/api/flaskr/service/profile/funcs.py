@@ -109,7 +109,7 @@ def save_user_profile(app:Flask, user_id:str, profile_key:str, profile_value:str
         else:
             user_profile = UserProfile(user_id=user_id, profile_key=profile_key, profile_value=profile_value, profile_type=profile_type)
             db.session.add(user_profile)
-        db.session.commit()
+        db.session.flush()
         return UserProfileDTO(user_profile.user_id, user_profile.profile_key, user_profile.profile_value, user_profile.profile_type)
 
 def save_user_profiles(app:Flask,user_id:str, profiles:dict):
@@ -122,7 +122,7 @@ def save_user_profiles(app:Flask,user_id:str, profiles:dict):
             else:
                 user_profile = UserProfile(user_id=user_id, profile_key=key, profile_value=value, profile_type=1)
                 db.session.add(user_profile)
-        db.session.commit()
+        db.session.flush()
         return True
 def get_user_profiles(app:Flask,user_id:str,keys:list=None)->dict:
     user_profiles = UserProfile.query.filter_by(user_id=user_id).all()

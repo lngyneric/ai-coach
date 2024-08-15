@@ -6,7 +6,7 @@ import openai
 from typing import Generator
 from flask import Flask, typing
 
-from flaskr.service.study.const import INPUT_TYPE_BRANCH, INPUT_TYPE_CHECKCODE, INPUT_TYPE_CONTINUE, INPUT_TYPE_LOGIN, INPUT_TYPE_PHONE, INPUT_TYPE_SELECT, ROLE_VALUES
+from flaskr.service.study.const import INPUT_TYPE_BRANCH, INPUT_TYPE_CHECKCODE, INPUT_TYPE_CONTINUE, INPUT_TYPE_LOGIN, INPUT_TYPE_PHONE, INPUT_TYPE_SELECT, ROLE_TEACHER, ROLE_VALUES
 from ...service.study.dtos import AILessonAttendDTO, StudyRecordDTO
 from ...service.user.models import User
 from ...service.common  import AppException
@@ -88,7 +88,7 @@ def get_study_record(app:Flask,user_id:str,lesson_id:str)->StudyRecordDTO:
             return None
         attend_ids = [attend_info.attend_id for attend_info in attend_infos]
         app.logger.info("attend_ids:{}".format(attend_ids))
-        attend_scripts = AICourseLessonAttendScript.query.filter(AICourseLessonAttendScript.attend_id.in_(attend_ids)).order_by(AICourseLessonAttendScript.id).all()
+        attend_scripts = AICourseLessonAttendScript.query.filter(AICourseLessonAttendScript.attend_id.in_(attend_ids)).order_by(AICourseLessonAttendScript.id.asc()).all()
         app.logger.info("attend_scripts:{}".format(len(attend_scripts)))
         index = len(attend_scripts)-1
         if len(attend_scripts) == 0:
@@ -101,15 +101,18 @@ def get_study_record(app:Flask,user_id:str,lesson_id:str)->StudyRecordDTO:
         ret = StudyRecordDTO(items)
         last_script_id = attend_scripts[-1].script_id
         last_script = AILessonScript.query.filter_by(script_id=last_script_id).first()
-        app.logger.info("last_script:{}".format(last_script)) 
+        app.logger.info("last_script: id:{},type:{},ui_type:{}" .format(last_script_id,last_script.script_type,last_script.script_ui_type))
         last_lesson_id = last_script.lesson_id
         last_attends = [i for i in attend_infos if i.lesson_id == last_lesson_id]
         if len(last_attends) == 0:
+            app.logger.info("last_attends is empty")
             return ret
         last_attend = last_attends[-1]
-        if last_attend.status == ATTEND_STATUS_COMPLETED:
+        last_attend_script=attend_scripts[-1]
+        if last_attend.status == ATTEND_STATUS_COMPLETED :
+            app.logger.info("last_attend is completed")
             return ret
-        if last_script.script_ui_type == UI_TYPE_INPUT:
+        if last_script.script_ui_type == UI_TYPE_INPUT and last_attend_script.script_role ==ROLE_TEACHER:
             ret.ui = StudyUIDTO("input",last_script.script_ui_content,lesson_id)
         elif last_script.script_ui_type == UI_TYPE_BUTTON:
             btn = [{

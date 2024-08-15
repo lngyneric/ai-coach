@@ -75,7 +75,7 @@ def handle_input_branch(app:Flask,user_id:str,attend:AICourseLessonAttend,script
                     next_attend.status = ATTEND_STATUS_IN_PROGRESS
                     next_attend.script_index =0
                     attend_info.status = ATTEND_STATUS_BRANCH
-                    db.session.commit()
+                    db.session.flush()
                     attend_info = next_attend
 
     btn = [{
@@ -130,4 +130,4 @@ def handle_ui(app:Flask,user_id:str,attend:AICourseLessonAttend,script_info:AILe
         raise AppException("script type not found")
     span = trace.span(name="ui_script")
     span.end()
-    db.session.commit()
+    db.session.flush()
