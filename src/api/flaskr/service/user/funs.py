@@ -6,6 +6,8 @@ import string
 from flask import Flask
 from flask_sqlalchemy import SQLAlchemy
 
+from api.flaskr.route import user
+
 
 from ...service.common.dtos import UserInfo, UserToken
 from ...api.aliyun import send_sms_code_ali
@@ -287,13 +289,10 @@ def verify_sms_code(app:Flask,user_id,phone:str,chekcode:str)->UserToken:
         if chekcode != check_save_str and chekcode != FIX_CHECK_CODE:
             raise SMS_CHECK_ERROR
         else:
-            if user_id:
-                user_info = User.query.filter_by(user_id=user_id).first()
+            user_info = User.query.filter(User.mobile==phone).order_by(User.id.asc()).first()
+            if not user_info:
+                user_info = User.query.filter(User.user_id==user_id).order_by(User.id.asc()).first()
                 user_info.mobile = phone
-                user_info.user_state = USER_STATE_REGISTERED 
-            else:
-                user_info = User.query.filter_by(mobile=phone).first()
-                user_id = user_info.user_id
             if user_info is None:
                 user_id = str(uuid.uuid4()).replace('-', '')
                 user_info = User(user_id=user_id, username="", name="", email="", mobile=phone,default_model=app.config["OPENAI_DEFAULT_MODEL"])
@@ -302,8 +301,6 @@ def verify_sms_code(app:Flask,user_id,phone:str,chekcode:str)->UserToken:
             token = generate_token(app,user_id=user_id)
             db.session.commit()
             return UserToken(UserInfo(user_id=user_info.user_id, username=user_info.username, name=user_info.name, email=user_info.email, mobile=user_info.mobile,model=user_info.default_model,user_state=user_info.user_state),token)
-
-
 
 def get_content_type(filename):
     extension = filename.rsplit('.', 1)[1].lower()
