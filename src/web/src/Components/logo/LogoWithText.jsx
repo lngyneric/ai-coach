@@ -1,8 +1,10 @@
 import { memo } from 'react';
 import logoBlue from 'Assets/logos/logo-blue-120.png';
 import logoColor from 'Assets/logos/logo-color-120.png';
+import logoWhite from 'Assets/logos/logo-white-120.png';
 import logoTextRow from 'Assets/logos/logo-text-horiz-160.png';
 import logoTextColumn from 'Assets/logos/logo-text-verti-160.png';
+import logoTextRowWhite from 'Assets/logos/logo-text-horiz-white-160.png';
 
 /**
  *
@@ -27,6 +29,26 @@ export const LogoWithText = ({ direction, size = 64, color = 'blue' }) => {
     marginTop: isRow ? '0' : size * 0.3 + 'px',
   };
 
+  const getLogoByColor = (color) => {
+    switch (color) {
+      case 'color':
+        return logoColor;
+      case 'white':
+        return logoWhite;
+      default:
+        return logoBlue;
+    }
+  };
+
+  const getTextRowByColor = (color) => {
+    switch (color) {
+      case 'white':
+        return logoTextRowWhite;
+      default:
+        return logoTextRow;
+    }
+  }
+
   return (
     <div
       style={{
@@ -36,14 +58,9 @@ export const LogoWithText = ({ direction, size = 64, color = 'blue' }) => {
         ...commonStyles,
       }}
     >
-      {color === 'color' ? (
-        <img src={logoColor} alt="logo" style={{ ...commonStyles }} />
-      ) : (
-        <img src={logoBlue} alt="logo" style={{ ...commonStyles }} />
-      )}
-
+      <img src={getLogoByColor(color)} alt="logo" style={{ ...commonStyles }} />
       {isRow ? (
-        <img src={logoTextRow} alt="logotext" style={{ ...textStyles }} />
+        <img src={getTextRowByColor(color)} alt="logotext" style={{ ...textStyles }} />
       ) : (
         <img src={logoTextColumn} alt="logotext" style={{ ...textStyles }} />
       )}

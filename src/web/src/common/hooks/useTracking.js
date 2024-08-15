@@ -12,7 +12,7 @@ export const useTracking = () => {
   }, [])
 
   const trackingEvent = useCallback(async (eventName, eventData) => {
-    trackingEvent(eventName, eventData);
+    tracking(eventName, eventData);
   }, [])
 
   return { tracking: trackingEvent }
