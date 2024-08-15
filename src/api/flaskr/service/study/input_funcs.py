@@ -180,8 +180,7 @@ def handle_input_checkcode(app:Flask,user_id:str,attend:AICourseLessonAttend,scr
         verify_user_id = ret.userInfo.user_id
         if origin_user_id != verify_user_id:
             app.logger.info(f"origin_user_id:{origin_user_id},verify_user_id:{verify_user_id} copy profile")
-            new_profiles = get_user_profile_labels(app,origin_user_id)
-            update_user_profile_with_lable(app,verify_user_id,new_profiles)
+            new_profiles = get_user_profile_labels(app,ori
         yield make_script_dto("profile_update",{"key":"phone","value":ret.userInfo.mobile},script_info.script_id)
         yield make_script_dto("user_login",{"phone":ret.userInfo.mobile,"user_id":ret.userInfo.user_id,"token":ret.token},script_info.script_id)
         input = None
