@@ -70,7 +70,7 @@ def handle_input_text(app:Flask,user_id:str,attend:AICourseLessonAttend,script_i
             yield make_script_dto("profile_update",{"key":key,"value":profile_tosave[key]},script_info.script_id)
             time.sleep(0.01)
         span.end()
-        db.session.commit() 
+        db.session.flush()
         
     else:
         reason = jsonObj.get("reason",response_text)
@@ -85,7 +85,7 @@ def handle_input_text(app:Flask,user_id:str,attend:AICourseLessonAttend,script_i
         span.end(output=response_text)
         trace_args ["output"] = trace_args["output"]+"\r\n"+response_text
         trace.update(**trace_args)
-        db.session.commit()
+        db.session.flush()
         yield make_script_dto("input",script_info.script_ui_content,script_info.script_id) 
         raise BreakException
 
@@ -129,7 +129,7 @@ def handle_input_continue(app:Flask,user_id:str,attend:AICourseLessonAttend,scri
                             attend_info = next_attend
                             app.logger.info("branch jump")
 
-    db.session.commit()
+    db.session.flush()
 
 @register_input_handler(input_type=INPUT_TYPE_SELECT)
 def handle_input_select(app:Flask,user_id:str,attend:AICourseLessonAttend,script_info:AILessonScript,input:str,trace:Trace,trace_args):
@@ -148,7 +148,7 @@ def handle_input_select(app:Flask,user_id:str,attend:AICourseLessonAttend,script
     db.session.add(log_script)
     span = trace.span(name="user_select",input=input)
     span.end()
-    db.session.commit()
+    db.session.flush()
 
 @register_input_handler(input_type=INPUT_TYPE_PHONE)  
 def handle_input_phone(app:Flask,user_id:str,attend:AICourseLessonAttend,script_info:AILessonScript,input:str,trace:Trace,trace_args):
@@ -169,7 +169,7 @@ def handle_input_phone(app:Flask,user_id:str,attend:AICourseLessonAttend,script_
         log_script.script_role = ROLE_TEACHER
         db.session.add(log_script)
         span.end(output=response_text)
-        db.session.commit()
+        db.session.flush()
         raise BreakException
     span.end()
 @register_input_handler(input_type=INPUT_TYPE_CHECKCODE)

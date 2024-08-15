@@ -84,4 +84,4 @@ def handle_output(app:Flask,user_id:str,attend:AICourseLessonAttend,script_info:
         raise AppException("script type not found")
     span = trace.span(name="output_script")
     span.end()
-    db.session.commit()
+    db.session.flush()
