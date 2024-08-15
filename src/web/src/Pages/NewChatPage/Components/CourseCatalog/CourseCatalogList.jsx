@@ -9,6 +9,7 @@ export const CourseCatalogList = ({
   lessonCount = 0,
   onChapterCollapse = ({ id }) => {},
   onLessonSelect = ({ id }) => {},
+  onTryLessonSelect = ({ chapterId, lessonId}) => {},
 }) => {
   return (
     <div className={styles.courseCatalogList}>
@@ -36,6 +37,7 @@ export const CourseCatalogList = ({
               collapse={catalog.collapse}
               onCollapse={onChapterCollapse}
               onLessonSelect={onLessonSelect}
+              onTrySelect={onTryLessonSelect}
             />
           );
         })}

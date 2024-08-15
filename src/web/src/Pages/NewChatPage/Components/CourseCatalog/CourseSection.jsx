@@ -11,6 +11,7 @@ export const CourseSection = ({
   selected,
   canLearning = false,
   onSelect = ({ id }) => {},
+  onTrySelect= ({ id }) => {},
 }) => {
   const genIconClassName = () => {
     switch (status) {
@@ -27,12 +28,13 @@ export const CourseSection = ({
   };
 
   const onSectionClick = useCallback(() => {
+    onTrySelect?.({ id });
     if (status === LESSON_STATUS.NOT_START || status === LESSON_STATUS.LOCKED) {
       return;
     }
 
     onSelect?.({ id });
-  }, [status, onSelect, id]);
+  }, [onTrySelect, id, status, onSelect]);
 
   return (
     <div

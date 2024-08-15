@@ -31,6 +31,8 @@ import { memo } from 'react';
 import { useCallback } from 'react';
 import { tokenTool } from '@Service/storeUtil.js';
 import MarkdownBubble from './ChatMessage/MarkdownBubble.jsx';
+import { useTracking, EVENT_NAMES } from 'common/hooks/useTracking.js';
+
 
 const USER_ROLE = {
   TEACHER: '老师',
@@ -145,6 +147,7 @@ export const ChatComponents = forwardRef(
     },
     ref
   ) => {
+    const { trackEvent } = useTracking();
     const [chatId, setChatId] = useState('');
     const [lessonId, setLessonId] = useState(null);
     const [inputDisabled, setInputDisabled] = useState(false);
@@ -522,6 +525,7 @@ export const ChatComponents = forwardRef(
 
       if (type === INTERACTION_OUTPUT_TYPE.ORDER) {
         setInputDisabled(true);
+        trackEvent(EVENT_NAMES.POP_PAY, { from: 'script', way: 'manual' });
         onPayModalOpen();
         return;
       }
