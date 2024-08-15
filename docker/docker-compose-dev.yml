@@ -13,7 +13,7 @@ services:
   ai-shifu-web-dev:
     container_name:  ai-shifu-web-dev
     image: ai-shifu-web-dev:latest
-    command:  pnpm run start:dev
+    command:  pnpm run start:dev-local
     depends_on:
       - ai-shifu-api-dev
     volumes:
