@@ -73,7 +73,6 @@ def get_lesson_tree_to_study(app:Flask,user_id:str,course_id:str)->AICourseDTO:
 
 def get_study_record(app:Flask,user_id:str,lesson_id:str)->StudyRecordDTO:
     with app.app_context():
-
         lesson_info = AILesson.query.filter_by(lesson_id=lesson_id).first()
         lesson_ids = [lesson_id]
         if not lesson_info:
@@ -111,7 +110,7 @@ def get_study_record(app:Flask,user_id:str,lesson_id:str)->StudyRecordDTO:
         last_attend_script=attend_scripts[-1]
         if last_attend.status == ATTEND_STATUS_COMPLETED :
             app.logger.info("last_attend is completed")
-            return ret
+            # return ret
         if last_script.script_ui_type == UI_TYPE_INPUT and last_attend_script.script_role ==ROLE_TEACHER:
             ret.ui = StudyUIDTO("input",last_script.script_ui_content,lesson_id)
         elif last_script.script_ui_type == UI_TYPE_BUTTON:

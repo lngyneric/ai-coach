@@ -213,7 +213,6 @@ def update_attend_lesson_info(app:Flask,attend_id:str)->list[AILessonAttendDTO]:
         parent_no = parent_no[:2]
     app.logger.info('parent_no:'+parent_no)
     attend_lesson_infos =  get_lesson_and_attend_info(app,parent_no,lesson.course_id,attend_info.user_id)
-
     if attend_lesson_infos[-1]['attend'].attend_id == attend_id:
         # 最后一个已经完课
         # 整体章节完课
@@ -236,7 +235,6 @@ def update_attend_lesson_info(app:Flask,attend_id:str)->list[AILessonAttendDTO]:
         app.logger.info(i)
         if i>0 and  attend_lesson_infos[i-1]['attend'].attend_id == attend_id:
             # 更新下一节
-            app.logger.info('to update' + attend_lesson_infos[i]['lesson'].lesson_no)
             attend_lesson_infos[i]['attend'].status = ATTEND_STATUS_NOT_STARTED
             res.append(AILessonAttendDTO( attend_lesson_infos[i]['lesson'].lesson_no,  attend_lesson_infos[i]['lesson'].lesson_name,  attend_lesson_infos[i]['lesson'].lesson_id,ATTEND_STATUS_VALUES[ATTEND_STATUS_NOT_STARTED]))
     return res

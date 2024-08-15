@@ -233,20 +233,19 @@ def send_sms_code(app:Flask,phone:str,chekcode:str):
 
 # 发送短信验证码
 def send_sms_code_without_check(app:Flask,user_id:str,phone:str)->str:
-    with app.app_context():
-        user = User.query.filter(User.user_id==user_id).first()
-        user.mobile = phone
-        characters =  string.digits
-        random_string = ''.join(random.choices(characters, k=4))
-        # 发送短信验证码
-        redis.set(app.config["REDIS_KEY_PRRFIX_PHONE"]+user_id,phone,ex=app.config.get("PHONE_EXPIRE_TIME",60*30))
-        redis.set(app.config["REDIS_KEY_PRRFIX_PHONE_CODE"] + phone, random_string,ex=app.config['PHONE_CODE_EXPIRE_TIME'])
-        send_sms_code_ali(app,phone,random_string)
-        db.session.flush()
-        return {
-            "expire_in":app.config['PHONE_CODE_EXPIRE_TIME'],
-            "phone":phone
-        } 
+    user = User.query.filter(User.user_id==user_id).first()
+    user.mobile = phone
+    characters =  string.digits
+    random_string = ''.join(random.choices(characters, k=4))
+    # 发送短信验证码
+    redis.set(app.config["REDIS_KEY_PRRFIX_PHONE"]+user_id,phone,ex=app.config.get("PHONE_EXPIRE_TIME",60*30))
+    redis.set(app.config["REDIS_KEY_PRRFIX_PHONE_CODE"] + phone, random_string,ex=app.config['PHONE_CODE_EXPIRE_TIME'])
+    send_sms_code_ali(app,phone,random_string)
+    db.session.flush()
+    return {
+        "expire_in":app.config['PHONE_CODE_EXPIRE_TIME'],
+        "phone":phone
+    } 
 def get_sms_code_info(app:Flask,user_id:str,resend:bool):
     with app.app_context():
         phone = redis.get(app.config["REDIS_KEY_PRRFIX_PHONE"]+user_id)
@@ -279,29 +278,28 @@ def verify_sms_code_without_phone(app:Flask,user_id:str,checkcode)->UserToken:
         return verify_sms_code(app,user_id,phone,checkcode)
 # 验证短信验证码
 def verify_sms_code(app:Flask,user_id,phone:str,chekcode:str)->UserToken:
-    with app.app_context():
-        app.logger.info("phone:"+phone+" chekcode:"+chekcode)
-        check_save = redis.get(app.config["REDIS_KEY_PRRFIX_PHONE_CODE"] + phone)
-        if check_save == None:
-            raise SMS_SEND_EXPIRED
-        check_save_str = str(check_save,encoding="utf-8") 
-        if chekcode != check_save_str and chekcode != FIX_CHECK_CODE:
-            raise SMS_CHECK_ERROR
-        else:
-            user_info = User.query.filter(User.mobile==phone).order_by(User.id.asc()).first()
-            if not user_info:
-                user_info = User.query.filter(User.user_id==user_id).order_by(User.id.asc()).first()
+    app.logger.info("phone:"+phone+" chekcode:"+chekcode)
+    check_save = redis.get(app.config["REDIS_KEY_PRRFIX_PHONE_CODE"] + phone)
+    if check_save == None:
+        raise SMS_SEND_EXPIRED
+    check_save_str = str(check_save,encoding="utf-8") 
+    if chekcode != check_save_str and chekcode != FIX_CHECK_CODE:
+        raise SMS_CHECK_ERROR
+    else:
+        user_info = User.query.filter(User.mobile==phone).order_by(User.id.asc()).first()
+        if not user_info:
+            user_info = User.query.filter(User.user_id==user_id).order_by(User.id.asc()).first()
 
-            if user_info is None:
-                user_id = str(uuid.uuid4()).replace('-', '')
-                user_info = User(user_id=user_id, username="", name="", email="", mobile=phone)
-                user_info.user_state = USER_STATE_REGISTERED
-                user_info.mobile = phone
-                db.session.add(user_info)
-            user_id = user_info.user_id
-            token = generate_token(app,user_id=user_id)
-            db.session.flush()
-            return UserToken(UserInfo(user_id=user_info.user_id, username=user_info.username, name=user_info.name, email=user_info.email, mobile=user_info.mobile,model=user_info.default_model,user_state=user_info.user_state),token)
+        if user_info is None:
+            user_id = str(uuid.uuid4()).replace('-', '')
+            user_info = User(user_id=user_id, username="", name="", email="", mobile=phone)
+            user_info.user_state = USER_STATE_REGISTERED
+            user_info.mobile = phone
+            db.session.add(user_info)
+        user_id = user_info.user_id
+        token = generate_token(app,user_id=user_id)
+        db.session.flush()
+        return UserToken(UserInfo(user_id=user_info.user_id, username=user_info.username, name=user_info.name, email=user_info.email, mobile=user_info.mobile,model=user_info.default_model,user_state=user_info.user_state),token)
 
 def get_content_type(filename):
     extension = filename.rsplit('.', 1)[1].lower()

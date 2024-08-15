@@ -17,13 +17,12 @@ from ...service.common.models import AppException
 from ...service.lesson.const import CONTENT_TYPE_IMAGE, LESSON_TYPE_BRANCH_HIDDEN, SCRIPT_TYPE_FIX, SCRIPT_TYPE_PORMPT, SCRIPT_TYPE_SYSTEM, UI_TYPE_BRANCH, UI_TYPE_BUTTON, UI_TYPE_CHECKCODE, UI_TYPE_CONTINUED, UI_TYPE_INPUT, UI_TYPE_LOGIN, UI_TYPE_PHONE, UI_TYPE_SELECTION, UI_TYPE_TO_PAY
 from ...service.lesson.models import AICourse, AILesson, AILessonScript
 from ...service.order.consts import ATTEND_STATUS_BRANCH, ATTEND_STATUS_COMPLETED, ATTEND_STATUS_IN_PROGRESS, ATTEND_STATUS_NOT_STARTED, ATTEND_STATUS_VALUES, BUY_STATUS_SUCCESS
-from ...service.order.funs import AICourseLessonAttendDTO, init_buy_record, init_trial_lesson, query_buy_record, query_raw_buy_record
+from ...service.order.funs import AICourseLessonAttendDTO,  init_trial_lesson, query_raw_buy_record
 from ...service.order.models import AICourseBuyRecord, AICourseLessonAttend
 from ...service.profile.funcs import get_user_profiles, save_user_profiles
 from ...service.study.const import INPUT_TYPE_BRANCH, INPUT_TYPE_CHECKCODE, INPUT_TYPE_CONTINUE, INPUT_TYPE_LOGIN, INPUT_TYPE_PHONE, INPUT_TYPE_SELECT, INPUT_TYPE_START, INPUT_TYPE_TEXT, ROLE_STUDENT, ROLE_TEACHER
 from ...service.study.dtos import AILessonAttendDTO, ScriptDTO
 from ...service.study.models import AICourseAttendAsssotion, AICourseLessonAttendScript
-from ...service.user.funs import send_sms_code_without_check, verify_sms_code_without_phone
 from ...service.user.models import User
 from ...dao import db,redis_client
 from .utils import *
@@ -148,13 +147,13 @@ def run_script_inner(app: Flask, user_id: str, course_id: str, lesson_id: str=No
                     db.session.rollback()
                     return
             else:
-                        app.logger.info("script_info is None,to update attend")
-                        attends =  update_attend_lesson_info(app,attend.attend_id)
-                        for attend_update in attends:
-                                if len(attend_update.lesson_no) > 2:
-                                    yield make_script_dto("lesson_update",attend_update.__json__(),"")
-                                else:
-                                    yield make_script_dto("chapter_update",attend_update.__json__(),"") 
+                app.logger.info("script_info is None,to update attend")
+                attends =  update_attend_lesson_info(app,attend.attend_id)
+                for attend_update in attends:
+                        if len(attend_update.lesson_no) > 2:
+                            yield make_script_dto("lesson_update",attend_update.__json__(),"")
+                        else:
+                            yield make_script_dto("chapter_update",attend_update.__json__(),"") 
             db.session.commit()
         except GeneratorExit:
             db.session.rollback()
@@ -164,11 +163,9 @@ def run_script_inner(app: Flask, user_id: str, course_id: str, lesson_id: str=No
 
 
 def run_script(app: Flask, user_id: str, course_id: str, lesson_id: str=None,input:str=None,input_type:str=None,script_id:str = None)->Generator[ScriptDTO,None,None]:
-    
     timeout = 5*60
     blocking_timeout = 1
     lock_key = app.config.get("REDIS_KEY_PRRFIX") + ":run_script:" + user_id
-
     lock = redis_client.lock(lock_key, timeout=timeout, blocking_timeout=blocking_timeout)
     if lock.acquire(blocking=True):
         try:
