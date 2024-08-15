@@ -10,7 +10,7 @@ from flask_migrate import Migrate
 from flasgger import Swagger
 
 
-# 设置时区
+# set timezone to UTC
 # fix windows platform
 if os.name == "nt":
     os.system('tzutil /s "UTC"')
@@ -29,23 +29,25 @@ def create_app()->Flask:
     CORS(app, resources={r"/*": {"supports_credentials": True}})
     from flaskr.common import Config,init_log
     app.config = Config(app.config,app)
-    ## 初始化日志
+    ## init log
     init_log(app)
-    ## 初始化数据库
+    ## init database
     from flaskr import dao
     dao.init_db(app)
-    # 初始化r 和ADMIN相关的表逻辑
+    # init models and migrate
     from flaskr.service.admin.models import AdminUser
-    dao.init_redis(app)
     Migrate(app,dao.db)
 
-    ## 初始化其他API
+    #  init redis 
+    dao.init_redis(app)
+
+    ## init langfuse
     from flaskr import api
     api.init_langfuse(app)
-    # 初始化route
+    # register route
     from flaskr.route import register_route
     app = register_route(app)
-    ## 初始化swagger
+    ## init swagger
     if app.config.get('SWAGGER_ENABLED',False):
         from flaskr.common import swagger_config
         app.logger.info('swagger init ...')
