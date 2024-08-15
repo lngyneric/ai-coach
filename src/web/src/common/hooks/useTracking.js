@@ -19,7 +19,7 @@ export const useTracking = () => {
       user_id: userInfo?.user_id || 0,
       device: isMobile ? 'H5' : 'Web',
     }
-  }, [isMobile, userInfo.state, userInfo?.user_id])
+  }, [isMobile, userInfo?.state, userInfo?.user_id])
 
   const trackEvent = useCallback(async (eventName, eventData) => {
     try {
