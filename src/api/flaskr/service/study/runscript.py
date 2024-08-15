@@ -27,7 +27,7 @@ from ...service.user.funs import send_sms_code_without_check, verify_sms_code_wi
 from ...service.user.models import User
 from ...dao import db,redis_client
 from .utils import *
-from .input_funcs import handle_input  
+from .input_funcs import BreakException, handle_input  
 from .output_funcs import handle_output
 from .ui_funcs import handle_ui
 
@@ -126,7 +126,6 @@ def run_script_inner(app: Flask, user_id: str, course_id: str, lesson_id: str=No
                             break
                     else:
                         break
-                   
                 if script_info:
                 # 返回下一轮交互
                 # 返回  下一轮的交互方式
