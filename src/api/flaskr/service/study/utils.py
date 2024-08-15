@@ -181,7 +181,7 @@ def get_script(app:Flask,attend_id:str,next:bool) :
         else:
             current.status = ATTEND_STATUS_COMPLETED
             attend_info.status = ATTEND_STATUS_IN_PROGRESS
-            db.session.commit()
+            db.session.flush()
             return get_script(app,attend_id,next)
     elif next:
         attend_info.script_index = attend_info.script_index + 1
@@ -192,7 +192,7 @@ def get_script(app:Flask,attend_id:str,next:bool) :
         attend_info.status = ATTEND_STATUS_COMPLETED
         lesson = AILesson.query.filter(AILesson.lesson_id == attend_info.lesson_id).first()
         attend_infos.append(AILessonAttendDTO(lesson.lesson_no,lesson.lesson_name,lesson.lesson_id,ATTEND_STATUS_VALUES[ATTEND_STATUS_COMPLETED]))
-    db.session.commit()
+    db.session.flush()
     return script_info,attend_infos
 
 def get_script_by_id(app: Flask,script_id:str)->AILessonScript:
