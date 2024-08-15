@@ -142,7 +142,7 @@ def get_fmt_prompt(app:Flask,user_id:str,profile_tmplate:str,input:str=None,prof
 
 
 def get_script(app:Flask,attend_id:str,next:bool) :
-    attend_info = AICourseLessonAttend.query.ilter(AICourseLessonAttend.attend_id ==attend_id).first()
+    attend_info = AICourseLessonAttend.query.filter(AICourseLessonAttend.attend_id ==attend_id).first()
     attend_infos = []
     app.logger.info("get next script,current:{},next:{}".format(attend_info.script_index,next))
     if attend_info.status == ATTEND_STATUS_NOT_STARTED or attend_info.script_index == 0:
