@@ -23,10 +23,22 @@ from ...service.study.const import INPUT_TYPE_LOGIN, ROLE_STUDENT, ROLE_TEACHER
 from ...dao import db
 from .utils import *
 
+ 
+
 
 class BreakException(Exception):
     pass
 
+UI_HANDLE_MAP = {
+}
+def register_input_handler(input_type:str):
+    def decorator(func):
+        print(f"register_input_handler {input_type} ==> {func.__name__}")
+        UI_HANDLE_MAP[input_type] = func
+        return func
+    return decorator
+   
+@register_input_handler(input_type=INPUT_TYPE_TEXT)
 def handle_input_text(app:Flask,user_id:str,attend:AICourseLessonAttend,script_info:AILessonScript,input:str,trace:Trace,trace_args):
     prompt = get_fmt_prompt(app,user_id,script_info.script_check_prompt,input,script_info.script_profile)
     ## todo 换成通用的
@@ -78,6 +90,7 @@ def handle_input_text(app:Flask,user_id:str,attend:AICourseLessonAttend,script_i
         raise BreakException
 
 
+@register_input_handler(input_type=INPUT_TYPE_CONTINUE)
 def handle_input_continue(app:Flask,user_id:str,attend:AICourseLessonAttend,script_info:AILessonScript,input:str,trace:Trace,trace_args):
     log_script = generation_attend(app,attend,script_info)
     log_script.script_content = "继续"
@@ -118,6 +131,7 @@ def handle_input_continue(app:Flask,user_id:str,attend:AICourseLessonAttend,scri
 
     db.session.commit()
 
+@register_input_handler(input_type=INPUT_TYPE_SELECT)
 def handle_input_select(app:Flask,user_id:str,attend:AICourseLessonAttend,script_info:AILessonScript,input:str,trace:Trace,trace_args):
     profile_keys = get_profile_array(script_info.script_ui_profile)
     profile_tosave = {}
@@ -135,7 +149,8 @@ def handle_input_select(app:Flask,user_id:str,attend:AICourseLessonAttend,script
     span = trace.span(name="user_select",input=input)
     span.end()
     db.session.commit()
-    
+
+@register_input_handler(input_type=INPUT_TYPE_PHONE)  
 def handle_input_phone(app:Flask,user_id:str,attend:AICourseLessonAttend,script_info:AILessonScript,input:str,trace:Trace,trace_args):
     log_script = generation_attend(app,attend,script_info)
     log_script.script_content = input
@@ -157,7 +172,7 @@ def handle_input_phone(app:Flask,user_id:str,attend:AICourseLessonAttend,script_
         db.session.commit()
         raise BreakException
     span.end()
-
+@register_input_handler(input_type=INPUT_TYPE_CHECKCODE)
 def handle_input_checkcode(app:Flask,user_id:str,attend:AICourseLessonAttend,script_info:AILessonScript,input:str,trace:Trace,trace_args):
     try:
         ret = verify_sms_code_without_phone(app,user_id,input)
@@ -177,24 +192,14 @@ def handle_input_checkcode(app:Flask,user_id:str,attend:AICourseLessonAttend,scr
         log_script.script_role = ROLE_TEACHER
         db.session.add(log_script)
         raise BreakException
-
+@register_input_handler(input_type=INPUT_TYPE_LOGIN)
 def handle_input_login(app:Flask,user_id:str,attend:AICourseLessonAttend,script_info:AILessonScript,input:str,trace:Trace,trace_args):
     #todo
     yield make_script_dto(INPUT_TYPE_LOGIN,{"phone":ret.userInfo.mobile,"user_id":ret.userInfo.user_id},script_info.script_id)
-
+@register_input_handler(input_type=INPUT_TYPE_START)
 def handle_input_start(app:Flask,user_id:str,attend:AICourseLessonAttend,script_info:AILessonScript,input:str,trace:Trace,trace_args):
     return None
 
-UI_HANDLE_MAP = {
-   INPUT_TYPE_START:handle_input_start,
-    INPUT_TYPE_TEXT:handle_input_text,
-    INPUT_TYPE_CONTINUE:handle_input_continue,
-    INPUT_TYPE_SELECT:handle_input_select,
-    INPUT_TYPE_PHONE:handle_input_phone,
-    INPUT_TYPE_CHECKCODE:handle_input_checkcode,
-    INPUT_TYPE_LOGIN:handle_input_login,
-    # INPUT_TYPE_TO_PAY:handle_input_to_pay, 
-}
 
 def handle_input(app:Flask,user_id:str,input_type:str,attend:AICourseLessonAttend,script_info:AILessonScript,input:str,trace:Trace,trace_args
 ):

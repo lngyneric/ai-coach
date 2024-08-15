@@ -91,7 +91,6 @@ def get_study_record(app:Flask,user_id:str,lesson_id:str)->StudyRecordDTO:
         attend_scripts = AICourseLessonAttendScript.query.filter(AICourseLessonAttendScript.attend_id.in_(attend_ids)).order_by(AICourseLessonAttendScript.id).all()
         app.logger.info("attend_scripts:{}".format(len(attend_scripts)))
         index = len(attend_scripts)-1
-       
         if len(attend_scripts) == 0:
             return StudyRecordDTO(None)
         lesson_id = attend_scripts[-1].lesson_id
@@ -101,11 +100,15 @@ def get_study_record(app:Flask,user_id:str,lesson_id:str)->StudyRecordDTO:
         items =  [StudyRecordItemDTO(i.script_index,ROLE_VALUES[i.script_role],0,i.script_content,i.lesson_id if i.lesson_id in lesson_ids else lesson_id,i.id) for i in attend_scripts]
         ret = StudyRecordDTO(items)
         last_script_id = attend_scripts[-1].script_id
-       
-
-
         last_script = AILessonScript.query.filter_by(script_id=last_script_id).first()
         app.logger.info("last_script:{}".format(last_script)) 
+        last_lesson_id = last_script.lesson_id
+        last_attends = [i for i in attend_infos if i.lesson_id == last_lesson_id]
+        if len(last_attends) == 0:
+            return ret
+        last_attend = last_attends[-1]
+        if last_attend.status == ATTEND_STATUS_COMPLETED:
+            return ret
         if last_script.script_ui_type == UI_TYPE_INPUT:
             ret.ui = StudyUIDTO("input",last_script.script_ui_content,lesson_id)
         elif last_script.script_ui_type == UI_TYPE_BUTTON:

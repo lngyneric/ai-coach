@@ -27,8 +27,9 @@ from ...service.user.funs import send_sms_code_without_check, verify_sms_code_wi
 from ...service.user.models import User
 from ...dao import db,redis_client
 from .utils import *
-from .input_funcs import BreakException, handle_input 
+from .input_funcs import BreakException, handle_input  
 from .output_funcs import handle_output
+from .ui_funcs import handle_ui
 
 
 
@@ -48,7 +49,7 @@ def run_script_inner(app: Flask, user_id: str, course_id: str, lesson_id: str=No
                 app.logger.info("{}".format(attend))
                 lesson_id = attend.lesson_id
         else:
-            # 获取课程记录
+            # get attend info
             app.logger.info("user_id:{},course_id:{},lesson_id:{}".format(user_id,course_id,lesson_id))
             attend_info = AICourseLessonAttend.query.filter(AICourseLessonAttend.user_id==user_id, AICourseLessonAttend.course_id ==course_id,AICourseLessonAttend.lesson_id==lesson_id).first()
             if not attend_info:
@@ -125,83 +126,14 @@ def run_script_inner(app: Flask, user_id: str, course_id: str, lesson_id: str=No
                             break
                     else:
                         break
-                   
                 if script_info:
                 # 返回下一轮交互
                 # 返回  下一轮的交互方式
-                    app.logger.info("ui_type:{}".format(script_info.script_ui_type))
-                    if script_info.script_ui_type == UI_TYPE_INPUT:
-                        yield  make_script_dto("input",script_info.script_ui_content,script_info.script_id) 
-                    elif  script_info.script_ui_type == UI_TYPE_BUTTON:
-                        btn = [{
-                            "label":script_info.script_ui_content,
-                            "value":script_info.script_ui_content,
-                            "type":INPUT_TYPE_CONTINUE
-                        }]
-                        yield make_script_dto("buttons",{"title":"接下来","buttons":btn},script_info.script_id)
-                    elif script_info.script_ui_type == UI_TYPE_BRANCH:
-                          # 分支课程
-                        app.logger.info("branch")
-                        branch_info = json.loads(script_info.script_other_conf)
-                        branch_key = branch_info.get("var_name","")
-                        profile = get_user_profiles(app,user_id,[branch_key])
-                        branch_value = profile.get(branch_key,"")
-                        jump_rule = branch_info.get("jump_rule",[])
-                        for rule in jump_rule:
-                            if branch_value == rule.get("value",""):
-                                attend_info = AICourseLessonAttend.query.filter(AICourseLessonAttend.attend_id == attend.attend_id).first()
-                                next_lesson = AILesson.query.filter(AILesson.lesson_feishu_id == rule.get("lark_table_id",""), AILesson.status == 1, func.length(AILesson.lesson_no)>2).first()
-                                if next_lesson:
-                                    next_attend = AICourseLessonAttend.query.filter(AICourseLessonAttend.user_id==user_id, AICourseLessonAttend.course_id==course_id,AICourseLessonAttend.lesson_id==next_lesson.lesson_id).first()
-                                    if next_attend:
-                                        assoation =AICourseAttendAsssotion()
-                                        assoation.from_attend_id = attend_info.attend_id
-                                        assoation.to_attend_id = next_attend.attend_id 
-                                        assoation.user_id = user_id
-                                        db.session.add(assoation)
-                                        next_attend.status = ATTEND_STATUS_IN_PROGRESS
-                                        next_attend.script_index =0
-                                        attend_info.status = ATTEND_STATUS_BRANCH
-                                        db.session.commit()
-                                        next = False
-                                        attend_info = next_attend
-
-                        btn = [{
-                            "label":script_info.script_ui_content,
-                            "value":script_info.script_ui_content,
-                            "type":INPUT_TYPE_BRANCH
-                        }]
-                        yield make_script_dto("buttons",{"title":"接下来","buttons":btn},script_info.script_id)
-                    elif script_info.script_ui_type == UI_TYPE_SELECTION:
-                        btns = json.loads(script_info.script_other_conf)["btns"]
-                        for btn in btns:
-                            btn["type"] = INPUT_TYPE_SELECT
-                        
-                        yield make_script_dto("buttons",{"title":script_info.script_ui_content,"buttons":btns},script_info.script_id)
-                    elif  script_info.script_ui_type == UI_TYPE_PHONE:
-                        yield make_script_dto(INPUT_TYPE_PHONE,script_info.script_ui_content,script_info.script_id)
-                    elif script_info.script_ui_type == UI_TYPE_CHECKCODE:
-                        try:
-                            expires = send_sms_code_without_check(app,user_id,input)
-                            yield make_script_dto(INPUT_TYPE_CHECKCODE,expires,script_info.script_id)
-                        except AppException as e:
-                            for i in e.message:
-                                yield make_script_dto("text",i,script_info.script_id)
-                                time.sleep(0.01)
-                            yield make_script_dto("text_end","",script_info.script_id)
-                    elif script_info.script_ui_type == UI_TYPE_LOGIN:
-                        yield make_script_dto(INPUT_TYPE_LOGIN,script_info.script_ui_content,script_info.script_id)
-                        # 这里控制暂时是否启用登录
-                    elif script_info.script_ui_type == UI_TYPE_TO_PAY:
-                        order =  init_buy_record(app,user_id,course_id)
-                        btn = [{
-                            "label":script_info.script_ui_content,
-                            "value":order.order_id
-                        }]
-                        yield make_script_dto("order",{"title":"买课！","buttons":btn},script_info.script_id)
-                    elif  script_info.script_ui_type == UI_TYPE_CONTINUED:
+                    if script_info.script_ui_type == UI_TYPE_CONTINUED:
                         next = True
                         input_type= None 
+                    else:
+                        yield from handle_ui(app,user_id,attend,script_info,input,trace,trace_args) 
                 
                 else:
                     attends =  update_attend_lesson_info(app,attend.attend_id)
