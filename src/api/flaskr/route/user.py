@@ -329,9 +329,10 @@ def register_user_handler(app:Flask,path_prefix:str)->Flask:
         profiles = request.get_json().get('profiles',None)
         if not profiles:
             raise_param_error('profiles')
-        ret = update_user_profile_with_lable(app,request.user.user_id,profiles)
-        db.session.commit()
-        return make_common_response(ret)
+        with app.app_context():
+            ret = update_user_profile_with_lable(app,request.user.user_id,profiles)
+            db.session.commit()
+            return make_common_response(ret)
     
     
 
