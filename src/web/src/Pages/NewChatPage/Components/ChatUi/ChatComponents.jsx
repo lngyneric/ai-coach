@@ -1,6 +1,5 @@
 import '@chatui/core/dist/index.css';
-import Chat, { Bubble, useMessages } from '@chatui/core';
-import { Button, Image } from 'antd';
+import Chat, { useMessages } from '@chatui/core';
 import {
   useEffect,
   forwardRef,
@@ -9,10 +8,6 @@ import {
   useContext,
 } from 'react';
 import { runScript, getLessonStudyRecord } from 'Api/study';
-import ReactMarkdown from 'react-markdown';
-import { Prism as SyntaxHighlighter } from 'react-syntax-highlighter';
-import { vscDarkPlus } from 'react-syntax-highlighter/dist/esm/styles/prism';
-import { CopyOutlined } from '@ant-design/icons';
 import { genUuid } from 'Utils/common.js';
 import ChatInteractionArea from './ChatInput/ChatInteractionArea.jsx';
 import { AppContext } from 'Components/AppContext.js';
@@ -28,17 +23,14 @@ import {
 import classNames from 'classnames';
 import { useUserStore } from 'stores/useUserStore.js';
 import { fixMarkdown, fixMarkdownStream } from 'Utils/markdownUtils.js';
-import { testPurchaseOrder } from 'Api/order.js';
-import remarkGfm from 'remark-gfm';
-import rehypeRaw from 'rehype-raw';
 import { FRAME_LAYOUT_MOBILE } from 'constants/uiConstants.js';
 import ChatMobileHeader from './ChatMobileHeader.jsx';
 import PayModal from '../Pay/PayModal.jsx';
 import { useDisclosture } from 'common/hooks/useDisclosture.js';
 import { memo } from 'react';
 import { useCallback } from 'react';
-import { use } from 'i18next';
-import { userInfoStore, tokenTool } from '@Service/storeUtil.js';
+import { tokenTool } from '@Service/storeUtil.js';
+import MarkdownBubble from './ChatMessage/MarkdownBubble.jsx';
 
 const USER_ROLE = {
   TEACHER: '老师',
@@ -46,74 +38,6 @@ const USER_ROLE = {
 };
 
 const robotAvatar = require('@Assets/chat/sunner_icon.jpg');
-
-const MarkdownBubble = memo((props) => {
-  const { mobileStyle, onImageLoaded } = props;
-  const onCopy = (content) => {
-    navigator.clipboard.writeText(content);
-  };
-
-  return (
-    <Bubble>
-      <ReactMarkdown
-        children={props.content}
-        remarkPlugins={[remarkGfm]}
-        rehypePlugins={[rehypeRaw]}
-        components={{
-          code({ node, inline, className, children, ...props }) {
-            const match = /language-(\w+)/.exec(className || '');
-            return !inline && match ? (
-              <div
-                className="markdown-code_block"
-                style={{
-                  position: 'relative',
-                }}
-              >
-                <Button
-                  className="copy_btn"
-                  type="dashed"
-                  ghost
-                  size="small"
-                  icon={<CopyOutlined></CopyOutlined>}
-                  onClick={() => onCopy(children)}
-                ></Button>
-                <SyntaxHighlighter
-                  {...props}
-                  children={String(children).replace(/\n$/, '')}
-                  style={vscDarkPlus}
-                  language={match[1]}
-                  showLineNumbers={!mobileStyle}
-                  wrapLines={false}
-                  onCopy={() => {
-                    onCopy(children);
-                  }}
-                ></SyntaxHighlighter>
-              </div>
-            ) : (
-              <code
-                {...props}
-                className={classNames(className, styles.inlineCode)}
-              >
-                {children}
-              </code>
-            );
-          },
-          img(imgProps) {
-            return (
-              <Image
-                {...imgProps}
-                width={'100%'}
-                preview={!props.isStreaming}
-                style={{ borderRadius: '5px' }}
-                onLoad={onImageLoaded}
-              ></Image>
-            );
-          },
-        }}
-      />
-    </Bubble>
-  );
-});
 
 const createMessage = ({
   id = 0,
@@ -182,7 +106,7 @@ const convertEventInputModal = ({ type, content }) => {
       type,
       props: { content },
     };
-  } else if (type === RESP_EVENT_TYPE.BUTTONS) {
+  } else if (type === RESP_EVENT_TYPE.BUTTONS || type === RESP_EVENT_TYPE.ORDER) {
     const getBtnType = (type) => {
       if (type === INTERACTION_TYPE.ORDER) {
         return INTERACTION_TYPE.ORDER;
@@ -227,7 +151,6 @@ export const ChatComponents = forwardRef(
     const [inputModal, setInputModal] = useState(null);
     const [_, setLessonEnd] = useState(false);
     // 是否是再聊天框内进行登录
-    const [loginInChat, setLoginInChat] = useState(false);
     const [_lastSendMsg, setLastSendMsg] = useState(null);
     const [loadedChapterId, setLoadedChapterId] = useState('');
     const [loadedData, setLoadedData] = useState(false);
@@ -252,21 +175,22 @@ export const ChatComponents = forwardRef(
       onClose: onPayModalClose,
     } = useDisclosture();
 
+    const _onPayModalClose = useCallback(() => {
+      onPayModalClose();
+      setInputDisabled(false);
+    }, [onPayModalClose])
+
     useEffect(() => {
       setLessonId(currLessonId);
     }, [currLessonId, lessonId]);
 
     const initLoadedInteraction = useCallback(
       (ui) => {
-        if (ui.type === INTERACTION_TYPE.ORDER) {
-          onPayModalOpen();
-        } else {
-          const nextInputModal = convertEventInputModal(ui);
-          setInputDisabled(false);
-          setInputModal(nextInputModal);
-        }
+        const nextInputModal = convertEventInputModal(ui);
+        setInputDisabled(false);
+        setInputModal(nextInputModal);
       },
-      [onPayModalOpen]
+      []
     );
 
     const lessonUpdateResp = useCallback(
@@ -348,7 +272,10 @@ export const ChatComponents = forwardRef(
               }
               setInputModal({ type: response.type, props: response });
               setInputDisabled(false);
-            } else if (response.type === RESP_EVENT_TYPE.BUTTONS) {
+            } else if (
+              response.type === RESP_EVENT_TYPE.BUTTONS ||
+              response.type === RESP_EVENT_TYPE.ORDER
+            ) {
               if (isEnd) {
                 return;
               }
@@ -357,9 +284,6 @@ export const ChatComponents = forwardRef(
               setInputDisabled(false);
             } else if (response.type === RESP_EVENT_TYPE.LESSON_UPDATE) {
               lessonUpdateResp(response, isEnd, nextStep);
-            } else if (response.type === RESP_EVENT_TYPE.ORDER) {
-              onPayModalOpen();
-              setInputDisabled(false);
             } else if (response.type === RESP_EVENT_TYPE.CHAPTER_UPDATE) {
               const { status, lesson_id: lessonId } = response.content;
               if (status === LESSON_STATUS.COMPLETED) {
@@ -387,7 +311,7 @@ export const ChatComponents = forwardRef(
           } catch (e) {}
         });
       },
-      [appendMsg, checkLogin, lessonUpdateResp, onPayModalOpen, setTyping, updateMsg, updateUserInfo, userInfo]
+      [appendMsg, checkLogin, lessonUpdateResp, setTyping, updateMsg, updateUserInfo, userInfo]
     );
 
     const scrollToBottom = useCallback(() => {
@@ -533,10 +457,6 @@ export const ChatComponents = forwardRef(
             userInfo,
           });
           appendMsg(message);
-
-          if (type === INTERACTION_OUTPUT_TYPE.CHECKCODE) {
-            setLoginInChat(true);
-          }
         }
 
         setTyping(true);
@@ -548,8 +468,9 @@ export const ChatComponents = forwardRef(
 
     const onPayModalOk = useCallback(() => {
       handleSend(INTERACTION_OUTPUT_TYPE.ORDER);
+      onPurchased?.();
       onPayModalClose();
-    }, [handleSend, onPayModalClose]);
+    }, [handleSend, onPayModalClose, onPurchased]);
 
     const renderMessageContent = useCallback(
       (msg) => {
@@ -577,7 +498,6 @@ export const ChatComponents = forwardRef(
       [isStreaming, mobileStyle, onImageLoaded]
     );
 
-    useImperativeHandle(ref, () => ({}));
 
     const renderBeforeMessageList = () => {
       if (messages.length === 0) {
@@ -602,13 +522,14 @@ export const ChatComponents = forwardRef(
 
       if (type === INTERACTION_OUTPUT_TYPE.ORDER) {
         setInputDisabled(true);
-        onPurchased?.();
+        onPayModalOpen();
         return;
       }
 
       handleSend(type, val, scriptId);
     };
 
+    useImperativeHandle(ref, () => ({}));
     return (
       <div
         className={classNames(
@@ -644,7 +565,7 @@ export const ChatComponents = forwardRef(
         )}
         <PayModal
           open={payModalOpen}
-          onCancel={onPayModalClose}
+          onCancel={_onPayModalClose}
           onOk={onPayModalOk}
         />
       </div>

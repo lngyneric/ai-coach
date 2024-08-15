@@ -168,7 +168,6 @@ export const PayModal = ({ open = false, onCancel, onOk }) => {
         className={styles.payModal}
         width="700px"
         height="588px"
-        closable={false}
         maskClosable={false}
       >
         <div className={styles.payModalContent}>
