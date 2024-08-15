@@ -6,7 +6,6 @@ import string
 from flask import Flask
 from flask_sqlalchemy import SQLAlchemy
 
-from api.flaskr.route import user
 
 
 from ...service.common.dtos import UserInfo, UserToken
