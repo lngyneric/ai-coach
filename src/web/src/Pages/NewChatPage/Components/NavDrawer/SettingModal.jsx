@@ -5,6 +5,13 @@ import classNames from 'classnames';
 import { useUserStore } from 'stores/useUserStore.js';
 import { Modal } from 'antd';
 import { memo } from 'react';
+import userIcon from 'Assets/newchat/light/user.png';
+import editIcon from 'Assets/newchat/light/icon16-edit.png';
+import memberIcon from 'Assets/newchat/light/icon16-member.png';
+import exitLoginIcon from 'Assets/newchat/light/exit-login-2x.png';
+import { useCallback } from 'react';
+import { useDisclosture } from 'common/hooks/useDisclosture.js';
+import PayModal from '../Pay/PayModal.jsx';
 
 export const SettingModal = ({
   open,
@@ -16,6 +23,12 @@ export const SettingModal = ({
 }) => {
   const { hasLogin, userInfo, logout } = useUserStore((state) => state);
 
+  const {
+    open: payModalOpen,
+    onOpen: onPayModalOpen,
+    onClose: onPayModalClose,
+  } = useDisclosture();
+
   const onLogoutClick = async (e) => {
     await Modal.confirm({
       title: '确认退出登录？',
@@ -26,15 +39,23 @@ export const SettingModal = ({
       },
     });
   };
-  const avatar = userInfo?.avatar || require('@Assets/newchat/light/user.png');
+  const avatar = userInfo?.avatar || userIcon;
 
-  const onLoginRowClick = () => {
+  const onLoginRowClick = useCallback( () => {
     if (!hasLogin) {
       onLoginClick?.();
     } else {
       onGoToSetting?.();
     }
-  };
+  }, [hasLogin, onGoToSetting, onLoginClick]);
+
+  const onMemberRowClick = useCallback(() => {
+    if (!hasLogin) {
+      onLoginClick?.();
+    } else {
+      onPayModalOpen();
+    }
+  }, []) 
 
   return (
     <>
@@ -55,17 +76,16 @@ export const SettingModal = ({
                 {hasLogin ? userInfo?.name || '默认名称' : '未登录'}
               </div>
             </div>
-            <img className={styles.rowIcon} src={require('@Assets/newchat/light/icon16-edit.png')} alt="" />
+            <img className={styles.rowIcon} src={editIcon} alt="" />
           </div>
           <div
             className={styles.settingRow}
-            onClick={() => {
-            }}
+            onClick={onMemberRowClick}
           >
             <div>会员管理</div>
             <img
               className={styles.rowIcon}
-              src={require('@Assets/newchat/light/icon16-member.png')}
+              src={memberIcon}
               alt=""
             />
           </div>
@@ -74,13 +94,19 @@ export const SettingModal = ({
               <div>退出登录</div>
               <img
                 className={styles.rowIcon}
-                src={require('@Assets/newchat/light/icon16-member.png')}
+                src={exitLoginIcon}
                 alt=""
               />
             </div>
           )}
         </div>
       </PopupModal>
+
+      <PayModal
+        open={payModalOpen}
+        onCancel={onPayModalClose}
+        onOk={onPayModalClose}
+      />
     </>
   );
 };
