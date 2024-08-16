@@ -189,9 +189,10 @@ def get_script(app:Flask,attend_id:str,next:bool) :
     if not script_info:
         app.logger.info('no script found')
         app.logger.info(attend_info.lesson_id)
-        attend_info.status = ATTEND_STATUS_COMPLETED
-        lesson = AILesson.query.filter(AILesson.lesson_id == attend_info.lesson_id).first()
-        attend_infos.append(AILessonAttendDTO(lesson.lesson_no,lesson.lesson_name,lesson.lesson_id,ATTEND_STATUS_VALUES[ATTEND_STATUS_COMPLETED]))
+        if attend_info.status == ATTEND_STATUS_IN_PROGRESS:
+            attend_info.status = ATTEND_STATUS_COMPLETED
+            lesson = AILesson.query.filter(AILesson.lesson_id == attend_info.lesson_id).first()
+            attend_infos.append(AILessonAttendDTO(lesson.lesson_no,lesson.lesson_name,lesson.lesson_id,ATTEND_STATUS_VALUES[ATTEND_STATUS_COMPLETED]))
     db.session.flush()
     return script_info,attend_infos
 
@@ -213,7 +214,6 @@ def update_attend_lesson_info(app:Flask,attend_id:str)->list[AILessonAttendDTO]:
         parent_no = parent_no[:2]
     app.logger.info('parent_no:'+parent_no)
     attend_lesson_infos =  get_lesson_and_attend_info(app,parent_no,lesson.course_id,attend_info.user_id)
-
     if attend_lesson_infos[-1]['attend'].attend_id == attend_id:
         # 最后一个已经完课
         # 整体章节完课
@@ -226,17 +226,16 @@ def update_attend_lesson_info(app:Flask,attend_id:str)->list[AILessonAttendDTO]:
         if len(next_lessons) > 0 :
             # 解锁
             for next_lesson_attend in next_lessons:
-                if next_lesson_attend['lesson'].lesson_no == next_no and next_lesson_attend['attend'].status== ATTEND_STATUS_LOCKED:
+                if next_lesson_attend['lesson'].lesson_no == next_no and next_lesson_attend['attend'].status == ATTEND_STATUS_LOCKED:
                     next_lesson_attend['attend'].status = ATTEND_STATUS_NOT_STARTED
                     res.append(AILessonAttendDTO(next_lesson_attend['lesson'].lesson_no,next_lesson_attend['lesson'].lesson_name,next_lesson_attend['lesson'].lesson_id,ATTEND_STATUS_VALUES[ATTEND_STATUS_NOT_STARTED]))
-                if next_lesson_attend['lesson'].lesson_no == next_no+'01'and  next_lesson_attend['attend'].status== ATTEND_STATUS_LOCKED:
+                if next_lesson_attend['lesson'].lesson_no == next_no+'01' and  next_lesson_attend['attend'].status== ATTEND_STATUS_LOCKED:
                     next_lesson_attend['attend'].status = ATTEND_STATUS_NOT_STARTED
                     res.append(AILessonAttendDTO(next_lesson_attend['lesson'].lesson_no,next_lesson_attend['lesson'].lesson_name,next_lesson_attend['lesson'].lesson_id,ATTEND_STATUS_VALUES[ATTEND_STATUS_NOT_STARTED]))
     for i in range(len(attend_lesson_infos)):
         app.logger.info(i)
-        if i>0 and  attend_lesson_infos[i-1]['attend'].attend_id == attend_id:
+        if i>0 and  attend_lesson_infos[i-1]['attend'].attend_id == attend_id and attend_lesson_infos[i-1]['attend'].status ==  ATTEND_STATUS_LOCKED:
             # 更新下一节
-            app.logger.info('to update' + attend_lesson_infos[i]['lesson'].lesson_no)
             attend_lesson_infos[i]['attend'].status = ATTEND_STATUS_NOT_STARTED
             res.append(AILessonAttendDTO( attend_lesson_infos[i]['lesson'].lesson_no,  attend_lesson_infos[i]['lesson'].lesson_name,  attend_lesson_infos[i]['lesson'].lesson_id,ATTEND_STATUS_VALUES[ATTEND_STATUS_NOT_STARTED]))
     return res

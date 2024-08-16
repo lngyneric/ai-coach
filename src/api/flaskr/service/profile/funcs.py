@@ -100,30 +100,42 @@ def get_user_profile_by_user_id(app:Flask,user_id:str, profile_key:str)->UserPro
         return UserProfileDTO(user_profile.user_id, user_profile.profile_key, user_profile.profile_value, user_profile.profile_type)
     return None
 
-def save_user_profile(app:Flask, user_id:str, profile_key:str, profile_value:str, profile_type:int):
-    with app.app_context():
-        user_profile = UserProfile.query.filter_by(user_id=user_id, profile_key=profile_key).first()
-        if user_profile:
-            user_profile.profile_value = profile_value
-            user_profile.profile_type = profile_type
-        else:
-            user_profile = UserProfile(user_id=user_id, profile_key=profile_key, profile_value=profile_value, profile_type=profile_type)
-            db.session.add(user_profile)
-        db.session.flush()
-        return UserProfileDTO(user_profile.user_id, user_profile.profile_key, user_profile.profile_value, user_profile.profile_type)
+def save_user_profile(user_id:str, profile_key:str, profile_value:str, profile_type:int):
+    user_profile = UserProfile.query.filter_by(user_id=user_id, profile_key=profile_key).first()
+    user_info = User.query.filter(User.user_id==user_id).first()
+    if user_profile:
+        user_profile.profile_value = profile_value
+        user_profile.profile_type = profile_type
+    else:
+        user_profile = UserProfile(user_id=user_id, profile_key=profile_key, profile_value=profile_value, profile_type=profile_type)
+        db.session.add(user_profile)
+    if profile_key in PROFILES_LABLES:
+            profile_lable = PROFILES_LABLES[profile_key]
+            if profile_lable.get("mapping"):
+                if profile_lable.get("items_mapping"):
+                    profile_value = profile_lable["items_mapping"].get(profile_value, profile_value) 
+                setattr(user_info, profile_lable["mapping"], profile_value)
+    db.session.flush()
+    return UserProfileDTO(user_profile.user_id, user_profile.profile_key, user_profile.profile_value, user_profile.profile_type)
 
 def save_user_profiles(app:Flask,user_id:str, profiles:dict):
-    with app.app_context():
-        app.logger.info("select user profiles:{}".format(profiles))
-        for key, value in profiles.items():
-            user_profile = UserProfile.query.filter_by(user_id=user_id, profile_key=key).first()
-            if user_profile:
-                user_profile.profile_value = value
-            else:
-                user_profile = UserProfile(user_id=user_id, profile_key=key, profile_value=value, profile_type=1)
-                db.session.add(user_profile)
-        db.session.flush()
-        return True
+    app.logger.info("save user profiles:{}".format(profiles))
+    user_info = User.query.filter(User.user_id==user_id).first()
+    for key, value in profiles.items():
+        user_profile = UserProfile.query.filter_by(user_id=user_id, profile_key=key).first()
+        if user_profile:
+            user_profile.profile_value = value
+        else:
+            user_profile = UserProfile(user_id=user_id, profile_key=key, profile_value=value, profile_type=1)
+            db.session.add(user_profile)
+        if key in PROFILES_LABLES:
+            profile_lable = PROFILES_LABLES[key]
+            if profile_lable.get("mapping"):
+                if profile_lable.get("items_mapping"):
+                    value = profile_lable["items_mapping"].get(value, value) 
+                setattr(user_info, profile_lable["mapping"], value)
+    db.session.flush()
+    return True
 def get_user_profiles(app:Flask,user_id:str,keys:list=None)->dict:
     user_profiles = UserProfile.query.filter_by(user_id=user_id).all()
     result = {}
@@ -135,10 +147,6 @@ def get_user_profiles(app:Flask,user_id:str,keys:list=None)->dict:
         if user_profile.profile_key in keys:
             result[user_profile.profile_key] = user_profile.profile_value
     return result
-
-
-
-
 
 
 def get_user_profile_labels(app:Flask,user_id:str):
@@ -183,28 +191,23 @@ def get_user_profile_labels(app:Flask,user_id:str):
 
 
 def update_user_profile_with_lable(app:Flask,user_id:str,profiles :list):
-    with app.app_context():
-        user_info = User.query.filter(User.user_id==user_id).first()
-        if user_info:
-            user_profiles = UserProfile.query.filter_by(user_id=user_id).all()
-            for profile in profiles:
-                user_profile_to_update = [p for p in user_profiles if p.profile_key == profile["key"]]
-                user_profile = user_profile_to_update[0] if len(user_profile_to_update) > 0 else None
-                profile_lable = PROFILES_LABLES.get(profile["key"], None)
-                profile_value = profile["value"]
-                profile_key = profile["key"]
-                if profile_lable:
-                    if profile_lable.get("items_mapping"):
-                        for k,v in profile_lable["items_mapping"].items():
-                            if v == profile_value:
-                                profile_value = k
-                    if profile_lable.get("mapping"):
-                        setattr(user_info, profile_lable["mapping"], profile_value)
-                if user_profile:
-                    user_profile.profile_value = profile_value
-                # else:
-                #     user_profile = UserProfile(user_id=user_id, profile_key=profile_key, profile_value=profile_value, profile_type=1)
-                #     db.session.add(user_profile)
-            db.session.commit()
-            return True
-    return False
+    user_info = User.query.filter(User.user_id==user_id).first()
+    if user_info:
+        user_profiles = UserProfile.query.filter_by(user_id=user_id).all()
+        for profile in profiles:
+            user_profile_to_update = [p for p in user_profiles if p.profile_key == profile["key"]]
+            user_profile = user_profile_to_update[0] if len(user_profile_to_update) > 0 else None
+            profile_lable = PROFILES_LABLES.get(profile["key"], None)
+            profile_value = profile["value"]
+
+            if profile_lable:
+                if profile_lable.get("items_mapping"):
+                    for k,v in profile_lable["items_mapping"].items():
+                        if v == profile_value:
+                            profile_value = k
+                if profile_lable.get("mapping"):
+                    setattr(user_info, profile_lable["mapping"], profile_value)
+            if user_profile:
+                user_profile.profile_value = profile_value
+        db.session.flush()
+        return True

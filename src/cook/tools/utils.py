@@ -328,19 +328,13 @@ def extract_variables(template: str) -> list:
     return filtered_variables
 
 
-def count_lines(text: str, one_line_max=60):
-    """
-    计算文本的行数
-    返回的第一个数值是正常的行数
-    返回的第二个数值按照一行的最大值计算折行后的总行数（单行总数/最大值 之后 取上整）
-    """
-    lines = text.split('\n')
-    total_lines = len(lines)
-    total_lines_with_wrap = sum([len(line) // one_line_max + 1 for line in lines])
+def extract_variables(template: str) -> list:
+    # 使用正则表达式匹配单层 {} 中的内容
+    pattern = r'\{([^{}]+)\}'
+    matches = re.findall(pattern, template)
 
-    return total_lines, total_lines_with_wrap
-
-
+    # 返回去重后的变量名列表
+    return list(set(matches))
 
 
 if __name__ == '__main__':

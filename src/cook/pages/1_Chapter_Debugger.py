@@ -1,10 +1,3 @@
-import logging
-import time
-
-import yaml
-from yaml.loader import SafeLoader
-import streamlit as st
-import streamlit_authenticator as stauth
 from streamlit_extras.bottom_container import bottom
 
 from models.course import get_courses_by_user_from_sqlite
@@ -18,12 +11,14 @@ from tools.auth import login
 # ==================== 各种初始化工作 ====================
 # 设置页面标题和图标
 st.set_page_config(
-    page_title="Chapter Debugger",
+    page_title="CodeSifu",
     page_icon="🧙‍♂️",  # 👨‍🏫
 )
+# 固定侧边栏宽度并添加Logo
+fix_sidebar_add_logo("static/CodeSifu_logo_w300.jpg")
 # 页面内的大标题小标题
-'# Chapter Debugger ⌨️🧙‍♂️⌨️'  # 📚
-st.caption('📚 加载章节剧本模拟用户体验进行线性调试')
+'# Code Sifu ⌨️🧙‍♂️⌨️'  # 📚
+st.caption('📚 你的专属AI编程私教')
 
 
 # ========== Debug 初始化 ==========
@@ -53,55 +48,33 @@ if 'has_started' not in st.session_state:
 # if 'lark_app_token' not in st.session_state:
 #     st.session_state.lark_app_token = ''
 
-if 'miss_vars' not in st.session_state:
-    st.session_state.miss_vars = False
-
-if 'system_miss_vars' not in st.session_state:
-    st.session_state.system_miss_vars = False
-
 # ======================================================
 
 # ==================== Sidebar ====================
 with st.sidebar:
-    st.caption('飞书中更新后可以点击清除缓存')
     if st.button('Clean all cache', use_container_width=True):
         st.cache_data.clear()
 
 
 # ==================== 主体框架 ====================
-if not st.session_state.has_started:
+# 需要登录
+if login():
 
-    with open('auth_config.yml') as file:
-        config = yaml.load(file, Loader=SafeLoader)
+    # 开发者模式要做的事情
+    if st.session_state.DEV_MODE:
+        # 加载进度控制器
+        load_process_controller()
 
-    # Pre-hashing all plain text passwords once
-    # Hasher.hash_passwords(config['credentials'])
-
-    authenticator = stauth.Authenticate(
-        config['credentials'],
-        config['cookie']['name'],
-        config['cookie']['key'],
-        config['cookie']['expiry_days'],
-        config['pre-authorized']
-    )
-
-    authenticator.login()
-
-    if st.session_state['authentication_status']:
-        # authenticator.logout()
-        # st.write(f'Welcome *{st.session_state["name"]}*')
-        # st.title('Some content')
-
-
+    if not st.session_state.has_started:
         courses = get_courses_by_user_from_sqlite(st.session_state["username"])
-        # courses = get_courses_by_user_from_sqlite('kenrick')
         if not courses:
             st.warning(' 暂无课程，请前往我的账户新建课程。  ⬇️ ⬇️ ⬇️', icon='⚠️')
             if st.button('前往我的账户', type='primary', use_container_width=True):
                 st.switch_page("pages/100_My_Account.py")
             st.stop()
 
-        col1, col2, col3 = st.columns(3)
+
+        col1, col2, col3 = st.columns([2, 2, 1])
         with col1:
             selected_course = st.selectbox('选择课程:', (course.course_name for course in courses))
 
@@ -111,130 +84,42 @@ if not st.session_state.has_started:
             tables = get_bitable_tables(st.session_state.lark_app_token)
 
             with col2:
-                select_table = st.selectbox('选择章节:', (
+                select_table = st.selectbox('选择剧本:', (
                     table.name for table in tables if not table.name.startswith('字典-')))
-                st.session_state.lark_table_id = next(
-                    (table.table_id for table in tables if table.name == select_table), None)
-                # 加载剧本及系统角色
-                if 'script_list' in st.session_state:
-                    del st.session_state['script_list']  # clear before load
-                # load_scripts_and_system_role(st.session_state.lark_app_token, st.session_state.lark_table_id)
-                system_role_script = load_scripts(st.session_state.lark_app_token, st.session_state.lark_table_id)
 
-            with (col3):
-                # st.session_state.select_progress = st.number_input('开始位置:', value=2, min_value=1, step=1)
-                # st.session_state.select_progress
-                select_script = st.selectbox('开始位置:', st.session_state.script_list)
-                st.session_state.progress = st.session_state.script_list.index(select_script)
-                # st.write(f'选中的剧本在列表中的位置序号是: {index}')
+            with col3:
+                select_progress = st.number_input('开始位置:', value=2, min_value=1, step=1)
 
-                # st.session_state.progress = st.session_state.select_progress - (
-                #     2 if 'system_role' in st.session_state else 1)
-
-        if select_script:
-            st.text_area('剧本内容', select_script.template, disabled=True, height=200)
 
         if st.button('启动剧本', type='primary', use_container_width=True):
+            st.session_state.lark_table_id = next(
+                (table.table_id for table in tables if table.name == select_table), None)
             st.session_state.has_started = True
-            # st.rerun()
-
-    elif st.session_state['authentication_status'] is False:
-        st.error('Username/password is incorrect')
-    elif st.session_state['authentication_status'] is None:
-        st.warning('Please enter your username and password')
-
-# 非开发者模式直接开始，若在开发者模式则等待配置后开始
-# if not st.session_state.DEV_MODE or st.session_state.has_started:
-else:
-
-    # 获取剧本总长度，并在结束时停止
-    if st.session_state.progress >= st.session_state.script_list_len:
-        # chat_box.ai_say('别再犹豫了，马上把我带回家吧~')
-        with bottom():
-            st.write('')
-        st.stop()
+            st.rerun()
 
 
-    if 'system_role_script' in st.session_state and 'system_role' not in st.session_state:
-        system_needed_vars = extract_variables(st.session_state.system_role_script.template)
-        if system_needed_vars:
-            system_miss_vars = [var for var in system_needed_vars if var not in st.session_state]
-            if system_miss_vars:
-                st.session_state.system_miss_vars = True
-                with st.form('sys_miss_vars'):
-                    '### 系统角色模版中需要变量'
-                    for var in system_miss_vars:
-                        val = st.text_input(f'输入 {var} 的值：')
-                        if val != '':
-                            st.session_state[var] = val
 
-                    submitted = st.form_submit_button('提交变量继续', type='primary', use_container_width=True)
-                    if submitted:
-                        st.session_state.system_miss_vars = False
-                        # time.sleep(5)
-                        # st.rerun()
-            else:
-                st.session_state.system_miss_vars = False
+    # 非开发者模式直接开始，若在开发者模式则等待配置后开始
+    # if not st.session_state.DEV_MODE or st.session_state.has_started:
+    if st.session_state.has_started:
 
-        if not st.session_state.system_miss_vars:
-            template = st.session_state.system_role_script.template
-            variables = {v: st.session_state[v] for v in
-                         st.session_state.system_role_script.template_vars} if st.session_state.system_role_script.template_vars else None
+            # 加载剧本及系统角色
+            load_scripts_and_system_role(st.session_state.lark_app_token, st.session_state.lark_table_id)
+            st.session_state.progress = select_progress - (2 if 'system_role' in st.session_state else 1)
 
-            if variables:
-                prompt = PromptTemplate(input_variables=list(variables.keys()), template=template)
-                prompt = prompt.format(**variables)
-            else:
-                prompt = template
+            # 获取剧本总长度，并在结束时停止
+            if st.session_state.progress >= st.session_state.script_list_len:
+                # chat_box.ai_say('别再犹豫了，马上把我带回家吧~')
+                with bottom():
+                    st.write('')
+                st.stop()
 
-            st.session_state.system_role = prompt
-            st.session_state.system_role_id = st.session_state.system_role_script.id
+            # 根据当前进度ID，获取对应的剧本
+            script: Script = st.session_state.script_list[st.session_state.progress]
+            logging.debug(f'当前剧本：\n{script}')
+            if st.session_state.DEV_MODE:
+                show_current_script(script)
 
-    else:
-
-
-        # 根据当前进度ID，获取对应的剧本
-        script: Script = st.session_state.script_list[st.session_state.progress]
-        logging.debug(f'当前剧本：\n{script}')
-        # if st.session_state.DEV_MODE:
-        #     show_current_script(script)
-
-        needed_vars = extract_variables(script.template)
-        # st.session_state
-        if needed_vars:
-            logging.debug('=== need vars')
-            missing_vars = [var for var in needed_vars if var not in st.session_state]
-
-            has_empty_val = False
-            for var in needed_vars:
-                if not st.session_state.get(var):
-                    has_empty_val = True
-                    break
-
-            if missing_vars or has_empty_val:
-                logging.debug('=== if missing_vars or has_empty_val')
-                st.session_state.miss_vars = True
-
-                # with st.form('missing_vars'):
-                with st.expander('Now Script Template:', expanded=True):
-                    st.text_area('剧本内容', script.template, disabled=True, height=300)
-                st.write(f'需要变量: **{needed_vars}**,   缺失: **{missing_vars}**')
-                with st.form('missing_vars'):
-                    for var in missing_vars:
-                        val = st.text_input(f'输入 {var} 的值：')
-                        if val != '':
-                            st.session_state[var] = val
-
-                    submitted = st.form_submit_button('提交变量继续', type='primary', use_container_width=True)
-                    if submitted:
-                        st.session_state.miss_vars = False
-                        # time.sleep(5)
-                        # st.rerun()
-            else:
-                st.session_state.miss_vars = False
-
-        # 没有缺失的 vars 时才能继续：
-        if not st.session_state.miss_vars:
 
             # ========== 内容输出部分 ==========
             # 如果剧本没有输出过，则进行输出
@@ -244,7 +129,6 @@ else:
                 # ===【固定剧本】：模拟流式输出
                 if script.type == ScriptType.FIXED:
                     if script.format == ScriptFormat.MARKDOWN:
-                        logging.debug('=== 打算模拟输出了')
                         full_result = simulate_streaming(chat_box, script.template, script.template_vars)
                     elif script.format == ScriptFormat.IMAGE:
                         chat_box.ai_say(Image(script.media_url))
@@ -293,8 +177,7 @@ else:
                     for row in btns:
                         st_cols = st.columns(len(row))
                         for i, btn in enumerate(row):
-                            if st_cols[i].button(btn['label'], key=btn['value'], type='primary',
-                                                 use_container_width=True):
+                            if st_cols[i].button(btn['label'], key=btn['value'], type='primary', use_container_width=True):
                                 # 获取用户点击按钮的 value
                                 st.session_state[script.btn_group_cfg['var_name']] = btn['value']
                                 st.session_state.progress += 1
@@ -316,8 +199,7 @@ else:
 
                         # 如果找到了则加载，否则报错
                         if lark_table_id:
-                            sub_script_list = load_scripts_from_bitable(cfg.LARK_APP_TOKEN, lark_table_id,
-                                                                        lark_view_id)
+                            sub_script_list = load_scripts_from_bitable(cfg.LARK_APP_TOKEN, lark_table_id, lark_view_id)
                             # 将子剧本插入到原剧本中
                             st.session_state.script_list = (
                                     st.session_state.script_list[:st.session_state.progress + 1]
@@ -365,16 +247,5 @@ else:
             else:
                 st.session_state.progress += 1
                 st.rerun()
-
-
-
-        # st.session_state
-
-        # # 开发者模式要做的事情
-        # if st.session_state.DEV_MODE:
-        #     # 加载进度控制器
-        #     load_process_controller()
-
-
 
 

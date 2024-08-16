@@ -86,7 +86,7 @@ def init_buy_record(app: Flask,user_id:str,course_id:str):
         if not course_info:
             app.logger.error('course:{} not found'.format(course_id))
             raise COURSE_NOT_FOUND
-        origin_record = AICourseBuyRecord.query.filter(AICourseBuyRecord.user_id==user_id,AICourseBuyRecord.course_id==course_id,AICourseBuyRecord.status != BUY_STATUS_SUCCESS).first()
+        origin_record = AICourseBuyRecord.query.filter(AICourseBuyRecord.user_id==user_id,AICourseBuyRecord.course_id==course_id).order_by(AICourseBuyRecord.id.asc()).first()
         if origin_record:
             return AICourseBuyRecordDTO(origin_record.record_id,origin_record.user_id,origin_record.course_id,origin_record.price,origin_record.status,origin_record.discount_value)
         buy_record = AICourseBuyRecord()

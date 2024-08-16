@@ -12,7 +12,7 @@ from sqlalchemy import func
 
 from flaskr.api.llm import invoke_llm
 from flaskr.service.common.models import AppException
-from flaskr.service.profile.funcs import save_user_profiles
+from flaskr.service.profile.funcs import save_user_profiles, get_user_profile_labels,update_user_profile_with_lable
 from flaskr.service.study.utils import extract_json, generation_attend, get_fmt_prompt
 from flaskr.service.user.funs import verify_sms_code_without_phone
 
@@ -163,7 +163,7 @@ def handle_input_phone(app:Flask,user_id:str,attend:AICourseLessonAttend,script_
             yield make_script_dto("text",i,script_info.script_id)
             time.sleep(0.01)
         yield make_script_dto("text_end","",script_info.script_id)
-        yield make_script_dto(UI_TYPE_PHONE,script_info.script_ui_content,script_info.script_id) 
+        yield make_script_dto(INPUT_TYPE_PHONE,script_info.script_ui_content,script_info.script_id) 
         log_script = generation_attend(app,attend,script_info)
         log_script.script_content = response_text
         log_script.script_role = ROLE_TEACHER
@@ -175,7 +175,13 @@ def handle_input_phone(app:Flask,user_id:str,attend:AICourseLessonAttend,script_
 @register_input_handler(input_type=INPUT_TYPE_CHECKCODE)
 def handle_input_checkcode(app:Flask,user_id:str,attend:AICourseLessonAttend,script_info:AILessonScript,input:str,trace:Trace,trace_args):
     try:
+        origin_user_id = user_id
         ret = verify_sms_code_without_phone(app,user_id,input)
+        verify_user_id = ret.userInfo.user_id
+        if origin_user_id != verify_user_id:
+            app.logger.info(f"origin_user_id:{origin_user_id},verify_user_id:{verify_user_id} copy profile")
+            new_profiles = get_user_profile_labels(app,origin_user_id)
+            update_user_profile_with_lable(app,verify_user_id,new_profiles)
         yield make_script_dto("profile_update",{"key":"phone","value":ret.userInfo.mobile},script_info.script_id)
         yield make_script_dto("user_login",{"phone":ret.userInfo.mobile,"user_id":ret.userInfo.user_id,"token":ret.token},script_info.script_id)
         input = None
