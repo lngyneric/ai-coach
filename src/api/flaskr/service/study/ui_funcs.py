@@ -20,7 +20,7 @@ from flaskr.service.order.funs import init_buy_record
 from flaskr.service.profile.funcs import get_user_profiles
 from flaskr.service.study.const import INPUT_TYPE_BRANCH, INPUT_TYPE_CHECKCODE, INPUT_TYPE_CONTINUE, INPUT_TYPE_PHONE, INPUT_TYPE_SELECT
 from flaskr.service.study.models import AICourseAttendAsssotion
-from flaskr.service.user.funs import send_sms_code_without_check
+from flaskr.service.user import send_sms_code_without_check
 from flaskr.service.lesson.models import AILesson, AILessonScript
 from flaskr.service.lesson.const import UI_TYPE_BRANCH, UI_TYPE_BUTTON, UI_TYPE_CHECKCODE, UI_TYPE_INPUT, UI_TYPE_PHONE, UI_TYPE_SELECTION, UI_TYPE_TO_PAY
 from flaskr.service.order.models import AICourseLessonAttend

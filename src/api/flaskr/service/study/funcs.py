@@ -10,7 +10,7 @@ from flaskr.service.study.const import INPUT_TYPE_BRANCH, INPUT_TYPE_CHECKCODE, 
 from ...service.study.dtos import AILessonAttendDTO, StudyRecordDTO
 from ...service.user.models import User
 from ...service.common  import AppException
-from ...service.user.funs import get_sms_code_info, send_sms_code_without_check, verify_sms_code, verify_sms_code_without_phone
+from ...service.user import get_sms_code_info, send_sms_code_without_check, verify_sms_code, verify_sms_code_without_phone
 from ...common import register_schema_to_swagger
 from ...service.profile.funcs import get_user_profiles, save_user_profiles
 from ...service.order.consts import ATTEND_STATUS_BRANCH, ATTEND_STATUS_TYPES, ATTEND_STATUS_UNAVAILABE, ATTEND_STATUS_VALUES

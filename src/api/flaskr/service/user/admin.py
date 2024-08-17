@@ -1,8 +1,10 @@
 from flask import Flask
+from ...service.common.dtos import PageNationDTO
 from .models import User
+from datetime import date as Date
 
 
-from api.flaskr.common.swagger import register_schema_to_swagger
+from ...common.swagger import register_schema_to_swagger
 
 
 
@@ -27,6 +29,8 @@ class UserItemDTO:
 
 
 
+# get user list
+# author: yfge
 def get_user_list(app:Flask,page:int=1,page_size:int=20,query=None):
     with app.app_context():
         app.logger.info("query:"+str(query)+" page:"+str(page)+" page_size:"+str(page_size))

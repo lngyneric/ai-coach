@@ -36,6 +36,30 @@ const authRoutes = [
     title: "用户",
     icon: <ReadOutlined></ReadOutlined>,
   },
+  {
+    path: "/order",
+    element: <ContactsComponant></ContactsComponant>,
+    title: "订单",
+    icon: <ReadOutlined></ReadOutlined>,
+  },
+  {
+    path: "/course",
+    element: <ContactsComponant></ContactsComponant>,
+    title: "课程",
+    icon: <ReadOutlined></ReadOutlined>,
+  },
+  {
+    path: "/discount",
+    element: <ContactsComponant></ContactsComponant>,
+    title: "优惠",
+    icon: <ReadOutlined></ReadOutlined>,
+  },
+  {
+    path: "/channel",
+    element: <ContactsComponant></ContactsComponant>,
+    title: "渠道",
+    icon: <ReadOutlined></ReadOutlined>,
+  },
 // <<<<<<< HEAD
   // {
   //   path: "/schedele",

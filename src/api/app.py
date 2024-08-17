@@ -35,7 +35,7 @@ def create_app()->Flask:
     from flaskr import dao
     dao.init_db(app)
     # init models and migrate
-    from flaskr.service.admin.models import AdminUser
+    # from flaskr.service.admin.models import AdminUser
     Migrate(app,dao.db)
 
     #  init redis 
