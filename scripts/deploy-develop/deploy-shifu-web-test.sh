@@ -41,7 +41,7 @@ fi
 pnpm install
 
 # Build the project with pnpm
-pnpm run build
+npm run build:staging
 
 # Sync build files to the specified directory
 rsync -av --delete /item/ai-shifu/src/web/build/ /opt/1panel/apps/openresty/openresty/www/sites/test-sifu.agiclass.cn/index
