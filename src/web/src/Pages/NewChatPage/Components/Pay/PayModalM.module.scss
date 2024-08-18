@@ -29,13 +29,13 @@
   }
 
   .totalDiscountWrapper {
-      margin-top: 10px;
-      display: flex;
-      justify-content: center;
+    margin-top: 10px;
+    display: flex;
+    justify-content: center;
   }
 
   .payChannelWrapper {
-    margin-top: 10px;
+    margin-top: 40px;
 
     .payChannelRow {
       padding: 18px;
@@ -45,8 +45,8 @@
       align-items: center;
       border-radius: 10px;
 
-      &.selected { 
-        background-color: var(--color-4)
+      &.selected {
+        background-color: var(--color-4);
       }
 
       .payChannelBasic {
@@ -64,12 +64,62 @@
         }
       }
 
-
       .payChannelRadio {
         --icon-size: 16px;
       }
     }
+  }
 
+  .buttonWrapper {
+    margin-top: 40px;
+    display: flex;
+    flex-flow: row nowrap;
+    justify-content: center;
+    align-items: center;
 
+    .payButton {
+      width: 100%;
+    }
+  }
+
+  .couponCodeWrapper {
+    margin-top: 30px;
+    display: flex;
+    flex-flow: row nowrap;
+    justify-content: center;
+    align-items: center;
+
+    .couponCodeButton {
+      --adm-font-size-9: var(--font-size-5);
+    }
+  }
+
+  .protocalWrapper {
+    margin-top: 30px;
+    display: flex;
+    flex-flow: column nowrap;
+    justify-content: center;
+    align-items: center;
+    font-size: var(--font-size-5);
+
+    .protocalDesc {
+      color: var(--color-8);
+    }
+
+    .protocalLinks {
+      margin-top: 6px;
+
+      .protocalLink {
+        text-decoration: none;
+      }
+    }
+  }
+  
+  .payInfoWrapper {
+    margin-top: 30px;
+
+    .payInfo {
+      width: 100%;
+    }
   }
 }
