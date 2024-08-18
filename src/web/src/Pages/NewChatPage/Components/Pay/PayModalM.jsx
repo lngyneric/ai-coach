@@ -83,7 +83,7 @@ export const PayModalM = ({ open = false, onCancel, onOk }) => {
             <PayTotalDiscount discount={totalDiscount} />
           </div>
           <div className={styles.payChannelWrapper}>
-            <a href={payUrl} target="_blank" referrerPolicy="no-referrer" rel="noreferrer" >支付链接</a>
+            {payUrl && <a href={payUrl}>支付链接</a> }
             <Radio.Group value={payChannel} onChange={onPayChannelChange}>
               <div
                 className={classNames(
