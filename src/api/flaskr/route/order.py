@@ -87,7 +87,7 @@ def register_order_handler(app: Flask, path_prefix: str):
                                     type: string
                                     description: 返回信息
                                 data:
-                                    $ref: "#/components/schemas/BuyRecordDTO"
+                                    $ref: "#/components/schemas/AICourseBuyRecordDTO"
     
         """
         user_id = request.user.user_id
@@ -125,7 +125,7 @@ def register_order_handler(app: Flask, path_prefix: str):
                                     type: string
                                     description: 返回信息
                                 data:
-                                    $ref: "#/components/schemas/BuyRecordDTO"
+                                    $ref: "#/components/schemas/AICourseBuyRecordDTO"
     
                         """
         order_id = request.get_json().get('order_id', '')
@@ -165,7 +165,7 @@ def register_order_handler(app: Flask, path_prefix: str):
                                     type: string
                                     description: 返回信息
                                 data:
-                                    $ref: "#/components/schemas/BuyRecordDTO"
+                                    $ref: "#/components/schemas/AICourseBuyRecordDTO"
     
         """
         discount_code = request.get_json().get('discount_code', '')
