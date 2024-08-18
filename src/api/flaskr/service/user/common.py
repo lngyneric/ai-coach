@@ -19,7 +19,7 @@ from ...api.aliyun import send_sms_code_ali
 
 from ..common.dtos import USER_STATE_REGISTERED, UserInfo, UserToken
 from ..common.models import RESET_PWD_CODE_ERROR, RESET_PWD_CODE_EXPIRED, SMS_CHECK_ERROR, SMS_SEND_EXPIRED, USER_NOT_FOUND, USER_PASSWORD_ERROR, USER_TOKEN_EXPIRED
-from .utils import generate_token
+from .utils import generate_token,get_user_openid
 from ...dao import redis_client as redis, db
 from .models import User as CommonUser,AdminUser as AdminUser
 
@@ -37,11 +37,6 @@ def get_model(app:Flask):
         return CommonUser
     
 
-def get_user_openid(user):
-    if hasattr(user,'user_open_id'):
-        return user.user_open_id
-    else:
-        return "";
 
 
 def verify_user(app:Flask, login: str, raw_password: str) ->UserToken:

@@ -12,6 +12,11 @@ from ...api.aliyun import send_sms_code_ali
 from io import BytesIO
 
 
+def get_user_openid(user):
+    if hasattr(user,'user_open_id'):
+        return user.user_open_id
+    else:
+        return "";
 
 
 # generate token

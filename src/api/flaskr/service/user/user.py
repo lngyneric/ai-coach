@@ -12,7 +12,7 @@ from flask import Flask
 from ...common.config import get_config
 from ..common.models import FILE_TYPE_NOT_SUPPORT
 
-from .utils import generate_token
+from .utils import generate_token,get_user_openid
 from ...service.common.dtos import USER_STATE_UNTEGISTERED, UserInfo, UserToken
 from ...service.user.models import User, UserConversion
 from ...dao import db
@@ -49,13 +49,13 @@ def generate_temp_user(app:Flask,temp_id:str,user_source = 'web',wx_code=None)->
             db.session.add(new_user)
             db.session.commit()
             token = generate_token(app,user_id=user_id)
-            return UserToken(UserInfo(user_id=user_id, username="", name="", email="", mobile="",model=new_user.default_model,user_state=new_user.user_state),token=token)
+            return UserToken(UserInfo(user_id=user_id, username="", name="", email="", mobile="",model=new_user.default_model,user_state=new_user.user_state,wx_openid= new_user.user_open_id),token=token)
         else:
             user = User.query.filter_by(user_id=convert_user.user_id).first()
             user.wx_openid = wx_openid
             db.session.commit()
             token = generate_token(app,user_id=user.user_id)
-            return UserToken(UserInfo(user_id=user.user_id, username=user.username, name=user.name, email=user.email, mobile=user.mobile,model=user.default_model,user_state=user.user_state),token=token)     
+            return UserToken(UserInfo(user_id=user.user_id, username=user.username, name=user.name, email=user.email, mobile=user.mobile,model=user.default_model,user_state=user.user_state,wx_openid= user.user_open_id),token=token)     
 
 
 
