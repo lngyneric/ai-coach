@@ -44,7 +44,8 @@ export const PayModalM = ({ open = false, onCancel, onOk }) => {
       orderId,
     });
 
-    window.location.assign(qrcodeResp.qr_url);
+    // window.location.assign(qrcodeResp.qr_url);
+    window.open(qrcodeResp.qr_url);
   };
 
   const onPayChannelChange = (value) => {
