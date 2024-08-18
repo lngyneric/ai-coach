@@ -574,7 +574,7 @@ export const ChatComponents = forwardRef(
         {mobileStyle && (
           <ChatMobileHeader className={styles.ChatMobileHeader} />
         )}
-        {mobileStyle ? (
+        {payModalOpen && (mobileStyle ? (
           <PayModalM
             open={payModalOpen}
             onCancel={_onPayModalClose}
@@ -586,7 +586,7 @@ export const ChatComponents = forwardRef(
             onCancel={_onPayModalClose}
             onOk={onPayModalOk}
           />
-        )}
+        ))}
       </div>
     );
   }
