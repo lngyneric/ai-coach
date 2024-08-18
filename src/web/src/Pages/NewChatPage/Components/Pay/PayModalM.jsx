@@ -28,6 +28,7 @@ export const PayModalM = ({ open = false, onCancel, onOk }) => {
   const [payChannel, setPayChannel] = useState(PAY_CHANNEL_WECHAT);
   const [orderId, setOrderId] = useState('');
   const [isCompleted, setIsCompleted] = useState(false);
+  const [payUrl, setPayUrl] = useState('');
 
   useEffect(() => {
     (async () => {
@@ -45,6 +46,7 @@ export const PayModalM = ({ open = false, onCancel, onOk }) => {
     });
 
     // window.location.assign(qrcodeResp.qr_url);
+    setPayUrl(qrcodeResp.qr_url);
     window.open(qrcodeResp.qr_url);
   };
 
@@ -81,6 +83,7 @@ export const PayModalM = ({ open = false, onCancel, onOk }) => {
             <PayTotalDiscount discount={totalDiscount} />
           </div>
           <div className={styles.payChannelWrapper}>
+            <a href={payUrl} target="_blank" referrerPolicy="no-referrer" rel="noreferrer" >支付链接</a>
             <Radio.Group value={payChannel} onChange={onPayChannelChange}>
               <div
                 className={classNames(
