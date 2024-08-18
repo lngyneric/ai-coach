@@ -12,10 +12,8 @@ export const IndexNavigate = (props) => {
     const channel = params.channel || '';
     channelRef.current = channel;
   }
-  
 
   useEffect(() => {
-    console.log('channel', channelRef.current)
     updateChannel(channelRef.current);
   }, [updateChannel])
 

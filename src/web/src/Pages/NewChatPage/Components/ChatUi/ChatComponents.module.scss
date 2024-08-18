@@ -4,12 +4,6 @@
   position: relative;
   box-sizing: border-box;
 
-  .ChatMobileHeader {
-    position: absolute;
-    top: 0;
-    left: 0;
-    z-index: 990;
-  }
 
   :global(.MessageContainer) {
     background-color: var(--color-4);

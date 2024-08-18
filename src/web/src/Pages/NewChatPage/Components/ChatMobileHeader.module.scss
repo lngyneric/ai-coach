@@ -3,7 +3,8 @@
   flex-flow: row nowrap;
   justify-content: space-between;
   align-items: center;
-  background-color: rgba(255,255,255,0.8);
+  background: rgba(255, 255, 255, 0.8);
+  backdrop-filter: blur(15px);
   padding: 0 12px;
   height: 76px;
   width: 100%;

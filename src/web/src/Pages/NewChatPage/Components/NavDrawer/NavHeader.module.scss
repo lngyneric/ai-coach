@@ -7,6 +7,10 @@
   justify-content: space-between;
   transition: width 3s ease;
 
+  &.mobile {
+    height: 76px;
+  }
+
   .logoArea {
     display: flex;
     flex-flow: row nowrap;

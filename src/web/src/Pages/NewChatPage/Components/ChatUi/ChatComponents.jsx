@@ -24,7 +24,6 @@ import classNames from 'classnames';
 import { useUserStore } from 'stores/useUserStore.js';
 import { fixMarkdown, fixMarkdownStream } from 'Utils/markdownUtils.js';
 import { FRAME_LAYOUT_MOBILE } from 'constants/uiConstants.js';
-import ChatMobileHeader from './ChatMobileHeader.jsx';
 import PayModal from '../Pay/PayModal.jsx';
 import { useDisclosture } from 'common/hooks/useDisclosture.js';
 import { memo } from 'react';
@@ -147,7 +146,6 @@ export const ChatComponents = forwardRef(
       onGoChapter = (id) => {},
       chapterId,
       onPurchased,
-      onMoblieSettingClick: onMobileSettingClick,
     },
     ref
   ) => {
@@ -575,9 +573,6 @@ export const ChatComponents = forwardRef(
               onChatInputSend(type, val);
             }}
           />
-        )}
-        {mobileStyle && (
-          <ChatMobileHeader className={styles.ChatMobileHeader} onSettingClick={_onMobileSettingClick} />
         )}
         {payModalOpen && (mobileStyle ? (
           <PayModalM

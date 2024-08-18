@@ -1,17 +1,19 @@
 import { Avatar } from 'antd';
+import { AppContext } from 'Components/AppContext.js';
 import PopupModal from 'Components/PopupModal';
 import styles from './SettingModal.module.scss';
 import classNames from 'classnames';
 import { useUserStore } from 'stores/useUserStore.js';
 import { Modal } from 'antd';
-import { memo } from 'react';
+import { memo, useCallback, useContext } from 'react';
 import userIcon from 'Assets/newchat/light/user.png';
 import editIcon from 'Assets/newchat/light/icon16-edit.png';
 import memberIcon from 'Assets/newchat/light/icon16-member.png';
 import exitLoginIcon from 'Assets/newchat/light/exit-login-2x.png';
-import { useCallback } from 'react';
 import { useDisclosture } from 'common/hooks/useDisclosture.js';
 import PayModal from '../Pay/PayModal.jsx';
+import PayModalM from '../Pay/PayModalM.jsx';
+import { FRAME_LAYOUT_MOBILE } from 'constants/uiConstants';
 
 export const SettingModal = ({
   open,
@@ -22,6 +24,9 @@ export const SettingModal = ({
   className,
 }) => {
   const { hasLogin, userInfo, logout } = useUserStore((state) => state);
+  const { frameLayout } = useContext(AppContext);
+
+  const mobileStyle = frameLayout === FRAME_LAYOUT_MOBILE;
 
   const {
     open: payModalOpen,
@@ -41,7 +46,7 @@ export const SettingModal = ({
   };
   const avatar = userInfo?.avatar || userIcon;
 
-  const onLoginRowClick = useCallback( () => {
+  const onLoginRowClick = useCallback(() => {
     if (!hasLogin) {
       onLoginClick?.();
     } else {
@@ -55,7 +60,7 @@ export const SettingModal = ({
     } else {
       onPayModalOpen();
     }
-  }, []) 
+  }, []);
 
   return (
     <>
@@ -78,35 +83,33 @@ export const SettingModal = ({
             </div>
             <img className={styles.rowIcon} src={editIcon} alt="" />
           </div>
-          <div
-            className={styles.settingRow}
-            onClick={onMemberRowClick}
-          >
+          <div className={styles.settingRow} onClick={onMemberRowClick}>
             <div>会员管理</div>
-            <img
-              className={styles.rowIcon}
-              src={memberIcon}
-              alt=""
-            />
+            <img className={styles.rowIcon} src={memberIcon} alt="" />
           </div>
           {hasLogin && (
             <div className={styles.settingRow} onClick={onLogoutClick}>
               <div>退出登录</div>
-              <img
-                className={styles.rowIcon}
-                src={exitLoginIcon}
-                alt=""
-              />
+              <img className={styles.rowIcon} src={exitLoginIcon} alt="" />
             </div>
           )}
         </div>
       </PopupModal>
 
-      <PayModal
-        open={payModalOpen}
-        onCancel={onPayModalClose}
-        onOk={onPayModalClose}
-      />
+      {payModalOpen &&
+        (mobileStyle ? (
+          <PayModalM
+            open={payModalOpen}
+            onCancel={onPayModalClose}
+            onOk={onPayModalClose}
+          />
+        ) : (
+          <PayModal
+            open={payModalOpen}
+            onCancel={onPayModalClose}
+            onOk={onPayModalClose}
+          />
+        ))}
     </>
   );
 };

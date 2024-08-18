@@ -3,7 +3,7 @@ import { useParams, useNavigate } from 'react-router-dom';
 import classNames from 'classnames';
 import styles from './NewChatPage.module.scss';
 import { Skeleton } from 'antd';
-import { calcFrameLayout } from 'constants/uiConstants.js';
+import { calcFrameLayout, FRAME_LAYOUT_MOBILE } from 'constants/uiConstants.js';
 import { useUiLayoutStore } from 'stores/useUiLayoutStore.js';
 import { useUserStore } from 'stores/useUserStore.js';
 import { AppContext } from 'Components/AppContext.js';
@@ -13,7 +13,8 @@ import LoginModal from './Components/Login/LoginModal.jsx';
 import { useLessonTree } from './hooks/useLessonTree.js';
 import { useCourseStore } from 'stores/useCourseStore';
 import TrackingVisit from 'Components/TrackingVisit.jsx';
-
+import ChatMobileHeader from './Components/ChatMobileHeader.jsx';
+import { useDisclosture } from 'common/hooks/useDisclosture.js';
 // 课程学习主页面
 const NewChatPage = (props) => {
   const { frameLayout, updateFrameLayout } = useUiLayoutStore((state) => state);
@@ -38,6 +39,16 @@ const NewChatPage = (props) => {
   const [showUserSettings, setShowUserSettings] = useState(false);
   const [loading, setLoading] = useState(false);
   const navigate = useNavigate();
+
+  const mobileStyle = frameLayout === FRAME_LAYOUT_MOBILE;
+
+  const {
+    open: navOpen,
+    onClose: onNavClose,
+    onToggle: onNavToggle,
+  } = useDisclosture({
+    initOpen: mobileStyle ? false : true
+  });
 
   // 判断布局类型
   useEffect(() => {
@@ -156,14 +167,17 @@ const NewChatPage = (props) => {
           paragraph={true}
           rows={10}
         >
-          <NavDrawer
-            onLoginClick={() => setLoginModalOpen(true)}
-            lessonTree={tree}
-            onChapterCollapse={toggleCollapse}
-            onLessonSelect={onLessonSelect}
-            onGoToSetting={onGoToSetting}
-            onTryLessonSelect={onTryLessonSelect}
-          />
+          {navOpen && (
+            <NavDrawer
+              onLoginClick={() => setLoginModalOpen(true)}
+              lessonTree={tree}
+              onChapterCollapse={toggleCollapse}
+              onLessonSelect={onLessonSelect}
+              onGoToSetting={onGoToSetting}
+              onTryLessonSelect={onTryLessonSelect}
+              onClose={onNavClose}
+            />
+          )}
           {
             <ChatUi
               chapterId={currChapterId}
@@ -183,6 +197,14 @@ const NewChatPage = (props) => {
           />
         )}
         {initialized && <TrackingVisit />}
+
+        {mobileStyle && (
+          <ChatMobileHeader
+            navOpen={navOpen} 
+            className={styles.chatMobileHeader}
+            onSettingClick={onNavToggle}
+          />
+        )}
       </AppContext.Provider>
     </div>
   );
