@@ -90,8 +90,6 @@ def use_discount_code(app:Flask, user_id, discount_code, order_id):
         
         if not buy_record:
             return None
-        if buy_record.discount_value > 0:
-             return AICourseBuyRecordDTO(buy_record.record_id,buy_record.user_id,buy_record.course_id,buy_record.price,buy_record.status,buy_record.discount_value)
         if not discount:
             return None
         if discount.status == DISCOUNT_STATUS_INACTIVE:

@@ -46,23 +46,6 @@ def generation_img_chk(app:Flask,mobile:str):
             "expire_in":app.config['CAPTCHA_CODE_EXPIRE_TIME']
         }
 
-# send sms code
-# author: yfge 
-def send_sms_code_without_check(app:Flask,user_id:str,phone:str,User)->str:
-    user = User.query.filter(User.user_id==user_id).first()
-    user.mobile = phone
-    characters =  string.digits
-    random_string = ''.join(random.choices(characters, k=4))
-    # 发送短信验证码
-    redis.set(app.config["REDIS_KEY_PRRFIX_PHONE"]+user_id,phone,ex=app.config.get("PHONE_EXPIRE_TIME",60*30))
-    redis.set(app.config["REDIS_KEY_PRRFIX_PHONE_CODE"] + phone, random_string,ex=app.config['PHONE_CODE_EXPIRE_TIME'])
-    send_sms_code_ali(app,phone,random_string)
-    db.session.flush()
-    return {
-        "expire_in":app.config['PHONE_CODE_EXPIRE_TIME'],
-        "phone":phone
-    }
-
 
 
 
