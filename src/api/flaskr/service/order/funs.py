@@ -129,6 +129,7 @@ def init_buy_record(app: Flask,user_id:str,course_id:str):
         buy_record.status = BUY_STATUS_INIT
         buy_record.record_id = order_id
         buy_record.discount_value = decimal.Decimal(0.00)
+        buy_record.pay_value = course_info.course_price
         price_items = []
         price_items.append(PayItemDto('商品','基础价格',buy_record.price,False))
         if active_records:
