@@ -65,6 +65,7 @@
     "start:dev-local": "dotenv -e .local.single.env -e .env.dev-local craco start",
     "lint:knip": "knip",
     "build": "dotenv -e .local.single.env -e .env.prod craco build",
+    "build:staging": "dotenv -e .local.single.env -e .env.staging craco build",
     "test": "craco test",
     "eject": "craco eject"
   },
