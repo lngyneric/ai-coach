@@ -3,6 +3,7 @@ from datetime import date
 import datetime
 import decimal
 import json
+from math import e
 from os import name
 from re import S
 from typing import List
@@ -10,6 +11,7 @@ from typing import List
 from numpy import block, char
 from sympy import product
 
+from api.flaskr.service.user.models import User
 from flaskr.service.active import query_active_record,query_and_join_active
 from flaskr.service.order.query_discount import query_discount_record
 from flaskr.common.swagger import register_schema_to_swagger
@@ -169,6 +171,8 @@ class BuyRecordDTO:
 def generate_charge(app: Flask,record_id:str,channel:str,client_ip:str)->BuyRecordDTO:
     with app.app_context():
         app.logger.info('generate charge for record:{} channel:{}'.format(record_id,channel))
+
+
         buy_record = AICourseBuyRecord.query.filter(AICourseBuyRecord.record_id==record_id).first()
         if not buy_record:
             raise ORDER_NOT_FOUND
@@ -194,6 +198,13 @@ def generate_charge(app: Flask,record_id:str,channel:str,client_ip:str)->BuyReco
             extra = dict({})
             charge =  create_pingxx_order(app, order_no, pingpp_id, channel, amount, client_ip, subject, body, extra)
             qr_url = charge['credential']['alipay_qr']
+        elif channel == 'wx_pub': # 微信JSAPI支付
+            user = User.query.filter(User.user_id==buy_record.user_id).first()
+            extra = dict({"open_id": user.user_open_id})
+            charge =  create_pingxx_order(app, order_no, pingpp_id, channel, amount, client_ip, subject, body, extra)
+        elif channel == 'wx_wap': # 微信H5支付
+            extra = dict({})
+            charge =  create_pingxx_order(app, order_no, pingpp_id, channel, amount, client_ip, subject, body, extra)
         else:
             app.logger.error('channel:{} not support'.format(channel))
             raise PAY_CHANNEL_NOT_SUPPORT
