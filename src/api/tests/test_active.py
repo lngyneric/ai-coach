@@ -26,6 +26,8 @@ def test_create_order_with_active(app):
     from flaskr.service.order import init_buy_record
     from flaskr.service.user import generate_temp_user
     from flaskr.util import generate_id
+    from flaskr.service.order.models import DiscountRecord
+    from flaskr.service.order.discount import use_discount_code
   
 
     with app.app_context():
@@ -35,7 +37,12 @@ def test_create_order_with_active(app):
         course = AICourse.query.first()
         course_id = course.course_id
         order = init_buy_record(app, user_id, course_id)
+
+        discount_record = DiscountRecord.query.filter(DiscountRecord.status == 902,DiscountRecord.discount_value == 100).first()
         # assert order_id is not None
+
+
+        order = use_discount_code(app, user_id, discount_record.discount_code, order.order_id)
         app.logger.info('order: {}'.format(order.__json__()))
 
         
