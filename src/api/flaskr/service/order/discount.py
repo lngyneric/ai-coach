@@ -100,11 +100,16 @@ def use_discount_code(app:Flask, user_id, discount_code, order_id):
         discountRecord.updated = datetime.now()
         discountRecord.user_id = user_id
         discountRecord.order_id = order_id
+
         if discount.discount_type == DISCOUNT_TYPE_FIXED:
-            buy_record.discount_value = discountRecord.discount_value
+            buy_record.discount_value =  buy_record.discount_value +  discountRecord.discount_value
         elif discount.discount_type == DISCOUNT_TYPE_PERCENT:
-            buy_record.discount_value = buy_record.price * discountRecord.discount_value
-        buy_record.pay_value = buy_record.price - buy_record.discount_value
+            buy_record.discount_value = buy_record.discount_value +  buy_record.price * discountRecord.discount_value
+        if buy_record.discount_value >= buy_record.price:
+            buy_record.discount_value = buy_record.price
+        buy_record.pay_value =  buy_record.price -  buy_record.discount_value
+        if buy_record.pay_value < 0:
+            buy_record.pay_value = 0
         buy_record.updated = datetime.now()
         db.session.commit()
         if buy_record.discount_value >= buy_record.price:

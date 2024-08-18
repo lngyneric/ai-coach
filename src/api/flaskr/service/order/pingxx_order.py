@@ -37,5 +37,7 @@ def retrieve_pingxx_order(app:Flask,charge_id):
     app.logger.info('retrieve pingxx order,charge_id:{}'.format(charge_id))
     pingpp = init_pingxx(app)
     order = pingpp.Charge.retrieve(charge_id)
+
+    # pingpp.wxpub_oauth.get_openid('YOUR_AUTH_CODE')
     app.logger.info('retrieve pingxx order done')
     return order

@@ -369,7 +369,47 @@ def register_user_handler(app:Flask,path_prefix:str)->Flask:
         avatar = request.files.get('avatar',None)
         if not avatar:
             raise_param_error('avatar')
-        return make_common_response(upload_user_avatar(app,request.user.user_id,avatar)) 
+        return make_common_response(upload_user_avatar(app,request.user.user_id,avatar))
+
+
+    @app.route(path_prefix+'/update_openid',methods=['POST'])
+    def update_wechat_openid():
+        """
+        更新微信openid
+        ---
+        tags:
+            - 用户
+        parameters:
+            - in: body
+              name: body
+              required: true
+              schema:
+                type: object
+                properties:
+                    code:
+                        type: string
+                        description: 微信code
+        responses:
+            200:
+                description: 更新成功
+                content:
+                    application/json:
+                        schema:
+                            properties:
+                                code:
+                                    type: integer
+                                    description: 返回码
+                                message:
+                                    type: string
+                                    description: 返回信息
+                                data:
+                                    type: string
+                                    description: openid
+        """
+        code = request.get_json().get('code',None)
+        if not code:
+            raise_param_error('code')
+        return make_common_response(update_user_open_id(app,request.user.user_id,code)) 
 
     # 健康检查 
     @app.route('/health',methods=['GET'])

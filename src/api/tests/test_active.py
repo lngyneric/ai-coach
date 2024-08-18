@@ -38,7 +38,7 @@ def test_create_order_with_active(app):
         course_id = course.course_id
         order = init_buy_record(app, user_id, course_id)
 
-        discount_record = DiscountRecord.query.filter(DiscountRecord.status == 902,DiscountRecord.discount_value == 100).first()
+        discount_record = DiscountRecord.query.filter(DiscountRecord.status == 902,DiscountRecord.discount_value == 200).first()
         # assert order_id is not None
 
 
