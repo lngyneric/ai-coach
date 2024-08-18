@@ -6,9 +6,11 @@ import { memo } from 'react';
 import LogoWithText from 'Components/logo/LogoWithText.jsx';
 
 export const ChatMobileHeader = (props) => {
-  return <div className={classNames(styles.ChatMobileHeader, props.className)}>
+  const { className, onSettingClick } = props;
+
+  return <div className={classNames(styles.ChatMobileHeader, className)}>
     <LogoWithText direction="row" size={30} />
-    <IconButton icon={MoeIcon} />
+    <IconButton icon={MoeIcon} onClick={onSettingClick} />
   </div>
 }
 

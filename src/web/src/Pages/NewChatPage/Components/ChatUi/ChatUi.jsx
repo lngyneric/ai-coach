@@ -17,6 +17,7 @@ export const ChatUi = ({
   onPurchased,
   showUserSettings = true,
   onUserSettingsClose = () => {},
+  onMobileSettingClick = () => {},
 }) => {
   const { frameLayout } = useContext(AppContext);
 
@@ -34,6 +35,7 @@ export const ChatUi = ({
           onGoChapter={onGoChapter}
           className={styles.chatComponents}
           onPurchased={onPurchased}
+          onMobileSettingClick={onMobileSettingClick}
         />
       }
       {showUserSettings && (

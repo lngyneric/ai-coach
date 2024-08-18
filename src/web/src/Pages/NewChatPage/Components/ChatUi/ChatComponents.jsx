@@ -147,6 +147,7 @@ export const ChatComponents = forwardRef(
       onGoChapter = (id) => {},
       chapterId,
       onPurchased,
+      onMoblieSettingClick: onMobileSettingClick,
     },
     ref
   ) => {
@@ -185,6 +186,10 @@ export const ChatComponents = forwardRef(
       onPayModalClose();
       setInputDisabled(false);
     }, [onPayModalClose]);
+
+    const _onMobileSettingClick = useCallback(() => {
+      onPayModalOpen();
+    }, [onPayModalOpen]);
 
     useEffect(() => {
       setLessonId(currLessonId);
@@ -572,7 +577,7 @@ export const ChatComponents = forwardRef(
           />
         )}
         {mobileStyle && (
-          <ChatMobileHeader className={styles.ChatMobileHeader} />
+          <ChatMobileHeader className={styles.ChatMobileHeader} onSettingClick={_onMobileSettingClick} />
         )}
         {payModalOpen && (mobileStyle ? (
           <PayModalM
