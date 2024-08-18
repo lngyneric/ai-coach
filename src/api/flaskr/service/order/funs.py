@@ -79,6 +79,7 @@ class AICourseBuyRecordDTO:
     discount:str
     active_discount:str
     value_to_pay:str
+    price_item:List[PayItemDto]
 
 
     def __init__(self, record_id, user_id, course_id, price, status,discount = '0.00'):
