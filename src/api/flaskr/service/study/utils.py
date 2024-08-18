@@ -20,7 +20,7 @@ from ...service.profile.funcs import get_user_profiles, save_user_profiles
 from ...service.study.const import INPUT_TYPE_CHECKCODE, INPUT_TYPE_CONTINUE, INPUT_TYPE_LOGIN, INPUT_TYPE_PHONE, INPUT_TYPE_SELECT, INPUT_TYPE_START, INPUT_TYPE_TEXT, ROLE_STUDENT, ROLE_TEACHER
 from ...service.study.dtos import AILessonAttendDTO, ScriptDTO
 from ...service.study.models import AICourseAttendAsssotion, AICourseLessonAttendScript
-from ...service.user.funs import send_sms_code_without_check, verify_sms_code_without_phone
+from ...service.user import send_sms_code_without_check, verify_sms_code_without_phone
 from ...service.user.models import User
 from ...dao import db
 
@@ -233,8 +233,7 @@ def update_attend_lesson_info(app:Flask,attend_id:str)->list[AILessonAttendDTO]:
                     next_lesson_attend['attend'].status = ATTEND_STATUS_NOT_STARTED
                     res.append(AILessonAttendDTO(next_lesson_attend['lesson'].lesson_no,next_lesson_attend['lesson'].lesson_name,next_lesson_attend['lesson'].lesson_id,ATTEND_STATUS_VALUES[ATTEND_STATUS_NOT_STARTED]))
     for i in range(len(attend_lesson_infos)):
-        app.logger.info(i)
-        if i>0 and  attend_lesson_infos[i-1]['attend'].attend_id == attend_id and attend_lesson_infos[i-1]['attend'].status ==  ATTEND_STATUS_LOCKED:
+        if i>0 and  attend_lesson_infos[i-1]['attend'].attend_id == attend_id and attend_lesson_infos[i]['attend'].status ==  ATTEND_STATUS_LOCKED:
             # 更新下一节
             attend_lesson_infos[i]['attend'].status = ATTEND_STATUS_NOT_STARTED
             res.append(AILessonAttendDTO( attend_lesson_infos[i]['lesson'].lesson_no,  attend_lesson_infos[i]['lesson'].lesson_name,  attend_lesson_infos[i]['lesson'].lesson_id,ATTEND_STATUS_VALUES[ATTEND_STATUS_NOT_STARTED]))

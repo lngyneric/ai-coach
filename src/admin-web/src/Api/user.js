@@ -11,7 +11,7 @@ import request from '../Service/Request';
  */
 export const register = ({ username, password, mobile, email }) => {
   return request({
-    url: '/api/admin/register',
+    url: '/api/user/register',
     method: 'post',
     data: { username, password, email, mobile }
   })
@@ -25,7 +25,7 @@ export const register = ({ username, password, mobile, email }) => {
  */
 export const login = (username, password) => {
   return request({
-    url: '/api/admin/login',
+    url: '/api/user/login',
     method: 'post',
     data: { username, password }
   });
@@ -37,7 +37,7 @@ export const login = (username, password) => {
  */
 export const getUserInfo = () => {
   return request({
-    url: '/api/admin/info',
+    url: '/api/user/info',
     method: 'get',
   })
 }
@@ -48,7 +48,7 @@ export const getUserInfo = () => {
  */
 export const updateUserInfo = (name) => {
   return request({
-    url: '/api/admin/update_info',
+    url: '/api/user/update_info',
     method: 'post',
     data: { name }
   })
@@ -57,7 +57,7 @@ export const updateUserInfo = (name) => {
 
 export const updatePassword = (old_password, new_password) => {
   return request({
-    url: '/api/admin/update_password',
+    url: '/api/user/update_password',
     method: 'post',
     data: { old_password, new_password }
   })
@@ -65,7 +65,7 @@ export const updatePassword = (old_password, new_password) => {
 
 export const requireResetPasswordCode = (username) => {
   return request({
-    url: '/api/admin/require_reset_code',
+    url: '/api/user/require_reset_code',
     method: 'post',
     data: { username }
   })
@@ -74,7 +74,7 @@ export const requireResetPasswordCode = (username) => {
 
 export const resetPassword = (username, new_password, code) => {
   return request({
-    url: '/api/admin/reset_password',
+    url: '/api/user/reset_password',
     method: 'post',
     data: { username, new_password, code }
   })
@@ -83,7 +83,7 @@ export const resetPassword = (username, new_password, code) => {
 
 export const requireTmp = (temp_id,source)=>{
   return request({
-    url: '/api/admin/require_tmp',
+    url: '/api/user/require_tmp',
     method: 'post',
     data: { temp_id, source }
   });
