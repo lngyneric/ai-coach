@@ -3,6 +3,7 @@ from datetime import date
 import datetime
 import decimal
 import json
+from os import name
 from re import S
 from typing import List
 
@@ -49,6 +50,26 @@ class AICourseLessonAttendDTO:
 
 
 @register_schema_to_swagger
+class PayItemDto:
+    name:str
+    price_name:str
+    price:str
+    is_discount:bool
+
+    def __init__(self, name, price_name,price,is_discount):
+        self.name = name
+        self.price_name = price_name
+        self.price = price
+        self.is_discount = is_discount
+    def __json__(self):
+        return {
+            "name": self.name,
+            "price_name": self.price_name,
+            "price": str(self.price),
+            "is_discount": self.is_discount
+        }
+
+@register_schema_to_swagger
 class AICourseBuyRecordDTO:
     order_id:str
     user_id:str
@@ -56,6 +77,7 @@ class AICourseBuyRecordDTO:
     price: str
     status:int
     discount:str
+    active_discount:str
     value_to_pay:str
 
 
@@ -67,6 +89,10 @@ class AICourseBuyRecordDTO:
         self.status = status
         self.discount = discount
         self.value_to_pay = str(decimal.Decimal(price) - decimal.Decimal(discount))
+        self.price_item = []
+        self.price_item.append(PayItemDto( '商品','基础价格',price,False))
+        self.price_item.append(PayItemDto( '活动','早鸟优惠立减',discount,True))
+
 
     def __json__(self):
         return {
