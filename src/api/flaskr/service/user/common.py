@@ -13,6 +13,8 @@ import string
 from flask import Flask
 import jwt
 
+from flaskr.api.sendcloud import send_email
+
 from ...api.aliyun import send_sms_code_ali
 
 from ..common.dtos import USER_STATE_REGISTERED, UserInfo, UserToken
@@ -33,6 +35,14 @@ def get_model(app:Flask):
         return AdminUser
     else:
         return CommonUser
+    
+
+def get_user_openid(user):
+    if hasattr(user,'user_open_id'):
+        return user.user_open_id
+    else:
+        return "";
+
 
 def verify_user(app:Flask, login: str, raw_password: str) ->UserToken:
     User = get_model(app)
@@ -42,7 +52,7 @@ def verify_user(app:Flask, login: str, raw_password: str) ->UserToken:
             password_hash = hashlib.md5((user.user_id + raw_password).encode()).hexdigest()
             if password_hash == user.password_hash:
                 token = generate_token(app,user_id=user.user_id)  
-                return UserToken(UserInfo(user_id=user.user_id, username=user.username, name=user.name, email=user.email, mobile=user.mobile,model=user.default_model,user_state=user.user_state),token=token)
+                return UserToken(UserInfo(user_id=user.user_id, username=user.username, name=user.name, email=user.email, mobile=user.mobile,model=user.default_model,user_state=user.user_state, wx_openid=get_user_openid(user)),token=token)
             else:
                 raise USER_PASSWORD_ERROR
         else:
@@ -62,8 +72,9 @@ def validate_user(app:Flask, token: str) -> UserInfo:
             if app.config.get('ENVERIMENT','prod') == 'dev':
                 user_id = token
                 user = User.query.filter_by(user_id=user_id).first()
+               
                 if user:
-                    return UserInfo(user_id=user.user_id, username=user.username, name=user.name, email=user.email, mobile=user.mobile,model=user.default_model, user_state=user.user_state)
+                    return UserInfo(user_id=user.user_id, username=user.username, name=user.name, email=user.email, mobile=user.mobile,model=user.default_model, user_state=user.user_state, wx_openid=get_user_openid(user))
             else:
                 user_id = jwt.decode(token, app.config['SECRET_KEY'], algorithms=['HS256'])['user_id']
 
@@ -77,7 +88,7 @@ def validate_user(app:Flask, token: str) -> UserInfo:
             if set_token == token:
                 user = User.query.filter_by(user_id=user_id).first()
                 if user:
-                    return UserInfo(user_id=user.user_id, username=user.username, name=user.name, email=user.email, mobile=user.mobile,model=user.default_model, user_state=user.user_state)
+                    return UserInfo(user_id=user.user_id, username=user.username, name=user.name, email=user.email, mobile=user.mobile,model=user.default_model, user_state=user.user_state, wx_openid=get_user_openid(user))
                 else:
                     raise USER_TOKEN_EXPIRED
             else:
@@ -102,7 +113,7 @@ def update_user_info(app:Flask,user:UserInfo,name,email=None,mobile=None)->UserI
             if(mobile != None):
                 dbuser.mobile = mobile
             db.session.commit()
-            return UserInfo(user_id=user.user_id, username=user.username, name=user.name, email=user.email, mobile=user.mobile,model=dbuser.default_model,user_state=dbuser.user_state)
+            return UserInfo(user_id=user.user_id, username=user.username, name=user.name, email=user.email, mobile=user.mobile,model=dbuser.default_model,user_state=dbuser.user_state, wx_openid=get_user_openid(user))
         else:
             raise USER_NOT_FOUND
         
@@ -119,7 +130,7 @@ def change_user_passwd(app:Flask,user:UserInfo,oldpwd,newpwd)->UserInfo:
             if password_hash == user.password_hash:
                 user.password_hash = hashlib.md5((user.user_id + newpwd).encode()).hexdigest()
                 db.session.commit()
-                return UserInfo(user_id=user.user_id, username=user.username, name=user.name, email=user.email, mobile=user.mobile,model=user.default_model,user_state=user.user_state)
+                return UserInfo(user_id=user.user_id, username=user.username, name=user.name, email=user.email, mobile=user.mobile,model=user.default_model,user_state=user.user_state, wx_openid=get_user_openid(user))
             else:
                 raise OLD_PASSWORD_ERROR
         else:
@@ -129,7 +140,7 @@ def get_user_info(app:Flask,user_id:str)->UserInfo:
     with app.app_context():
         user = User.query.filter_by(user_id=user_id).first()
         if user:
-            return UserInfo(user_id=user.user_id, username=user.username, name=user.name, email=user.email, mobile=user.mobile,model=user.default_model,user_state=user.user_state)
+            return UserInfo(user_id=user.user_id, username=user.username, name=user.name, email=user.email, mobile=user.mobile,model=user.default_model,user_state=user.user_state, wx_openid=get_user_openid(user))
         else:
             raise USER_NOT_FOUND
 
@@ -245,4 +256,4 @@ def verify_sms_code(app:Flask,user_id,phone:str,chekcode:str)->UserToken:
         user_id = user_info.user_id
         token = generate_token(app,user_id=user_id)
         db.session.flush()
-        return UserToken(UserInfo(user_id=user_info.user_id, username=user_info.username, name=user_info.name, email=user_info.email, mobile=user_info.mobile,model=user_info.default_model,user_state=user_info.user_state),token)
+        return UserToken(UserInfo(user_id=user_info.user_id, username=user_info.username, name=user_info.name, email=user_info.email, mobile=user_info.mobile,model=user_info.default_model,user_state=user_info.user_state, wx_openid=get_user_openid(user_info)),token)

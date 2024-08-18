@@ -25,7 +25,7 @@ class UserInfo:
     mobile: str
     model: str
     user_state: str
-    def __init__(self, user_id, username, name, email, mobile,model,user_state):
+    def __init__(self, user_id, username, name, email, mobile,model,user_state,wx_openid):
         self.user_id = user_id
         self.username = username
         self.name = name
@@ -33,6 +33,7 @@ class UserInfo:
         self.mobile = mobile
         self.model = model
         self.user_state = USE_STATE_VALUES[user_state]
+        self.wx_openid = wx_openid
     def __json__(self):
         return {
             "user_id": self.user_id,
@@ -41,6 +42,7 @@ class UserInfo:
             "email": self.email,
             "mobile": self.mobile,
             "state": self.user_state,
+            "openid": self.wx_openid
         }
     def __html__(self):
         return self.__json__()

@@ -24,5 +24,5 @@ def create_new_user(app:Flask, username: str, name: str, raw_password: str, emai
         db.session.add(new_user)
         db.session.commit()
         token = generate_token(app,user_id=user_id)
-        return UserToken(UserInfo(user_id=user_id, username=username, name=name, email=email, mobile=mobile,model=new_user.default_model,user_state= new_user.user_state),token=token)
+        return UserToken(UserInfo(user_id=user_id, username=username, name=name, email=email, mobile=mobile,model=new_user.default_model,user_state= new_user.user_state,wx_openid=""),token=token)
 
