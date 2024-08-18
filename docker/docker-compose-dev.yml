@@ -20,12 +20,15 @@ services:
       - ../src/web:/usr/src/app
   ai-shifu-admin-api-dev:
     container_name: ai-shifu-admin-api-dev
-    image: ai-shifu-admin-api-dev:latest
-    command:  flask --app flaskr run  --debug --host=0.0.0 --port=5800
+    image: ai-shifu-api-dev:latest
+    command:  flask run --debug  --host=0.0.0.0 --port=5800
     env_file:
       - ./.env
+    environment:
+      - MODE=admin
     volumes:
-      - ../src/admin-api/flaskr:/app/flaskr
+      - ../src/api/:/app/
+      - /Users/geyunfei/dev/agiclass/keys/pingxx_test_key.gem:/app/pingxx_key.gem
   ai-shifu-admin-web-dev: 
     container_name:  ai-shifu-admin-web-dev
     image: ai-shifu-admin-web-dev:latest

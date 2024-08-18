@@ -14,7 +14,7 @@ from flaskr.api.llm import invoke_llm
 from flaskr.service.common.models import AppException
 from flaskr.service.profile.funcs import save_user_profiles, get_user_profile_labels,update_user_profile_with_lable
 from flaskr.service.study.utils import extract_json, generation_attend, get_fmt_prompt
-from flaskr.service.user.funs import verify_sms_code_without_phone
+from flaskr.service.user import verify_sms_code_without_phone
 
 from ...service.study.runscript import check_phone_number, get_profile_array
 from ...service.lesson.models import AILessonScript
