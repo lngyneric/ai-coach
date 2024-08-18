@@ -35,7 +35,7 @@ export const PayModalM = ({ open = false, onCancel, onOk }) => {
       setPrice(resp.value_to_pay);
       const orderId = resp.order_id;
       setOrderId(orderId);
-    })()
+    })();
   }, []);
 
   const handlePay = async () => {
@@ -45,6 +45,18 @@ export const PayModalM = ({ open = false, onCancel, onOk }) => {
     });
 
     window.location.assign(qrcodeResp.qr_url);
+  };
+
+  const onPayChannelChange = (value) => {
+    setPayChannel(value);
+  };
+
+  const onPayChannelWechatClick = () => {
+    setPayChannel(PAY_CHANNEL_WECHAT);
+  }
+
+  const onPayChannelZhifubaoClick = () => {
+    setPayChannel(PAY_CHANNEL_ZHIFUBAO);
   }
 
   return (
@@ -68,8 +80,14 @@ export const PayModalM = ({ open = false, onCancel, onOk }) => {
             <PayTotalDiscount discount={totalDiscount} />
           </div>
           <div className={styles.payChannelWrapper}>
-            <Radio.Group>
-              <div className={classNames(styles.payChannelRow, styles.selected) }>
+            <Radio.Group value={payChannel} onChange={onPayChannelChange}>
+              <div
+                className={classNames(
+                  styles.payChannelRow,
+                  payChannel === PAY_CHANNEL_WECHAT && styles.selected
+                )}
+                onClick={onPayChannelWechatClick}
+              >
                 <div className={styles.payChannelBasic}>
                   <img
                     src={weixinIcon}
@@ -78,9 +96,18 @@ export const PayModalM = ({ open = false, onCancel, onOk }) => {
                   />
                   <span className={styles.payChannelTitle}>微信支付</span>
                 </div>
-                <RadioM className={styles.payChannelRadio} value={PAY_CHANNEL_WECHAT} />
+                <RadioM
+                  className={styles.payChannelRadio}
+                  value={PAY_CHANNEL_WECHAT}
+                />
               </div>
-              <div className={styles.payChannelRow}>
+              <div
+                className={classNames(
+                  styles.payChannelRow,
+                  payChannel === PAY_CHANNEL_ZHIFUBAO && styles.selected
+                )}
+                onClick={onPayChannelZhifubaoClick}
+              >
                 <div className={styles.payChannelBasic}>
                   <img
                     src={zhifuboIcon}
@@ -89,21 +116,44 @@ export const PayModalM = ({ open = false, onCancel, onOk }) => {
                   />
                   <span className={styles.payChannelTitle}>支付宝支付</span>
                 </div>
-                <RadioM className={styles.payChannelRadio} value={PAY_CHANNEL_ZHIFUBAO} />
+                <RadioM
+                  className={styles.payChannelRadio}
+                  value={PAY_CHANNEL_ZHIFUBAO}
+                />
               </div>
             </Radio.Group>
           </div>
           <div className={styles.buttonWrapper}>
-            <MainButtonM className={styles.payButton} onClick={handlePay} >支付</MainButtonM>
+            <MainButtonM className={styles.payButton} onClick={handlePay}>
+              支付
+            </MainButtonM>
           </div>
           <div className={styles.couponCodeWrapper}>
-            <MainButtonM className={styles.couponCodeButton} fill='none' >{'使用兑换码 >'}</MainButtonM>
+            <MainButtonM className={styles.couponCodeButton} fill="none">
+              {'使用兑换码 >'}
+            </MainButtonM>
           </div>
           <div className={styles.protocalWrapper}>
-            <div className={styles.protocalDesc}>购买前请详细阅读以下协议内容</div>
+            <div className={styles.protocalDesc}>
+              购买前请详细阅读以下协议内容
+            </div>
             <div className={styles.protocalLinks}>
-              <a className={styles.protocalLink} href="/useraggrement" target='_blank' referrerPolicy='no-referrer' >《模型服务协议》</a>
-              <a className={styles.protocalLink} href="/privacypolicy" target='_blank' referrerPolicy='no-referrer'>《用户隐私协议》</a>
+              <a
+                className={styles.protocalLink}
+                href="/useraggrement"
+                target="_blank"
+                referrerPolicy="no-referrer"
+              >
+                《模型服务协议》
+              </a>
+              <a
+                className={styles.protocalLink}
+                href="/privacypolicy"
+                target="_blank"
+                referrerPolicy="no-referrer"
+              >
+                《用户隐私协议》
+              </a>
             </div>
           </div>
           <div className={styles.payInfoWrapper}>
