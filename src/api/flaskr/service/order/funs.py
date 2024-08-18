@@ -11,7 +11,7 @@ from typing import List
 from numpy import block, char
 from sympy import product
 
-from api.flaskr.service.user.models import User
+from flaskr.service.user.models import User
 from flaskr.service.active import query_active_record,query_and_join_active
 from flaskr.service.order.query_discount import query_discount_record
 from flaskr.common.swagger import register_schema_to_swagger
