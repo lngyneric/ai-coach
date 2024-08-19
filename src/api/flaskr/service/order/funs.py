@@ -190,19 +190,19 @@ def generate_charge(app: Flask,record_id:str,channel:str,client_ip:str)->BuyReco
         order_no = str(get_uuid(app))
         qr_url = None
         pingpp_id = app.config.get('PINGPP_APP_ID')
-        if channel == 'wx_pub_qr':
+        if channel == 'wx_pub_qr': # wxpay scan
             extra = dict({"product_id":product_id})
             charge =  create_pingxx_order(app, order_no, pingpp_id, channel, amount, client_ip, subject, body, extra)
             qr_url = charge['credential']['wx_pub_qr']
-        elif channel == 'alipay_qr':
+        elif channel == 'alipay_qr': # alipay scan
             extra = dict({})
             charge =  create_pingxx_order(app, order_no, pingpp_id, channel, amount, client_ip, subject, body, extra)
             qr_url = charge['credential']['alipay_qr']
-        elif channel == 'wx_pub': # 微信JSAPI支付
+        elif channel == 'wx_pub': # wxpay JSAPI
             user = User.query.filter(User.user_id==buy_record.user_id).first()
             extra = dict({"open_id": user.user_open_id})
             charge =  create_pingxx_order(app, order_no, pingpp_id, channel, amount, client_ip, subject, body, extra)
-        elif channel == 'wx_wap': # 微信H5支付
+        elif channel == 'wx_wap': # wxpay H5
             extra = dict({})
             charge =  create_pingxx_order(app, order_no, pingpp_id, channel, amount, client_ip, subject, body, extra)
         else:
