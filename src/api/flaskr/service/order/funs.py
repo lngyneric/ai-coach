@@ -202,7 +202,7 @@ def generate_charge(app: Flask,record_id:str,channel:str,client_ip:str)->BuyReco
             user = User.query.filter(User.user_id==buy_record.user_id).first()
             extra = dict({"open_id": user.user_open_id})
             charge =  create_pingxx_order(app, order_no, pingpp_id, channel, amount, client_ip, subject, body, extra)
-            qr_url = charge['credential']
+            qr_url = charge['credential']['wx_pub']
         elif channel == 'wx_wap': # wxpay H5
             extra = dict({})
             charge =  create_pingxx_order(app, order_no, pingpp_id, channel, amount, client_ip, subject, body, extra)
