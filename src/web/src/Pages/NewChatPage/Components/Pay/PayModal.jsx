@@ -23,7 +23,6 @@ import { useInterval } from 'react-use';
 import { message } from 'antd';
 
 import payInfoBg from 'Assets/newchat/pay-info-bg.png';
-import PayLeft from './PayLeft.jsx';
 
 const DEFAULT_QRCODE = 'DEFAULT_QRCODE';
 const MAX_TIMEOUT = 1000 * 60 * 3;
@@ -176,7 +175,6 @@ export const PayModal = ({ open = false, onCancel, onOk }) => {
             className={styles.introSection}
             style={{ backgroundImage: `url(${payInfoBg})` }}
           >
-            <PayLeft />
           </div>
           <div className={styles.paySection}>
             <div className={styles.payInfoTitle}>首发特惠</div>

@@ -316,14 +316,9 @@ const ChatComponents = forwardRef(
       setLessonId(lessonInfo.lesson_id);
       setChatId(lessonInfo.course_id);
       if (lessonInfo.status === '未开始') {
-        // loadMsg(lessonInfo.lesson_id, [])
-
-        // checkResetListComplete().then(()=>{
         handleSend('start', '');
-        // })
       } else {
         getLessonStudyRecord(lessonInfo.lesson_id).then((res) => {
-          // console.log("getLessonStudyRecord", res);
           loadMsg(lessonInfo.lesson_id, res.data);
         });
       }

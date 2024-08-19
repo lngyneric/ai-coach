@@ -1,8 +1,9 @@
 import { useCallback } from "react";
 import { useState } from "react"
 
-export const useDisclosture = () => {
-  const [open, setOpen] = useState(false);
+export const useDisclosture = ({ initOpen = false } = {}) => {
+  console.log('useDisclosture:', initOpen);
+  const [open, setOpen] = useState(initOpen);
 
   const onOpen = useCallback(() => {
     setOpen(true);
@@ -14,7 +15,7 @@ export const useDisclosture = () => {
 
   const onToggle = useCallback(() => {
     setOpen((prev) => !prev);
-  });
+  }, []);
 
 
   return {

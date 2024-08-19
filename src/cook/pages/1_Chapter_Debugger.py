@@ -146,7 +146,6 @@ if login():
                 st.session_state.script_has_output.add(script.id)
                 logging.debug(f'script id: {script.id}, chat result: {full_result}')
 
-
             # ========== 处理【后续交互】 ==========
             # === 显示 输入框
             if script.next_action == NextAction.ShowInput:

@@ -10,6 +10,7 @@ export const IconButton = ({
   width = 36,
   borderRadius = 10,
   selected = false,
+  onClick = () => {},
 }) => {
   const [isHover, setIsHover] = useState(false);
   const [isActive, setIsActive] = useState(false);
@@ -74,6 +75,7 @@ export const IconButton = ({
         height: `${width}px`,
         borderRadius: `${borderRadius}px`,
       }}
+      onClick={onClick}
     >
       <img src={genImageSrc()} alt="" className={styles.innerIcon} />
     </div>

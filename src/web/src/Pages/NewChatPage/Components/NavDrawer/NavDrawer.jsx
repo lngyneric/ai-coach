@@ -64,6 +64,7 @@ const NavDrawer = ({
   onLessonSelect = () => {},
   onTryLessonSelect = ({ chapterId, lessonId }) => {},
   onGoToSetting = () => {},
+  onClose = () => {},
 }) => {
   const { trackEvent } = useTracking();
   const { frameLayout, hasLogin } = useContext(AppContext);
@@ -71,6 +72,7 @@ const NavDrawer = ({
   const [popupModalState, setPopupModalState] = useState(
     POPUP_WINDOW_STATE_CLOSE
   );
+
   const [feedbackModalOpen, setFeedbackModalOpen] = useState(false);
 
   const alwaysShowLessonTree = !!parseInt(
@@ -97,19 +99,23 @@ const NavDrawer = ({
     return isCollapse ? styles.popUpWindowCollapse : styles.popUpWindowExpand;
   };
 
+  const mobileStyle = frameLayout === FRAME_LAYOUT_MOBILE;
+
   return (
     <div
       className={classNames(
         styles.navDrawerWrapper,
-        frameLayout === FRAME_LAYOUT_MOBILE ? styles.mobile : ''
+        mobileStyle ? styles.mobile : ''
       )}
       style={{ width: isCollapse ? COLLAPSE_WIDTH : calcNavWidth(frameLayout) }}
     >
       <div className={styles.navDrawer}>
         <NavHeader
+          className={styles.navHeader}
           onClose={onHeaderCloseClick}
           onToggle={onHeaderToggleClick}
           isCollapse={isCollapse}
+          mobileStyle={mobileStyle}
         />
         <div className={styles.bodyWrapper}>
           {!isCollapse &&

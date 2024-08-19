@@ -40,3 +40,13 @@ export const calcFrameLayout = (selector) => {
  */
 export const THEME_LIGHT = 'light';
 export const THEME_DARK = 'dark';
+
+
+export const inWechat = () => {
+  let ua = navigator.userAgent.toLowerCase()
+  let isWXWork = ua.match(/wxwork/i) === 'wxwork'
+  let isWeixin = !isWXWork && ua.match(/MicroMessenger/i) === 'micromessenger'
+
+  return isWeixin
+
+}

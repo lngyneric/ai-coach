@@ -3,10 +3,12 @@
   bottom: 0;
   left: 0;
   width: 100%;
-  background: transparent;
   padding-top: 10px;
   transition: opacity 0.8s ease;
   opacity: 1;
+  background: rgba(255, 255, 255, 0.8);
+  backdrop-filter: blur(15px);
+
 
   &.disabled {
     opacity: 0.3;

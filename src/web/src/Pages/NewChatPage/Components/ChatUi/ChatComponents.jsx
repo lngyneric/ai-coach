@@ -24,7 +24,6 @@ import classNames from 'classnames';
 import { useUserStore } from 'stores/useUserStore.js';
 import { fixMarkdown, fixMarkdownStream } from 'Utils/markdownUtils.js';
 import { FRAME_LAYOUT_MOBILE } from 'constants/uiConstants.js';
-import ChatMobileHeader from './ChatMobileHeader.jsx';
 import PayModal from '../Pay/PayModal.jsx';
 import { useDisclosture } from 'common/hooks/useDisclosture.js';
 import { memo } from 'react';
@@ -32,7 +31,7 @@ import { useCallback } from 'react';
 import { tokenTool } from '@Service/storeUtil.js';
 import MarkdownBubble from './ChatMessage/MarkdownBubble.jsx';
 import { useTracking, EVENT_NAMES } from 'common/hooks/useTracking.js';
-
+import PayModalM from '../Pay/PayModalM.jsx';
 
 const USER_ROLE = {
   TEACHER: '老师',
@@ -108,7 +107,10 @@ const convertEventInputModal = ({ type, content }) => {
       type,
       props: { content },
     };
-  } else if (type === RESP_EVENT_TYPE.BUTTONS || type === RESP_EVENT_TYPE.ORDER) {
+  } else if (
+    type === RESP_EVENT_TYPE.BUTTONS ||
+    type === RESP_EVENT_TYPE.ORDER
+  ) {
     const getBtnType = (type) => {
       if (type === INTERACTION_TYPE.ORDER) {
         return INTERACTION_TYPE.ORDER;
@@ -181,20 +183,21 @@ export const ChatComponents = forwardRef(
     const _onPayModalClose = useCallback(() => {
       onPayModalClose();
       setInputDisabled(false);
-    }, [onPayModalClose])
+    }, [onPayModalClose]);
+
+    const _onMobileSettingClick = useCallback(() => {
+      onPayModalOpen();
+    }, [onPayModalOpen]);
 
     useEffect(() => {
       setLessonId(currLessonId);
     }, [currLessonId, lessonId]);
 
-    const initLoadedInteraction = useCallback(
-      (ui) => {
-        const nextInputModal = convertEventInputModal(ui);
-        setInputDisabled(false);
-        setInputModal(nextInputModal);
-      },
-      []
-    );
+    const initLoadedInteraction = useCallback((ui) => {
+      const nextInputModal = convertEventInputModal(ui);
+      setInputDisabled(false);
+      setInputModal(nextInputModal);
+    }, []);
 
     const lessonUpdateResp = useCallback(
       (response, isEnd, nextStepFunc) => {
@@ -314,7 +317,15 @@ export const ChatComponents = forwardRef(
           } catch (e) {}
         });
       },
-      [appendMsg, checkLogin, lessonUpdateResp, setTyping, updateMsg, updateUserInfo, userInfo]
+      [
+        appendMsg,
+        checkLogin,
+        lessonUpdateResp,
+        setTyping,
+        updateMsg,
+        updateUserInfo,
+        userInfo,
+      ]
     );
 
     const scrollToBottom = useCallback(() => {
@@ -501,7 +512,6 @@ export const ChatComponents = forwardRef(
       [isStreaming, mobileStyle, onImageLoaded]
     );
 
-
     const renderBeforeMessageList = () => {
       if (messages.length === 0) {
         return (
@@ -564,14 +574,19 @@ export const ChatComponents = forwardRef(
             }}
           />
         )}
-        {mobileStyle && (
-          <ChatMobileHeader className={styles.ChatMobileHeader} />
-        )}
-        <PayModal
-          open={payModalOpen}
-          onCancel={_onPayModalClose}
-          onOk={onPayModalOk}
-        />
+        {payModalOpen && (mobileStyle ? (
+          <PayModalM
+            open={payModalOpen}
+            onCancel={_onPayModalClose}
+            onOk={onPayModalOk}
+          />
+        ) : (
+          <PayModal
+            open={payModalOpen}
+            onCancel={_onPayModalClose}
+            onOk={onPayModalOk}
+          />
+        ))}
       </div>
     );
   }

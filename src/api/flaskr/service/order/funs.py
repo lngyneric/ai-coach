@@ -3,12 +3,17 @@ from datetime import date
 import datetime
 import decimal
 import json
+from math import e
+from os import name
 from re import S
 from typing import List
 
 from numpy import block, char
 from sympy import product
 
+from flaskr.service.user.models import User
+from flaskr.service.active import query_active_record,query_and_join_active
+from flaskr.service.order.query_discount import query_discount_record
 from flaskr.common.swagger import register_schema_to_swagger
 from .models import *
 from flask import Flask
@@ -19,6 +24,7 @@ from .models import AICourseLessonAttend
 from ...util.uuid import generate_id as get_uuid
 from ..lesson.const import *
 from .pingxx_order import create_pingxx_order
+from ..active.models import * 
 
 @register_schema_to_swagger
 class AICourseLessonAttendDTO:
@@ -49,6 +55,26 @@ class AICourseLessonAttendDTO:
 
 
 @register_schema_to_swagger
+class PayItemDto:
+    name:str
+    price_name:str
+    price:str
+    is_discount:bool
+
+    def __init__(self, name, price_name,price,is_discount):
+        self.name = name
+        self.price_name = price_name
+        self.price = price
+        self.is_discount = is_discount
+    def __json__(self):
+        return {
+            "name": self.name,
+            "price_name": self.price_name,
+            "price": str(self.price),
+            "is_discount": self.is_discount
+        }
+
+@register_schema_to_swagger
 class AICourseBuyRecordDTO:
     order_id:str
     user_id:str
@@ -56,10 +82,12 @@ class AICourseBuyRecordDTO:
     price: str
     status:int
     discount:str
+    active_discount:str
     value_to_pay:str
+    price_item:List[PayItemDto]
 
 
-    def __init__(self, record_id, user_id, course_id, price, status,discount = '0.00'):
+    def __init__(self, record_id, user_id, course_id, price, status,discount,price_item):
         self.order_id = record_id
         self.user_id = user_id
         self.course_id = course_id
@@ -67,6 +95,8 @@ class AICourseBuyRecordDTO:
         self.status = status
         self.discount = discount
         self.value_to_pay = str(decimal.Decimal(price) - decimal.Decimal(discount))
+        self.price_item = price_item
+
 
     def __json__(self):
         return {
@@ -77,7 +107,8 @@ class AICourseBuyRecordDTO:
             "status":  self.status,
             "status_desc": BUY_STATUS_VALUES[self.status],
             "discount": str(self.discount),
-            "value_to_pay": str(self.value_to_pay)
+            "value_to_pay": str(self.value_to_pay),
+            "price_item": [item.__json__() for item in self.price_item]
         }
 
 def init_buy_record(app: Flask,user_id:str,course_id:str):
@@ -88,16 +119,29 @@ def init_buy_record(app: Flask,user_id:str,course_id:str):
             raise COURSE_NOT_FOUND
         origin_record = AICourseBuyRecord.query.filter(AICourseBuyRecord.user_id==user_id,AICourseBuyRecord.course_id==course_id).order_by(AICourseBuyRecord.id.asc()).first()
         if origin_record:
-            return AICourseBuyRecordDTO(origin_record.record_id,origin_record.user_id,origin_record.course_id,origin_record.price,origin_record.status,origin_record.discount_value)
+            app.logger.info('buy record found:{}'.format(origin_record))
+            return query_buy_record(app,origin_record.record_id)
+        
+        order_id = str(get_uuid(app))
+        active_records = query_and_join_active(app,course_id,user_id,order_id)
         buy_record = AICourseBuyRecord()
         buy_record.user_id = user_id
         buy_record.course_id = course_id
         buy_record.price =  course_info.course_price
         buy_record.status = BUY_STATUS_INIT
-        buy_record.record_id = str(get_uuid(app))
+        buy_record.record_id = order_id
+        buy_record.discount_value = decimal.Decimal(0.00)
+        buy_record.pay_value = course_info.course_price
+        price_items = []
+        price_items.append(PayItemDto('商品','基础价格',buy_record.price,False))
+        if active_records:
+            for active_record in active_records:
+                buy_record.discount_value = decimal.Decimal(buy_record.discount_value) + decimal.Decimal(active_record.price)
+                price_items.append(PayItemDto('活动',active_record.active_name,active_record.price,True))
+        buy_record.pay_value = decimal.Decimal(buy_record.price) - decimal.Decimal(buy_record.discount_value)
         db.session.add(buy_record)
         db.session.commit()
-        return AICourseBuyRecordDTO(buy_record.record_id,buy_record.user_id,buy_record.course_id,buy_record.price,buy_record.status)
+        return AICourseBuyRecordDTO(buy_record.record_id,buy_record.user_id,buy_record.course_id,buy_record.price,buy_record.status,buy_record.discount_value,price_items)
 
 
 
@@ -127,6 +171,8 @@ class BuyRecordDTO:
 def generate_charge(app: Flask,record_id:str,channel:str,client_ip:str)->BuyRecordDTO:
     with app.app_context():
         app.logger.info('generate charge for record:{} channel:{}'.format(record_id,channel))
+
+
         buy_record = AICourseBuyRecord.query.filter(AICourseBuyRecord.record_id==record_id).first()
         if not buy_record:
             raise ORDER_NOT_FOUND
@@ -137,7 +183,7 @@ def generate_charge(app: Flask,record_id:str,channel:str,client_ip:str)->BuyReco
         if buy_record.status == BUY_STATUS_SUCCESS:
             app.logger.error('buy record:{} status is not init'.format(record_id))
             raise ORDER_HAS_PAID
-        amount = int((buy_record.price - buy_record.discount_value )*100)
+        amount = int(buy_record.pay_value)*100
         product_id = course.course_id
         subject = course.course_name
         body = course.course_name
@@ -152,6 +198,13 @@ def generate_charge(app: Flask,record_id:str,channel:str,client_ip:str)->BuyReco
             extra = dict({})
             charge =  create_pingxx_order(app, order_no, pingpp_id, channel, amount, client_ip, subject, body, extra)
             qr_url = charge['credential']['alipay_qr']
+        elif channel == 'wx_pub': # 微信JSAPI支付
+            user = User.query.filter(User.user_id==buy_record.user_id).first()
+            extra = dict({"open_id": user.user_open_id})
+            charge =  create_pingxx_order(app, order_no, pingpp_id, channel, amount, client_ip, subject, body, extra)
+        elif channel == 'wx_wap': # 微信H5支付
+            extra = dict({})
+            charge =  create_pingxx_order(app, order_no, pingpp_id, channel, amount, client_ip, subject, body, extra)
         else:
             app.logger.error('channel:{} not support'.format(channel))
             raise PAY_CHANNEL_NOT_SUPPORT
@@ -254,7 +307,7 @@ def success_buy_record(app: Flask,record_id:str):
                     attend.status = ATTEND_STATUS_LOCKED
                 db.session.add(attend)
             db.session.commit()
-            return AICourseBuyRecordDTO(buy_record.record_id,buy_record.user_id,buy_record.course_id,buy_record.price,buy_record.status)
+            return query_buy_record(app,record_id)
         else:
             app.logger.error('record:{} not found'.format(record_id))
         return None
@@ -302,7 +355,19 @@ def query_buy_record(app: Flask,record_id:str)->AICourseBuyRecordDTO:
         app.logger.info('query buy record:"{}"'.format(record_id))
         buy_record = AICourseBuyRecord.query.filter(AICourseBuyRecord.record_id==record_id).first()
         if buy_record:
-            return AICourseBuyRecordDTO(buy_record.record_id,buy_record.user_id,buy_record.course_id,buy_record.price,buy_record.status,buy_record.discount_value)
+            item = []
+            item.append(PayItemDto('商品','基础价格',buy_record.price,False))
+            if buy_record.discount_value > 0:
+                aitive_records = query_active_record(app,record_id)
+                if aitive_records:
+                    for active_record in aitive_records:
+                        item.append(PayItemDto('活动',active_record.active_name,active_record.price,True))
+                
+                discount_records = query_discount_record(app,record_id)
+                if discount_records:
+                    for discount_record in discount_records:
+                        item.append(PayItemDto('优惠',discount_record.discount_name,discount_record.discount_value,True))
+            return AICourseBuyRecordDTO(buy_record.record_id,buy_record.user_id,buy_record.course_id,buy_record.price,buy_record.status,buy_record.discount_value,item)
         raise ORDER_NOT_FOUND
 
 def fix_attend_info(app:Flask,user_id:str,course_id:str):

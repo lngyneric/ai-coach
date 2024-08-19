@@ -6,11 +6,13 @@ import { useCallback } from 'react';
 import { useTracking, EVENT_NAMES } from 'common/hooks/useTracking.js';
 
 export const NavHeader = ({
+  className = '',
   showCollapseBtn = true,
   isCollapse = false,
   showCloseBtn = false,
   onToggle = (isCollapse) => {},
   onClose = () => {},
+  mobileStyle = false,
 }) => {
   const { trackEvent } = useTracking();
   const onLogoAreaClick = useCallback(() => {
@@ -28,8 +30,10 @@ export const NavHeader = ({
   return (
     <div
       className={classNames(
+        className,
         styles.navHeader,
-        isCollapse ? styles.collapse : ''
+        isCollapse ? styles.collapse : '',
+        mobileStyle ? styles.mobile : ''
       )}
     >
       <div className={styles.logoArea} onClick={onLogoAreaClick}>

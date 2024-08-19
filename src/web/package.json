@@ -41,6 +41,7 @@
     "react-dom": "^18.2.0",
     "react-easy-crop": "^5.0.7",
     "react-i18next": "^15.0.1",
+    "react-icons": "^5.3.0",
     "react-infinite-scroll-component": "^6.1.0",
     "react-markdown": "^9.0.1",
     "react-router-dom": "^6.14.0",
@@ -64,6 +65,7 @@
     "start:dev-local": "dotenv -e .local.single.env -e .env.dev-local craco start",
     "lint:knip": "knip",
     "build": "dotenv -e .local.single.env -e .env.prod craco build",
+    "build:staging": "dotenv -e .local.single.env -e .env.staging craco build",
     "test": "craco test",
     "eject": "craco eject"
   },
@@ -87,5 +89,6 @@
   },
   "devDependencies": {
     "knip": "^5.27.2"
-  }
+  },
+  "packageManager": "pnpm@9.7.1+sha512.faf344af2d6ca65c4c5c8c2224ea77a81a5e8859cbc4e06b1511ddce2f0151512431dd19e6aff31f2c6a8f5f2aced9bd2273e1fed7dd4de1868984059d2c4247"
 }

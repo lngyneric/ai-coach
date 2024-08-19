@@ -1,4 +1,5 @@
 import request from '../Service/Request';
+import { useSystemStore } from 'stores/useSystemStore.js';
 
 /**
  * @description 用户注册接口
@@ -88,11 +89,13 @@ export const resetPassword = (username, new_password, code) => {
  * https://agiclass.feishu.cn/docx/WyXhdgeVzoKVqDx1D4wc0eMknmg
  */
 export const registerTmp = ({ temp_id }) => {
+  const { channel: source } = useSystemStore.getState();
+
   return request(
     {
       url: '/api/user/require_tmp',
       method: 'post',
-      data: { temp_id }
+      data: { temp_id, source }
     }
   );
 }

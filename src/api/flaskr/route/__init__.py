@@ -20,4 +20,14 @@ def register_route(app):
     app = register_order_handler(app,prefix+'/order')
     app = register_callback_handler(app,prefix+'/callback')
     app = register_test_routes(app,prefix+'/test')
+
+
+    if app.config.get('MODE','api')=='admin':
+        from .admin.user import register_user_route
+        app = register_user_route(app,prefix+'/user')
+
+
+
+    
+    
     return app
