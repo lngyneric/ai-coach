@@ -10,6 +10,6 @@ def get_wechat_access_token(app:Flask, code:str):
     url = f"https://api.weixin.qq.com/sns/oauth2/access_token?appid={app_id}&secret={app_secret}&code=CODE&grant_type=authorization_code"
     response = requests.get(url)
     if response.status_code == 200:
-        data = json.loads(response.text)
-        return data
+        app.logger.info('get_wechat_access_token:'+str(response.json()))
+        return response.json()
     return None
