@@ -56,7 +56,10 @@ def generate_prompt_output(app:Flask,user_id:str,attend:AICourseLessonAttend,scr
         current_content = chunk.result
         if isinstance(current_content ,str):
             response_text += current_content
-            yield make_script_dto("text", current_content,script_info.script_id)
+            for i in current_content:
+                yield make_script_dto("text",i,script_info.script_id)
+                time.sleep(0.01)
+            # yield make_script_dto("text", current_content,script_info.script_id)
     trace_args ["output"] = trace_args["output"]+"\r\n"+response_text
     trace.update(**trace_args)
     log_script = generation_attend(app,attend,script_info)
