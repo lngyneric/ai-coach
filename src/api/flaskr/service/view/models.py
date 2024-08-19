@@ -1,9 +1,5 @@
-from re import I
-from arrow import get
 from flask import Flask
-from regex import D 
-# from api.flaskr.service.study.coddnst import INPUT_TYPE_TEXT
-from api.flaskr.service.common.dtos import PageNationDTO
+from flaskr.service.common.dtos import PageNationDTO
 from flaskr.dao import db
 from sqlalchemy import Column, String, Integer, Date, TIMESTAMP, func
 from flaskr.service.order.models import AICourseBuyRecord
@@ -85,7 +81,7 @@ class ViewDef:
             if count == 0:
                 return {}
             datas  = db_query.order_by(self.model.created.desc()).offset((page-1)*page_size).limit(page_size)
-            items = [{'id':data.id,'data':{item.lable: str(getattr(data,item.column)) for item in self.items}} for data in datas]
+            items = [{'id':data.id,**{item.column: str(getattr(data,item.column)) for item in self.items}} for data in datas]
             app.logger.info("query done"+str(items))
             return PageNationDTO(page,page_size,count,items)
     def query_by_id(self,app:Flask,id):

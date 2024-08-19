@@ -11,6 +11,7 @@ import { TableProps } from "antd";
 const CommonListTable = ({
   loading,
   dataSource,
+  dataColumns,
   onTableChage,
   onClickDetail,
   onClickEdit,
@@ -21,35 +22,7 @@ const CommonListTable = ({
    * @description 表格 column
    * @type {*} */
   const columns = [
-    {
-      title: "userId",
-      dataIndex: "user_id",
-      key: "user_id",
-    },
-    {
-      title: "姓名",
-      dataIndex: "name",
-      key: "name",
-    
-    },
-
-    {
-      title: "电话",
-      dataIndex: "mobile",
-      key: "mobile",
-    },
-
-   
-    {
-      title: "性别",
-      dataIndex: "user_sex",
-      key: "user_sex",
-    }, 
-    {
-      title: "生日",
-      dataIndex: "birth",
-      key: "birth",
-    }, 
+    ...dataColumns,
     {
       title: "操作",
       dataIndex: "action",
@@ -90,6 +63,8 @@ const CommonListTable = ({
 
   const [top, setTop] = useState('topLeft');
   const [bottom, setBottom] = useState('bottomRight');
+
+
 
 
   return (

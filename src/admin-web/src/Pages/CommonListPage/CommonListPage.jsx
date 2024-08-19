@@ -11,13 +11,16 @@ import { Pagination } from "antd";
 // import { GetAllContacts, deleteContact } from "../../Api/contact";
 import {getUserList} from "../../Api/admin"
 
-import { UploadEvent } from "../../Api/UploadEvent";
 import { DeleteColumnOutlined, DeleteOutlined } from "@ant-design/icons";
 import { TRUE } from "sass";
 import { set } from "store";
 
+import {getViewInfo,queryView} from "../../Api/manager"
+
 const CommonListPage = () => {
-  UploadEvent("ContactsComponant", { page: "contact" });
+
+
+
 
 
   const [pageSize, setPageSize] = useState(10);
@@ -29,6 +32,7 @@ const CommonListPage = () => {
   const params = {};
   const [loading, setLoading] = useState(false);
   const [contactIds, setContactIds] = useState([]);
+  const [colum, setColum] = useState([]);
   /**
    *@description 点击搜索的方法
    *
@@ -45,17 +49,35 @@ const CommonListPage = () => {
     queryAllContacts();
   };
 
+  useEffect(() => {
+    getViewInfo("order").then((res) => {
+      console.log(res);
+      const columns = res.data.items.map((item) => {
+        return {
+          title: item.lable,
+          dataIndex: item.name,
+          key: item.name,
+        };
+      });
+      setColum(columns);
+
+    });
+  }, []);
+
   const [contactInfoList, setContactInfoList] = useState([]);
   /**
    * @description 联系人数据
    */
   const queryAllContacts = () => {
-    getUserList(pageSize,currentPage,params)
+    queryView('order',currentPage,pageSize,params)
       .then((res) => {
-        setContactInfoList(res.data.items);
-        setPageSize(res.data.page_size);
         setCurrentPage(res.data.page);
+        setPageSize(res.data.page_size);
         setTotal(res.data.total);
+        setContactInfoList(res.data.items);
+        // setPageSize(res.data.page_size);
+        // setCurrentPage(res.data.page);
+        // setTotal(res.data.total);
         setLoading(false);
       })
       .catch(() => {
@@ -195,6 +217,7 @@ const CommonListPage = () => {
     <Space direction="vertical" size="large" style={{ display: "flex" }}>
       <SearchForm onSearch={onSearch} onReset={onReset}></SearchForm>
       <CommonListTable
+        dataColumns={colum} 
         dataSource={contactInfoList}
         onClickEdit={onClickTableRowEdit}
         onClickDelete={onClickTableRowDelte}
