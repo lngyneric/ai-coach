@@ -15,6 +15,7 @@ const App = () => {
     useSystemStore();
 
   const params = parseUrlParams();
+  console.log('params', params)
   const currChannel = params.channel || '';
 
   if (channel !== currChannel) {

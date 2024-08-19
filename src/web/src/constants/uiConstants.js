@@ -43,11 +43,11 @@ export const THEME_DARK = 'dark';
 
 
 export const inWechat = () => {
-  let ua = navigator.userAgent.toLowerCase()
-  let isWXWork = ua.match(/wxwork/i) === 'wxwork'
-  let isWeixin = !isWXWork && ua.match(/MicroMessenger/i) === 'micromessenger'
+  let ua = navigator.userAgent.toLowerCase();
+  let isWXWork = ua.match(/wxwork/i) === 'wxwork';
+  let isWeixin = !isWXWork && /MicroMessenger/i.test(ua);
 
-  return isWeixin
+  return isWeixin;
 }
 
 // 微信登录跳转
