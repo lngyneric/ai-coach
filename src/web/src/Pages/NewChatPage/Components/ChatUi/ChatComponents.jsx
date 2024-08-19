@@ -450,7 +450,9 @@ export const ChatComponents = forwardRef(
       }
 
       return () => {
-        delete window.ztDebug.resend;
+        if (window.ztDebug) {
+          delete window.ztDebug.resend;
+        }
       };
     }, [nextStep, onPayModalOpen]);
 

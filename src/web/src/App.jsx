@@ -22,6 +22,7 @@ const App = () => {
   }
 
   if (inWechat()) {
+    console.log('inWechat...');
     const currCode = params.code;
     if (!currCode) {
       wechatLogin({
