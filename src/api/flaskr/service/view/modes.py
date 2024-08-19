@@ -1,6 +1,8 @@
+from re import I
 from arrow import get
 from flask import Flask
 from regex import D 
+# from api.flaskr.service.study.coddnst import INPUT_TYPE_TEXT
 from flaskr.dao import db
 from sqlalchemy import Column, String, Integer, Date, TIMESTAMP, func
 from flaskr.service.order.models import AICourseBuyRecord
@@ -10,46 +12,64 @@ from flaskr.service.order.models import AICourseBuyRecord
 
 
 
+INPUT_TYPE_TEXT = 'text'
+INPUT_TYPE_DATE = 'date'
+INPUT_TYPE_SELECT = 'select'
+INPUT_TYPE_NUMBER = 'number'
+INPUT_TYPE_DATETIME = 'datetime'
+INPUT_TYPE_TIME = 'time'
+INPUT_TYPE_CHECKBOX = 'checkbox'
 
-class ViewItem:
+# query list info 
 
-    def __init__(self, name, lable, fmt):
-        self.name = name
-        self.lable = lable
-        self.fmt = fmt
+class TableColumnItem:
+
+    def __init__(self, column, lable):
+        self.column =column # database column name
+        self.lable = lable # table column lable name,display in page
 
     def __json__(self):
         return {
-            "name": self.name,
+            "name": self.column,
             "lable": self.lable,
         }
     
 
+
+
+
+
+# query input info
 class InputItem:
-    
-        def __init__(self, name, lable, fmt):
-            self.name = name
+        
+        def __init__(self,column,lable,query_type, input_type,input_options=None,input_view = None):
+            self.column = column
             self.lable = lable
-            self.fmt = fmt
+            self.query_type = query_type
+            self.input_type = input_type
+            self.input_options = input_options
+            self.input_view = input_view
     
         def __json__(self):
             return {
-                "name": self.name,
+                "column": self.column,
                 "lable": self.lable,
+                "query_type": self.query_type,
+                "input_type": self.input_type,
+                "input_options": self.input_options
             }
-
+ 
 
 
 views = {}
 class ViewDef:
-        
-    def __init__(self, name:str, items:list[ViewItem],queryinput:list[InputItem], model):
+    def __init__(self, name:str, items:list[TableColumnItem],queryinput:list[InputItem], model):
         self.name = name
         self.items = items
         self.model = model
         self.queryinput = queryinput
         views[name] = self
-
+    
     def query(self,app:Flask,page:int=1,page_size:int=20,query=None):
         with app.app_context():
             app.logger.info("query:"+str(query)+" page:"+str(page)+" page_size:"+str(page_size))
@@ -88,8 +108,8 @@ class ViewDef:
         
 
 OrderView = ViewDef('order',
-                    [ViewItem('record_id','订单号',''),
-                     ViewItem('price','订单状态',''),
-                     ViewItem('paid_value','订单金额',''),
-                     ViewItem('paid_value','订单时间','')],
+                    [TableColumnItem('record_id','订单号',''),
+                     TableColumnItem('price','订单状态',''),
+                     TableColumnItem('paid_value','订单金额',''),
+                     TableColumnItem('paid_value','订单时间','')],
                 [InputItem('order_id','订单号','like')],AICourseBuyRecord)
