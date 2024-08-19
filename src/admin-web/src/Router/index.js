@@ -1,5 +1,5 @@
 import MainLayout from "../Layout/MainLayout";
-import ChatPage from "../Pages/ChatPage/ChatPage";
+import CommonListPage from "../Pages/CommonListPage/CommonListPage";
 import SchedeleComponent from "../Pages/SchedulePage/SchedulePage";
 import LoginPage from "../Pages/LoginPage/LoginPage";
 import RegisterPage from "../Pages/RegisterPage/RegisterPage";
@@ -34,81 +34,31 @@ const authRoutes = [
     path: "/user",
     element: <ContactsComponant></ContactsComponant>,
     title: "用户",
-    icon: <ReadOutlined></ReadOutlined>,
   },
   {
     path: "/order",
-    element: <ContactsComponant></ContactsComponant>,
+    element: <CommonListPage></CommonListPage>,
+  
     title: "订单",
-    icon: <ReadOutlined></ReadOutlined>,
   },
   {
     path: "/course",
     element: <ContactsComponant></ContactsComponant>,
     title: "课程",
-    icon: <ReadOutlined></ReadOutlined>,
   },
   {
     path: "/discount",
     element: <ContactsComponant></ContactsComponant>,
     title: "优惠",
-    icon: <ReadOutlined></ReadOutlined>,
   },
   {
     path: "/channel",
     element: <ContactsComponant></ContactsComponant>,
     title: "渠道",
-    icon: <ReadOutlined></ReadOutlined>,
   },
-// <<<<<<< HEAD
-  // {
-  //   path: "/schedele",
-  //   element: <SchedeleComponent></SchedeleComponent>,
-  //   title: "日程",
-  //   icon: <ScheduleOutlined></ScheduleOutlined>,
-  // },
-  // {
-  //   path: "/schedele",
-  //   element: <SchedulePage></SchedulePage>,
-  //   title: "日程",
-  //   icon: <ScheduleOutlined></ScheduleOutlined>,
-  // },
-// =======
-//   {
-//     path: "/schedele",
-//     element: <SchedeleComponent></SchedeleComponent>,
-//     title: "日程",
-//     icon: <ScheduleOutlined></ScheduleOutlined>,
-//   },
-  // {
-  //   path: "/schedeleDemo",
-  //   element: <SchedulePage></SchedulePage>,
-  //   title: "日程demo",
-  //   icon: <ScheduleOutlined></ScheduleOutlined>,
-  // },
-// >>>>>>> master
-  // {
-  //   path: "/todo",
-  //   element: <ToDoComponent></ToDoComponent>,
-  //   icon: <CheckSquareOutlined></CheckSquareOutlined>,
-  //   title: "待办",
-  // },
-  // {
-  //   path: "/contacts",
-  //   element: <ContactsComponant></ContactsComponant>,
-  //   icon: <ContactsOutlined></ContactsOutlined>,
-  //   title: "通讯录",
-  // },
-  // {
-  //   path: "/document",
-  //   element: <DocumentPage></DocumentPage>,
-  //   icon: <FolderOutlined></FolderOutlined>,
-  //   title: "文档",
-  // },
   {
     path: "/setting",
     element: <SettingPage></SettingPage>,
-    icon: <SettingOutlined></SettingOutlined>,
     title: "设置",
   },
 ];

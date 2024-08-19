@@ -8,7 +8,7 @@ import { TableProps } from "antd";
 
 
 
-const ContactListTable = ({
+const CommonListTable = ({
   loading,
   dataSource,
   onTableChage,
@@ -21,31 +21,16 @@ const ContactListTable = ({
    * @description 表格 column
    * @type {*} */
   const columns = [
-    // {
-    //   title:"编号",
-    //   dataIndex:"number",
-    //   key:"number",
-    // },
     {
       title: "userId",
       dataIndex: "user_id",
       key: "user_id",
     },
-    // {
-    //   title: "头像",
-    //   dataIndex: "avatar",
-    //   key: "avatar",
-    //   render: (value, record) => (
-    //     <Avatar src={value}>{record.nickname.slice(0, 1)}</Avatar>
-    //   ),
-    // },
     {
       title: "姓名",
       dataIndex: "name",
       key: "name",
-      // sorter: {
-      //   compare: true,
-      // },
+    
     },
 
     {
@@ -79,22 +64,6 @@ const ContactListTable = ({
           >
             详情
           </Button>  
-          {/* <Button
-            type="link"
-            onClick={() => {
-              onClickEdit(record);
-            }}
-          >
-            编辑
-          </Button>
-          <Button
-            type="link"
-            onClick={() => {
-              onClickDelete(record);
-            }}
-          >
-            删除
-          </Button> */}
         </Space>
       ),
     },
@@ -140,4 +109,4 @@ const ContactListTable = ({
   );
 };
 
-export default ContactListTable;
+export default CommonListTable;

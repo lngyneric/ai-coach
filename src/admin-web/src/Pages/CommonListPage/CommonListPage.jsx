@@ -1,6 +1,6 @@
 import { Button, Space, Modal } from "antd";
 import SearchForm from "./SearchForm";
-import ContactListTable from "./ContactListTable";
+import CommonListTable from "./CommonListTable";
 import { useEffect, useState } from "react";
 import EditContactModal from "./Modal/EditContactModal";
 import ContactDetailModal from "./Modal/ContactDetailModel";
@@ -16,7 +16,7 @@ import { DeleteColumnOutlined, DeleteOutlined } from "@ant-design/icons";
 import { TRUE } from "sass";
 import { set } from "store";
 
-const ContactsComponant = () => {
+const CommonListPage = () => {
   UploadEvent("ContactsComponant", { page: "contact" });
 
 
@@ -194,14 +194,14 @@ const ContactsComponant = () => {
   return (
     <Space direction="vertical" size="large" style={{ display: "flex" }}>
       <SearchForm onSearch={onSearch} onReset={onReset}></SearchForm>
-      <ContactListTable
+      <CommonListTable
         dataSource={contactInfoList}
         onClickEdit={onClickTableRowEdit}
         onClickDelete={onClickTableRowDelte}
         onClickDetail={onClickTableDetail}
         loading={loading}
         onTableSelectChange={onTableSelectChange}
-      ></ContactListTable>
+      ></CommonListTable>
       <Pagination pageSize={pageSize} onChange={onPaginationChange} current={currentPage} total={total} ></Pagination>
       <EditContactModal
         open={editContactModalProps.open}
@@ -218,4 +218,4 @@ const ContactsComponant = () => {
     </Space>
   );
 };
-export default ContactsComponant;
+export default CommonListPage;
