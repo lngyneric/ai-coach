@@ -66,7 +66,7 @@ def update_user_open_id(app:Flask,user_id:str,wx_code:str)->str:
             wx_data = get_wechat_access_token(app,wx_code)
             if wx_data:
                 wx_openid = wx_data.get("openid","")
-                user.wx_openid = wx_openid
+                user.user_open_id = wx_openid
                 db.session.commit()
                 return wx_openid
         return ""
