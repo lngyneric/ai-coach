@@ -23,8 +23,7 @@ jobs:
           port: ${{ secrets.PORT }}
           script: |
             sudo su -
-            cd /item/cd ai-shifu
-            git checkout develop
+            cd  /data/ai-shifu/deploy-config/
             git pull
             bash /data/ai-shifu/deploy-config/build-and-deploy-shifu-api.sh
             bash /data/ai-shifu/deploy-config/build-and-deploy-shifu-web.sh
