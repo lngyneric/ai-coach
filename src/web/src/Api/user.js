@@ -89,13 +89,29 @@ export const resetPassword = (username, new_password, code) => {
  * https://agiclass.feishu.cn/docx/WyXhdgeVzoKVqDx1D4wc0eMknmg
  */
 export const registerTmp = ({ temp_id }) => {
-  const { channel: source } = useSystemStore.getState();
+  const { channel: source, wechatCode: wxcode } = useSystemStore.getState();
+  console.log('registerTmp', source, wxcode);
 
   return request(
     {
       url: '/api/user/require_tmp',
       method: 'post',
-      data: { temp_id, source }
+      data: { temp_id, source, wxcode }
+    }
+  );
+}
+
+/**
+ * 更新微信code
+ * @returns 
+ */
+export const updateWxcode = () => {
+  const { wechatCode: wxcode } = useSystemStore.getState();
+  return request(
+    {
+      url: '/api/user/update_openid',
+      method: 'post',
+      data: { wxcode }
     }
   );
 }

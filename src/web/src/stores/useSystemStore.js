@@ -5,5 +5,5 @@ export const useSystemStore = create((set) => ({
   channel: '',
   wechatCode: '',
   updateChannel: (channel) => set({ channel }),
-  updateweixinCode: (wechatCode) => set({ wechatCode }),
+  updateWechatCode: (wechatCode) => set({ wechatCode }),
 }));
