@@ -3,6 +3,7 @@ from arrow import get
 from flask import Flask
 from regex import D 
 # from api.flaskr.service.study.coddnst import INPUT_TYPE_TEXT
+from api.flaskr.service.common.dtos import PageNationDTO
 from flaskr.dao import db
 from sqlalchemy import Column, String, Integer, Date, TIMESTAMP, func
 from flaskr.service.order.models import AICourseBuyRecord
@@ -58,7 +59,6 @@ class InputItem:
                 "input_type": self.input_type,
                 "input_options": self.input_options
             }
- 
 
 
 views = {}
@@ -76,7 +76,7 @@ class ViewDef:
             db_query = self.model.query
             if query:
                 for key in query.keys():
-                    input = next(filter(lambda x: x.name == key, self.queryinput))
+                    input = next(filter(lambda x: x.column == key, self.queryinput))
                     if input.fmt == 'like':
                         db_query = db_query.filter(getattr(self.model,key).like("%"+query.get(key)+"%"))
                     else:
@@ -85,17 +85,17 @@ class ViewDef:
             if count == 0:
                 return {}
             datas  = db_query.order_by(self.model.created.desc()).offset((page-1)*page_size).limit(page_size)
-
-            items = [ {item.name: str(getattr(data,item.name)) for item in self.items} for data in datas]
+            items = [{'id':data.id,'data':{item.lable: str(getattr(data,item.column)) for item in self.items}} for data in datas]
             app.logger.info("query done"+str(items))
-            return datas 
+            return PageNationDTO(page,page_size,count,items)
     def query_by_id(self,app:Flask,id):
         with app.app_context():
             app.logger.info("query_by_id:"+str(id))
             data  =  self.model.query.filter_by(id=id).first()
             if data == None:
                 return {}
-            items = {item.name: str(getattr(data,item.name)) for item in self.items}
+            item = {'id':data.id,'data':{item.lable: str(getattr(data,item.column)) for item in self.items}}
+            return item 
     def query_by_id_and_property(self,app:Flask,id,property):
         with app.app_context():
             app.logger.info("query_by_id:"+str(id))
@@ -104,12 +104,31 @@ class ViewDef:
             if property_value == None:
                 return {}
             return views['xxx'].query_by_id(app,property_value)
+    def get_view_def(self):
+        return {
+            "name": self.name,
+            "items": self.items,
+            "queryinput": self.queryinput
+        }
     
         
 
 OrderView = ViewDef('order',
-                    [TableColumnItem('record_id','订单号',''),
-                     TableColumnItem('price','订单状态',''),
-                     TableColumnItem('paid_value','订单金额',''),
-                     TableColumnItem('paid_value','订单时间','')],
-                [InputItem('order_id','订单号','like')],AICourseBuyRecord)
+    [TableColumnItem('id','ID'),
+    TableColumnItem('record_id','订单ID'),
+    TableColumnItem('user_id','用户ID'),
+    TableColumnItem('course_id','课程ID'),
+    TableColumnItem('price','订单原价'),
+    TableColumnItem('pay_value','应付金额'),
+    TableColumnItem('discount_value','折扣金额'),
+    TableColumnItem('status','状态'),
+    TableColumnItem('created','创建时间'),
+    TableColumnItem('updated','更新时间')],
+    [InputItem('user_id','用户ID','like',INPUT_TYPE_TEXT),
+    InputItem('course_id','课程ID','like',INPUT_TYPE_TEXT),
+    InputItem('price','价格','like',INPUT_TYPE_TEXT),
+    InputItem('status','状态','like',INPUT_TYPE_TEXT),
+    InputItem('created','创建时间','like',INPUT_TYPE_TEXT),
+    InputItem('updated','更新时间','like',INPUT_TYPE_TEXT)],
+    AICourseBuyRecord
+    )
