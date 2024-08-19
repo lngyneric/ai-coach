@@ -22,28 +22,26 @@ const App = () => {
   if (channel !== currChannel) {
     updateChannel(currChannel);
   }
+  
+  useEffect(() => {
+    if (inWechat()) {
+      setLoading(true);
+      console.log('inWechat...');
+      const currCode = params.code;
 
-  if (inWechat()) {
-    console.log('inWechat...');
-    const currCode = params.code;
+      if (!currCode) {
+        wechatLogin({
+          appId: process.env.REACT_APP_APP_ID,
+        });
+        return
+      }
 
-    let isExit = false;
-    if (!currCode) {
-      wechatLogin({
-        appId: process.env.REACT_APP_APP_ID,
-      });
-      isExit = true;
-    }
-    if (currCode !== wechatCode) {
-      updateWechatCode(currCode);
-    }
-
-    if (!isExit) {
-      setLoading(false);
-    }
-  } else {
+      if (currCode !== wechatCode) {
+        updateWechatCode(currCode);
+      }
+    } 
     setLoading(false);
-  }
+  }, [params.code, updateWechatCode, wechatCode])
 
   // 挂载 debugger
   useEffect(() => {
