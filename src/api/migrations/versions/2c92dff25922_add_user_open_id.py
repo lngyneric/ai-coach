@@ -32,3 +32,4 @@ def downgrade():
         batch_op.drop_column('user_open_id')
 
     # ### end Alembic commands ###
+
