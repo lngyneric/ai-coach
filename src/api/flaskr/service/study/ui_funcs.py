@@ -15,7 +15,7 @@ from re import U
 import time
 from flask import Flask
 from flaskr.service.common.models import AppException
-from flaskr.service.order.consts import ATTEND_STATUS_BRANCH, ATTEND_STATUS_IN_PROGRESS
+from flaskr.service.order.consts import ATTEND_STATUS_BRANCH, ATTEND_STATUS_IN_PROGRESS, BUY_STATUS_SUCCESS
 from flaskr.service.order.funs import init_buy_record
 from flaskr.service.profile.funcs import get_user_profiles
 from flaskr.service.study.const import INPUT_TYPE_BRANCH, INPUT_TYPE_CHECKCODE, INPUT_TYPE_CONTINUE, INPUT_TYPE_PHONE, INPUT_TYPE_SELECT
@@ -115,11 +115,20 @@ def handle_input_checkcode(app:Flask,user_id:str,attend:AICourseLessonAttend,scr
 @register_ui_handler(UI_TYPE_TO_PAY)
 def handle_input_to_pay(app:Flask,user_id:str,attend:AICourseLessonAttend,script_info:AILessonScript,input:str,trace,trace_args):
     order =  init_buy_record(app,user_id,attend.course_id)
-    btn = [{
-        "label":script_info.script_ui_content,
-        "value":order.order_id
-    }]
-    yield make_script_dto("order",{"title":"买课！","buttons":btn},script_info.script_id)
+    if order.status != BUY_STATUS_SUCCESS:
+        btn = [{
+            "label":script_info.script_ui_content,
+            "value":order.order_id
+        }]
+        yield make_script_dto("order",{"title":"买课！","buttons":btn},script_info.script_id)
+    else:
+        btn = [{
+                            "label":script_info.script_ui_content,
+                            "value":script_info.script_ui_content,
+                            "type":INPUT_TYPE_CONTINUE
+                        }]
+        yield make_script_dto("buttons",{"title":"接下来","buttons":btn},script_info.script_id)
+
 
 
 def handle_ui(app:Flask,user_id:str,attend:AICourseLessonAttend,script_info:AILessonScript,input:str,trace,trace_args):
