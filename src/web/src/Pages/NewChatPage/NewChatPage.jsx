@@ -3,7 +3,7 @@ import { useParams, useNavigate } from 'react-router-dom';
 import classNames from 'classnames';
 import styles from './NewChatPage.module.scss';
 import { Skeleton } from 'antd';
-import { calcFrameLayout, FRAME_LAYOUT_MOBILE, isWechat } from 'constants/uiConstants.js';
+import { calcFrameLayout, FRAME_LAYOUT_MOBILE, inWechat } from 'constants/uiConstants.js';
 import { useUiLayoutStore } from 'stores/useUiLayoutStore.js';
 import { useUserStore } from 'stores/useUserStore.js';
 import { AppContext } from 'Components/AppContext.js';
@@ -74,7 +74,7 @@ const NewChatPage = (props) => {
     if (!initialized) {
       (async () => {
         await checkLogin();
-        if (isWechat) {
+        if (inWechat()) {
           await updateWxcode();
         }
         setInitialized(true);

@@ -21,7 +21,7 @@ const App = () => {
     updateChannel(currChannel);
   }
 
-  if (inWechat) {
+  if (inWechat()) {
     const currCode = params.code;
     if (!currCode) {
       wechatLogin({
