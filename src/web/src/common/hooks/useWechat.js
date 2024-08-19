@@ -22,7 +22,7 @@ export const useWechat = () => {
   });
 
   const runInJsBridge = (callback) => {
-    if (inWechat()) {
+    if (!inWechat()) {
       return
     }
 
