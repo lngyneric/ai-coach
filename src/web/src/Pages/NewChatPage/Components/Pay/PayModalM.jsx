@@ -8,24 +8,36 @@ import weixinIcon from 'Assets/newchat/weixin.png';
 import zhifuboIcon from 'Assets/newchat/zhifubao.png';
 
 import RadioM from 'Components/m/RadioM.jsx';
-import { Radio } from 'antd-mobile';
+import { Radio, Input } from 'antd-mobile';
 import { PAY_CHANNEL_WECHAT_JSAPI, PAY_CHANNEL_ZHIFUBAO } from './constans.js';
 import MainButtonM from 'Components/m/MainButtonM.jsx';
 import payInfoBg from 'Assets/newchat/pay-info-bg-m.png';
 import { useEffect } from 'react';
 
-import { getPayUrl, initOrder } from 'Api/order.js';
+import { getPayUrl, initOrder, applyDiscountCode } from 'Api/order.js';
 import { useWechat } from 'common/hooks/useWechat.js';
 import { message } from 'antd';
+import { inWechat } from 'constants/uiConstants.js';
+import { useDisclosture } from 'common/hooks/useDisclosture.js';
+import { useCallback } from 'react';
+import { SettingInputM } from 'Components/m/SettingInputM.jsx';
 
 export const PayModalM = ({ open = false, onCancel, onOk }) => {
   const [isLoading, setIsLoading] = useState(false);
   const [price, setPrice] = useState('0.00');
   const [totalDiscount, setTotalDiscount] = useState('');
-  const [payChannel, setPayChannel] = useState(PAY_CHANNEL_WECHAT_JSAPI);
+  const [payChannel, setPayChannel] = useState(
+    inWechat() ? PAY_CHANNEL_WECHAT_JSAPI : PAY_CHANNEL_ZHIFUBAO
+  );
   const [orderId, setOrderId] = useState('');
+  const [couponCode, setCouponCode] = useState('');
   const { payByJsApi } = useWechat();
   const [messageApi, contextHolder] = message.useMessage();
+  const {
+    open: couponCodeModalOpen,
+    onClose: onCouponCodeModalClose,
+    onOpen: onCouponCodeModalOpen,
+  } = useDisclosture();
 
   useEffect(() => {
     (async () => {
@@ -37,7 +49,7 @@ export const PayModalM = ({ open = false, onCancel, onOk }) => {
     })();
   }, []);
 
-  const handlePay = async () => {
+  const handlePay = useCallback(async () => {
     const { data: qrcodeResp } = await getPayUrl({
       channel: payChannel,
       orderId,
@@ -46,25 +58,41 @@ export const PayModalM = ({ open = false, onCancel, onOk }) => {
     if (payChannel === PAY_CHANNEL_WECHAT_JSAPI) {
       try {
         await payByJsApi(qrcodeResp.qr_url);
+        messageApi.success('支付成功');
+        onOk();
       } catch (e) {
         messageApi.error('支付失败');
       }
     } else {
       window.open(qrcodeResp.qr_url);
     }
-  };
+  }, [messageApi, onOk, orderId, payByJsApi, payChannel]);
 
-  const onPayChannelChange = (value) => {
+  const onPayChannelChange = useCallback((value) => {
     setPayChannel(value);
-  };
+  }, []);
 
-  const onPayChannelWechatClick = () => {
+  const onPayChannelWechatClick = useCallback(() => {
     setPayChannel(PAY_CHANNEL_WECHAT_JSAPI);
-  };
+  }, []);
 
-  const onPayChannelZhifubaoClick = () => {
+  const onPayChannelZhifubaoClick = useCallback(() => {
     setPayChannel(PAY_CHANNEL_ZHIFUBAO);
-  };
+  }, []);
+
+  const onCouponCodeButtonClick = useCallback(() => {
+    onCouponCodeModalOpen();
+  });
+
+  const onCouponCodeOkClick = useCallback(async () => {
+    const resp = await applyDiscountCode({ orderId, code: couponCode });
+    if (resp.code !== 0) {
+      messageApi.error(resp.message);
+      return;
+    }
+
+    onOk();
+  }, [couponCode, messageApi, onOk, orderId]);
 
   return (
     <>
@@ -92,26 +120,28 @@ export const PayModalM = ({ open = false, onCancel, onOk }) => {
             </div>
             <div className={styles.payChannelWrapper}>
               <Radio.Group value={payChannel} onChange={onPayChannelChange}>
-                <div
-                  className={classNames(
-                    styles.payChannelRow,
-                    payChannel === PAY_CHANNEL_WECHAT_JSAPI && styles.selected
-                  )}
-                  onClick={onPayChannelWechatClick}
-                >
-                  <div className={styles.payChannelBasic}>
-                    <img
-                      src={weixinIcon}
-                      alt="微信支付"
-                      className={styles.payChannelIcon}
+                {inWechat() && (
+                  <div
+                    className={classNames(
+                      styles.payChannelRow,
+                      payChannel === PAY_CHANNEL_WECHAT_JSAPI && styles.selected
+                    )}
+                    onClick={onPayChannelWechatClick}
+                  >
+                    <div className={styles.payChannelBasic}>
+                      <img
+                        src={weixinIcon}
+                        alt="微信支付"
+                        className={styles.payChannelIcon}
+                      />
+                      <span className={styles.payChannelTitle}>微信支付</span>
+                    </div>
+                    <RadioM
+                      className={styles.payChannelRadio}
+                      value={PAY_CHANNEL_WECHAT_JSAPI}
                     />
-                    <span className={styles.payChannelTitle}>微信支付</span>
                   </div>
-                  <RadioM
-                    className={styles.payChannelRadio}
-                    value={PAY_CHANNEL_WECHAT_JSAPI}
-                  />
-                </div>
+                )}
                 <div
                   className={classNames(
                     styles.payChannelRow,
@@ -140,7 +170,11 @@ export const PayModalM = ({ open = false, onCancel, onOk }) => {
               </MainButtonM>
             </div>
             <div className={styles.couponCodeWrapper}>
-              <MainButtonM className={styles.couponCodeButton} fill="none">
+              <MainButtonM
+                className={styles.couponCodeButton}
+                fill="none"
+                onClick={onCouponCodeButtonClick}
+              >
                 {'使用兑换码 >'}
               </MainButtonM>
             </div>
@@ -173,6 +207,30 @@ export const PayModalM = ({ open = false, onCancel, onOk }) => {
           </div>
         }
       />
+      {couponCodeModalOpen && (
+        <ModalM
+          visible={couponCodeModalOpen}
+          title="兑换码"
+          onClose={onCouponCodeModalClose}
+          style={{ width: '80%' }}
+          className={styles.couponCodeModal}
+          content={
+            <>
+              <div className={styles.couponCodeInputWrapper}>
+                <SettingInputM title="兑换码" onChange={(e) => setCouponCode(e)} />
+              </div>
+              <div class={styles.buttonWrapper}>
+                <MainButtonM
+                  onClick={onCouponCodeOkClick}
+                  className={styles.okButton}
+                >
+                  确定
+                </MainButtonM>
+              </div>
+            </>
+          }
+        />
+      )}
       {contextHolder}
     </>
   );
