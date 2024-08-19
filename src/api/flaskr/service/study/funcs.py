@@ -5,6 +5,7 @@ import re
 import openai
 from typing import Generator
 from flask import Flask, typing
+from sqlalchemy import null
 
 from flaskr.service.study.const import INPUT_TYPE_BRANCH, INPUT_TYPE_CHECKCODE, INPUT_TYPE_CONTINUE, INPUT_TYPE_LOGIN, INPUT_TYPE_PHONE, INPUT_TYPE_SELECT, ROLE_TEACHER, ROLE_VALUES
 from ...service.study.dtos import AILessonAttendDTO, StudyRecordDTO
@@ -13,7 +14,7 @@ from ...service.common  import AppException
 from ...service.user import get_sms_code_info, send_sms_code_without_check, verify_sms_code, verify_sms_code_without_phone
 from ...common import register_schema_to_swagger
 from ...service.profile.funcs import get_user_profiles, save_user_profiles
-from ...service.order.consts import ATTEND_STATUS_BRANCH, ATTEND_STATUS_TYPES, ATTEND_STATUS_UNAVAILABE, ATTEND_STATUS_VALUES
+from ...service.order.consts import ATTEND_STATUS_BRANCH, ATTEND_STATUS_TYPES, ATTEND_STATUS_UNAVAILABE, ATTEND_STATUS_VALUES, BUY_STATUS_SUCCESS
 
 from .dtos import AICourseDTO, StudyRecordItemDTO, StudyUIDTO
 from ...service.lesson.const import CONTENT_TYPE_IMAGE, LESSON_TYPE_BRANCH_HIDDEN, SCRIPT_TYPE_FIX, SCRIPT_TYPE_PORMPT, SCRIPT_TYPE_SYSTEM, UI_TYPE_BRANCH, UI_TYPE_BUTTON, UI_TYPE_CHECKCODE, UI_TYPE_CONTINUED, UI_TYPE_INPUT, UI_TYPE_LOGIN, UI_TYPE_PHONE, UI_TYPE_SELECTION, UI_TYPE_TO_PAY
@@ -139,11 +140,13 @@ def get_study_record(app:Flask,user_id:str,lesson_id:str)->StudyRecordDTO:
             ret.ui = StudyUIDTO(INPUT_TYPE_LOGIN,last_script.script_ui_content,lesson_id)
         elif last_script.script_ui_type == UI_TYPE_TO_PAY:
             order =  init_buy_record(app,user_id,lesson_info.course_id)
-            btn = [{
-                        "label":last_script.script_ui_content,
-                        "value":order.order_id
-                    }]
-            ret.ui = StudyUIDTO("order",{"title":"买课！","buttons":btn},lesson_id)
+            if order.status != BUY_STATUS_SUCCESS:
+                btn = [{
+                            "label":last_script.script_ui_content,
+                            "value":order.order_id
+                        }]
+                ret.ui = StudyUIDTO("order",{"title":"买课！","buttons":btn},lesson_id)
+            
         
         return ret
 # 重置用户信息

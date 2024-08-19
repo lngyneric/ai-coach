@@ -147,6 +147,9 @@ def register_user_handler(app:Flask,path_prefix:str)->Flask:
                         source:
                             type: string
                             description: 来源
+                        wxcode:
+                            type: string
+                            description: 微信code
         responses:
             200:
                 description: 临时用户登录成功
@@ -169,9 +172,10 @@ def register_user_handler(app:Flask,path_prefix:str)->Flask:
         """
         tmp_id = request.get_json().get('temp_id',None)
         source = request.get_json().get('source','web')
+        wx_code = request.get_json().get('wxcode',None)
         if not tmp_id:
             raise_param_error('temp_id')
-        user_token = generate_temp_user(app,tmp_id,source)
+        user_token = generate_temp_user(app,tmp_id,source,wx_code)
         resp = make_response(make_common_response(user_token))
         return resp
 
@@ -386,7 +390,7 @@ def register_user_handler(app:Flask,path_prefix:str)->Flask:
               schema:
                 type: object
                 properties:
-                    code:
+                    wxcode:
                         type: string
                         description: 微信code
         responses:
@@ -406,9 +410,9 @@ def register_user_handler(app:Flask,path_prefix:str)->Flask:
                                     type: string
                                     description: openid
         """
-        code = request.get_json().get('code',None)
+        code = request.get_json().get('wxcode',None)
         if not code:
-            raise_param_error('code')
+            raise_param_error('wxcode')
         return make_common_response(update_user_open_id(app,request.user.user_id,code)) 
 
     # 健康检查 
