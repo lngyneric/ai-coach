@@ -18,4 +18,4 @@ def test_buy_and_pay(app):
         user_id = user.user_id
         record = init_buy_record(app,user_id,course.course_id)
         charge = generate_charge(app,
-                                record.order_id,'wx_pub','116.179.37.55')
+                                record.order_id,'wx_wap','116.179.37.55')
