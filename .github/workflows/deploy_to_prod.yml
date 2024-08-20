@@ -5,7 +5,7 @@ on:
     branches: ["master"] # Trigger only on push to the develop branch
   pull_request:
     branches: [ "master" ]
-     
+    
  
 
 jobs:
@@ -25,6 +25,34 @@ jobs:
             sudo su -
             cd  /data/ai-shifu/deploy-config/
             git pull
+      - name: Deploy API
+        uses: appleboy/ssh-action@master
+        with:
+          host: ${{ secrets.PROD_DEPLOY_HOST }}
+          username: ${{ secrets.USERNAME }}
+          key: ${{ secrets.PROD_SSH_KEY }}
+          port: ${{ secrets.PORT }}
+          script: |
+            sudo su -
             bash /data/ai-shifu/deploy-config/build-and-deploy-shifu-api.sh
+            - name: Deploy API
+      - name: Deploy Web
+        uses: appleboy/ssh-action@master
+        with:
+          host: ${{ secrets.PROD_DEPLOY_HOST }}
+          username: ${{ secrets.USERNAME }}
+          key: ${{ secrets.PROD_SSH_KEY }}
+          port: ${{ secrets.PORT }}
+          script: |
+            sudo su -
             bash /data/ai-shifu/deploy-config/build-and-deploy-shifu-web.sh
+      - name: Deploy Admin Web
+        uses: appleboy/ssh-action@master
+        with:
+          host: ${{ secrets.PROD_DEPLOY_HOST }}
+          username: ${{ secrets.USERNAME }}
+          key: ${{ secrets.PROD_SSH_KEY }}
+          port: ${{ secrets.PORT }}
+          script: |
+            sudo su -
             bash /data/ai-shifu/deploy-config/build-and-deploy-shifu-admin-web.sh
