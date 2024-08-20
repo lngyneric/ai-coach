@@ -17,7 +17,7 @@ import { set } from "store";
 
 import {getViewInfo,queryView} from "../../Api/manager"
 
-const CommonListPage = () => {
+const CommonListPage = ({viewName}) => {
 
 
 
@@ -33,6 +33,7 @@ const CommonListPage = () => {
   const [loading, setLoading] = useState(false);
   const [contactIds, setContactIds] = useState([]);
   const [colum, setColum] = useState([]);
+  const [searchParams, setSearchParams] = useState({});
   /**
    *@description 点击搜索的方法
    *
@@ -40,6 +41,7 @@ const CommonListPage = () => {
    */
   const onSearch = (searchParams) => {
     Object.assign(params, searchParams);
+    console.log(params);
     setCurrentPage(1);
     queryAllContacts();
   };
@@ -50,7 +52,7 @@ const CommonListPage = () => {
   };
 
   useEffect(() => {
-    getViewInfo("order").then((res) => {
+    getViewInfo(viewName).then((res) => {
       console.log(res);
       const columns = res.data.items.map((item) => {
         return {
@@ -60,16 +62,18 @@ const CommonListPage = () => {
         };
       });
       setColum(columns);
+      setSearchParams(res.data.queryinput);
+      queryAllContacts();
 
     });
-  }, []);
+  }, [viewName]);
 
   const [contactInfoList, setContactInfoList] = useState([]);
   /**
    * @description 联系人数据
    */
   const queryAllContacts = () => {
-    queryView('order',currentPage,pageSize,params)
+    queryView(viewName,currentPage,pageSize,params)
       .then((res) => {
         setCurrentPage(res.data.page);
         setPageSize(res.data.page_size);
@@ -215,7 +219,7 @@ const CommonListPage = () => {
   }, [pageSize,currentPage]);
   return (
     <Space direction="vertical" size="large" style={{ display: "flex" }}>
-      <SearchForm onSearch={onSearch} onReset={onReset}></SearchForm>
+      <SearchForm onSearch={onSearch} onReset={onReset} inputs={searchParams}></SearchForm>
       <CommonListTable
         dataColumns={colum} 
         dataSource={contactInfoList}

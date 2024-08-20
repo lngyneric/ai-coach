@@ -1,14 +1,45 @@
-import { Button, Input } from "antd";
+import { Button, Input ,Select } from "antd";
 import { Form } from "antd";
 import { Space } from "antd";
 import { useForm } from "antd/es/form/Form";
 
-const SearchForm = ({ onSearch, onReset }) => {
+const SearchForm = ({ onSearch, onReset,inputs }) => {
   const [form] = useForm();
   const onClickReset = () => {
     form.resetFields();
     onReset();
   };
+
+
+  function loadInputs(inputs){
+    let ret = []
+     for (let i = 0 ;i < inputs.length;i++){
+        let input = inputs[i];
+        let {label,column} = input;
+        if (input.input_options){
+
+          console.log(input.input_options)
+          ret.push( (
+            <Form.Item label={label} name={column} >
+              <Select allowClear  options = {input.input_options}  placeholder="请选择">
+
+      
+              </Select>
+            </Form.Item>)
+          )
+
+        }else {
+        ret.push( (
+          <Form.Item label={label} name={column} >
+        
+            <Input allowClear placeholder="请输入"></Input>
+            
+          </Form.Item>
+        ))
+      }
+     }
+      return ret;
+  }
 
   return (
     <div className="search-form_container">
@@ -20,15 +51,7 @@ const SearchForm = ({ onSearch, onReset }) => {
         form={form}
       >
         <Space>
-          <Form.Item label="UID" name="user_id">
-            <Input allowClear placeholder="请输入"></Input>
-          </Form.Item>
-          <Form.Item label="联系电话" name="mobile">
-            <Input allowClear placeholder="请输入"></Input>
-          </Form.Item>
-          <Form.Item label="昵称" name="nickname">
-            <Input allowClear placeholder="请输入"></Input>
-          </Form.Item>
+          {loadInputs(inputs)}
           <Form.Item>
             <Space>
               <Button type="primary" htmlType="submit">

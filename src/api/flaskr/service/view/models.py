@@ -1,8 +1,11 @@
+from tkinter import NO
 from flask import Flask
 from flaskr.service.common.dtos import PageNationDTO
 from flaskr.dao import db
 from sqlalchemy import Column, String, Integer, Date, TIMESTAMP, func
-from flaskr.service.order.models import AICourseBuyRecord
+from flaskr.service.order.models import AICourseBuyRecord, DiscountRecord
+
+from flaskr.service.order.consts import BUY_STATUS_VALUES,BUY_STATUS_TYPES, DISCOUNT_STATUS_TYPES, DISCOUNT_STATUS_VALUES,DISCOUNT_TYPE_VALUES,DISCOUNT_TYPE_TYPES,DISCOUNT_APPLY_TYPE_TYPES
 
 
 
@@ -21,9 +24,10 @@ INPUT_TYPE_CHECKBOX = 'checkbox'
 
 class TableColumnItem:
 
-    def __init__(self, column, lable):
+    def __init__(self, column, lable,items=None):
         self.column =column # database column name
         self.lable = lable # table column lable name,display in page
+        self.items = items
 
     def __json__(self):
         return {
@@ -39,18 +43,24 @@ class TableColumnItem:
 # query input info
 class InputItem:
         
-        def __init__(self,column,lable,query_type, input_type,input_options=None,input_view = None):
+        def __init__(self,column,label,query_type, input_type,input_options = None,input_view = None):
             self.column = column
-            self.lable = lable
+            self.label = label
             self.query_type = query_type
             self.input_type = input_type
-            self.input_options = input_options
+
+            options = None
+            if input_options!=None:
+                options = []
+                for key in input_options.keys():
+                    options.append({"value":input_options.get(key),"label":key})
+            self.input_options = options
             self.input_view = input_view
     
         def __json__(self):
             return {
                 "column": self.column,
-                "lable": self.lable,
+                "label": self.label,
                 "query_type": self.query_type,
                 "input_type": self.input_type,
                 "input_options": self.input_options
@@ -73,15 +83,17 @@ class ViewDef:
             if query:
                 for key in query.keys():
                     input = next(filter(lambda x: x.column == key, self.queryinput))
-                    if input.fmt == 'like':
-                        db_query = db_query.filter(getattr(self.model,key).like("%"+query.get(key)+"%"))
+                    if input.query_type == 'like':
+                        db_query = db_query.filter(getattr(self.model,key).like("%"+str(query.get(key))+"%"))
                     else:
                         db_query = db_query.filter(getattr(self.model,key) == query.get(key))
             count = db_query.count()
             if count == 0:
                 return {}
-            datas  = db_query.order_by(self.model.created.desc()).offset((page-1)*page_size).limit(page_size)
-            items = [{'id':data.id,**{item.column: str(getattr(data,item.column)) for item in self.items}} for data in datas]
+            datas  = db_query.order_by(self.model.id.desc()).offset((page-1)*page_size).limit(page_size) 
+
+            
+            items = [{'id':data.id,**{item.column: item .items.get(getattr(data,item.column),'') if item.items else str(getattr(data,item.column))  for item in self.items}} for data in datas]
             app.logger.info("query done"+str(items))
             return PageNationDTO(page,page_size,count,items)
     def query_by_id(self,app:Flask,id):
@@ -117,14 +129,32 @@ OrderView = ViewDef('order',
     TableColumnItem('price','订单原价'),
     TableColumnItem('pay_value','应付金额'),
     TableColumnItem('discount_value','折扣金额'),
-    TableColumnItem('status','状态'),
+    TableColumnItem('status','状态',items=BUY_STATUS_VALUES),
     TableColumnItem('created','创建时间'),
     TableColumnItem('updated','更新时间')],
     [InputItem('user_id','用户ID','like',INPUT_TYPE_TEXT),
     InputItem('course_id','课程ID','like',INPUT_TYPE_TEXT),
     InputItem('price','价格','like',INPUT_TYPE_TEXT),
-    InputItem('status','状态','like',INPUT_TYPE_TEXT),
+    InputItem('status','状态','like',INPUT_TYPE_TEXT,input_options=BUY_STATUS_TYPES),
     InputItem('created','创建时间','like',INPUT_TYPE_TEXT),
     InputItem('updated','更新时间','like',INPUT_TYPE_TEXT)],
     AICourseBuyRecord
+    )
+
+
+DisCountdRecordView = ViewDef('discount',
+    [TableColumnItem('id','ID'),
+    TableColumnItem('discount_value','折扣金额'),
+    TableColumnItem('user_id','用户ID'),
+    TableColumnItem('discount_code','折扣码'),
+    TableColumnItem('discount_type','折扣类型',items=DISCOUNT_TYPE_VALUES),
+    TableColumnItem('status','状态',items=DISCOUNT_STATUS_VALUES),
+    TableColumnItem('created','创建时间'),
+    TableColumnItem('updated','更新时间')],
+    
+    [
+        InputItem('discount_value','折扣金额','like',INPUT_TYPE_TEXT),
+        InputItem('status','状态','like',INPUT_TYPE_TEXT,input_options=DISCOUNT_STATUS_TYPES)
+               ],
+    DiscountRecord
     )

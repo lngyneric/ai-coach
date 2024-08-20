@@ -25,6 +25,7 @@ const CommonListTable = ({
     ...dataColumns,
     {
       title: "操作",
+      fixed: "right",
       dataIndex: "action",
       key: "action",
       render: (_, record) => (
@@ -79,7 +80,8 @@ const CommonListTable = ({
       onChange={onTableChage}
       loading={loading}
       pagination={false}
-      rowKey="contact_id"
+      rowKey="id"
+      scroll={{ x: 1300 }}
     ></Table>
   );
 };

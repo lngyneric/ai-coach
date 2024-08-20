@@ -37,7 +37,7 @@ const authRoutes = [
   },
   {
     path: "/order",
-    element: <CommonListPage></CommonListPage>,
+    element: <CommonListPage viewName="order"></CommonListPage>,
   
     title: "订单",
   },
@@ -48,7 +48,7 @@ const authRoutes = [
   },
   {
     path: "/discount",
-    element: <ContactsComponant></ContactsComponant>,
+    element: <CommonListPage viewName="discount"></CommonListPage>,
     title: "优惠",
   },
   {
