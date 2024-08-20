@@ -44,13 +44,13 @@ def generate_temp_user(app:Flask,temp_id:str,user_source = 'web',wx_code=None)->
                 wx_openid = wx_data.get("openid","")
         if not convert_user:
             if wx_openid != "":
-                user_info = User.query.filter(User.user_open_id==wx_openid,User.user_state>0).order_by(User.id.asc()).first()
+                user_info = User.query.filter(User.user_open_id==wx_openid).order_by(User.id.asc()).first()
                 if user_info:
                     return UserToken(UserInfo(user_id=user_info.user_id, username=user_info.username, name=user_info.name, email=user_info.email, mobile=user_info.mobile,model=user_info.default_model,user_state=user_info.user_state,wx_openid= user_info.user_open_id),token=generate_token(app,user_id=user_info.user_id))
             user_id = str(uuid.uuid4()).replace('-', '')
             new_convert_user = UserConversion(user_id=user_id,conversion_uuid=temp_id, conversion_id=temp_id, conversion_source=user_source, conversion_status=0)
             new_user = User(user_id=user_id,user_state=USER_STATE_UNTEGISTERED)
-            new_user.wx_openid = wx_openid
+            new_user.user_open_id = wx_openid
             db.session.add(new_convert_user)
             db.session.add(new_user)
             db.session.commit()
@@ -58,9 +58,9 @@ def generate_temp_user(app:Flask,temp_id:str,user_source = 'web',wx_code=None)->
             return UserToken(UserInfo(user_id=user_id, username="", name="", email="", mobile="",model=new_user.default_model,user_state=new_user.user_state,wx_openid= new_user.user_open_id),token=token)
         else:
             if wx_openid != "":
-                user = User.query.filter(User.user_open_id==wx_openid,User.user_state>0).order_by(User.id.asc()).first()
+                user = User.query.filter(User.user_open_id==wx_openid).order_by(User.id.asc()).first()
                 if user:
-                    return UserToken(UserInfo(user_id=user.user_id, username=user.username, 
+                    return UserToken(UserInfo(user_id=user.user_id, username=user.username,
                                               name=user.name, email=user.email, 
                                               mobile=user.mobile,model=user.default_model,
                                               user_state=user.user_state,wx_openid=user.user_open_id),
