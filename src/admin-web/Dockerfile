@@ -6,6 +6,9 @@ ENV PATH="$PNPM_HOME:$PATH"
 # 设置工作目录
 WORKDIR /usr/src/app
 
+
+RUN apk add --no-cache git
+
 # 安装项目依赖
 # 复制package.json和package-lock.json文件
 COPY package*.json ./

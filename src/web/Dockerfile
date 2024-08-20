@@ -3,6 +3,13 @@ from node:20-slim
 RUN corepack enable
 ENV PNPM_HOME="/pnpm"
 ENV PATH="$PNPM_HOME:$PATH"
+
+
+
+RUN apk add --no-cache git
+RUN npm install -g pnpm
+
+
 # 设置工作目录
 WORKDIR /usr/src/app
 
