@@ -15,7 +15,7 @@ COPY . .
 #RUN npm install --force
 # RUN npm install -g pnpm
 # RUN pnpm install --registry=http://registry.npm.taobao.org --force
-RUN pnpm install --registry=http://registry.npm.taobao.org
+RUN pnpm install
 # RUN npm install  --force
 
 

@@ -12,7 +12,7 @@ COPY package*.json ./
 # 复制项目源代码
 COPY . .
 
-RUN pnpm install --registry=http://registry.npm.taobao.org
+RUN pnpm install  
 
 
 
