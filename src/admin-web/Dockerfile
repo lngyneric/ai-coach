@@ -1,13 +1,10 @@
-from node:20-slim
+from node:20
 # 使用官方的node运行时作为父镜像
 RUN corepack enable
 ENV PNPM_HOME="/pnpm"
 ENV PATH="$PNPM_HOME:$PATH"
 # 设置工作目录
 WORKDIR /usr/src/app
-
-
-RUN apk add --no-cache git
 
 # 安装项目依赖
 # 复制package.json和package-lock.json文件
@@ -20,7 +17,6 @@ COPY . .
 # RUN pnpm install --registry=http://registry.npm.taobao.org --force
 RUN pnpm install
 # RUN npm install  --force
-
 
 
 

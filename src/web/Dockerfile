@@ -1,13 +1,10 @@
-from node:20-slim
+from node:20
 # 使用官方的node运行时作为父镜像
 RUN corepack enable
 ENV PNPM_HOME="/pnpm"
 ENV PATH="$PNPM_HOME:$PATH"
 
 
-
-RUN apk add --no-cache git
-RUN npm install -g pnpm
 
 
 # 设置工作目录
