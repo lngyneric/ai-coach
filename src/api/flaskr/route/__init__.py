@@ -25,6 +25,9 @@ def register_route(app):
     if app.config.get('MODE','api')=='admin':
         from .admin.user import register_user_route
         app = register_user_route(app,prefix+'/user')
+        # register manager
+        from .admin.manager import register_data_manager_route
+        app = register_data_manager_route(app,prefix+'/manager')
 
 
 

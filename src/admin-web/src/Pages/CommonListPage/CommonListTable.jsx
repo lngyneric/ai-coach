@@ -8,9 +8,10 @@ import { TableProps } from "antd";
 
 
 
-const ContactListTable = ({
+const CommonListTable = ({
   loading,
   dataSource,
+  dataColumns,
   onTableChage,
   onClickDetail,
   onClickEdit,
@@ -21,52 +22,10 @@ const ContactListTable = ({
    * @description 表格 column
    * @type {*} */
   const columns = [
-    // {
-    //   title:"编号",
-    //   dataIndex:"number",
-    //   key:"number",
-    // },
-    {
-      title: "userId",
-      dataIndex: "user_id",
-      key: "user_id",
-    },
-    // {
-    //   title: "头像",
-    //   dataIndex: "avatar",
-    //   key: "avatar",
-    //   render: (value, record) => (
-    //     <Avatar src={value}>{record.nickname.slice(0, 1)}</Avatar>
-    //   ),
-    // },
-    {
-      title: "姓名",
-      dataIndex: "name",
-      key: "name",
-      // sorter: {
-      //   compare: true,
-      // },
-    },
-
-    {
-      title: "电话",
-      dataIndex: "mobile",
-      key: "mobile",
-    },
-
-   
-    {
-      title: "性别",
-      dataIndex: "user_sex",
-      key: "user_sex",
-    }, 
-    {
-      title: "生日",
-      dataIndex: "birth",
-      key: "birth",
-    }, 
+    ...dataColumns,
     {
       title: "操作",
+      fixed: "right",
       dataIndex: "action",
       key: "action",
       render: (_, record) => (
@@ -79,22 +38,6 @@ const ContactListTable = ({
           >
             详情
           </Button>  
-          {/* <Button
-            type="link"
-            onClick={() => {
-              onClickEdit(record);
-            }}
-          >
-            编辑
-          </Button>
-          <Button
-            type="link"
-            onClick={() => {
-              onClickDelete(record);
-            }}
-          >
-            删除
-          </Button> */}
         </Space>
       ),
     },
@@ -123,6 +66,8 @@ const ContactListTable = ({
   const [bottom, setBottom] = useState('bottomRight');
 
 
+
+
   return (
     <Table
       // pagination={{ position: [top, bottom] }}
@@ -135,9 +80,10 @@ const ContactListTable = ({
       onChange={onTableChage}
       loading={loading}
       pagination={false}
-      rowKey="contact_id"
+      rowKey="id"
+      scroll={{ x: 1300 }}
     ></Table>
   );
 };
 
-export default ContactListTable;
+export default CommonListTable;
