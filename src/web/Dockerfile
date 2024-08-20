@@ -1,4 +1,4 @@
-from node:20
+from node:20-slim
 # 使用官方的node运行时作为父镜像
 RUN corepack enable
 ENV PNPM_HOME="/pnpm"
@@ -14,15 +14,15 @@ COPY package*.json ./
 # 复制项目源代码
 COPY . .
 
-RUN npm install  
+RUN pnpm install  
 
 
 
 
 # 构建项目
-RUN npm run build
+RUN pnpm run build
 
-RUN npm install -g serve
+RUN pnpm install -g serve
 
 # 声明服务运行在5000端口
 EXPOSE 5000
