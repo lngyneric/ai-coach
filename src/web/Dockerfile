@@ -14,15 +14,15 @@ COPY package*.json ./
 # 复制项目源代码
 COPY . .
 
-RUN pnpm install  
+RUN npm install  
 
 
 
 
 # 构建项目
-RUN pnpm run build
+RUN npm run build
 
-RUN pnpm install -g serve
+RUN npm install -g serve
 
 # 声明服务运行在5000端口
 EXPOSE 5000

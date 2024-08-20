@@ -15,17 +15,17 @@ COPY . .
 #RUN npm install --force
 # RUN npm install -g pnpm
 # RUN pnpm install --registry=http://registry.npm.taobao.org --force
-RUN pnpm install
+RUN npm install
 # RUN npm install  --force
 
 
 
 # 构建项目
-RUN pnpm run build
+RUN npm run build
 
 
 # 安装serve工具，用于运行构建好的项目
-RUN pnpm install -g serve
+RUN npm install -g serve
 
 
 # 声明服务运行在5000端口
