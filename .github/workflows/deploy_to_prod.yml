@@ -35,7 +35,6 @@ jobs:
           script: |
             sudo su -
             bash /data/ai-shifu/deploy-config/build-and-deploy-shifu-api.sh
-            - name: Deploy API
       - name: Deploy Web
         uses: appleboy/ssh-action@master
         with:
