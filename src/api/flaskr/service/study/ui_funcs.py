@@ -14,6 +14,8 @@ import json
 from re import U
 import time
 from flask import Flask
+from sqlalchemy import func
+from cook.models import course
 from flaskr.service.common.models import AppException
 from flaskr.service.order.consts import ATTEND_STATUS_BRANCH, ATTEND_STATUS_IN_PROGRESS, BUY_STATUS_SUCCESS
 from flaskr.service.order.funs import init_buy_record
@@ -60,6 +62,7 @@ def handle_input_branch(app:Flask,user_id:str,attend:AICourseLessonAttend,script
     profile = get_user_profiles(app,user_id,[branch_key])
     branch_value = profile.get(branch_key,"")
     jump_rule = branch_info.get("jump_rule",[])
+    course_id = attend.course_id
     for rule in jump_rule:
         if branch_value == rule.get("value",""):
             attend_info = AICourseLessonAttend.query.filter(AICourseLessonAttend.attend_id == attend.attend_id).first()
