@@ -3,6 +3,8 @@ from node:20-slim
 RUN corepack enable
 ENV PNPM_HOME="/pnpm"
 ENV PATH="$PNPM_HOME:$PATH"
+
+
 # 设置工作目录
 WORKDIR /usr/src/app
 
@@ -12,7 +14,7 @@ COPY package*.json ./
 # 复制项目源代码
 COPY . .
 
-RUN pnpm install --registry=http://registry.npm.taobao.org
+RUN pnpm install  
 
 
 

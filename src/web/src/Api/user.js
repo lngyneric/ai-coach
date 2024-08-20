@@ -109,7 +109,7 @@ export const updateWxcode = () => {
   const { wechatCode: wxcode } = useSystemStore.getState();
   return request(
     {
-      url: '/api/user/require_tmp',
+      url: '/api/user/update_openid',
       method: 'post',
       data: { wxcode }
     }

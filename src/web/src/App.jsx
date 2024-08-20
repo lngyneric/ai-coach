@@ -1,4 +1,4 @@
-import { memo, useEffect } from 'react';
+import { memo, useEffect, useState } from 'react';
 import { parseUrlParams } from 'Utils/urlUtils.js';
 import routes from './Router/index';
 import { useRoutes } from 'react-router-dom';
@@ -13,28 +13,35 @@ const RouterView = () => useRoutes(routes);
 const App = () => {
   const { language, updateChannel, channel, wechatCode, updateWechatCode } =
     useSystemStore();
+  const [loading, setLoading] = useState(true);
 
   const params = parseUrlParams();
-  console.log('params', params)
+  console.log('params', params);
   const currChannel = params.channel || '';
 
   if (channel !== currChannel) {
     updateChannel(currChannel);
   }
+  
+  useEffect(() => {
+    if (inWechat()) {
+      setLoading(true);
+      console.log('inWechat...');
+      const currCode = params.code;
 
-  if (inWechat()) {
-    console.log('inWechat...');
-    const currCode = params.code;
-    if (!currCode) {
-      wechatLogin({
-        appId: process.env.REACT_APP_APP_ID,
-      });
-    }
+      if (!currCode) {
+        wechatLogin({
+          appId: process.env.REACT_APP_APP_ID,
+        });
+        return
+      }
 
-    if (currCode !== wechatCode) {
-      updateWechatCode(currCode);
-    }
-  }
+      if (currCode !== wechatCode) {
+        updateWechatCode(currCode);
+      }
+    } 
+    setLoading(false);
+  }, [params.code, updateWechatCode, wechatCode])
 
   // 挂载 debugger
   useEffect(() => {
@@ -51,7 +58,7 @@ const App = () => {
 
   return (
     <ConfigProvider locale={locale}>
-      <RouterView></RouterView>
+      {!loading && <RouterView></RouterView>}
     </ConfigProvider>
   );
 };
