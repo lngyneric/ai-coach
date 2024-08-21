@@ -106,8 +106,13 @@ def get_study_record(app:Flask,user_id:str,lesson_id:str)->StudyRecordDTO:
         last_attends = [i for i in attend_infos if i.lesson_id == last_lesson_id]
         if len(last_attends) == 0:
             app.logger.info("last_attends is empty")
-            return ret
-        last_attend = last_attends[-1]
+            app.logger.info("last_lesson_id:{}".format(last_lesson_id))
+            last_attend = AICourseLessonAttend.query.filter(AICourseLessonAttend.user_id==user_id,AICourseLessonAttend.lesson_id==last_lesson_id).first()
+            if last_attend == None:
+                app.logger.info("last_attend is None")
+                return ret
+        else:
+            last_attend = last_attends[-1]
         last_attend_script=attend_scripts[-1]
         if last_attend.status == ATTEND_STATUS_COMPLETED :
             app.logger.info("last_attend is completed")
