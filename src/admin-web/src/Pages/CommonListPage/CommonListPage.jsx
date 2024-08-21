@@ -1,4 +1,4 @@
-import { Button, Space, Modal } from "antd";
+import {  Space, Modal } from "antd";
 import SearchForm from "./SearchForm";
 import CommonListTable from "./CommonListTable";
 import { useEffect, useState } from "react";
@@ -8,14 +8,8 @@ import ContactDetailModal from "./Modal/ContactDetailModel";
 
 import { Pagination } from "antd";
 
-// import { GetAllContacts, deleteContact } from "../../Api/contact";
-import {getUserList} from "../../Api/admin"
-
-import { DeleteColumnOutlined, DeleteOutlined } from "@ant-design/icons";
-import { TRUE } from "sass";
-import { set } from "store";
-
 import {getViewInfo,queryView} from "../../Api/manager"
+import { set } from "store";
 
 const CommonListPage = ({viewName}) => {
 
@@ -31,24 +25,22 @@ const CommonListPage = ({viewName}) => {
    */
   const params = {};
   const [loading, setLoading] = useState(false);
-  const [contactIds, setContactIds] = useState([]);
   const [colum, setColum] = useState([]);
   const [searchParams, setSearchParams] = useState({});
+  const [query, setQuery] = useState({});
   /**
    *@description 点击搜索的方法
    *
    * @param {*} searchParams 搜索表单中的条件
    */
   const onSearch = (searchParams) => {
-    Object.assign(params, searchParams);
-    console.log(params);
+    setQuery(searchParams);
     setCurrentPage(1);
-    queryAllContacts();
   };
 
   const onReset = (searchParams) => {
-    Object.assign(params, searchParams);
-    queryAllContacts();
+    setQuery({});
+    setCurrentPage(1);
   };
 
   useEffect(() => {
@@ -73,15 +65,13 @@ const CommonListPage = ({viewName}) => {
    * @description 联系人数据
    */
   const queryAllContacts = () => {
-    queryView(viewName,currentPage,pageSize,params)
+    setLoading(true);
+    queryView(viewName,currentPage,pageSize,query)
       .then((res) => {
         setCurrentPage(res.data.page);
         setPageSize(res.data.page_size);
         setTotal(res.data.total);
         setContactInfoList(res.data.items);
-        // setPageSize(res.data.page_size);
-        // setCurrentPage(res.data.page);
-        // setTotal(res.data.total);
         setLoading(false);
       })
       .catch(() => {
@@ -214,14 +204,13 @@ const CommonListPage = ({viewName}) => {
   }
 
   useEffect(() => {
-    setLoading(true);
     queryAllContacts();
-  }, [pageSize,currentPage]);
+  }, [pageSize,currentPage,query]);
   return (
     <Space direction="vertical" size="large" style={{ display: "flex" }}>
       <SearchForm onSearch={onSearch} onReset={onReset} inputs={searchParams}></SearchForm>
       <CommonListTable
-        dataColumns={colum} 
+        dataColumns={colum}
         dataSource={contactInfoList}
         onClickEdit={onClickTableRowEdit}
         onClickDelete={onClickTableRowDelte}
