@@ -57,6 +57,8 @@ def get_lesson_tree_to_study(app:Flask,user_id:str,course_id:str)->AICourseDTO:
             if not attend_info:
                 continue
             status = ATTEND_STATUS_VALUES[attend_info.status if  attend_info else  ATTEND_STATUS_UNAVAILABE]
+            if status == ATTEND_STATUS_BRANCH:
+                status = ATTEND_STATUS_IN_PROGRESS
             lessonInfo = AILessonAttendDTO(lesson.lesson_no,lesson.lesson_name,lesson.lesson_id,status, [])
             lesson_dict[lessonInfo.lesson_no] = lessonInfo
             if len(lessonInfo.lesson_no) == 2:  # 假设2位数是根节点
