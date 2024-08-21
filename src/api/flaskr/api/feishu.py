@@ -10,12 +10,6 @@ from flaskr.common.config import get_config
 # 飞书相关的调用封装
 # ref: https://open.feishu.cn/document/server-docs/docs/docs-overview
 
-# APPID = 'cli_a5fbaacf14fb900c'
-# APP_SECRET='VnReMkkkPdUf6e6kCvkgPgvJJybQvvxe'
-# FOLDER_ID='QSN2fIQWqlubNxdHHoJcSbVknVh'
-# REDIS_KEY_PREFIX = 'feishu:token:'
-
-
 
 ## AI 课程
 APPID = get_config("FEISHU_APP_ID") 
@@ -219,3 +213,30 @@ def list_tables(app:Flask,app_token:str):
     return r.json()
    
 
+
+def send_notify(app:Flask,title,msgs):
+    url = app.config['FEISHU_NOTIFY_URL']
+    headers = {'Content-Type': 'application/json'}
+    data = {
+        "msg_type": "post",
+        "content": {
+            "post": {
+                "zh_cn": {
+                    "title": "师傅~"+title,
+                    "content": [
+                       
+                    ]
+                }
+            }
+        }
+    }
+
+    for msg in msgs:
+        data['content']['post']['zh_cn']['content'].append([{
+            "tag": "text",
+            "text": msg
+        }])
+
+    r = requests.post(url, headers=headers, data=json.dumps(data))
+    app.logger.info('send_notify:'+str(r.json()))
+    return r.json()

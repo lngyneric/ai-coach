@@ -15,6 +15,7 @@ from flaskr.service.user.models import User
 from flaskr.service.active import query_active_record,query_and_join_active
 from flaskr.service.order.query_discount import query_discount_record
 from flaskr.common.swagger import register_schema_to_swagger
+from flaskr.api.feishu import send_notify
 from .models import *
 from flask import Flask
 from ...dao import db,redis_client
@@ -110,6 +111,23 @@ class AICourseBuyRecordDTO:
             "value_to_pay": str(self.value_to_pay),
             "price_item": [item.__json__() for item in self.price_item]
         }
+    
+def send_order_feishu(app: Flask,record_id:str):
+    order_info =  query_buy_record(app,record_id)
+    urser_info = User.query.filter(User.user_id==order_info.user_id).first()
+    if not urser_info:
+        app.logger.error('user:{} not found'.format(order_info.user_id))
+        return
+    title = '购买课程通知'
+    msgs = []
+    msgs.append("用户手机号:{}".format(urser_info.mobile))
+    msgs.append("用户姓名:{}".format(urser_info.name))
+    msgs.append("课程名称:{}".format(order_info.course_id))
+    msgs.append("付款金额:{}".format(order_info.value_to_pay))
+    for item in order_info.price_item:
+        msgs.append("{}-{}-{}".format(item.name,item.price_name,item.price))
+    send_notify(app,title,msgs)
+    
 
 def init_buy_record(app: Flask,user_id:str,course_id:str):
     with app.app_context():
@@ -271,6 +289,7 @@ def success_buy_record_from_pingxx(app: Flask,charge_id:str,body:dict):
                                 attend.status = ATTEND_STATUS_LOCKED
                             db.session.add(attend)
                         db.session.commit()
+                        send_order_feishu(app,buy_record.record_id)
                         return AICourseBuyRecordDTO(buy_record.record_id,buy_record.user_id,buy_record.course_id,buy_record.price,buy_record.status,buy_record.discount_value)
                     else:
                         app.logger.error('record:{} not found'.format(pingxx_order.record_id))
