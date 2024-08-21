@@ -2,7 +2,6 @@ from concurrent.futures import thread
 import datetime
 import json
 import re
-import stat
 import openai
 from typing import Generator
 from flask import Flask, typing
