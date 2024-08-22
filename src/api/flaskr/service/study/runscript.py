@@ -3,7 +3,7 @@ import traceback
 from typing import Generator
 from flask import Flask
 
-from api.flaskr.service.user.models import User
+from flaskr.service.user.models import User
 from ...api.langfuse import langfuse_client as langfuse
 from ...service.lesson.const import (
     UI_TYPE_CHECKCODE,
