@@ -4,5 +4,5 @@ def test_chapter_reset(app):
     app.logger.info("test_chapter_reset")
 
     user_id = "ab769989275a4eddbdf589558b9df089"
-    lesson_id = "84aa585dd0b54ffa9437ddc47494e901"
+    lesson_id = "42f1b809bb1247a4aebf0a756fb46640"
     reset_user_study_info_by_lesson(app, user_id, lesson_id)

@@ -1,4 +1,5 @@
 import json
+from flaskr.util.uuid import generate_id
 from flask import Flask
 
 from sqlalchemy import text
@@ -19,6 +20,7 @@ from ...service.user import (
 )
 from ...service.order.consts import (
     ATTEND_STATUS_BRANCH,
+    ATTEND_STATUS_LOCKED,
     ATTEND_STATUS_NOT_STARTED,
     ATTEND_STATUS_RESET,
     ATTEND_STATUS_UNAVAILABE,
@@ -390,21 +392,24 @@ def reset_user_study_info_by_lesson(app: Flask, user_id: str, lesson_id: str):
         # reset the attend info
         for attend_info in attend_infos:
             attend_info.status = ATTEND_STATUS_RESET
+        app.logger.info(
+            "attend_infos to reset:{}".format([i.attend_id for i in attend_infos])
+        )
         # insert the new attend info
         for lesson in lessons:
             attend_info = AICourseLessonAttend(
                 user_id=user_id,
                 lesson_id=lesson.lesson_id,
                 course_id=lesson.course_id,
-                status=ATTEND_STATUS_UNAVAILABE,
+                status=ATTEND_STATUS_LOCKED,
                 script_index=0,
             )
+            attend_info.attend_id = generate_id(app)
             # first lesson is in available status
             if lesson.lesson_no == lesson_no:
                 attend_info.status = ATTEND_STATUS_NOT_STARTED
             if lesson.lesson_no == lesson_no + "01":
                 attend_info.status = ATTEND_STATUS_NOT_STARTED
-                attend_info.script_index = 1
             db.session.add(attend_info)
         app.logger.info("lesson_info:{}".format(lesson_info))
         app.logger.info("user_id:{}".format(user_id))
