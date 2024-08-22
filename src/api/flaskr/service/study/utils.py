@@ -270,6 +270,7 @@ def get_script(app: Flask, attend_id: str, next: bool):
         AILessonScript.lesson_id == attend_info.lesson_id,
         AILessonScript.status == 1,
         AILessonScript.script_index == attend_info.script_index,
+        AILessonScript.script_type != SCRIPT_TYPE_SYSTEM,
     ).first()
     if not script_info:
         app.logger.info("no script found")
