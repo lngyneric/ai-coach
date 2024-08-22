@@ -18,6 +18,7 @@ from ...service.user import (
     get_sms_code_info,
 )
 from ...service.order.consts import (
+    ATEEST_STATUS_RESET,
     ATTEND_STATUS_BRANCH,
     ATTEND_STATUS_UNAVAILABE,
     ATTEND_STATUS_VALUES,
@@ -78,6 +79,7 @@ def get_lesson_tree_to_study(app: Flask, user_id: str, course_id: str) -> AICour
         attend_infos = AICourseLessonAttend.query.filter(
             AICourseLessonAttend.user_id == user_id,
             AICourseLessonAttend.course_id == course_id,
+            AICourseLessonAttend.status != ATEEST_STATUS_RESET,
         ).all()
         attend_infos_map = {i.lesson_id: i for i in attend_infos}
         lessonInfos = []
@@ -131,6 +133,7 @@ def get_study_record(app: Flask, user_id: str, lesson_id: str) -> StudyRecordDTO
             AICourseLessonAttend.query.filter(
                 AICourseLessonAttend.user_id == user_id,
                 AICourseLessonAttend.lesson_id.in_(lesson_ids),
+                AICourseLessonAttend.status != ATEEST_STATUS_RESET,
             )
             .order_by(AICourseLessonAttend.id)
             .all()
@@ -363,6 +366,9 @@ def reset_user_study_info_by_lesson(app: Flask, user_id: str, lesson_id: str):
         lesson_info = AILesson.query.filter_by(lesson_id=lesson_id).first()
         if not lesson_info:
             return False
+        lesson_no = lesson_info.lesson_no
+        if len(lesson_no) <= 2:
+            raise
         app.logger.info("lesson_info:{}".format(lesson_info))
         app.logger.info("user_id:{}".format(user_id))
         db.session.commit()
