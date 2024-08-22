@@ -10,27 +10,27 @@ from .test import register_test_routes
 
 
 def register_route(app):
-    prefix = app.config.get('PATH_PREFIX','')
+    prefix = app.config.get("PATH_PREFIX", "")
     app = register_common_handler(app)
-    app = register_user_handler(app,prefix+'/user')
-    app = register_lesson_handler(app,prefix+'/lesson')
-    app = register_study_handler(app,prefix+'/study')
-    app = register_dict_handler(app,prefix+'/dict')
-    app = register_tools_handler(app,prefix+'/tools')
-    app = register_order_handler(app,prefix+'/order')
-    app = register_callback_handler(app,prefix+'/callback')
-    app = register_test_routes(app,prefix+'/test')
+    app = register_user_handler(app, prefix + "/user")
+    app = register_lesson_handler(app, prefix + "/lesson")
+    app = register_study_handler(app, prefix + "/study")
+    app = register_dict_handler(app, prefix + "/dict")
+    app = register_tools_handler(app, prefix + "/tools")
+    app = register_order_handler(app, prefix + "/order")
+    app = register_callback_handler(app, prefix + "/callback")
+    app = register_test_routes(app, prefix + "/test")
 
-
-    if app.config.get('MODE','api')=='admin':
+    if app.config.get("MODE", "api") == "admin":
         from .admin.user import register_user_route
-        app = register_user_route(app,prefix+'/user')
+
+        app = register_user_route(app, prefix + "/user")
         # register manager
         from .admin.manager import register_data_manager_route
-        app = register_data_manager_route(app,prefix+'/manager')
 
+        app = register_data_manager_route(app, prefix + "/manager")
+        from .admin.tools import register_tools_handler
 
+        app = register_tools_handler(app, prefix + "/tools")
 
-    
-    
     return app
