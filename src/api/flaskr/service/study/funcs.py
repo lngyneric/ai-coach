@@ -404,6 +404,7 @@ def reset_user_study_info_by_lesson(app: Flask, user_id: str, lesson_id: str):
                 attend_info.status = ATTEND_STATUS_NOT_STARTED
             if lesson.lesson_no == lesson_no + "01":
                 attend_info.status = ATTEND_STATUS_NOT_STARTED
+                attend_info.script_index = 1
             db.session.add(attend_info)
         app.logger.info("lesson_info:{}".format(lesson_info))
         app.logger.info("user_id:{}".format(user_id))
