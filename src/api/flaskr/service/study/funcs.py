@@ -3,7 +3,6 @@ from flask import Flask
 
 from sqlalchemy import text
 
-from cook.models.chapter import LESSON_TYPE_TRIAL
 from flaskr.service.study.const import (
     INPUT_TYPE_BRANCH,
     INPUT_TYPE_CHECKCODE,
@@ -37,6 +36,7 @@ from ...service.lesson.const import (
     UI_TYPE_PHONE,
     UI_TYPE_SELECTION,
     UI_TYPE_TO_PAY,
+    LESSON_TYPE_TRIAL,
 )
 from ...dao import db
 
