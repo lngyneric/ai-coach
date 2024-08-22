@@ -67,7 +67,7 @@ const NavDrawer = ({
   onClose = () => {},
 }) => {
   const { trackEvent } = useTracking();
-  const { frameLayout, hasLogin } = useContext(AppContext);
+  const { frameLayout, hasLogin, mobileStyle } = useContext(AppContext);
   const [isCollapse, setIsCollapse] = useState(false);
   const [popupModalState, setPopupModalState] = useState(
     POPUP_WINDOW_STATE_CLOSE
@@ -98,8 +98,6 @@ const NavDrawer = ({
   const popupWindowClassname = () => {
     return isCollapse ? styles.popUpWindowCollapse : styles.popUpWindowExpand;
   };
-
-  const mobileStyle = frameLayout === FRAME_LAYOUT_MOBILE;
 
   return (
     <div

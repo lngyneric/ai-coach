@@ -14,3 +14,11 @@ export const getScriptInfo = async (scriptId) => {
     
   })
 };
+
+export const resetChapter = async ({ chapterId }) => {
+  return request({
+    url: '/api/study/reset-study-progress',
+    method: 'POST',
+    data: { lesson_id: chapterId }
+  });
+}

@@ -10,6 +10,8 @@ export const EVENT_NAMES = {
   NAV_TOP_EXPAND: 'nav_top_expand',
   NAV_TOP_COLLAPSE: 'nav_top_collapse',
   NAV_SECTION_SWITCH: 'nav_section_switch',
+  RESET_CHAPTER: 'reset_chapter',
+  RESET_CHAPTER_CONFIRM: 'reset_chapter_confirm',
 }
 
 export const tracking = async (eventName, eventData) => {

@@ -23,7 +23,6 @@ import {
 import classNames from 'classnames';
 import { useUserStore } from 'stores/useUserStore.js';
 import { fixMarkdown, fixMarkdownStream } from 'Utils/markdownUtils.js';
-import { FRAME_LAYOUT_MOBILE } from 'constants/uiConstants.js';
 import PayModal from '../Pay/PayModal.jsx';
 import { useDisclosture } from 'common/hooks/useDisclosture.js';
 import { memo } from 'react';
@@ -146,6 +145,7 @@ export const ChatComponents = forwardRef(
       onGoChapter = (id) => {},
       chapterId,
       onPurchased,
+      chapterUpdate,
     },
     ref
   ) => {
@@ -163,7 +163,7 @@ export const ChatComponents = forwardRef(
     const [isStreaming, setIsStreaming] = useState(false);
     const [initRecords, setInitRecords] = useState([]);
 
-    const { userInfo, frameLayout } = useContext(AppContext);
+    const { userInfo, frameLayout, mobileStyle } = useContext(AppContext);
     const { lessonId: currLessonId, changeCurrLesson } = useCourseStore(
       (state) => state
     );
@@ -179,7 +179,6 @@ export const ChatComponents = forwardRef(
       })
     );
 
-    const mobileStyle = frameLayout === FRAME_LAYOUT_MOBILE;
     const {
       open: payModalOpen,
       onOpen: onPayModalOpen,
@@ -307,6 +306,7 @@ export const ChatComponents = forwardRef(
               lessonUpdateResp(response, isEnd, nextStep);
             } else if (response.type === RESP_EVENT_TYPE.CHAPTER_UPDATE) {
               const { status, lesson_id: lessonId } = response.content;
+              chapterUpdate?.({ id: lessonId, status });
               if (status === LESSON_STATUS.COMPLETED) {
                 isEnd = true;
                 setLessonEnd(true);
@@ -334,6 +334,7 @@ export const ChatComponents = forwardRef(
       },
       [
         appendMsg,
+        chapterUpdate,
         checkLogin,
         lessonUpdateResp,
         setTyping,
