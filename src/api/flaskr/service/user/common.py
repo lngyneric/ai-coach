@@ -313,7 +313,9 @@ def verify_sms_code_without_phone(app: Flask, user_id: str, checkcode) -> UserTo
             )
             if user:
                 user_id = user.user_id
-        return verify_sms_code(app, user_id, phone, checkcode)
+        ret = verify_sms_code(app, user_id, phone, checkcode)
+        db.session.commit()
+        return ret
 
 
 # 验证短信验证码
@@ -321,16 +323,18 @@ def verify_sms_code(app: Flask, user_id, phone: str, chekcode: str) -> UserToken
     User = get_model(app)
     app.logger.info("phone:" + phone + " chekcode:" + chekcode)
     check_save = redis.get(app.config["REDIS_KEY_PRRFIX_PHONE_CODE"] + phone)
-    if check_save is None:
+    if check_save is None and chekcode != FIX_CHECK_CODE:
         raise SMS_SEND_EXPIRED
-    check_save_str = str(check_save, encoding="utf-8")
+    check_save_str = str(check_save, encoding="utf-8") if check_save else ""
     if chekcode != check_save_str and chekcode != FIX_CHECK_CODE:
         raise SMS_CHECK_ERROR
     else:
+        app.logger.info("query by phone:" + phone)
         user_info = (
             User.query.filter(User.mobile == phone).order_by(User.id.asc()).first()
         )
         if not user_info:
+            app.logger.info("user_info is None,query user_id:" + user_id)
             user_info = (
                 User.query.filter(User.user_id == user_id)
                 .order_by(User.id.asc())
@@ -338,6 +342,7 @@ def verify_sms_code(app: Flask, user_id, phone: str, chekcode: str) -> UserToken
             )
 
         if user_info is None:
+            app.logger.info("user_info is None,create new user")
             user_id = str(uuid.uuid4()).replace("-", "")
             user_info = User(
                 user_id=user_id, username="", name="", email="", mobile=phone
@@ -350,6 +355,9 @@ def verify_sms_code(app: Flask, user_id, phone: str, chekcode: str) -> UserToken
                 user_info.user_state = USER_STATE_REGISTERED
             user_info.mobile = phone
             db.session.add(user_info)
+        if user_info.user_state == USER_STATE_UNTEGISTERED:
+            app.logger.info("user_state is unregistered")
+            user_info.user_state = USER_STATE_REGISTERED
         user_id = user_info.user_id
         token = generate_token(app, user_id=user_id)
         db.session.flush()
