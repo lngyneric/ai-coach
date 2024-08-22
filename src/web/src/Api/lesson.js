@@ -6,3 +6,11 @@ export const getLessonTree = async () => {
     method: "get",
   });
 }
+
+export const getScriptInfo = async (scriptId) => {
+  return request({
+    url: `/api/study/query-script-into?script_id=${scriptId}`,
+    method: 'GET',
+    
+  })
+};

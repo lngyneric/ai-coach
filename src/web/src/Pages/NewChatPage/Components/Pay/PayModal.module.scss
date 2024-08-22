@@ -7,11 +7,12 @@
   .payModalContent {
     display: flex;
     flex-flow: row nowrap;
+    height: 588px;
 
     .introSection {
       flex: 0 0 auto;
       width: 430px;
-      height: 588px;
+      height: 100%;
       background-size: 100% 100%;
     }
     .paySection {
@@ -65,7 +66,6 @@
         border: 1px solid var(--color-9);
         border-radius: 5px;
       }
-
     }
 
     .discountTipWrapper {
@@ -98,10 +98,47 @@
         width: 200px;
         height: 40px;
         color: var(--color-2);
-        border: 0.5px solid var(--color-2);
         backdrop-filter: blur(10px);
         border-radius: 50px;
       }
     }
+  }
+
+}
+
+.completedSection {
+  display: flex;
+  flex-flow: column nowrap;
+  height: 100%;
+  padding: 40px 30px;
+  color: var(--font-color-main);
+  box-sizing: border-box;
+
+  .title {
+    text-align: center;
+    font-weight: 700;
+    flex: 0 0 auto;
+    margin-bottom: 2em;
+  }
+
+  .completeWrapper {
+    flex: 1 1 0;
+    display: flex;
+    flex-flow: column nowrap;
+    justify-content: space-between;
+  }
+
+  .description {
+    font-size: var(--font-size-3);
+  }
+
+  .qrcode {
+    width: 183px;
+    display: block;
+    margin-bottom: 10px;
+  }
+  .qrcodeWrapper2 {
+    display: block;
+    text-align: center;
   }
 }

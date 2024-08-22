@@ -60,7 +60,7 @@ export const SettingModal = ({
     } else {
       onPayModalOpen();
     }
-  }, []);
+  }, [hasLogin, onLoginClick, onPayModalOpen]);
 
   return (
     <>

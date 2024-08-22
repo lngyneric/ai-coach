@@ -97,7 +97,6 @@ const ChatComponents = forwardRef(
     const [lessonId, setLessonId] = React.useState('');
 
     function handleSend(type, val) {
-      console.log('handle send', type, val);
       let sendScriptId = scriptId;
       if (type === 'text' && val.trim()) {
         appendMsg({
@@ -181,14 +180,12 @@ const ChatComponents = forwardRef(
             appendMsg(lastMsg);
             setInputDisabled(true);
           } else if (response.type === 'study_complete') {
-            // setLessonId(response.lesson_id);
           } else if (response.type === 'lesson_update') {
             if (lessonStatusUpdate) {
               lessonStatusUpdate(response.content);
             }
           }
         } catch (e) {
-          // console.log("error", e);
         }
       });
     }
