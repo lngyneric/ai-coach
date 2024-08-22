@@ -1,5 +1,4 @@
 from flask import Flask, Response, request
-from flaskr.service.study.funcs import get_script_info, reset_user_study_info_by_lesson
 from flaskr.route.common import make_common_response
 from flaskr.service.common.models import raise_param_error
 from flaskr.service.study import (
@@ -7,6 +6,8 @@ from flaskr.service.study import (
     get_study_record,
     run_script,
     reset_user_study_info,
+    get_script_info,
+    reset_user_study_info_by_lesson,
 )
 
 
@@ -233,7 +234,7 @@ def register_study_handler(app: Flask, path_prefix: str) -> Flask:
         user_id = request.user.user_id
         return make_common_response(get_script_info(app, user_id, script_id))
 
-    @app.route(path_prefix + "/reset-study-progress", methods=["GET"])
+    @app.route(path_prefix + "/reset-study-progress", methods=["POST"])
     def reset_study_progress():
         """
         重置学习进度
@@ -241,14 +242,19 @@ def register_study_handler(app: Flask, path_prefix: str) -> Flask:
         tags:
         - 学习
         parameters:
-        -   name: lesson_id
-            in: query
-            type: string
-            required: true
-            description: 课时ID
+            -   in: body
+                name: body
+                description: 重置学习进度的请求体
+                required: true
+                schema:
+                    type: object
+                    properties:
+                        lesson_id:
+                            type: string
+                            description: 课时id
         responses:
             200:
-                description: 返回课程学习进度
+                description: 返回重置结果
                 content:
                     application/json:
                         schema:
@@ -259,11 +265,10 @@ def register_study_handler(app: Flask, path_prefix: str) -> Flask:
                                 message:
                                     type: string
                                     description: 返回信息
-
             400:
                 description: 参数错误
         """
-        lesson_id = request.args.get("lesson_id")
+        lesson_id = request.get_json().get("lesson_id")
         if not lesson_id:
             raise_param_error("lesson_id is not found")
         user_id = request.user.user_id
