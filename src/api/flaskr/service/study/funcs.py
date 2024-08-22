@@ -18,8 +18,9 @@ from ...service.user import (
     get_sms_code_info,
 )
 from ...service.order.consts import (
-    ATEEST_STATUS_RESET,
     ATTEND_STATUS_BRANCH,
+    ATTEND_STATUS_NOT_STARTED,
+    ATTEND_STATUS_RESET,
     ATTEND_STATUS_UNAVAILABE,
     ATTEND_STATUS_VALUES,
     BUY_STATUS_SUCCESS,
@@ -52,6 +53,7 @@ from ...service.order.models import (
     AICourseBuyRecord,
     AICourseLessonAttend,
 )
+from ...service.common.models import LESSON_CANNOT_BE_RESET
 from .models import AICourseLessonAttendScript, AICourseAttendAsssotion
 
 
@@ -79,7 +81,7 @@ def get_lesson_tree_to_study(app: Flask, user_id: str, course_id: str) -> AICour
         attend_infos = AICourseLessonAttend.query.filter(
             AICourseLessonAttend.user_id == user_id,
             AICourseLessonAttend.course_id == course_id,
-            AICourseLessonAttend.status != ATEEST_STATUS_RESET,
+            AICourseLessonAttend.status != ATTEND_STATUS_RESET,
         ).all()
         attend_infos_map = {i.lesson_id: i for i in attend_infos}
         lessonInfos = []
@@ -133,7 +135,7 @@ def get_study_record(app: Flask, user_id: str, lesson_id: str) -> StudyRecordDTO
             AICourseLessonAttend.query.filter(
                 AICourseLessonAttend.user_id == user_id,
                 AICourseLessonAttend.lesson_id.in_(lesson_ids),
-                AICourseLessonAttend.status != ATEEST_STATUS_RESET,
+                AICourseLessonAttend.status != ATTEND_STATUS_RESET,
             )
             .order_by(AICourseLessonAttend.id)
             .all()
@@ -368,7 +370,37 @@ def reset_user_study_info_by_lesson(app: Flask, user_id: str, lesson_id: str):
             return False
         lesson_no = lesson_info.lesson_no
         if len(lesson_no) <= 2:
-            raise
+            raise LESSON_CANNOT_BE_RESET
+        # query the lesson tree
+        lessons = AILesson.query.filter(
+            AILesson.lesson_no.like(lesson_no + "%"), AILesson.status == 1
+        ).all()
+        lessons = [lesson_info] + lessons
+        lesson_ids = [lesson.lesson_id for lesson in lessons]
+        # query the attend info
+        attend_infos = AICourseLessonAttend.query.filter(
+            AICourseLessonAttend.user_id == user_id,
+            AICourseLessonAttend.lesson_id.in_(lesson_ids),
+            AICourseLessonAttend.status != ATTEND_STATUS_RESET,
+        ).all()
+        # reset the attend info
+        for attend_info in attend_infos:
+            attend_info.status = ATTEND_STATUS_RESET
+        # insert the new attend info
+        for lesson in lessons:
+            attend_info = AICourseLessonAttend(
+                user_id=user_id,
+                lesson_id=lesson.lesson_id,
+                course_id=lesson.course_id,
+                status=ATTEND_STATUS_UNAVAILABE,
+                script_index=0,
+            )
+            # first lesson is in available status
+            if lesson.lesson_no == lesson_no:
+                attend_info.status = ATTEND_STATUS_NOT_STARTED
+            if lesson.lesson_no == lesson_no + "01":
+                attend_info.status = ATTEND_STATUS_IN_PROGRESS
+            db.session.add(attend_info)
         app.logger.info("lesson_info:{}".format(lesson_info))
         app.logger.info("user_id:{}".format(user_id))
         db.session.commit()
