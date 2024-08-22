@@ -94,27 +94,10 @@
     }
   }
 
-  .protocalWrapper {
+  .protocal {
     margin-top: 30px;
-    display: flex;
-    flex-flow: column nowrap;
-    justify-content: center;
-    align-items: center;
-    font-size: var(--font-size-5);
-
-    .protocalDesc {
-      color: var(--color-8);
-    }
-
-    .protocalLinks {
-      margin-top: 6px;
-
-      .protocalLink {
-        text-decoration: none;
-      }
-    }
   }
-  
+
   .payInfoWrapper {
     margin-top: 30px;
 
@@ -131,8 +114,39 @@
   .buttonWrapper {
     margin-top: 100px;
 
-    .okButton { 
+    .okButton {
       width: 100%;
     }
+  }
+}
+
+.completedSection {
+  color: var(--font-color-main);
+  box-sizing: border-box;
+  padding: 0 8px;
+
+  .title {
+    text-align: center;
+    font-weight: 700;
+    flex: 0 0 auto;
+    margin-bottom: 2em;
+  }
+
+  .completeWrapper {
+    .description {
+      font-size: var(--font-size-3);
+      margin-top: 30px;
+    }
+
+    .qrcodeWrapper2 {
+      text-align: center;
+    }
+
+    .qrcode {
+      width: 183px;
+      display: block;
+      margin: 50px auto 10px auto;
+    }
+
   }
 }

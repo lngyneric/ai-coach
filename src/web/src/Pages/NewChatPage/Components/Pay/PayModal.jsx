@@ -21,17 +21,45 @@ import { useEffect } from 'react';
 import classNames from 'classnames';
 import { useInterval } from 'react-use';
 import { message } from 'antd';
+import contactBzWechatImg from 'Assets/newchat/contact-bz-wechat.png';
 
 import payInfoBg from 'Assets/newchat/pay-info-bg.png';
+import PayModalFooter from './PayModalFooter.jsx';
 
 const DEFAULT_QRCODE = 'DEFAULT_QRCODE';
 const MAX_TIMEOUT = 1000 * 60 * 3;
 const COUNTDOWN_INTERVAL = 1000;
 
+const CompletedSection = memo(() => {
+  return (
+    <div className={styles.completedSection}>
+      <div className={styles.title}>添加真人助教</div>
+      <div className={styles.completeWrapper}>
+        <div className={styles.description}>
+          <div>感谢你的信任！期待接下来的学习～</div>
+          <div>
+            请务必添加你的添加真人助教，学习课程时，遇到任何问题记得来找我！
+          </div>
+        </div>
+        <div className={styles.qrcodeWrapper2}>
+          <img
+            className={styles.qrcode}
+            src={contactBzWechatImg}
+            alt="联系我"
+          />
+          <div>用微信扫码二维码</div>
+        </div>
+        <PayModalFooter />
+      </div>
+    </div>
+  );
+});
+
 export const PayModal = ({ open = false, onCancel, onOk }) => {
   const { t } = useTranslation();
   const [isLoading, setIsLoading] = useState(false);
   const [isTimeout, setIsTimeout] = useState(false);
+  const [isCompleted, setIsCompleted] = useState(false);
 
   const [price, setPrice] = useState('');
   const [qrUrl, setQrUrl] = useState(DEFAULT_QRCODE);
@@ -53,6 +81,7 @@ export const PayModal = ({ open = false, onCancel, onOk }) => {
     const { data: resp } = await queryOrder({ orderId });
 
     if (resp.status === ORDER_STATUS.BUY_STATUS_SUCCESS) {
+      setIsCompleted(true);
       setInterval(null);
       onOk?.();
       return;
@@ -70,8 +99,14 @@ export const PayModal = ({ open = false, onCancel, onOk }) => {
       });
 
       setQrUrl(qrcodeResp.qr_url);
-      setCountDown(MAX_TIMEOUT);
-      setInterval(COUNTDOWN_INTERVAL);
+
+      if (qrcodeResp.status === ORDER_STATUS.BUY_STATUS_SUCCESS) {
+        setIsCompleted(true);
+        setInterval(null);
+      } else {
+        setCountDown(MAX_TIMEOUT);
+        setInterval(COUNTDOWN_INTERVAL);
+      }
     },
     [payChannel]
   );
@@ -87,14 +122,21 @@ export const PayModal = ({ open = false, onCancel, onOk }) => {
     setDiscount('');
 
     const { data: resp } = await initOrder();
-    if (resp.status !== ORDER_STATUS.BUY_STATUS_INIT && resp.status !== ORDER_STATUS.BUY_STATUS_TO_BE_PAID) {
-      return;
-    }
-
     setPrice(resp.value_to_pay);
     const orderId = resp.order_id;
     setOrderId(orderId);
-    await refreshOrderQrcode(orderId);
+
+    if (
+      resp.status === ORDER_STATUS.BUY_STATUS_INIT ||
+      resp.status === ORDER_STATUS.BUY_STATUS_TO_BE_PAID
+    ) {
+      await refreshOrderQrcode(orderId);
+    }
+
+    if (resp.status === ORDER_STATUS.BUY_STATUS_SUCCESS) {
+      setIsCompleted(true);
+    }
+
     setIsLoading(false);
   }, [refreshOrderQrcode]);
 
@@ -174,53 +216,59 @@ export const PayModal = ({ open = false, onCancel, onOk }) => {
           <div
             className={styles.introSection}
             style={{ backgroundImage: `url(${payInfoBg})` }}
-          >
-          </div>
-          <div className={styles.paySection}>
-            <div className={styles.payInfoTitle}>首发特惠</div>
-            <div className={styles.priceWrapper}>
-              <div
-                className={classNames(
-                  styles.price,
-                  (isLoading || isTimeout) && styles.disabled
-                )}
-              >
-                <span className={styles.priceSign}>￥</span>
-                <span className={styles.priceNumber}>{price}</span>
+          ></div>
+          {isCompleted ? (
+            <CompletedSection />
+          ) : (
+            <div className={styles.paySection}>
+              <div className={styles.payInfoTitle}>首发特惠</div>
+              <div className={styles.priceWrapper}>
+                <div
+                  className={classNames(
+                    styles.price,
+                    (isLoading || isTimeout) && styles.disabled
+                  )}
+                >
+                  <span className={styles.priceSign}>￥</span>
+                  <span className={styles.priceNumber}>{price}</span>
+                </div>
               </div>
+              <div className={styles.discountTipWrapper}>
+                <div className={styles.discountTip}>
+                  已节省： {discount || '0.00'}
+                </div>
+              </div>
+              <div className={styles.payChannelWrapper}>
+                <span>支付方式：</span>
+                <Select
+                  className={styles.payChannelSelect}
+                  options={getPayChannelOptions()}
+                  value={payChannel}
+                  style={{ width: '120px' }}
+                  onChange={onPayChannelSelectChange}
+                />
+              </div>
+              <div className={styles.qrcodeWrapper}>
+                <QRCode
+                  size={175}
+                  value={qrUrl}
+                  status={getQrcodeStatus()}
+                  onRefresh={onQrcodeRefresh}
+                  bordered={false}
+                />
+              </div>
+              <div className={styles.couponCodeWrapper}>
+                <Button
+                  type="link"
+                  onClick={onCouponCodeClick}
+                  className={styles.couponCodeButton}
+                >
+                  {!couponCode ? '使用兑换码 >' : '修改兑换码 >'}
+                </Button>
+              </div>
+              <PayModalFooter />
             </div>
-            <div className={styles.discountTipWrapper}>
-              <div className={styles.discountTip}>已节省： {discount || '0.00'}</div>
-            </div>
-            <div className={styles.payChannelWrapper}>
-              <span>支付方式：</span>
-              <Select
-                className={styles.payChannelSelect}
-                options={getPayChannelOptions()}
-                value={payChannel}
-                style={{ width: '120px' }}
-                onChange={onPayChannelSelectChange}
-              />
-            </div>
-            <div className={styles.qrcodeWrapper}>
-              <QRCode
-                size={183}
-                value={qrUrl}
-                status={getQrcodeStatus()}
-                onRefresh={onQrcodeRefresh}
-                bordered={false}
-              />
-            </div>
-            <div className={styles.couponCodeWrapper}>
-              <Button
-                type="link"
-                onClick={onCouponCodeClick}
-                className={styles.couponCodeButton}
-              >
-                {!couponCode ? '使用优惠券' : '修改优惠券'}
-              </Button>
-            </div>
-          </div>
+          )}
         </div>
       </Modal>
       {couponCodeModalOpen && (
