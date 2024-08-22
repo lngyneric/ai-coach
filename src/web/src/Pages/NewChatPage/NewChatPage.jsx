@@ -1,9 +1,14 @@
-import { useEffect, useState } from 'react';
+import { useEffect, useState, useCallback } from 'react';
+import { useEffectOnce } from 'react-use';
 import { useParams, useNavigate } from 'react-router-dom';
 import classNames from 'classnames';
 import styles from './NewChatPage.module.scss';
 import { Skeleton } from 'antd';
-import { calcFrameLayout, FRAME_LAYOUT_MOBILE, inWechat } from 'constants/uiConstants.js';
+import {
+  calcFrameLayout,
+  FRAME_LAYOUT_MOBILE,
+  inWechat,
+} from 'constants/uiConstants.js';
 import { useUiLayoutStore } from 'stores/useUiLayoutStore.js';
 import { useUserStore } from 'stores/useUserStore.js';
 import { AppContext } from 'Components/AppContext.js';
@@ -36,8 +41,8 @@ const NewChatPage = (props) => {
     onTryLessonSelect,
   } = useLessonTree();
   const { cid } = useParams();
-  const [currChapterId, setCurrChapterId] = useState(null);
-  const { lessonId, changeCurrLesson } = useCourseStore((state) => state);
+  const { lessonId, changeCurrLesson, chapterId, updateChapterId } =
+    useCourseStore((state) => state);
   const [showUserSettings, setShowUserSettings] = useState(false);
   const [loading, setLoading] = useState(false);
   const navigate = useNavigate();
@@ -49,8 +54,13 @@ const NewChatPage = (props) => {
     onClose: onNavClose,
     onToggle: onNavToggle,
   } = useDisclosture({
-    initOpen: mobileStyle ? false : true
+    initOpen: mobileStyle ? false : true,
   });
+
+  useEffect(() => {
+    console.log('updateChapterId cid', cid);
+    updateChapterId(cid);
+  }, [cid, updateChapterId]);
 
   // 判断布局类型
   useEffect(() => {
@@ -64,67 +74,84 @@ const NewChatPage = (props) => {
     return () => {
       window.removeEventListener('resize', onResize);
     };
-  }, []);
+  }, [updateFrameLayout]);
 
   const loadData = async () => {
     await loadTree();
   };
 
-  useEffect(() => {
-    if (!initialized) {
-      (async () => {
-        await checkLogin();
-        if (inWechat()) {
-          await updateWxcode();
-        }
-        setInitialized(true);
-      })();
+  const initAndCheckLogin = useCallback(async () => {
+    await checkLogin();
+    if (inWechat()) {
+      await updateWxcode();
     }
-  }, []);
+    setInitialized(true);
+  }, [checkLogin]);
 
-  // 定位当前课程位置
-  useEffect(() => {
-    if (!initialized) {
-      return;
+  const checkUrl = useCallback(async () => {
+    let nextTree;
+    if (!tree) {
+      setLoading(true);
+      nextTree = await loadTree(cid, lessonId);
+    } else {
+      setLoading(true);
+      nextTree = await reloadTree(cid, lessonId);
     }
-    (async () => {
-      let nextTree;
-      if (!tree) {
-        setLoading(true);
-        nextTree = await loadTree(cid, lessonId);
-      } else {
-        setLoading(true);
-        nextTree = await reloadTree(cid, lessonId);
-      }
 
-      setLoading(false);
-      if (cid) {
-        if (!checkChapterAvaiableStatic(nextTree, cid)) {
-          navigate('/newchat');
-        } else {
-          const data = getCurrElementStatic(nextTree);
-          if (data) {
-            changeCurrLesson(data.lesson.id);
-          }
-          setCurrChapterId(cid);
-          console.log('next chapter', cid, data.lesson.id);
-        }
+    setLoading(false);
+    if (cid) {
+      if (!checkChapterAvaiableStatic(nextTree, cid)) {
+        navigate('/newchat');
       } else {
         const data = getCurrElementStatic(nextTree);
-        if (!data) {
-          return;
-        }
-
-        if (data.catalog) {
-          navigate(`/newchat/${data.catalog.id}`);
+        if (data) {
+          changeCurrLesson(data.lesson.id);
         }
       }
+    } else {
+      const data = getCurrElementStatic(nextTree);
+      if (!data) {
+        return;
+      }
+
+      if (data.catalog) {
+        navigate(`/newchat/${data.catalog.id}`);
+      }
+    }
+  }, [
+    changeCurrLesson,
+    checkChapterAvaiableStatic,
+    cid,
+    getCurrElementStatic,
+    lessonId,
+    loadTree,
+    navigate,
+    reloadTree,
+    tree,
+  ]);
+
+  useEffectOnce(() => {
+    (async () => {
+      console.log('useEffectOnce, init and check login');
+      await initAndCheckLogin();
+      await checkUrl();
     })();
-  }, [hasLogin, cid, initialized]);
+  });
+
+  useCourseStore.subscribe(
+    (state) => state.chapterId,
+    (curr, pre) => {
+      console.log('subscribe chapterId', curr, pre);
+      if (!chapterId) {
+        return;
+      }
+      checkUrl();
+    }
+  );
 
   useEffect(() => {
     updateSelectedLesson(lessonId);
-  }, [lessonId]);
+  }, [lessonId, updateSelectedLesson]);
 
   const onLoginModalClose = async () => {
     setLoginModalOpen(false);
@@ -155,7 +182,7 @@ const NewChatPage = (props) => {
 
     changeCurrLesson(id);
     setTimeout(() => {
-      if (chapter.id !== currChapterId) {
+      if (chapter.id !== chapterId) {
         navigate(`/newchat/${chapter.id}`);
       }
     }, 0);
@@ -185,7 +212,7 @@ const NewChatPage = (props) => {
           )}
           {
             <ChatUi
-              chapterId={currChapterId}
+              chapterId={chapterId}
               lessonUpdate={onLessonUpdate}
               onGoChapter={onGoChapter}
               onPurchased={onPurchased}
@@ -205,7 +232,7 @@ const NewChatPage = (props) => {
 
         {mobileStyle && (
           <ChatMobileHeader
-            navOpen={navOpen} 
+            navOpen={navOpen}
             className={styles.chatMobileHeader}
             onSettingClick={onNavToggle}
           />

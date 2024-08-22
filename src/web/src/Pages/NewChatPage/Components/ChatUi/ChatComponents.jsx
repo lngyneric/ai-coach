@@ -149,7 +149,7 @@ export const ChatComponents = forwardRef(
     },
     ref
   ) => {
-    const { trackEvent } = useTracking();
+    const { trackEvent, trackTrailProgress } = useTracking();
     const [chatId, setChatId] = useState('');
     const [lessonId, setLessonId] = useState(null);
     const [inputDisabled, setInputDisabled] = useState(false);
@@ -171,7 +171,10 @@ export const ChatComponents = forwardRef(
     const { messages, appendMsg, setTyping, updateMsg, resetList } =
       useMessages([]);
 
-    const { checkLogin, updateUserInfo } = useUserStore((state) => state);
+    const { checkLogin, updateUserInfo } = useUserStore((state) => ({
+      checkLogin: state.checkLogin,
+      updateUserInfo: state.updateUserInfo,
+    }));
 
     const mobileStyle = frameLayout === FRAME_LAYOUT_MOBILE;
     const {
@@ -184,10 +187,6 @@ export const ChatComponents = forwardRef(
       onPayModalClose();
       setInputDisabled(false);
     }, [onPayModalClose]);
-
-    const _onMobileSettingClick = useCallback(() => {
-      onPayModalOpen();
-    }, [onPayModalOpen]);
 
     useEffect(() => {
       setLessonId(currLessonId);
@@ -236,6 +235,19 @@ export const ChatComponents = forwardRef(
             isEnd = v;
             return v;
           });
+
+          const scriptId = response.script_id;
+          if (
+            [
+              RESP_EVENT_TYPE.TEXT_END,
+              RESP_EVENT_TYPE.PHONE,
+              RESP_EVENT_TYPE.CHECKCODE,
+              RESP_EVENT_TYPE.ORDER,
+              RESP_EVENT_TYPE.USER_LOGIN,
+            ].includes(response.type)
+          ) {
+            trackTrailProgress(scriptId);
+          }
 
           try {
             if (response.type === RESP_EVENT_TYPE.TEXT) {
@@ -359,61 +371,71 @@ export const ChatComponents = forwardRef(
       setLoadedData(false);
     }, [chatId, initRecords, lessonId, loadedData, nextStep, scrollToBottom]);
 
-    useEffect(() => {
-      async function resetAndLoadData() {
-        // 只有课程切换时才重置数据
-        if (!chapterId || loadedChapterId === chapterId) {
-          return;
-        }
-        setIsStreaming(false);
-        setTyping(false);
-        setInputDisabled(true);
-        setLessonEnd(false);
-        resetList();
-        setInitRecords(null);
+    const resetAndLoadData = useCallback(async () => {
+      if (!chapterId) {
+        return;
+      }
+      setIsStreaming(false);
+      setTyping(false);
+      setInputDisabled(true);
+      setLessonEnd(false);
+      resetList();
+      setInitRecords(null);
 
-        const resp = await getLessonStudyRecord(chapterId);
-        const records = resp.data.records;
-        setInitRecords(records);
-        const ui = resp.data.ui;
+      const resp = await getLessonStudyRecord(chapterId);
+      const records = resp.data.records;
+      setInitRecords(records);
+      const ui = resp.data.ui;
 
-        if (records) {
-          records.forEach((v, i) => {
-            if (v.script_type === CHAT_MESSAGE_TYPE.LESSON_SEPARATOR) {
-            } else {
-              const newMessage = convertMessage(
-                {
-                  ...v,
-                  id: i,
-                  script_type: CHAT_MESSAGE_TYPE.TEXT,
-                },
-                userInfo
-              );
-              appendMsg(newMessage);
-            }
-          });
+      if (records) {
+        records.forEach((v, i) => {
+          if (v.script_type === CHAT_MESSAGE_TYPE.LESSON_SEPARATOR) {
+          } else {
+            const newMessage = convertMessage(
+              {
+                ...v,
+                id: i,
+                script_type: CHAT_MESSAGE_TYPE.TEXT,
+              },
+              userInfo
+            );
+            appendMsg(newMessage);
+          }
+        });
 
-          setLessonId(records[records.length - 1].lesson_id);
-        }
-
-        if (ui) {
-          initLoadedInteraction(ui);
-        }
-
-        setLoadedData(true);
-        setLoadedChapterId(chapterId);
+        setLessonId(records[records.length - 1].lesson_id);
       }
 
-      resetAndLoadData();
+      if (ui) {
+        initLoadedInteraction(ui);
+      }
+
+      setLoadedData(true);
+      setLoadedChapterId(chapterId);
     }, [
       appendMsg,
       chapterId,
       initLoadedInteraction,
-      loadedChapterId,
       resetList,
       setTyping,
       userInfo,
     ]);
+
+    useEffect(() => {
+      if (loadedChapterId !== chapterId) {
+        setLoadedChapterId(chapterId);
+        resetAndLoadData();
+      }
+    }, [chapterId, loadedChapterId, resetAndLoadData]);
+
+    useUserStore.subscribe(
+      (state) => state.hasLogin,
+      () => {
+        console.log('hasLogin subscribe');
+        setLoadedChapterId(chapterId);
+        resetAndLoadData();
+      }
+    );
 
     // debugger
     useEffect(() => {
@@ -485,8 +507,7 @@ export const ChatComponents = forwardRef(
     const onPayModalOk = useCallback(() => {
       handleSend(INTERACTION_OUTPUT_TYPE.ORDER);
       onPurchased?.();
-      onPayModalClose();
-    }, [handleSend, onPayModalClose, onPurchased]);
+    }, [handleSend, onPurchased]);
 
     const renderMessageContent = useCallback(
       (msg) => {
@@ -576,19 +597,20 @@ export const ChatComponents = forwardRef(
             }}
           />
         )}
-        {payModalOpen && (mobileStyle ? (
-          <PayModalM
-            open={payModalOpen}
-            onCancel={_onPayModalClose}
-            onOk={onPayModalOk}
-          />
-        ) : (
-          <PayModal
-            open={payModalOpen}
-            onCancel={_onPayModalClose}
-            onOk={onPayModalOk}
-          />
-        ))}
+        {payModalOpen &&
+          (mobileStyle ? (
+            <PayModalM
+              open={payModalOpen}
+              onCancel={_onPayModalClose}
+              onOk={onPayModalOk}
+            />
+          ) : (
+            <PayModal
+              open={payModalOpen}
+              onCancel={_onPayModalClose}
+              onOk={onPayModalOk}
+            />
+          ))}
       </div>
     );
   }
