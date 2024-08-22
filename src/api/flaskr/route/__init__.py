@@ -29,8 +29,8 @@ def register_route(app):
         from .admin.manager import register_data_manager_route
 
         app = register_data_manager_route(app, prefix + "/manager")
-        from .admin.tools import register_tools_handler
+        from .admin.tools import register_manager_tools_handler
 
-        app = register_tools_handler(app, prefix + "/tools")
+        app = register_manager_tools_handler(app, prefix + "/tools")
 
     return app
