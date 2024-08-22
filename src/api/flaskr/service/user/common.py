@@ -11,7 +11,12 @@ from flaskr.api.sendcloud import send_email
 
 from ...api.aliyun import send_sms_code_ali
 
-from ..common.dtos import USER_STATE_REGISTERED, UserInfo, UserToken
+from ..common.dtos import (
+    USER_STATE_REGISTERED,
+    USER_STATE_UNTEGISTERED,
+    UserInfo,
+    UserToken,
+)
 from ..common.models import (
     OLD_PASSWORD_ERROR,
     RESET_PWD_CODE_ERROR,
@@ -337,7 +342,12 @@ def verify_sms_code(app: Flask, user_id, phone: str, chekcode: str) -> UserToken
             user_info = User(
                 user_id=user_id, username="", name="", email="", mobile=phone
             )
-            user_info.user_state = USER_STATE_REGISTERED
+
+            if (
+                user_info.user_state is None
+                or user_info.user_state == USER_STATE_UNTEGISTERED
+            ):
+                user_info.user_state = USER_STATE_REGISTERED
             user_info.mobile = phone
             db.session.add(user_info)
         user_id = user_info.user_id

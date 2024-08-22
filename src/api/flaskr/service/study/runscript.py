@@ -2,9 +2,13 @@ import time
 import traceback
 from typing import Generator
 from flask import Flask
+
+from api.flaskr.service.user.models import User
 from ...api.langfuse import langfuse_client as langfuse
 from ...service.lesson.const import (
+    UI_TYPE_CHECKCODE,
     UI_TYPE_CONTINUED,
+    UI_TYPE_PHONE,
     UI_TYPE_TO_PAY,
 )
 from ...service.lesson.models import AICourse
@@ -47,6 +51,7 @@ def run_script_inner(
     with app.app_context():
         try:
             course_info = AICourse.query.filter(AICourse.course_id == course_id).first()
+            user_info = User.query.filter(User.user_id == user_id).first()
             if not course_info:
                 course_info = AICourse.query.first()
                 course_id = course_info.course_id
@@ -183,8 +188,22 @@ def run_script_inner(
                                 yield from response
                             if script_info.script_ui_type == UI_TYPE_CONTINUED:
                                 continue
-                            else:
-                                break
+                            if (
+                                script_info.script_ui_type == UI_TYPE_PHONE
+                                and user_info.user_status != 0
+                            ):
+                                continue
+                            if (
+                                script_info.script_ui_type == UI_TYPE_CHECKCODE
+                                and user_info.user_status != 0
+                            ):
+                                continue
+                            if (
+                                script_info.script_ui_type == UI_TYPE_TO_PAY
+                                and check_paid
+                            ):
+                                continue
+                            break
                         else:
                             break
                     if script_info:
