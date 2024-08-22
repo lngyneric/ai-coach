@@ -365,19 +365,23 @@ def reset_user_study_info(app: Flask, user_id: str):
 # 按章节重置用户学习信息
 def reset_user_study_info_by_lesson(app: Flask, user_id: str, lesson_id: str):
     with app.app_context():
-        lesson_info = AILesson.query.filter_by(lesson_id=lesson_id).first()
+        lesson_info = AILesson.query.filter(AILesson.lesson_id == lesson_id).first()
         if not lesson_info:
+            app.logger.info("lesson_info not found")
             return False
         lesson_no = lesson_info.lesson_no
-        if len(lesson_no) <= 2:
+        if len(lesson_no) > 2:
             raise LESSON_CANNOT_BE_RESET
         # query the lesson tree
         lessons = AILesson.query.filter(
             AILesson.lesson_no.like(lesson_no + "%"), AILesson.status == 1
         ).all()
-        lessons = [lesson_info] + lessons
+        # lessons = [lesson_info] + lessons
         lesson_ids = [lesson.lesson_id for lesson in lessons]
+        lesson_nos = [lesson.lesson_no for lesson in lessons]
         # query the attend info
+        app.logger.info("lesson_ids to reset:{}".format(lesson_ids))
+        app.logger.info("lesson_nos to reset:{}".format(lesson_nos))
         attend_infos = AICourseLessonAttend.query.filter(
             AICourseLessonAttend.user_id == user_id,
             AICourseLessonAttend.lesson_id.in_(lesson_ids),
@@ -399,7 +403,7 @@ def reset_user_study_info_by_lesson(app: Flask, user_id: str, lesson_id: str):
             if lesson.lesson_no == lesson_no:
                 attend_info.status = ATTEND_STATUS_NOT_STARTED
             if lesson.lesson_no == lesson_no + "01":
-                attend_info.status = ATTEND_STATUS_IN_PROGRESS
+                attend_info.status = ATTEND_STATUS_NOT_STARTED
             db.session.add(attend_info)
         app.logger.info("lesson_info:{}".format(lesson_info))
         app.logger.info("user_id:{}".format(user_id))
