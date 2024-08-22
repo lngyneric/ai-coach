@@ -224,7 +224,7 @@ export const useLessonTree = () => {
     return getCurrElementStatic(tree);
   }
 
-  const updateChapter = (id, val) => {
+  const updateLesson = (id, val) => {
     setTree(old => {
       if (!old) {
         return
@@ -241,6 +241,26 @@ export const useLessonTree = () => {
             c.lessons[idx] = newLesson;
           }
         })
+      });
+
+      return nextState;
+    });
+  }
+
+  const updateChapterStatus = (id, { status }) => {
+    setTree(old => {
+      if (!old) {
+        return
+      }
+
+      const nextState = produce(old, draft => {
+        const idx = draft.catalogs.findIndex(ch => ch.id === id);
+        if (idx !== -1) {
+          draft.catalogs[idx] = {
+            ...draft.catalogs[idx],
+            status,
+          }
+        }
       });
 
       return nextState;
@@ -294,7 +314,8 @@ export const useLessonTree = () => {
     toggleCollapse,
     checkChapterAvaiableStatic,
     getCurrElement,
-    updateChapter,
+    updateLesson,
+    updateChapterStatus,
     getCurrElementStatic,
     getChapterByLesson,
     onTryLessonSelect,
