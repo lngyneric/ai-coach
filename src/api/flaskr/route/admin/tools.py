@@ -4,10 +4,9 @@ from flaskr.route.common import bypass_token_validation, make_common_response
 
 
 def register_manager_tools_handler(app: Flask, path_prefix: str) -> Flask:
-    # app.logger.info('register_study_handler is called, path_prefix is {}'.format(path_prefix))
     @bypass_token_validation
     @app.route(path_prefix + "/fix", methods=["GET"])
-    def reset_course():
+    def fix_user_attend():
         """
         重置用户学习信息
         ---
