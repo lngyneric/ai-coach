@@ -1,5 +1,5 @@
 from flask import Flask, Response, request
-from flaskr.service.study.funcs import get_script_info
+from flaskr.service.study.funcs import get_script_info, reset_user_study_info_by_lesson
 from flaskr.route.common import make_common_response
 from flaskr.service.common.models import raise_param_error
 from flaskr.service.study import (
@@ -232,5 +232,43 @@ def register_study_handler(app: Flask, path_prefix: str) -> Flask:
             raise_param_error("script_id is not found")
         user_id = request.user.user_id
         return make_common_response(get_script_info(app, user_id, script_id))
+
+    @app.route(path_prefix + "/reset-study-progress", methods=["GET"])
+    def reset_study_progress():
+        """
+        重置学习进度
+        ---
+        tags:
+        - 学习
+        parameters:
+        -   name: lesson_id
+            in: query
+            type: string
+            required: true
+            description: 课时ID
+        responses:
+            200:
+                description: 返回课程学习进度
+                content:
+                    application/json:
+                        schema:
+                            properties:
+                                code:
+                                    type: integer
+                                    description: 返回码
+                                message:
+                                    type: string
+                                    description: 返回信息
+
+            400:
+                description: 参数错误
+        """
+        lesson_id = request.args.get("lesson_id")
+        if not lesson_id:
+            raise_param_error("lesson_id is not found")
+        user_id = request.user.user_id
+        return make_common_response(
+            reset_user_study_info_by_lesson(app, user_id, lesson_id)
+        )
 
     return app
