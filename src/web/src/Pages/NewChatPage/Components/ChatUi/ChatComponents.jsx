@@ -171,10 +171,13 @@ export const ChatComponents = forwardRef(
     const { messages, appendMsg, setTyping, updateMsg, resetList } =
       useMessages([]);
 
-    const { checkLogin, updateUserInfo } = useUserStore((state) => ({
-      checkLogin: state.checkLogin,
-      updateUserInfo: state.updateUserInfo,
-    }));
+    const { checkLogin, updateUserInfo, refreshUserInfo } = useUserStore(
+      (state) => ({
+        checkLogin: state.checkLogin,
+        updateUserInfo: state.updateUserInfo,
+        refreshUserInfo: state.refreshUserInfo,
+      })
+    );
 
     const mobileStyle = frameLayout === FRAME_LAYOUT_MOBILE;
     const {
@@ -334,6 +337,7 @@ export const ChatComponents = forwardRef(
         checkLogin,
         lessonUpdateResp,
         setTyping,
+        trackTrailProgress,
         updateMsg,
         updateUserInfo,
         userInfo,
@@ -428,14 +432,15 @@ export const ChatComponents = forwardRef(
       }
     }, [chapterId, loadedChapterId, resetAndLoadData]);
 
-    useUserStore.subscribe(
-      (state) => state.hasLogin,
-      () => {
-        console.log('hasLogin subscribe');
-        setLoadedChapterId(chapterId);
-        resetAndLoadData();
-      }
-    );
+    useEffect(() => {
+      return useUserStore.subscribe(
+        (state) => state.hasLogin,
+        () => {
+          setLoadedChapterId(chapterId);
+          resetAndLoadData();
+        }
+      );
+    }, [chapterId, resetAndLoadData]);
 
     // debugger
     useEffect(() => {
@@ -507,6 +512,7 @@ export const ChatComponents = forwardRef(
     const onPayModalOk = useCallback(() => {
       handleSend(INTERACTION_OUTPUT_TYPE.ORDER);
       onPurchased?.();
+      refreshUserInfo();
     }, [handleSend, onPurchased]);
 
     const renderMessageContent = useCallback(

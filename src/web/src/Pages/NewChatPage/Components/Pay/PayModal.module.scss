@@ -30,7 +30,7 @@
       display: flex;
       justify-content: center;
 
-      .price { 
+      .price {
         font-size: var(--font-size-1);
 
         &.disabled {
@@ -78,7 +78,7 @@
         line-height: 28px;
         padding: 0 15px;
         font-size: var(--font-size-5);
-        background: linear-gradient(103deg, #E8CFA4 0%, #F1B87F 100%);
+        background: linear-gradient(103deg, #e8cfa4 0%, #f1b87f 100%);
         border-radius: 10px;
       }
     }
@@ -103,7 +103,6 @@
       }
     }
   }
-
 }
 
 .completedSection {
@@ -115,6 +114,7 @@
   box-sizing: border-box;
 
   .title {
+    font-size: var(--font-size-2);
     text-align: center;
     font-weight: 700;
     flex: 0 0 auto;
@@ -140,5 +140,6 @@
   .qrcodeWrapper2 {
     display: block;
     text-align: center;
+    color: var(--color-8);
   }
 }
