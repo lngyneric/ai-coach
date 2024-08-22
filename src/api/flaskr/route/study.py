@@ -196,6 +196,37 @@ def register_study_handler(app: Flask, path_prefix: str) -> Flask:
 
     @app.route(path_prefix + "/query-script-into", methods=["GET"])
     def query_script_info():
+        """
+        查询脚本信息
+
+        ---
+        tags:
+
+        - 学习
+        parameters:
+            -   name: script_id
+                in: query
+                type: string
+                required: true
+                description: 脚本ID
+        responses:
+            200:
+                description: 返回脚本信息
+                content:
+                    application/json:
+                        schema:
+                            properties:
+                                code:
+                                    type: integer
+                                    description: 返回码
+                                message:
+                                    type: string
+                                    description: 返回信息
+                                data:
+                                    $ref: "#/components/schemas/ScriptInfoDTO"
+            400:
+                description: 参数错误
+        """
         script_id = request.args.get("script_id")
         if not script_id:
             raise_param_error("script_id is not found")
