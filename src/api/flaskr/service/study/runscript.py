@@ -201,11 +201,7 @@ def run_script_inner(
                                 and user_info.user_state != 0
                             ):
                                 continue
-                            if (
-                                script_info.script_ui_type == UI_TYPE_TO_PAY
-                                and check_paid
-                            ):
-                                continue
+
                             break
                         else:
                             break
