@@ -32,7 +32,6 @@ FIX_CHECK_CODE = "0615"
 
 
 def get_model(app: Flask):
-    app.logger.info("MODE:" + app.config.get("MODE", "api"))
     if app.config.get("MODE", "api") == "admin":
         return AdminUser
     else:
@@ -76,8 +75,6 @@ def validate_user(app: Flask, token: str) -> UserInfo:
         if token is None:
             raise USER_NOT_LOGIN
         try:
-            app.logger.info("token:" + token)
-            app.logger.info("env:" + app.config.get("ENVERIMENT", "prod"))
             if app.config.get("ENVERIMENT", "prod") == "dev":
                 user_id = token
                 user = User.query.filter_by(user_id=user_id).first()
