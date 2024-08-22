@@ -110,7 +110,7 @@ def handle_output(
     trace: Trace,
     trace_args,
 ):
-    if script_info.script_type in OUTPUT_HANDLERS:
+    if script_info.script_type in OUTPUT_HANDLERS.keys():
         app.logger.info(
             "generation output lesson_id:{}  script type:{},user_id:{},script_index:{}".format(
                 script_info.lesson_id,
