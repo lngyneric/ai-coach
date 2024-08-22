@@ -58,7 +58,7 @@ const NewChatPage = (props) => {
   });
 
   useEffect(() => {
-    console.log('updateChapterId cid', cid);
+    console.log('update cid: ', cid);
     updateChapterId(cid);
   }, [cid, updateChapterId]);
 
@@ -138,18 +138,17 @@ const NewChatPage = (props) => {
     })();
   });
 
-  useCourseStore.subscribe(
-    (state) => state.chapterId,
-    (curr, pre) => {
-      console.log('subscribe chapterId', curr, pre);
-      if (!chapterId) {
-        return;
+  useEffect(() => {
+    return useCourseStore.subscribe(
+      (state) => state.chapterId,
+      (curr, pre) => {
+        checkUrl();
       }
-      checkUrl();
-    }
-  );
+    );
+  }, [chapterId, checkUrl]);
 
   useEffect(() => {
+    console.log('updateSelectedLesson: ', lessonId);
     updateSelectedLesson(lessonId);
   }, [lessonId, updateSelectedLesson]);
 

@@ -103,7 +103,9 @@ export const useUserStore = create(
     refreshUserInfo: async () => {
       const res = await getUserInfo();
       set(() => ({
-        userInfo: res.data
+        userInfo: {
+          ...res.data
+        }
       }))
     }
   }))

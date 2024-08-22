@@ -38,7 +38,7 @@ const CompletedSection = memo(() => {
         <div className={styles.description}>
           <div>感谢你的信任！期待接下来的学习～</div>
           <div>
-            请务必添加你的添加真人助教，学习课程时，遇到任何问题记得来找我！
+            请务必添加你的真人助教，学习课程时，遇到任何问题记得来找我！
           </div>
         </div>
         <div className={styles.qrcodeWrapper2}>

@@ -23,7 +23,7 @@ export const SettingModal = ({
   onGoToSetting = () => {},
   className,
 }) => {
-  const { hasLogin, userInfo, logout } = useUserStore((state) => state);
+  const { hasLogin, userInfo, logout, refreshUserInfo  } = useUserStore((state) => state);
   const { frameLayout } = useContext(AppContext);
 
   const mobileStyle = frameLayout === FRAME_LAYOUT_MOBILE;
@@ -61,6 +61,10 @@ export const SettingModal = ({
       onPayModalOpen();
     }
   }, [hasLogin, onLoginClick, onPayModalOpen]);
+
+  const onPayOk = useCallback( () => {
+    refreshUserInfo();
+  }, [refreshUserInfo]);
 
   return (
     <>
@@ -101,13 +105,13 @@ export const SettingModal = ({
           <PayModalM
             open={payModalOpen}
             onCancel={onPayModalClose}
-            onOk={onPayModalClose}
+            onOk={onPayOk}
           />
         ) : (
           <PayModal
             open={payModalOpen}
             onCancel={onPayModalClose}
-            onOk={onPayModalClose}
+            onOk={onPayOk}
           />
         ))}
     </>

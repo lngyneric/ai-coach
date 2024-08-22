@@ -126,6 +126,7 @@
   padding: 0 8px;
 
   .title {
+    font-size: var(--font-size-2);
     text-align: center;
     font-weight: 700;
     flex: 0 0 auto;
@@ -140,6 +141,7 @@
 
     .qrcodeWrapper2 {
       text-align: center;
+      color: var(--color-8);
     }
 
     .qrcode {
