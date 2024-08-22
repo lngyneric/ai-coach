@@ -3,8 +3,10 @@ import LineButton from 'Components/LineButton.jsx';
 import classNames from 'classnames';
 import { useCourseStore } from 'stores/useCourseStore.js';
 import { Modal } from 'antd';
+import { useTracking, EVENT_NAMES } from 'common/hooks/useTracking.js';
 
-export const ResetChapterButton = ({ className, chapterId, onClick }) => {
+export const ResetChapterButton = ({ className, chapterId, chapterName, onClick, onConfirm }) => {
+  const { trackEvent } = useTracking();
   const { resetChapter } = useCourseStore((state) => ({
     resetChapter: state.resetChapter,
   }));
@@ -16,11 +18,20 @@ export const ResetChapterButton = ({ className, chapterId, onClick }) => {
         content: '重置章节后，此章节的所有学习记录将清空，确定重置？',
         onOk: () => {
           resetChapter(chapterId);
+          trackEvent(EVENT_NAMES.RESET_CHAPTER_CONFIRM, {
+            chapter_id: chapterId,
+            chapter_name: chapterName,
+          });
+          onConfirm?.();
         }
+      });
+      trackEvent(EVENT_NAMES.RESET_CHAPTER, {
+        chapter_id: chapterId,
+        chapter_name: chapterName,
       });
       onClick?.(e);
     },
-    [chapterId, onClick, resetChapter]
+    [chapterId, chapterName, onClick, onConfirm, resetChapter, trackEvent]
   );
 
   return (
