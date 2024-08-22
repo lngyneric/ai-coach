@@ -1,5 +1,5 @@
 from flask import Flask, Response, request
-from api.flaskr.service.study.funcs import get_script_info
+from flaskr.service.study.funcs import get_script_info
 from flaskr.route.common import make_common_response
 from flaskr.service.common.models import raise_param_error
 from flaskr.service.study import (
