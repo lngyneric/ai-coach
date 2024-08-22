@@ -56,19 +56,22 @@ def run_script_inner(
                 course_info = AICourse.query.first()
                 course_id = course_info.course_id
             if not lesson_id:
+                app.logger.info("lesson_id is None")
                 buy_record = AICourseBuyRecord.query.filter_by(
                     user_id=user_id, course_id=course_id
                 ).first()
                 if not buy_record:
-                    lessons = init_trial_lesson(app, user_id, course_id)
+
                     app.logger.info(
                         "user_id:{},course_id:{},lesson_id:{}".format(
                             user_id, course_id, lesson_id
                         )
                     )
-                    attend = get_current_lesson(app, lessons)
-                    app.logger.info("{}".format(attend))
-                    lesson_id = attend.lesson_id
+                lessons = init_trial_lesson(app, user_id, course_id)
+                attend = get_current_lesson(app, lessons)
+                app.logger.info("{}".format(attend))
+                lesson_id = attend.lesson_id
+
             else:
                 # get attend info
                 app.logger.info(
