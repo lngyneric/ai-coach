@@ -1,5 +1,4 @@
 from flask import Flask, Response, request
-from flaskr.service.study.funcs import get_script_info, reset_user_study_info_by_lesson
 from flaskr.route.common import make_common_response
 from flaskr.service.common.models import raise_param_error
 from flaskr.service.study import (
@@ -7,6 +6,8 @@ from flaskr.service.study import (
     get_study_record,
     run_script,
     reset_user_study_info,
+    get_script_info,
+    reset_user_study_info_by_lesson,
 )
 
 
