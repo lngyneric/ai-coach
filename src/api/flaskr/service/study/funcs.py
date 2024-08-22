@@ -355,3 +355,15 @@ def reset_user_study_info(app: Flask, user_id: str):
         )
         db.session.commit()
         return True
+
+
+# 按章节重置用户学习信息
+def reset_user_study_info_by_lesson(app: Flask, user_id: str, lesson_id: str):
+    with app.app_context():
+        lesson_info = AILesson.query.filter_by(lesson_id=lesson_id).first()
+        if not lesson_info:
+            return False
+        app.logger.info("lesson_info:{}".format(lesson_info))
+        app.logger.info("user_id:{}".format(user_id))
+        db.session.commit()
+        return True
