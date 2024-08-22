@@ -219,3 +219,22 @@ class StudyRecordProgressDTO:
             "script_name": self.script_name,
             "is_branch": self.is_branch,
         }
+
+
+@register_schema_to_swagger
+class ScriptInfoDTO:
+    script_index: int
+    script_name: str
+    is_trial_lesson: bool
+
+    def __init__(self, script_index, script_name, is_trial_lesson):
+        self.script_index = script_index
+        self.script_name = script_name
+        self.is_trial_lesson = is_trial_lesson
+
+    def __json__(self):
+        return {
+            "script_index": self.script_index,
+            "script_name": self.script_name,
+            "is_trial_lesson": self.is_trial_lesson,
+        }

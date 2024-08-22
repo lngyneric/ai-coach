@@ -3,6 +3,7 @@ from flask import Flask
 
 from sqlalchemy import text
 
+from cook.models.chapter import LESSON_TYPE_TRIAL
 from flaskr.service.study.const import (
     INPUT_TYPE_BRANCH,
     INPUT_TYPE_CHECKCODE,
@@ -13,7 +14,7 @@ from flaskr.service.study.const import (
     ROLE_TEACHER,
     ROLE_VALUES,
 )
-from ...service.study.dtos import AILessonAttendDTO, StudyRecordDTO
+from ...service.study.dtos import AILessonAttendDTO, StudyRecordDTO, ScriptInfoDTO
 from ...service.user import (
     get_sms_code_info,
 )
@@ -312,6 +313,23 @@ def get_lesson_study_progress(
             script_index,
             script_name,
             is_branch,
+        )
+
+
+# get script info
+def get_script_info(app: Flask, user_id: str, script_id: str) -> ScriptInfoDTO:
+    with app.app_context():
+        script_info = AILessonScript.query.filter_by(script_id=script_id).first()
+        if not script_info:
+            return None
+        lesson = AILesson.query.filter_by(lesson_id=script_info.lesson_id).first()
+        if not lesson:
+            return None
+
+        return ScriptInfoDTO(
+            script_info.script_index,
+            script_info.script_name,
+            lesson.lesson_type == LESSON_TYPE_TRIAL,
         )
 
 

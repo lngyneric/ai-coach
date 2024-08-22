@@ -1,4 +1,5 @@
 from flask import Flask, Response, request
+from api.flaskr.service.study.funcs import get_script_info
 from flaskr.route.common import make_common_response
 from flaskr.service.common.models import raise_param_error
 from flaskr.service.study import (
@@ -192,5 +193,13 @@ def register_study_handler(app: Flask, path_prefix: str) -> Flask:
             raise_param_error("lesson_id is not found")
         user_id = request.user.user_id
         return make_common_response(reset_user_study_info(app, user_id, lesson_id))
+
+    @app.route(path_prefix + "/query-script-into", methods=["GET"])
+    def query_script_info():
+        script_id = request.args.get("script_id")
+        if not script_id:
+            raise_param_error("script_id is not found")
+        user_id = request.user.user_id
+        return make_common_response(get_script_info(app, user_id, script_id))
 
     return app
