@@ -190,12 +190,12 @@ def run_script_inner(
                                 continue
                             if (
                                 script_info.script_ui_type == UI_TYPE_PHONE
-                                and user_info.user_status != 0
+                                and user_info.user_state != 0
                             ):
                                 continue
                             if (
                                 script_info.script_ui_type == UI_TYPE_CHECKCODE
-                                and user_info.user_status != 0
+                                and user_info.user_state != 0
                             ):
                                 continue
                             if (
