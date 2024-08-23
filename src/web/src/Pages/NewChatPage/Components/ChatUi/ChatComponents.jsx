@@ -6,6 +6,7 @@ import {
   useImperativeHandle,
   useState,
   useContext,
+  useRef,
 } from 'react';
 import { runScript, getLessonStudyRecord } from 'Api/study';
 import { genUuid } from 'Utils/common.js';
@@ -164,6 +165,7 @@ export const ChatComponents = forwardRef(
     const [initRecords, setInitRecords] = useState([]);
 
     const { userInfo, frameLayout, mobileStyle } = useContext(AppContext);
+    const chatRef = useRef();
     const { lessonId: currLessonId, changeCurrLesson } = useCourseStore(
       (state) => state
     );
@@ -557,7 +559,7 @@ export const ChatComponents = forwardRef(
       }
     };
 
-    const onChatInputSend = async (type, val, scriptId) => {
+    const onChatInputSend = useCallback(async (type, val, scriptId) => {
       if (type === INTERACTION_OUTPUT_TYPE.NEXT_CHAPTER) {
         onGoChapter?.(val.lessonId);
         return;
@@ -571,9 +573,22 @@ export const ChatComponents = forwardRef(
       }
 
       handleSend(type, val, scriptId);
-    };
+    }, [handleSend, onGoChapter, onPayModalOpen, trackEvent]);
 
     useImperativeHandle(ref, () => ({}));
+
+    const onChatInteractionAreaSizeChange = useCallback(({ height }) => {
+      if (!chatRef || !chatRef.current) { 
+        return;
+      }
+
+      const messageListElem = chatRef.current.querySelector('.MessageList');
+      if (!messageListElem) {
+        return;
+      }
+
+      messageListElem.style.paddingBottom = `${height}px`;
+    });
     return (
       <div
         className={classNames(
@@ -581,6 +596,7 @@ export const ChatComponents = forwardRef(
           className,
           mobileStyle ? styles.mobile : ''
         )}
+        ref={chatRef}
       >
         <Chat
           navbar={null}
@@ -599,9 +615,8 @@ export const ChatComponents = forwardRef(
             type={inputModal.type}
             props={inputModal.props}
             disabled={inputDisabled}
-            onSend={(type, val) => {
-              onChatInputSend(type, val);
-            }}
+            onSend={onChatInputSend}
+            onSizeChange={onChatInteractionAreaSizeChange}
           />
         )}
         {payModalOpen &&
