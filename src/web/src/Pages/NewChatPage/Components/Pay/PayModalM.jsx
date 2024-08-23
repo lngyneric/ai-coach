@@ -188,28 +188,30 @@ export const PayModalM = ({ open = false, onCancel, onOk }) => {
                         />
                       </div>
                     )}
-                    <div
-                      className={classNames(
-                        styles.payChannelRow,
-                        payChannel === PAY_CHANNEL_ZHIFUBAO && styles.selected
-                      )}
-                      onClick={onPayChannelZhifubaoClick}
-                    >
-                      <div className={styles.payChannelBasic}>
-                        <img
-                          src={zhifuboIcon}
-                          alt="支付宝支付"
-                          className={styles.payChannelIcon}
+                    {!inWechat() && (
+                      <div
+                        className={classNames(
+                          styles.payChannelRow,
+                          payChannel === PAY_CHANNEL_ZHIFUBAO && styles.selected
+                        )}
+                        onClick={onPayChannelZhifubaoClick}
+                      >
+                        <div className={styles.payChannelBasic}>
+                          <img
+                            src={zhifuboIcon}
+                            alt="支付宝支付"
+                            className={styles.payChannelIcon}
+                          />
+                          <span className={styles.payChannelTitle}>
+                            支付宝支付
+                          </span>
+                        </div>
+                        <RadioM
+                          className={styles.payChannelRadio}
+                          value={PAY_CHANNEL_ZHIFUBAO}
                         />
-                        <span className={styles.payChannelTitle}>
-                          支付宝支付
-                        </span>
                       </div>
-                      <RadioM
-                        className={styles.payChannelRadio}
-                        value={PAY_CHANNEL_ZHIFUBAO}
-                      />
-                    </div>
+                    )}
                   </Radio.Group>
                 </div>
                 <div className={styles.buttonWrapper}>
