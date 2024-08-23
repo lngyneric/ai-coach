@@ -24,7 +24,6 @@ export const LineButton = forwardRef((props, ref) => {
         ref={ref}
         {...props}
         type="default"
-        shape="round"
         className={classNames(styles.mainButton, props.className)}
         style={{ width: props.width, height: props.height, ...props.style }}
       >
