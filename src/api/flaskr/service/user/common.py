@@ -340,6 +340,14 @@ def verify_sms_code(app: Flask, user_id, phone: str, chekcode: str) -> UserToken
                 .order_by(User.id.asc())
                 .first()
             )
+        elif user_id != user_info.user_id:
+            origin_user = User.query.filter(User.user_id == user_id).first()
+            if (
+                origin_user
+                and origin_user.user_open_id != user_info.user_open_id
+                and (user_info.user_open_id is None or user_info.user_open_id == "")
+            ):
+                user_info.user_open_id = origin_user.user_open_id
 
         if user_info is None:
             app.logger.info("user_info is None,create new user")
