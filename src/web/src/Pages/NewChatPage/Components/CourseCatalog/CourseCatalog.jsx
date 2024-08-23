@@ -42,7 +42,7 @@ export const CourseCatalog = ({
       )}
     >
       <div className={styles.titleRow} onClick={onTitleRowClick}>
-        <div>{name}</div>
+        <div className={styles.leftSection}>{name}</div>
         <div className={styles.rightSection}>
           {
             (status === LESSON_STATUS.LEARNING || status === LESSON_STATUS.COMPLETED) &&
