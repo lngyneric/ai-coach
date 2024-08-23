@@ -6,9 +6,13 @@ import styles from './ChatInteractionArea.module.scss';
 import ChatInputText from './ChatInputText.jsx';
 import ChatButtonGroup from './ChatButtonGroup.jsx';
 import ChatInputButton from './ChatInputButton.jsx';
-import { INTERACTION_TYPE, INTERACTION_DISPLAY_TYPE } from 'constants/courseConstants.js';
+import {
+  INTERACTION_TYPE,
+  INTERACTION_DISPLAY_TYPE,
+} from 'constants/courseConstants.js';
 import classNames from 'classnames';
-import { memo } from 'react';
+import { memo, useRef, useEffect } from 'react';
+import { useCallback } from 'react';
 
 const INTERACTION_DISPLAY_MAP = {
   [INTERACTION_TYPE.CONTINUE]: INTERACTION_DISPLAY_TYPE.BUTTON,
@@ -25,47 +29,85 @@ export const ChatInteractionArea = ({
   props = {},
   onSend = (type, val) => {},
   disabled = false,
+  onSizeChange = ({ width, height }) => {},
 }) => {
   const displayType = INTERACTION_DISPLAY_MAP[type];
+  const elemRef = useRef();
 
   const onSendFunc = (type, val) => {
     if (disabled) {
       return;
     }
     onSend?.(type, val, props.scriptId);
-  }
+  };
 
   const genRenderControl = () => {
     switch (displayType) {
       case INTERACTION_DISPLAY_TYPE.BUTTON:
-        return <ChatInputButton
-          disabled={disabled}
-          type={type}
-          props={props}
-          onClick={onSendFunc}
-        />
+        return (
+          <ChatInputButton
+            disabled={disabled}
+            type={type}
+            props={props}
+            onClick={onSendFunc}
+          />
+        );
       case INTERACTION_DISPLAY_TYPE.TEXT:
-        return <ChatInputText
-          disabled={disabled}
-          type={type}
-          props={props}
-          onClick={onSendFunc}
-        />
+        return (
+          <ChatInputText
+            disabled={disabled}
+            type={type}
+            props={props}
+            onClick={onSendFunc}
+          />
+        );
       case INTERACTION_DISPLAY_TYPE.BUTTONS:
-        return <ChatButtonGroup
-          disabled={disabled}
-          type={type}
-          props={props}
-          onClick={onSendFunc}
-        />
+        return (
+          <ChatButtonGroup
+            disabled={disabled}
+            type={type}
+            props={props}
+            onClick={onSendFunc}
+          />
+        );
       default:
-        return <></>
+        return <></>;
     }
-  }
+  };
+
+  const resizeChange = useCallback((e) => {
+    onSizeChange?.({
+      width: e.contentRect.width,
+      height: e.contentRect.height,
+    });
+  }, [onSizeChange]);
+
+  useEffect(() => {
+    // 监听的函数
+    const resize = new ResizeObserver((e) => {
+      if (!Array.isArray(e) || !e.length) return;
+      for (const ent of e) {
+        resizeChange(ent);
+      }
+    });
+    // 传入监听对象
+    resize.observe(elemRef?.current);
+    // 及时销毁监听函数（重要!!!）
+    const curr = elemRef?.current;
+    return () => {
+      resize.unobserve(curr);
+    };
+  }, [resizeChange]);
+
   return (
-    <div className={classNames(styles.chatInputArea, disabled && styles.disabled)}>
+    <div
+      className={classNames(styles.chatInputArea, disabled && styles.disabled)}
+      ref={elemRef}
+    >
       {genRenderControl()}
-      <div className={styles.tipText}>内容由 AI 大模型生成，无法确保真实准确，仅供学习参考</div>
+      <div className={styles.tipText}>
+        内容由 AI 大模型生成，无法确保真实准确，仅供学习参考
+      </div>
     </div>
   );
 };
