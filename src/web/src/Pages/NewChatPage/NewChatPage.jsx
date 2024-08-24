@@ -36,7 +36,8 @@ const NewChatPage = (props) => {
     toggleCollapse,
     checkChapterAvaiableStatic,
     getCurrElementStatic,
-    updateChapter,
+    updateLesson,
+    updateChapterStatus,
     getChapterByLesson,
     onTryLessonSelect,
   } = useLessonTree();
@@ -58,7 +59,7 @@ const NewChatPage = (props) => {
   });
 
   useEffect(() => {
-    console.log('updateChapterId cid', cid);
+    console.log('update cid: ', cid);
     updateChapterId(cid);
   }, [cid, updateChapterId]);
 
@@ -138,41 +139,71 @@ const NewChatPage = (props) => {
     })();
   });
 
-  useCourseStore.subscribe(
-    (state) => state.chapterId,
-    (curr, pre) => {
-      console.log('subscribe chapterId', curr, pre);
-      if (!chapterId) {
-        return;
+  useEffect(() => {
+    return useCourseStore.subscribe(
+      (state) => state.chapterId,
+      (curr, pre) => {
+        checkUrl();
       }
-      checkUrl();
-    }
-  );
+    );
+  }, [chapterId, checkUrl]);
 
   useEffect(() => {
+    return useCourseStore.subscribe(
+      (state) => state.resetedChapterId,
+      (curr) => {
+        console.log('subscribe resetedChapterId', curr);
+        if (curr) {
+          window.location.reload();
+        }
+      }
+    );
+  });
+
+  useEffect(() => {
+    return useUserStore.subscribe(
+      (state) => state.hasLogin,
+      () => {
+        checkUrl();
+      }
+    );
+  }, [checkUrl]);
+
+  useEffect(() => {
+    console.log('updateSelectedLesson: ', lessonId);
     updateSelectedLesson(lessonId);
   }, [lessonId, updateSelectedLesson]);
 
-  const onLoginModalClose = async () => {
+  const onLoginModalClose = useCallback(async () => {
     setLoginModalOpen(false);
     await loadData();
-  };
+  }, [loadData]);
 
-  const onLessonUpdate = (val) => {
-    updateChapter(val.id, val);
-  };
+  const onLessonUpdate = useCallback(
+    (val) => {
+      updateLesson(val.id, val);
+    },
+    [updateLesson]
+  );
+
+  const onChapterUpdate = useCallback(
+    ({ id, status }) => {
+      updateChapterStatus(id, { status });
+    },
+    [updateChapterStatus]
+  );
 
   const onGoChapter = (id) => {
     navigate(`/newchat/${id}`);
   };
 
-  const onPurchased = () => {
+  const onPurchased = useCallback(() => {
     reloadTree();
-  };
+  }, [reloadTree]);
 
-  const onGoToSetting = () => {
+  const onGoToSetting = useCallback(() => {
     setShowUserSettings(true);
-  };
+  }, []);
 
   const onLessonSelect = ({ id }) => {
     const chapter = getChapterByLesson(id);
@@ -191,7 +222,7 @@ const NewChatPage = (props) => {
   return (
     <div className={classNames(styles.newChatPage)}>
       <AppContext.Provider
-        value={{ frameLayout, hasLogin, userInfo, theme: '' }}
+        value={{ frameLayout, mobileStyle, hasLogin, userInfo, theme: '' }}
       >
         <Skeleton
           style={{ width: '100%', height: '100%' }}
@@ -218,6 +249,7 @@ const NewChatPage = (props) => {
               onPurchased={onPurchased}
               showUserSettings={showUserSettings}
               onUserSettingsClose={() => setShowUserSettings(false)}
+              chapterUpdate={onChapterUpdate}
             />
           }
         </Skeleton>

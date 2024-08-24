@@ -1,6 +1,16 @@
 .courseCatalog {
   margin-top: 10px;
 
+  &.mobile {
+    .titleRow {
+      .rightSection {
+        .resetButton {
+          display: flex;
+        }
+      }
+    }
+  }
+
   &.collapse {
     .titleRow {
       .collapseBtn {
@@ -21,14 +31,38 @@
     justify-content: space-between;
     cursor: pointer;
     color: var(--color-8);
+    height: 24px;
+
+    &:hover {
+      .rightSection {
+        .resetButton {
+          display: flex;
+        }
+      }
+    }
 
     .collapseBtn {
       width: 16px;
       transition: transform 0.2s ease-in;
     }
+
+    .leftSection {
+      flex: 1 1 0;
+    }
+    .rightSection {
+      flex: 0 0 auto;
+      display: flex;
+      flex-flow: row nowrap;
+      align-items: center;
+
+      .resetButton {
+        margin: 0 6px;
+        display: none;
+      }
+    }
   }
 
   .sectionList {
-    padding-top: 10px; 
+    padding-top: 10px;
   }
 }

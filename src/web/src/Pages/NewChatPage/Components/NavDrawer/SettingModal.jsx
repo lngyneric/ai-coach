@@ -13,7 +13,6 @@ import exitLoginIcon from 'Assets/newchat/light/exit-login-2x.png';
 import { useDisclosture } from 'common/hooks/useDisclosture.js';
 import PayModal from '../Pay/PayModal.jsx';
 import PayModalM from '../Pay/PayModalM.jsx';
-import { FRAME_LAYOUT_MOBILE } from 'constants/uiConstants';
 
 export const SettingModal = ({
   open,
@@ -23,10 +22,8 @@ export const SettingModal = ({
   onGoToSetting = () => {},
   className,
 }) => {
-  const { hasLogin, userInfo, logout } = useUserStore((state) => state);
-  const { frameLayout } = useContext(AppContext);
-
-  const mobileStyle = frameLayout === FRAME_LAYOUT_MOBILE;
+  const { hasLogin, userInfo, logout, refreshUserInfo  } = useUserStore((state) => state);
+  const { frameLayout, mobileStyle } = useContext(AppContext);
 
   const {
     open: payModalOpen,
@@ -61,6 +58,10 @@ export const SettingModal = ({
       onPayModalOpen();
     }
   }, [hasLogin, onLoginClick, onPayModalOpen]);
+
+  const onPayOk = useCallback( () => {
+    refreshUserInfo();
+  }, [refreshUserInfo]);
 
   return (
     <>
@@ -101,13 +102,13 @@ export const SettingModal = ({
           <PayModalM
             open={payModalOpen}
             onCancel={onPayModalClose}
-            onOk={onPayModalClose}
+            onOk={onPayOk}
           />
         ) : (
           <PayModal
             open={payModalOpen}
             onCancel={onPayModalClose}
-            onOk={onPayModalClose}
+            onOk={onPayOk}
           />
         ))}
     </>

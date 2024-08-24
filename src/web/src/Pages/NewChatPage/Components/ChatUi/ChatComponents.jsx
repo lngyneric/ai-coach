@@ -6,6 +6,7 @@ import {
   useImperativeHandle,
   useState,
   useContext,
+  useRef,
 } from 'react';
 import { runScript, getLessonStudyRecord } from 'Api/study';
 import { genUuid } from 'Utils/common.js';
@@ -23,7 +24,6 @@ import {
 import classNames from 'classnames';
 import { useUserStore } from 'stores/useUserStore.js';
 import { fixMarkdown, fixMarkdownStream } from 'Utils/markdownUtils.js';
-import { FRAME_LAYOUT_MOBILE } from 'constants/uiConstants.js';
 import PayModal from '../Pay/PayModal.jsx';
 import { useDisclosture } from 'common/hooks/useDisclosture.js';
 import { memo } from 'react';
@@ -146,6 +146,7 @@ export const ChatComponents = forwardRef(
       onGoChapter = (id) => {},
       chapterId,
       onPurchased,
+      chapterUpdate,
     },
     ref
   ) => {
@@ -163,7 +164,8 @@ export const ChatComponents = forwardRef(
     const [isStreaming, setIsStreaming] = useState(false);
     const [initRecords, setInitRecords] = useState([]);
 
-    const { userInfo, frameLayout } = useContext(AppContext);
+    const { userInfo, frameLayout, mobileStyle } = useContext(AppContext);
+    const chatRef = useRef();
     const { lessonId: currLessonId, changeCurrLesson } = useCourseStore(
       (state) => state
     );
@@ -171,12 +173,14 @@ export const ChatComponents = forwardRef(
     const { messages, appendMsg, setTyping, updateMsg, resetList } =
       useMessages([]);
 
-    const { checkLogin, updateUserInfo } = useUserStore((state) => ({
-      checkLogin: state.checkLogin,
-      updateUserInfo: state.updateUserInfo,
-    }));
+    const { checkLogin, updateUserInfo, refreshUserInfo } = useUserStore(
+      (state) => ({
+        checkLogin: state.checkLogin,
+        updateUserInfo: state.updateUserInfo,
+        refreshUserInfo: state.refreshUserInfo,
+      })
+    );
 
-    const mobileStyle = frameLayout === FRAME_LAYOUT_MOBILE;
     const {
       open: payModalOpen,
       onOpen: onPayModalOpen,
@@ -304,6 +308,7 @@ export const ChatComponents = forwardRef(
               lessonUpdateResp(response, isEnd, nextStep);
             } else if (response.type === RESP_EVENT_TYPE.CHAPTER_UPDATE) {
               const { status, lesson_id: lessonId } = response.content;
+              chapterUpdate?.({ id: lessonId, status });
               if (status === LESSON_STATUS.COMPLETED) {
                 isEnd = true;
                 setLessonEnd(true);
@@ -331,9 +336,11 @@ export const ChatComponents = forwardRef(
       },
       [
         appendMsg,
+        chapterUpdate,
         checkLogin,
         lessonUpdateResp,
         setTyping,
+        trackTrailProgress,
         updateMsg,
         updateUserInfo,
         userInfo,
@@ -428,14 +435,15 @@ export const ChatComponents = forwardRef(
       }
     }, [chapterId, loadedChapterId, resetAndLoadData]);
 
-    useUserStore.subscribe(
-      (state) => state.hasLogin,
-      () => {
-        console.log('hasLogin subscribe');
-        setLoadedChapterId(chapterId);
-        resetAndLoadData();
-      }
-    );
+    useEffect(() => {
+      return useUserStore.subscribe(
+        (state) => state.hasLogin,
+        () => {
+          setLoadedChapterId(chapterId);
+          resetAndLoadData();
+        }
+      );
+    }, [chapterId, resetAndLoadData]);
 
     // debugger
     useEffect(() => {
@@ -507,6 +515,7 @@ export const ChatComponents = forwardRef(
     const onPayModalOk = useCallback(() => {
       handleSend(INTERACTION_OUTPUT_TYPE.ORDER);
       onPurchased?.();
+      refreshUserInfo();
     }, [handleSend, onPurchased]);
 
     const renderMessageContent = useCallback(
@@ -550,7 +559,7 @@ export const ChatComponents = forwardRef(
       }
     };
 
-    const onChatInputSend = async (type, val, scriptId) => {
+    const onChatInputSend = useCallback(async (type, val, scriptId) => {
       if (type === INTERACTION_OUTPUT_TYPE.NEXT_CHAPTER) {
         onGoChapter?.(val.lessonId);
         return;
@@ -564,9 +573,22 @@ export const ChatComponents = forwardRef(
       }
 
       handleSend(type, val, scriptId);
-    };
+    }, [handleSend, onGoChapter, onPayModalOpen, trackEvent]);
 
     useImperativeHandle(ref, () => ({}));
+
+    const onChatInteractionAreaSizeChange = useCallback(({ height }) => {
+      if (!chatRef || !chatRef.current) { 
+        return;
+      }
+
+      const messageListElem = chatRef.current.querySelector('.MessageList');
+      if (!messageListElem) {
+        return;
+      }
+
+      messageListElem.style.paddingBottom = `${height}px`;
+    });
     return (
       <div
         className={classNames(
@@ -574,6 +596,7 @@ export const ChatComponents = forwardRef(
           className,
           mobileStyle ? styles.mobile : ''
         )}
+        ref={chatRef}
       >
         <Chat
           navbar={null}
@@ -592,9 +615,8 @@ export const ChatComponents = forwardRef(
             type={inputModal.type}
             props={inputModal.props}
             disabled={inputDisabled}
-            onSend={(type, val) => {
-              onChatInputSend(type, val);
-            }}
+            onSend={onChatInputSend}
+            onSizeChange={onChatInteractionAreaSizeChange}
           />
         )}
         {payModalOpen &&

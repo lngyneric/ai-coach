@@ -33,6 +33,7 @@ export const CourseCatalogList = ({
               key={catalog.id}
               id={catalog.id}
               name={catalog.name}
+              status={catalog.status}
               lessons={catalog.lessons}
               collapse={catalog.collapse}
               onCollapse={onChapterCollapse}

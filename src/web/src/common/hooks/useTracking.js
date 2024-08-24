@@ -38,7 +38,6 @@ export const useTracking = () => {
   const trackTrailProgress = useCallback(async (scriptId) => {
     try {
       const { data: scriptInfo } = await getScriptInfo(scriptId);
-      console.log('scriptInfo',scriptInfo);
 
       // 是否体验课
       if (!scriptInfo?.is_trial_lesson) {

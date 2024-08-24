@@ -4,16 +4,18 @@ import classNames from 'classnames';
 import { ConfigProvider } from 'antd';
 import { forwardRef, memo } from 'react';
 
-export const MainButton = forwardRef((props, ref) => {
+export const LineButton = forwardRef((props, ref) => {
   return (
     <ConfigProvider
       theme={{
         components: {
           Button: {
-            colorPrimary: '#042ED2',
-            colorPrimaryHover: '#3658DB',
-            colorPrimaryActive: '#0325A8',
-            lineWidth: 0,
+            defaultColor: '#042ED2',
+            defaultHoverColor: '#3658DB',
+            defaultActiveColor: '#0325A8',
+            defaultBorderColor: '#042ED2',
+            defaultHoverBorderColor: '#3658DB',
+            defaultActiveBorderColor: '#0325A8',
           },
         },
       }}
@@ -21,8 +23,7 @@ export const MainButton = forwardRef((props, ref) => {
       <Button
         ref={ref}
         {...props}
-        type="primary"
-        shape="round"
+        type="default"
         className={classNames(styles.mainButton, props.className)}
         style={{ width: props.width, height: props.height, ...props.style }}
       >
@@ -32,4 +33,4 @@ export const MainButton = forwardRef((props, ref) => {
   );
 });
 
-export default memo(MainButton);
+export default memo(LineButton);
