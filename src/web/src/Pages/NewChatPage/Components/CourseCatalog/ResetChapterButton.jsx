@@ -37,7 +37,7 @@ export const ResetChapterButton = ({ className, chapterId, chapterName, onClick,
   return (
     <>
       <LineButton className={classNames(className)} onClick={onButtonClick} size="small" >
-        重置
+        重修
       </LineButton>
     </>
   );
