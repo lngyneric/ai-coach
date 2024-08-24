@@ -45,6 +45,8 @@ body {
   --color-9: #cdd4df;
   --color-20: #8C4B1D;
 
+  --color-1-rgb: 15, 99, 238;
+
 
   /* 状态颜色 */
   --success-color: #00a27a;

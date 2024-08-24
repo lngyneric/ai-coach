@@ -89,6 +89,20 @@
       justify-content: center;
     }
 
+    .channelSwitchWrapper {
+      margin-top: 20px;
+      flex-flow: column nowrap;
+      display: flex;
+      justify-content: center;
+      align-items: center;
+
+      .channelDesc {
+        margin-top: 10px;
+        color: var(--color-8);
+        font-size: var(--font-size-5);
+      }
+    }
+
     .couponCodeWrapper {
       display: flex;
       justify-content: center;
