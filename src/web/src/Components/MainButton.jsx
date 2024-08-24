@@ -5,6 +5,7 @@ import { ConfigProvider } from 'antd';
 import { forwardRef, memo } from 'react';
 
 export const MainButton = forwardRef((props, ref) => {
+  const height = props.height || 40;
   return (
     <ConfigProvider
       theme={{
@@ -24,7 +25,7 @@ export const MainButton = forwardRef((props, ref) => {
         type="primary"
         shape="round"
         className={classNames(styles.mainButton, props.className)}
-        style={{ width: props.width, height: props.height, ...props.style }}
+        style={{ width: props.width, height, ...props.style }}
       >
         {props.children}
       </Button>
