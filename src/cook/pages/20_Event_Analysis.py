@@ -45,7 +45,7 @@ with login():
     current_time = datetime.now().strftime("%Y-%m-%d %H:%M:%S")
 
     # 绘制漏斗图
-    fig = px.funnel(df, x='数量', y='剧本简述', title=f'体验课剧本漏洞 ({current_time})', height=script_num*50)
+    fig = px.funnel(df, x='数量', y='剧本简述', title=f'体验课剧本漏斗 ({current_time})', height=script_num*50)
     st.plotly_chart(fig, use_container_width=True)
 
     # 计算下降比例
