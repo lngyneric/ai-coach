@@ -166,8 +166,12 @@ export const ChatComponents = forwardRef(
 
     const { userInfo, frameLayout, mobileStyle } = useContext(AppContext);
     const chatRef = useRef();
-    const { lessonId: currLessonId, changeCurrLesson } = useCourseStore(
-      (state) => state
+    const { lessonId: currLessonId, changeCurrLesson, updateResetedChapterId } = useCourseStore(
+      (state) => ({
+        lessonId: state.lessonId,
+        changeCurrLesson: state.changeCurrLesson,
+        updateResetedChapterId: state.updateResetedChapterId,
+      })
     );
 
     const { messages, appendMsg, setTyping, updateMsg, resetList } =
@@ -436,6 +440,25 @@ export const ChatComponents = forwardRef(
     }, [chapterId, loadedChapterId, resetAndLoadData]);
 
     useEffect(() => {
+      return useCourseStore.subscribe(
+        (state) => state.resetedChapterId,
+        (curr) => {
+          if (!curr) {
+            return;
+          }
+
+          if (curr === loadedChapterId) {
+            resetAndLoadData();
+            // 恢复到 null
+            updateResetedChapterId(null);
+          } else {
+            return
+          }
+        }
+      );
+    });
+
+    useEffect(() => {
       return useUserStore.subscribe(
         (state) => state.hasLogin,
         () => {
@@ -516,7 +539,7 @@ export const ChatComponents = forwardRef(
       handleSend(INTERACTION_OUTPUT_TYPE.ORDER);
       onPurchased?.();
       refreshUserInfo();
-    }, [handleSend, onPurchased]);
+    }, [handleSend, onPurchased, refreshUserInfo]);
 
     const renderMessageContent = useCallback(
       (msg) => {
@@ -559,26 +582,29 @@ export const ChatComponents = forwardRef(
       }
     };
 
-    const onChatInputSend = useCallback(async (type, val, scriptId) => {
-      if (type === INTERACTION_OUTPUT_TYPE.NEXT_CHAPTER) {
-        onGoChapter?.(val.lessonId);
-        return;
-      }
+    const onChatInputSend = useCallback(
+      async (type, val, scriptId) => {
+        if (type === INTERACTION_OUTPUT_TYPE.NEXT_CHAPTER) {
+          onGoChapter?.(val.lessonId);
+          return;
+        }
 
-      if (type === INTERACTION_OUTPUT_TYPE.ORDER) {
-        setInputDisabled(true);
-        trackEvent(EVENT_NAMES.POP_PAY, { from: 'script', way: 'manual' });
-        onPayModalOpen();
-        return;
-      }
+        if (type === INTERACTION_OUTPUT_TYPE.ORDER) {
+          setInputDisabled(true);
+          trackEvent(EVENT_NAMES.POP_PAY, { from: 'script', way: 'manual' });
+          onPayModalOpen();
+          return;
+        }
 
-      handleSend(type, val, scriptId);
-    }, [handleSend, onGoChapter, onPayModalOpen, trackEvent]);
+        handleSend(type, val, scriptId);
+      },
+      [handleSend, onGoChapter, onPayModalOpen, trackEvent]
+    );
 
     useImperativeHandle(ref, () => ({}));
 
     const onChatInteractionAreaSizeChange = useCallback(({ height }) => {
-      if (!chatRef || !chatRef.current) { 
+      if (!chatRef || !chatRef.current) {
         return;
       }
 
