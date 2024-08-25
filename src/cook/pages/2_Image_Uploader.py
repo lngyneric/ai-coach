@@ -22,7 +22,7 @@ st.set_page_config(
 st.caption('')
 
 # 需要登录
-if login():
+with login():
 
     # 初始化 OSS bucket 对象
     if 'bucket' not in st.session_state:
