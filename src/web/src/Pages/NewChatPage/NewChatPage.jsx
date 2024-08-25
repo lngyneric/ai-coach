@@ -217,6 +217,10 @@ const NewChatPage = (props) => {
         navigate(`/newchat/${chapter.id}`);
       }
     }, 0);
+
+    if (mobileStyle) {
+      onNavClose();
+    }
   };
 
   return (

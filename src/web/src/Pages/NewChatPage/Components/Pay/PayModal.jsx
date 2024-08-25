@@ -25,6 +25,7 @@ import contactBzWechatImg from 'Assets/newchat/contact-bz-wechat.png';
 
 import payInfoBg from 'Assets/newchat/pay-info-bg.png';
 import PayModalFooter from './PayModalFooter.jsx';
+import PayChannelSwitch from './PayChannelSwitch.jsx';
 
 const DEFAULT_QRCODE = 'DEFAULT_QRCODE';
 const MAX_TIMEOUT = 1000 * 60 * 3;
@@ -197,7 +198,7 @@ export const PayModal = ({ open = false, onCancel, onOk }) => {
   );
 
   const onPayChannelSelectChange = useCallback((e) => {
-    setPayChannel(e);
+    setPayChannel(e.channel);
   }, []);
 
   return (
@@ -238,16 +239,6 @@ export const PayModal = ({ open = false, onCancel, onOk }) => {
                   已节省： {discount || '0.00'}
                 </div>
               </div>
-              <div className={styles.payChannelWrapper}>
-                <span>支付方式：</span>
-                <Select
-                  className={styles.payChannelSelect}
-                  options={getPayChannelOptions()}
-                  value={payChannel}
-                  style={{ width: '120px' }}
-                  onChange={onPayChannelSelectChange}
-                />
-              </div>
               <div className={styles.qrcodeWrapper}>
                 <QRCode
                   size={175}
@@ -256,6 +247,10 @@ export const PayModal = ({ open = false, onCancel, onOk }) => {
                   onRefresh={onQrcodeRefresh}
                   bordered={false}
                 />
+              </div>
+              <div className={styles.channelSwitchWrapper}>
+                <PayChannelSwitch channel={payChannel} onChange={onPayChannelSelectChange} />
+                <div className={styles.channelDesc}>现已支持 <span style={{ fontWeight: 'bold'}}>微信 & 支付宝</span> 扫码支付</div>
               </div>
               <div className={styles.couponCodeWrapper}>
                 <Button

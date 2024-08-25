@@ -390,11 +390,11 @@ export const ChatComponents = forwardRef(
       setInitRecords(null);
 
       const resp = await getLessonStudyRecord(chapterId);
-      const records = resp.data.records;
+      const records = resp.data?.records || [];
       setInitRecords(records);
       const ui = resp.data.ui;
 
-      if (records) {
+      if (records && records.length > 0) {
         records.forEach((v, i) => {
           if (v.script_type === CHAT_MESSAGE_TYPE.LESSON_SEPARATOR) {
           } else {
