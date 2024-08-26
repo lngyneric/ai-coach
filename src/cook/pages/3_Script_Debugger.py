@@ -94,24 +94,7 @@ def debug_model2(model, temperature, script, variables, system_role, user_input)
 
 # ==================== 主体框架 ====================
 # 需要登录
-# if login():
-with open('auth_config.yml') as file:
-    config = yaml.load(file, Loader=SafeLoader)
-
-# Pre-hashing all plain text passwords once
-# Hasher.hash_passwords(config['credentials'])
-
-authenticator = stauth.Authenticate(
-    config['credentials'],
-    config['cookie']['name'],
-    config['cookie']['key'],
-    config['cookie']['expiry_days'],
-    config['pre-authorized']
-)
-
-authenticator.login()
-
-if st.session_state['authentication_status']:
+with login():
 
     # 初始化要调试的模型列表
     if 'debug_models' not in st.session_state:
@@ -463,8 +446,3 @@ if st.session_state['authentication_status']:
                             st.write(f'#### {model}， temp={temperature}')
                             st.write(result)
                     st.write('-----')
-
-elif st.session_state['authentication_status'] is False:
-    st.error('Username/password is incorrect')
-elif st.session_state['authentication_status'] is None:
-    st.warning('Please enter your username and password')

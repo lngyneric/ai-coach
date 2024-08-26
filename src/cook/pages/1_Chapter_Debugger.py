@@ -11,14 +11,12 @@ from tools.auth import login
 # ==================== 各种初始化工作 ====================
 # 设置页面标题和图标
 st.set_page_config(
-    page_title="CodeSifu",
+    page_title="Chapter Debugger",
     page_icon="🧙‍♂️",  # 👨‍🏫
 )
-# 固定侧边栏宽度并添加Logo
-fix_sidebar_add_logo("static/CodeSifu_logo_w300.jpg")
 # 页面内的大标题小标题
-'# Code Sifu ⌨️🧙‍♂️⌨️'  # 📚
-st.caption('📚 你的专属AI编程私教')
+'# Ai-Sifu ⌨️🧙‍♂️⌨️'  # 📚
+st.caption('📚 章节顺序调试器')
 
 
 # ========== Debug 初始化 ==========
@@ -58,7 +56,7 @@ with st.sidebar:
 
 # ==================== 主体框架 ====================
 # 需要登录
-if login():
+with login():
 
     # 开发者模式要做的事情
     if st.session_state.DEV_MODE:
