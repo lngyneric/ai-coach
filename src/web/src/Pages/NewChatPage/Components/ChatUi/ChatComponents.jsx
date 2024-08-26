@@ -396,7 +396,7 @@ export const ChatComponents = forwardRef(
       const resp = await getLessonStudyRecord(chapterId);
       const records = resp.data?.records || [];
       setInitRecords(records);
-      const ui = resp.data.ui;
+      const ui = resp.data?.ui || null;
 
       if (records && records.length > 0) {
         records.forEach((v, i) => {
