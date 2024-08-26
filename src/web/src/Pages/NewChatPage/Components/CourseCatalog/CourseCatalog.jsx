@@ -45,7 +45,7 @@ export const CourseCatalog = ({
         <div className={styles.leftSection}>{name}</div>
         <div className={styles.rightSection}>
           {
-            false && (status === LESSON_STATUS.LEARNING || status === LESSON_STATUS.COMPLETED) &&
+            (status === LESSON_STATUS.LEARNING || status === LESSON_STATUS.COMPLETED) &&
             <ResetChapterButton
               onClick={onResetButtonClick}
               chapterId={id}
