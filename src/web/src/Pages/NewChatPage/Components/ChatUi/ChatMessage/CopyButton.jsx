@@ -5,18 +5,16 @@ import { useState } from 'react';
 import styles from './CopyButton.module.scss';
 import { useRef } from 'react';
 import classNames from 'classnames';
+import { copyText } from 'Utils/textutils.js';
 
 const TIMEOUT = 5000;
-const onCopy = (content) => {
-  navigator.clipboard.writeText(content);
-};
 
 export const CopyButton = ({ content }) => {
   const [hasCopy, setHasCopy] = useState(false);
   const timeoutRef = useRef();
 
   const onCopyClick = () => {
-    onCopy(content);
+    copyText(content);
     setHasCopy(true);
 
     if (timeoutRef.current) {
