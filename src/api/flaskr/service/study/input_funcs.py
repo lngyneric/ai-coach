@@ -184,7 +184,7 @@ def handle_input_continue(
                                 assoation.user_id = user_id
                                 db.session.add(assoation)
                             next_attend.status = ATTEND_STATUS_IN_PROGRESS
-                            next_attend.script_index = 0
+                            next_attend.script_index = -1
                             attend_info.status = ATTEND_STATUS_BRANCH
                             attend_info = next_attend
                             app.logger.info("branch jump")
