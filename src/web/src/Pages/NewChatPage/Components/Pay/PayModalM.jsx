@@ -127,11 +127,13 @@ export const PayModalM = ({ open = false, onCancel, onOk }) => {
       return;
     }
 
+    onCouponCodeModalClose();
+
     if (resp.data.status === ORDER_STATUS.BUY_STATUS_SUCCESS) {
       setIsCompleted(true);
       onOk();
     }
-  }, [couponCode, messageApi, onOk, orderId]);
+  }, [couponCode, messageApi, onCouponCodeModalClose, onOk, orderId]);
 
   return (
     <>
