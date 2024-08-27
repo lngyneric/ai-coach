@@ -2,13 +2,13 @@ import { memo } from 'react';
 import ReactMarkdown from 'react-markdown';
 import { Prism as SyntaxHighlighter } from 'react-syntax-highlighter';
 import { vscDarkPlus } from 'react-syntax-highlighter/dist/esm/styles/prism';
-import { CopyOutlined } from '@ant-design/icons';
 import { Bubble } from '@chatui/core';
-import { Button, Image } from 'antd';
+import { Image } from 'antd';
 import remarkGfm from 'remark-gfm';
 import rehypeRaw from 'rehype-raw';
 import classNames from 'classnames';
 import styles from './MarkdownBubble.module.scss';
+import CopyButton from './CopyButton.jsx';
 
 export const MarkdownBubble = (props) => {
   const { mobileStyle, onImageLoaded } = props;
@@ -34,13 +34,7 @@ export const MarkdownBubble = (props) => {
                     position: 'relative',
                   }}
                 >
-                  <Button
-                    className="copy_btn"
-                    type="dashed"
-                    size="small"
-                    icon={<CopyOutlined></CopyOutlined>}
-                    onClick={() => onCopy(children)}
-                  ></Button>
+                  <CopyButton content={children} />
                   <SyntaxHighlighter
                     {...props}
                     children={String(children).replace(/\n$/, '')}

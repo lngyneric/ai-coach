@@ -149,18 +149,6 @@ const NewChatPage = (props) => {
   }, [chapterId, checkUrl]);
 
   useEffect(() => {
-    return useCourseStore.subscribe(
-      (state) => state.resetedChapterId,
-      (curr) => {
-        console.log('subscribe resetedChapterId', curr);
-        if (curr) {
-          window.location.reload();
-        }
-      }
-    );
-  });
-
-  useEffect(() => {
     return useUserStore.subscribe(
       (state) => state.hasLogin,
       () => {
@@ -222,6 +210,18 @@ const NewChatPage = (props) => {
       onNavClose();
     }
   };
+
+  useEffect(() => {
+    return useCourseStore.subscribe(
+      (state) => state.resetedChapterId,
+      (curr) => {
+        if (!curr || curr === chapterId) {
+          return;
+        }
+        onGoChapter(curr);
+      }
+    );
+  });
 
   return (
     <div className={classNames(styles.newChatPage)}>

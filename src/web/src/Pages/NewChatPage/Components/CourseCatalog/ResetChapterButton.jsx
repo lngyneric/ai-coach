@@ -5,7 +5,13 @@ import { useCourseStore } from 'stores/useCourseStore.js';
 import { Modal } from 'antd';
 import { useTracking, EVENT_NAMES } from 'common/hooks/useTracking.js';
 
-export const ResetChapterButton = ({ className, chapterId, chapterName, onClick, onConfirm }) => {
+export const ResetChapterButton = ({
+  className,
+  chapterId,
+  chapterName,
+  onClick,
+  onConfirm,
+}) => {
   const { trackEvent } = useTracking();
   const { resetChapter } = useCourseStore((state) => ({
     resetChapter: state.resetChapter,
@@ -23,7 +29,7 @@ export const ResetChapterButton = ({ className, chapterId, chapterName, onClick,
             chapter_name: chapterName,
           });
           onConfirm?.();
-        }
+        },
       });
       trackEvent(EVENT_NAMES.RESET_CHAPTER, {
         chapter_id: chapterId,
@@ -36,7 +42,12 @@ export const ResetChapterButton = ({ className, chapterId, chapterName, onClick,
 
   return (
     <>
-      <LineButton className={classNames(className)} onClick={onButtonClick} size="small" >
+      <LineButton
+        className={classNames(className)}
+        onClick={onButtonClick}
+        size="small"
+        shape="round"
+      >
         重修
       </LineButton>
     </>
