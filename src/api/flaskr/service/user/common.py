@@ -334,7 +334,7 @@ def verify_sms_code(app: Flask, user_id, phone: str, chekcode: str) -> UserToken
             User.query.filter(User.mobile == phone).order_by(User.id.asc()).first()
         )
         if not user_info:
-            app.logger.info("user_info is None,query user_id:" + user_id)
+            # app.logger.info("user_info is None,query user_id:" + user_id)
             user_info = (
                 User.query.filter(User.user_id == user_id)
                 .order_by(User.id.asc())

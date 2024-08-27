@@ -156,7 +156,7 @@ def get_study_record(app: Flask, user_id: str, lesson_id: str) -> StudyRecordDTO
         app.logger.info("attend_scripts:{}".format(len(attend_scripts)))
         index = len(attend_scripts) - 1
         if len(attend_scripts) == 0:
-            return StudyRecordDTO(None)
+            return StudyRecordDTO([])
         lesson_id = attend_scripts[-1].lesson_id
         while lesson_id not in lesson_ids:
             lesson_id = attend_scripts[index].lesson_id

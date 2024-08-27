@@ -31,8 +31,7 @@ def delete_course(course: Series):
 
 
 # 需要登录
-authenticator, config = login()
-if authenticator is not False:
+with login() as (authenticator, config):
 
     if st.session_state["authentication_status"]:
         user_name = st.session_state["username"]
@@ -144,8 +143,3 @@ if authenticator is not False:
             authenticator.logout(location='unrendered')
             st.session_state.is_login_welcome = False
 
-
-    elif st.session_state["authentication_status"] is False:
-        st.error('Username/password is incorrect')
-    elif st.session_state["authentication_status"] is None:
-        st.warning('Please enter your username and password')
