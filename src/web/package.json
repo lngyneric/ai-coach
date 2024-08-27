@@ -30,6 +30,7 @@
     "craco-alias": "^3.0.1",
     "dayjs": "^1.11.9",
     "dotenv-cli": "^7.2.1",
+    "eruda": "^3.2.3",
     "i18next": "^23.12.2",
     "i18next-http-backend": "^2.5.2",
     "immer": "^10.1.1",

@@ -7,6 +7,11 @@ import locale from 'antd/locale/zh_CN';
 import { useSystemStore } from 'stores/useSystemStore.js';
 import i18n from './i18n.js';
 import { inWechat, wechatLogin } from 'constants/uiConstants.js';
+import { getBoolEnv } from 'Utils/envUtils.js';
+
+if (getBoolEnv('REACT_APP_ERUDA')) {
+  import('eruda').then(eruda => eruda.default.init());
+}
 
 const RouterView = () => useRoutes(routes);
 
