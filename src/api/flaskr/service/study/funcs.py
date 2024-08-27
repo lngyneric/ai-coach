@@ -193,13 +193,13 @@ def get_study_record(app: Flask, user_id: str, lesson_id: str) -> StudyRecordDTO
             ).first()
             if last_attend is None:
                 app.logger.info("last_attend is None")
-                return ret
+                # return ret
         else:
             last_attend = last_attends[-1]
         last_attend_script = attend_scripts[-1]
         if last_attend.status == ATTEND_STATUS_COMPLETED:
             app.logger.info("last_attend is completed")
-            # return ret
+            return ret
         if (
             last_script.script_ui_type == UI_TYPE_INPUT
             and last_attend_script.script_role == ROLE_TEACHER

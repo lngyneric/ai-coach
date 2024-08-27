@@ -3,6 +3,7 @@ import traceback
 from typing import Generator
 from flask import Flask
 
+from flaskr.service.common.models import COURSE_NOT_FOUND
 from flaskr.service.user.models import User
 from ...api.langfuse import langfuse_client as langfuse
 from ...service.lesson.const import (
@@ -11,9 +12,10 @@ from ...service.lesson.const import (
     UI_TYPE_PHONE,
     UI_TYPE_TO_PAY,
 )
-from ...service.lesson.models import AICourse
+from ...service.lesson.models import AICourse, AILesson
 from ...service.order.consts import (
-    ATTEND_STATUS_RESET,
+    ATTEND_STATUS_IN_PROGRESS,
+    ATTEND_STATUS_NOT_STARTED,
     BUY_STATUS_SUCCESS,
 )
 from ...service.order.funs import (
@@ -79,12 +81,42 @@ def run_script_inner(
                         user_id, course_id, lesson_id
                     )
                 )
+                # 查找lesson_id
+                lesson_info = AILesson.query.filter(
+                    AILesson.lesson_id == lesson_id,
+                    AILesson.status == 1,
+                ).first()
+                if not lesson_info:
+                    raise COURSE_NOT_FOUND
+
+                parent_no = lesson_info.lesson_no
+                if len(parent_no) >= 2:
+                    parent_no = parent_no[:-2]
+
+                lessons = AILesson.query.filter(
+                    AILesson.lesson_no.like(parent_no + "__"),
+                    AILesson.status == 1,
+                ).all()
+                app.logger.info(
+                    "study lesson no :{}".format(
+                        ",".join([lesson.lesson_no for lesson in lessons])
+                    )
+                )
+                lesson_ids = [lesson.lesson_id for lesson in lessons]
                 attend_info = AICourseLessonAttend.query.filter(
                     AICourseLessonAttend.user_id == user_id,
                     AICourseLessonAttend.course_id == course_id,
-                    AICourseLessonAttend.lesson_id == lesson_id,
-                    AICourseLessonAttend.status != ATTEND_STATUS_RESET,
+                    AICourseLessonAttend.lesson_id.in_(lesson_ids),
+                    AICourseLessonAttend.status.in_(
+                        [ATTEND_STATUS_NOT_STARTED, ATTEND_STATUS_IN_PROGRESS]
+                    ),
                 ).first()
+                app.logger.info(
+                    "attend_info -- attend_id:{},lesson_id:{}".format(
+                        attend_info.attend_id, attend_info.lesson_id
+                    )
+                )
+                lesson_id = attend_info.lesson_id
                 if not attend_info:
                     # 没有课程记录
                     for i in "请购买课程":
