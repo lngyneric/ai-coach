@@ -116,7 +116,7 @@ def handle_input_text(
             time.sleep(0.01)
         yield make_script_dto("text_end", "", script_info.script_id)
         log_script = generation_attend(app, attend, script_info)
-        log_script.script_content = response_text
+        log_script.script_content = reason
         log_script.script_role = ROLE_TEACHER
         db.session.add(log_script)
         span.end(output=response_text)

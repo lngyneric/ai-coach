@@ -234,10 +234,10 @@ def run_script_inner(
                                     "chapter_update", attend_update.__json__(), ""
                                 )
                         app.logger.info("script_info is None")
-                except BreakException as e:
-                    app.logger.error("BreakException")
-                    app.logger.error(e)
-                    db.session.rollback()
+                except BreakException:
+                    # app.logger.error("BreakException")
+                    # app.logger.error(e)
+                    db.session.commit()
                     return
             else:
                 app.logger.info("script_info is None,to update attend")
