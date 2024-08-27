@@ -25,6 +25,7 @@ const App = () => {
   const currChannel = params.channel || '';
 
   if (channel !== currChannel) {
+    console.log('init channel value', currChannel);
     updateChannel(currChannel);
   }
   
@@ -42,6 +43,7 @@ const App = () => {
       }
 
       if (currCode !== wechatCode) {
+        console.log('init wechatcode value', currCode);
         updateWechatCode(currCode);
       }
     } 
