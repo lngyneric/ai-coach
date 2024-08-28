@@ -354,9 +354,10 @@ def update_attend_lesson_info(app: Flask, attend_id: str) -> list[AILessonAttend
         if len(next_lessons) > 0:
             # 解锁
             for next_lesson_attend in next_lessons:
-                if (
-                    next_lesson_attend["lesson"].lesson_no == next_no
-                    and next_lesson_attend["attend"].status == ATTEND_STATUS_LOCKED
+                if next_lesson_attend["lesson"].lesson_no == next_no and (
+                    next_lesson_attend["attend"].status == ATTEND_STATUS_LOCKED
+                    or next_lesson_attend["attend"].status == ATTEND_STATUS_NOT_STARTED
+                    or next_lesson_attend["attend"].status == ATTEND_STATUS_IN_PROGRESS
                 ):
                     next_lesson_attend["attend"].status = ATTEND_STATUS_NOT_STARTED
                     res.append(
@@ -367,9 +368,10 @@ def update_attend_lesson_info(app: Flask, attend_id: str) -> list[AILessonAttend
                             ATTEND_STATUS_VALUES[ATTEND_STATUS_NOT_STARTED],
                         )
                     )
-                if (
-                    next_lesson_attend["lesson"].lesson_no == next_no + "01"
-                    and next_lesson_attend["attend"].status == ATTEND_STATUS_LOCKED
+                if next_lesson_attend["lesson"].lesson_no == next_no + "01" and (
+                    next_lesson_attend["attend"].status == ATTEND_STATUS_LOCKED
+                    or next_lesson_attend["attend"].status == ATTEND_STATUS_NOT_STARTED
+                    or next_lesson_attend["attend"].status == ATTEND_STATUS_IN_PROGRESS
                 ):
                     next_lesson_attend["attend"].status = ATTEND_STATUS_NOT_STARTED
                     res.append(

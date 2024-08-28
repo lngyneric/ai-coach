@@ -17,6 +17,7 @@ from ...service.order.consts import (
     ATTEND_STATUS_BRANCH,
     ATTEND_STATUS_IN_PROGRESS,
     ATTEND_STATUS_NOT_STARTED,
+    ATTEND_STATUS_VALUES,
     BUY_STATUS_SUCCESS,
 )
 from ...service.order.funs import (
@@ -168,6 +169,13 @@ def run_script_inner(
                             yield make_script_dto(
                                 "chapter_update", attend_update.__json__(), ""
                             )
+                            if (
+                                attend_update.status
+                                == ATTEND_STATUS_VALUES[ATTEND_STATUS_NOT_STARTED]
+                            ):
+                                yield make_script_dto(
+                                    "next_chapter", attend_update.__json__(), ""
+                                )
             if script_info:
                 try:
                     check_paid = True
@@ -220,6 +228,15 @@ def run_script_inner(
                                     yield make_script_dto(
                                         "chapter_update", attend_update.__json__(), ""
                                     )
+                                    if (
+                                        attend_update.status
+                                        == ATTEND_STATUS_VALUES[
+                                            ATTEND_STATUS_NOT_STARTED
+                                        ]
+                                    ):
+                                        yield make_script_dto(
+                                            "next_chapter", attend_update.__json__(), ""
+                                        )
                         if script_info:
                             response = handle_output(
                                 app,
@@ -276,6 +293,13 @@ def run_script_inner(
                                 yield make_script_dto(
                                     "chapter_update", attend_update.__json__(), ""
                                 )
+                                if (
+                                    attend_update.status
+                                    == ATTEND_STATUS_VALUES[ATTEND_STATUS_NOT_STARTED]
+                                ):
+                                    yield make_script_dto(
+                                        "next_chapter", attend_update.__json__(), ""
+                                    )
                         app.logger.info("script_info is None")
                 except BreakException:
                     # app.logger.error("BreakException")
@@ -294,6 +318,13 @@ def run_script_inner(
                         yield make_script_dto(
                             "chapter_update", attend_update.__json__(), ""
                         )
+                        if (
+                            attend_update.status
+                            == ATTEND_STATUS_VALUES[ATTEND_STATUS_NOT_STARTED]
+                        ):
+                            yield make_script_dto(
+                                "next_chapter", attend_update.__json__(), ""
+                            )
             db.session.commit()
         except GeneratorExit:
             db.session.rollback()
