@@ -98,6 +98,11 @@ def get_lesson_and_attend_info(app: Flask, parent_no, course_id, user_id):
     ).all()
     if len(lessons) == 0:
         return []
+    app.logger.info(
+        "lessons:{}".format(
+            ",".join("'" + lesson.lesson_no + "'" for lesson in lessons)
+        )
+    )
     attend_infos = AICourseLessonAttend.query.filter(
         AICourseLessonAttend.lesson_id.in_([lesson.lesson_id for lesson in lessons]),
         AICourseLessonAttend.user_id == user_id,

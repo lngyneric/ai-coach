@@ -117,19 +117,48 @@ def run_script_inner(
                         ]
                     ),
                 ).first()
-                app.logger.info(
-                    "attend_info -- attend_id:{},lesson_id:{}".format(
-                        attend_info.attend_id, attend_info.lesson_id
-                    )
-                )
-                lesson_id = attend_info.lesson_id
+
                 if not attend_info:
-                    # 没有课程记录
-                    for i in "请购买课程":
-                        yield make_script_dto("text", i, None)
-                        time.sleep(0.01)
-                    yield make_script_dto("text_end", "", None)
-                    return
+                    # # 没有课程记录
+                    # for i in "请购买课程":
+                    #     yield make_script_dto("text", i, None)
+                    #     time.sleep(0.01)
+                    # yield make_script_dto("text_end", "", None)
+                    app.logger.info("found no attend_info")
+
+                    lessons.sort(key=lambda x: x.lesson_no)
+                    lesson_id = lessons[-1].lesson_id
+
+                    attend_info = AICourseLessonAttend.query.filter(
+                        AICourseLessonAttend.user_id == user_id,
+                        AICourseLessonAttend.course_id == course_id,
+                        AICourseLessonAttend.lesson_id == lesson_id,
+                    ).first()
+                    if not attend_info:
+                        for i in "请购买课程":
+                            yield make_script_dto("text", i, None)
+                            time.sleep(0.01)
+                        yield make_script_dto("text_end", "", None)
+
+                    attends = update_attend_lesson_info(app, attend_info.attend_id)
+                    for attend_update in attends:
+                        if len(attend_update.lesson_no) > 2:
+                            yield make_script_dto(
+                                "lesson_update", attend_update.__json__(), ""
+                            )
+                        else:
+                            yield make_script_dto(
+                                "chapter_update", attend_update.__json__(), ""
+                            )
+                            if (
+                                attend_update.status
+                                == ATTEND_STATUS_VALUES[ATTEND_STATUS_NOT_STARTED]
+                            ):
+                                yield make_script_dto(
+                                    "next_chapter", attend_update.__json__(), ""
+                                )
+                        return
+                lesson_id = attend_info.lesson_id
                 attend = AICourseLessonAttendDTO(
                     attend_info.attend_id,
                     attend_info.lesson_id,
