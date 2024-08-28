@@ -58,10 +58,6 @@ const NewChatPage = (props) => {
     initOpen: mobileStyle ? false : true,
   });
 
-  useEffect(() => {
-    console.log('update cid: ', cid);
-    updateChapterId(cid);
-  }, [cid, updateChapterId]);
 
   // 判断布局类型
   useEffect(() => {
@@ -77,9 +73,9 @@ const NewChatPage = (props) => {
     };
   }, [updateFrameLayout]);
 
-  const loadData = async () => {
+  const loadData = useCallback(async () => {
     await loadTree();
-  };
+  }, [loadTree]);
 
   const initAndCheckLogin = useCallback(async () => {
     await checkLogin();
@@ -131,6 +127,15 @@ const NewChatPage = (props) => {
     tree,
   ]);
 
+  useEffect(() => {
+    if (cid === chapterId) {
+      return;
+    }
+    console.log('update cid: ', cid);
+    updateChapterId(cid);
+    checkUrl(cid);
+  }, [chapterId, checkUrl, cid, updateChapterId]);
+
   useEffectOnce(() => {
     (async () => {
       console.log('useEffectOnce, init and check login');
@@ -181,7 +186,8 @@ const NewChatPage = (props) => {
     [updateChapterStatus]
   );
 
-  const onGoChapter = (id) => {
+  const onGoChapter = async (id) => {
+    await reloadTree();
     navigate(`/newchat/${id}`);
   };
 
