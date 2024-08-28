@@ -3,6 +3,7 @@ import traceback
 from typing import Generator
 from flask import Flask
 
+from flaskr.service.common.models import COURSE_NOT_FOUND
 from flaskr.service.user.models import User
 from ...api.langfuse import langfuse_client as langfuse
 from ...service.lesson.const import (
@@ -11,9 +12,11 @@ from ...service.lesson.const import (
     UI_TYPE_PHONE,
     UI_TYPE_TO_PAY,
 )
-from ...service.lesson.models import AICourse
+from ...service.lesson.models import AICourse, AILesson
 from ...service.order.consts import (
-    ATTEND_STATUS_RESET,
+    ATTEND_STATUS_BRANCH,
+    ATTEND_STATUS_IN_PROGRESS,
+    ATTEND_STATUS_NOT_STARTED,
     BUY_STATUS_SUCCESS,
 )
 from ...service.order.funs import (
@@ -79,12 +82,46 @@ def run_script_inner(
                         user_id, course_id, lesson_id
                     )
                 )
+                # 查找lesson_id
+                lesson_info = AILesson.query.filter(
+                    AILesson.lesson_id == lesson_id,
+                    AILesson.status == 1,
+                ).first()
+                if not lesson_info:
+                    raise COURSE_NOT_FOUND
+
+                parent_no = lesson_info.lesson_no
+                if len(parent_no) >= 2:
+                    parent_no = parent_no[:-2]
+
+                lessons = AILesson.query.filter(
+                    AILesson.lesson_no.like(parent_no + "__"),
+                    AILesson.status == 1,
+                ).all()
+                app.logger.info(
+                    "study lesson no :{}".format(
+                        ",".join([lesson.lesson_no for lesson in lessons])
+                    )
+                )
+                lesson_ids = [lesson.lesson_id for lesson in lessons]
                 attend_info = AICourseLessonAttend.query.filter(
                     AICourseLessonAttend.user_id == user_id,
                     AICourseLessonAttend.course_id == course_id,
-                    AICourseLessonAttend.lesson_id == lesson_id,
-                    AICourseLessonAttend.status != ATTEND_STATUS_RESET,
+                    AICourseLessonAttend.lesson_id.in_(lesson_ids),
+                    AICourseLessonAttend.status.in_(
+                        [
+                            ATTEND_STATUS_NOT_STARTED,
+                            ATTEND_STATUS_IN_PROGRESS,
+                            ATTEND_STATUS_BRANCH,
+                        ]
+                    ),
                 ).first()
+                app.logger.info(
+                    "attend_info -- attend_id:{},lesson_id:{}".format(
+                        attend_info.attend_id, attend_info.lesson_id
+                    )
+                )
+                lesson_id = attend_info.lesson_id
                 if not attend_info:
                     # 没有课程记录
                     for i in "请购买课程":
@@ -109,7 +146,8 @@ def run_script_inner(
             trace_args["name"] = "ai-python"
             trace = langfuse.trace(**trace_args)
             trace_args["output"] = ""
-            next = False
+            next = 0
+            is_first_add = False
             # 如果有用户输入,就得到当前这一条,否则得到下一条
             if script_id:
                 # 如果有指定脚本
@@ -117,7 +155,7 @@ def run_script_inner(
                 script_info = get_script_by_id(app, script_id)
             else:
                 # 获取当前脚本
-                script_info, attend_updates = get_script(
+                script_info, attend_updates, is_first_add = get_script(
                     app, attend_id=attend.attend_id, next=next
                 )
                 if len(attend_updates) > 0:
@@ -158,15 +196,20 @@ def run_script_inner(
                             yield from response
                     # 如果是Start或是Continue，就不需要再次获取脚本
                     if input_type == INPUT_TYPE_START:
-                        next = False
+                        next = 0
                     else:
-                        next = check_paid
+                        next = check_paid and 1 or 0
                     while True:
-                        if next:
-                            script_info, attend_updates = get_script(
-                                app, attend_id=attend.attend_id, next=next
-                            )
-                        next = True
+                        app.logger.info(
+                            "next:{} is_first:{}".format(next, is_first_add)
+                        )
+                        if is_first_add:
+                            is_first_add = False
+                            next = 0
+                        script_info, attend_updates, _ = get_script(
+                            app, attend_id=attend.attend_id, next=next
+                        )
+                        next = 1
                         if len(attend_updates) > 0:
                             for attend_update in attend_updates:
                                 if len(attend_update.lesson_no) > 2:
@@ -209,7 +252,7 @@ def run_script_inner(
                         # 返回下一轮交互
                         # 返回  下一轮的交互方式
                         if script_info.script_ui_type == UI_TYPE_CONTINUED:
-                            next = True
+                            next = 1
                             input_type = None
                         else:
                             yield from handle_ui(
@@ -234,10 +277,10 @@ def run_script_inner(
                                     "chapter_update", attend_update.__json__(), ""
                                 )
                         app.logger.info("script_info is None")
-                except BreakException as e:
-                    app.logger.error("BreakException")
-                    app.logger.error(e)
-                    db.session.rollback()
+                except BreakException:
+                    # app.logger.error("BreakException")
+                    # app.logger.error(e)
+                    db.session.commit()
                     return
             else:
                 app.logger.info("script_info is None,to update attend")
