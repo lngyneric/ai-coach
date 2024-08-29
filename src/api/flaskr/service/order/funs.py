@@ -405,14 +405,7 @@ def success_buy_record_from_pingxx(app: Flask, charge_id: str, body: dict):
                             db.session.add(attend)
                         db.session.commit()
                         send_order_feishu(app, buy_record.record_id)
-                        return AICourseBuyRecordDTO(
-                            buy_record.record_id,
-                            buy_record.user_id,
-                            buy_record.course_id,
-                            buy_record.price,
-                            buy_record.status,
-                            buy_record.discount_value,
-                        )
+                        return query_buy_record(app, buy_record.record_id)
                     else:
                         app.logger.error(
                             "record:{} not found".format(pingxx_order.record_id)

@@ -7,6 +7,11 @@ import locale from 'antd/locale/zh_CN';
 import { useSystemStore } from 'stores/useSystemStore.js';
 import i18n from './i18n.js';
 import { inWechat, wechatLogin } from 'constants/uiConstants.js';
+import { getBoolEnv } from 'Utils/envUtils.js';
+
+if (getBoolEnv('REACT_APP_ERUDA')) {
+  import('eruda').then(eruda => eruda.default.init());
+}
 
 const RouterView = () => useRoutes(routes);
 
@@ -20,6 +25,7 @@ const App = () => {
   const currChannel = params.channel || '';
 
   if (channel !== currChannel) {
+    console.log('init channel value', currChannel);
     updateChannel(currChannel);
   }
   
@@ -37,6 +43,7 @@ const App = () => {
       }
 
       if (currCode !== wechatCode) {
+        console.log('init wechatcode value', currCode);
         updateWechatCode(currCode);
       }
     } 

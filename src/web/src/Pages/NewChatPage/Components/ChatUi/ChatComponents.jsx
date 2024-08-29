@@ -311,8 +311,8 @@ export const ChatComponents = forwardRef(
             } else if (response.type === RESP_EVENT_TYPE.LESSON_UPDATE) {
               lessonUpdateResp(response, isEnd, nextStep);
             } else if (response.type === RESP_EVENT_TYPE.CHAPTER_UPDATE) {
-              const { status, lesson_id: lessonId } = response.content;
-              chapterUpdate?.({ id: lessonId, status });
+              const { status, lesson_id: chapterId } = response.content;
+              chapterUpdate?.({ id: chapterId, status });
               if (status === LESSON_STATUS.COMPLETED) {
                 isEnd = true;
                 setLessonEnd(true);
@@ -323,7 +323,7 @@ export const ChatComponents = forwardRef(
                   type: INTERACTION_TYPE.NEXT_CHAPTER,
                   props: {
                     label: '下一章',
-                    lessonId,
+                    lessonId: chapterId,
                   },
                 });
                 setInputDisabled(false);

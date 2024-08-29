@@ -98,6 +98,11 @@ def get_lesson_and_attend_info(app: Flask, parent_no, course_id, user_id):
     ).all()
     if len(lessons) == 0:
         return []
+    app.logger.info(
+        "lessons:{}".format(
+            ",".join("'" + lesson.lesson_no + "'" for lesson in lessons)
+        )
+    )
     attend_infos = AICourseLessonAttend.query.filter(
         AICourseLessonAttend.lesson_id.in_([lesson.lesson_id for lesson in lessons]),
         AICourseLessonAttend.user_id == user_id,
@@ -188,7 +193,9 @@ def get_fmt_prompt(
     return prompt
 
 
-def get_script(app: Flask, attend_id: str, next: bool):
+def get_script(app: Flask, attend_id: str, next: int = 0):
+
+    is_first = False
     attend_info = AICourseLessonAttend.query.filter(
         AICourseLessonAttend.attend_id == attend_id
     ).first()
@@ -199,6 +206,7 @@ def get_script(app: Flask, attend_id: str, next: bool):
     if attend_info.status == ATTEND_STATUS_NOT_STARTED or attend_info.script_index == 0:
         attend_info.status = ATTEND_STATUS_IN_PROGRESS
         attend_info.script_index = 1
+
         # 检查是否是第一节课
         lesson = AILesson.query.filter(
             AILesson.lesson_id == attend_info.lesson_id
@@ -224,6 +232,7 @@ def get_script(app: Flask, attend_id: str, next: bool):
                 AICourseLessonAttend.user_id == attend_info.user_id,
                 AICourseLessonAttend.status != ATTEND_STATUS_RESET,
             ).first()
+            is_first = True
             if parent_attend.status == ATTEND_STATUS_NOT_STARTED:
                 parent_attend.status = ATTEND_STATUS_IN_PROGRESS
                 attend_infos.append(
@@ -234,6 +243,7 @@ def get_script(app: Flask, attend_id: str, next: bool):
                         ATTEND_STATUS_VALUES[ATTEND_STATUS_IN_PROGRESS],
                     )
                 )
+
     elif attend_info.status == ATTEND_STATUS_BRANCH:
         # 分支课程
         app.logger.info("branch")
@@ -256,16 +266,17 @@ def get_script(app: Flask, attend_id: str, next: bool):
                     AICourseLessonAttend.attend_id == assoation.to_attend_id
                 ).first()
         app.logger.info("to get branch script")
-        script_info, attend_infos = get_script(app, current.attend_id, next)
+        db.session.flush()
+        script_info, attend_infos, is_first = get_script(app, current.attend_id, next)
         if script_info:
-            return script_info, []
+            return script_info, [], is_first
         else:
             current.status = ATTEND_STATUS_COMPLETED
             attend_info.status = ATTEND_STATUS_IN_PROGRESS
             db.session.flush()
             return get_script(app, attend_id, next)
-    elif next:
-        attend_info.script_index = attend_info.script_index + 1
+    elif next > 0:
+        attend_info.script_index = attend_info.script_index + next
     script_info = AILessonScript.query.filter(
         AILessonScript.lesson_id == attend_info.lesson_id,
         AILessonScript.status == 1,
@@ -289,7 +300,7 @@ def get_script(app: Flask, attend_id: str, next: bool):
                 )
             )
     db.session.flush()
-    return script_info, attend_infos
+    return script_info, attend_infos, is_first
 
 
 def get_script_by_id(app: Flask, script_id: str) -> AILessonScript:
@@ -348,9 +359,10 @@ def update_attend_lesson_info(app: Flask, attend_id: str) -> list[AILessonAttend
         if len(next_lessons) > 0:
             # 解锁
             for next_lesson_attend in next_lessons:
-                if (
-                    next_lesson_attend["lesson"].lesson_no == next_no
-                    and next_lesson_attend["attend"].status == ATTEND_STATUS_LOCKED
+                if next_lesson_attend["lesson"].lesson_no == next_no and (
+                    next_lesson_attend["attend"].status == ATTEND_STATUS_LOCKED
+                    or next_lesson_attend["attend"].status == ATTEND_STATUS_NOT_STARTED
+                    or next_lesson_attend["attend"].status == ATTEND_STATUS_IN_PROGRESS
                 ):
                     next_lesson_attend["attend"].status = ATTEND_STATUS_NOT_STARTED
                     res.append(
@@ -361,9 +373,10 @@ def update_attend_lesson_info(app: Flask, attend_id: str) -> list[AILessonAttend
                             ATTEND_STATUS_VALUES[ATTEND_STATUS_NOT_STARTED],
                         )
                     )
-                if (
-                    next_lesson_attend["lesson"].lesson_no == next_no + "01"
-                    and next_lesson_attend["attend"].status == ATTEND_STATUS_LOCKED
+                if next_lesson_attend["lesson"].lesson_no == next_no + "01" and (
+                    next_lesson_attend["attend"].status == ATTEND_STATUS_LOCKED
+                    or next_lesson_attend["attend"].status == ATTEND_STATUS_NOT_STARTED
+                    or next_lesson_attend["attend"].status == ATTEND_STATUS_IN_PROGRESS
                 ):
                     next_lesson_attend["attend"].status = ATTEND_STATUS_NOT_STARTED
                     res.append(
