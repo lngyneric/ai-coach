@@ -1,4 +1,4 @@
-import { Button, Modal, Select } from 'antd';
+import { Button, Modal } from 'antd';
 import { useCallback } from 'react';
 import { memo, useState } from 'react';
 import { useTranslation } from 'react-i18next';
@@ -6,11 +6,7 @@ import styles from './PayModal.module.scss';
 import { useDisclosture } from 'common/hooks/useDisclosture.js';
 import CouponCodeModal from './CouponCodeModal.jsx';
 import { QRCode } from 'antd';
-import {
-  ORDER_STATUS,
-  PAY_CHANNEL_WECHAT,
-  getPayChannelOptions,
-} from './constans.js';
+import { ORDER_STATUS, PAY_CHANNEL_WECHAT } from './constans.js';
 import {
   getPayUrl,
   initOrder,
@@ -21,6 +17,7 @@ import { useEffect } from 'react';
 import classNames from 'classnames';
 import { useInterval } from 'react-use';
 import { message } from 'antd';
+import { Translation } from 'react-i18next';
 import contactBzWechatImg from 'Assets/newchat/contact-bz-wechat.png';
 
 import payInfoBg from 'Assets/newchat/pay-info-bg.png';
@@ -30,7 +27,7 @@ import PayChannelSwitch from './PayChannelSwitch.jsx';
 const DEFAULT_QRCODE = 'DEFAULT_QRCODE';
 const MAX_TIMEOUT = 1000 * 60 * 3;
 const COUNTDOWN_INTERVAL = 1000;
-
+// const t = Translation();
 const CompletedSection = memo(() => {
   return (
     <div className={styles.completedSection}>
@@ -126,6 +123,7 @@ export const PayModal = ({ open = false, onCancel, onOk }) => {
     setPrice(resp.value_to_pay);
     const orderId = resp.order_id;
     setOrderId(orderId);
+    setDiscount(resp.discount);
 
     if (
       resp.status === ORDER_STATUS.BUY_STATUS_INIT ||
@@ -249,8 +247,15 @@ export const PayModal = ({ open = false, onCancel, onOk }) => {
                 />
               </div>
               <div className={styles.channelSwitchWrapper}>
-                <PayChannelSwitch channel={payChannel} onChange={onPayChannelSelectChange} />
-                <div className={styles.channelDesc}>现已支持 <span style={{ fontWeight: 'bold'}}>微信 & 支付宝</span> 扫码支付</div>
+                <PayChannelSwitch
+                  channel={payChannel}
+                  onChange={onPayChannelSelectChange}
+                />
+                <div className={styles.channelDesc}>
+                  现已支持{' '}
+                  <span style={{ fontWeight: 'bold' }}>微信 & 支付宝</span>{' '}
+                  扫码支付
+                </div>
               </div>
               <div className={styles.couponCodeWrapper}>
                 <Button

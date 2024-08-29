@@ -2,9 +2,11 @@ import { Modal, Form, Input } from 'antd';
 import { useCallback } from 'react';
 import { memo } from 'react';
 import styles from './CouponCodeModal.module.scss';
+import { Translation } from 'react-i18next';
 
 export const CouponCodeModal = ({ open = false, onCancel, onOk }) => {
   const [form] = Form.useForm();
+  const t = Translation();
 
   const _onOk = useCallback(async () => {
     try {
@@ -16,7 +18,7 @@ export const CouponCodeModal = ({ open = false, onCancel, onOk }) => {
     <Modal
       open={open}
       onCancel={onCancel}
-      title={'优惠码'}
+      title={t('groupon.grouponTitle')}
       width="400px"
       onOk={_onOk}
       className={styles.couponCodeModal}
@@ -24,10 +26,10 @@ export const CouponCodeModal = ({ open = false, onCancel, onOk }) => {
     >
       <Form form={form}>
         <Form.Item
-          rules={[{ required: true, message: '请输入优惠码' }]}
+          rules={[{ required: true, message: t('groupon.grouponInputMsg') }]}
           name="couponCode"
         >
-          <Input placeholder="请输入优惠码" name="couponCode" />
+          <Input placeholder={t('groupon.grouponPlaceholder')} name="couponCode" />
         </Form.Item>
       </Form>
     </Modal>

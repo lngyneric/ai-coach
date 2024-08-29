@@ -1,4 +1,4 @@
-import { useRef, useState } from 'react';
+import { useState } from 'react';
 import styles from './AvatarSettingModal.module.scss';
 import SettingBaseModal from './SettingBaseModal.jsx';
 import Cropper from 'react-easy-crop';

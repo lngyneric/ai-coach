@@ -6,6 +6,7 @@ import styles from './ChatInteractionArea.module.scss';
 import ChatInputText from './ChatInputText.jsx';
 import ChatButtonGroup from './ChatButtonGroup.jsx';
 import ChatInputButton from './ChatInputButton.jsx';
+import { useTranslation } from 'react-i18next';
 import {
   INTERACTION_TYPE,
   INTERACTION_DISPLAY_TYPE,
@@ -30,9 +31,11 @@ export const ChatInteractionArea = ({
   onSend = (type, val) => {},
   disabled = false,
   onSizeChange = ({ width, height }) => {},
+
 }) => {
   const displayType = INTERACTION_DISPLAY_MAP[type];
   const elemRef = useRef();
+  const {t} = useTranslation();
 
   const onSendFunc = (type, val) => {
     if (disabled) {
@@ -106,8 +109,8 @@ export const ChatInteractionArea = ({
     >
       {genRenderControl()}
       <div className={styles.tipText}>
-        内容由 AI 大模型生成，无法确保真实准确，仅供学习参考
-      </div>
+        {t('chat.chatTips')}
+         </div>
     </div>
   );
 };

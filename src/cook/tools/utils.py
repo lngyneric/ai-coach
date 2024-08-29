@@ -337,6 +337,19 @@ def extract_variables(template: str) -> list:
     return list(set(matches))
 
 
+def count_lines(text: str, one_line_max=60):
+    """
+    计算文本的行数
+    返回的第一个数值是正常的行数
+    返回的第二个数值按照一行的最大值计算折行后的总行数（单行总数/最大值 之后 取上整）
+    """
+    lines = text.split('\n')
+    total_lines = len(lines)
+    total_lines_with_wrap = sum([len(line) // one_line_max + 1 for line in lines])
+
+    return total_lines, total_lines_with_wrap
+
+
 if __name__ == '__main__':
     # print(get_current_time())
     template = """

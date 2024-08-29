@@ -53,7 +53,6 @@ const CompletedSection = memo(() => {
 });
 
 export const PayModalM = ({ open = false, onCancel, onOk }) => {
-  const [isLoading, setIsLoading] = useState(false);
   const [price, setPrice] = useState('0.00');
   const [totalDiscount, setTotalDiscount] = useState('');
   const [payChannel, setPayChannel] = useState(
@@ -151,10 +150,7 @@ export const PayModalM = ({ open = false, onCancel, onOk }) => {
                 <div className={styles.payInfoTitle}>首发特惠</div>
                 <div className={styles.priceWrapper}>
                   <div
-                    className={classNames(
-                      styles.price,
-                      isLoading && styles.disabled
-                    )}
+                    className={classNames(styles.price)}
                   >
                     <span className={styles.priceSign}>￥</span>
                     <span className={styles.priceNumber}>{price}</span>

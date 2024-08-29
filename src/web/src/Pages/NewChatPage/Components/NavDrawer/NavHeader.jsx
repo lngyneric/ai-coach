@@ -4,6 +4,7 @@ import { memo } from 'react';
 import LogoWithText from 'Components/logo/LogoWithText.jsx';
 import { useCallback } from 'react';
 import { useTracking, EVENT_NAMES } from 'common/hooks/useTracking.js';
+import { useTranslation } from 'react-i18next';
 
 export const NavHeader = ({
   className = '',
@@ -14,6 +15,7 @@ export const NavHeader = ({
   onClose = () => {},
   mobileStyle = false,
 }) => {
+  const { t } = useTranslation();
   const { trackEvent } = useTracking();
   const onLogoAreaClick = useCallback(() => {
     trackEvent(EVENT_NAMES.NAV_TOP_LOGO, {});
@@ -47,7 +49,7 @@ export const NavHeader = ({
         >
           <img
             src={require('@Assets/newchat/light/icon16-expand.png')}
-            alt="展开/折叠"
+            alt={t('common.expandCollapse')}
             className={classNames(styles.icon)}
           />
         </div>

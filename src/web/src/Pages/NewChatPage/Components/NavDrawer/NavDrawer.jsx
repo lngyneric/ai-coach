@@ -176,6 +176,7 @@ const NavDrawer = ({
           onClose={onPopupModalClose}
           onLoginClick={onLoginClick}
           onGoToSetting={onGoToSetting}
+          onNavClose={onClose}
         />
         <FeedbackModal
           open={feedbackModalOpen}

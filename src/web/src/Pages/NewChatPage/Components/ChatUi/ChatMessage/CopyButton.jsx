@@ -6,12 +6,14 @@ import styles from './CopyButton.module.scss';
 import { useRef } from 'react';
 import classNames from 'classnames';
 import { copyText } from 'Utils/textutils.js';
+import { Translation } from 'react-i18next';
 
 const TIMEOUT = 5000;
 
 export const CopyButton = ({ content }) => {
   const [hasCopy, setHasCopy] = useState(false);
   const timeoutRef = useRef();
+  const t = Translation();
 
   const onCopyClick = () => {
     copyText(content);
@@ -31,7 +33,7 @@ export const CopyButton = ({ content }) => {
       icon={<CopyOutlined></CopyOutlined>}
       onClick={onCopyClick}
     >
-      {hasCopy ? '已复制到剪切板' : '复制'}
+      {hasCopy ? t('chat.copySuccess') : t('chat.copyText')}
     </Button>
   );
 };

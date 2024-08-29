@@ -16,44 +16,39 @@ if (getBoolEnv('REACT_APP_ERUDA')) {
 const RouterView = () => useRoutes(routes);
 
 const App = () => {
-  const { language, updateChannel, channel, wechatCode, updateWechatCode } =
+  const { updateChannel, channel, wechatCode, updateWechatCode } =
     useSystemStore();
+  const [language, setLanguage] = useState(useSystemStore().language);
   const [loading, setLoading] = useState(true);
-
   const params = parseUrlParams();
-  console.log('params', params);
+  console.debug('params', params);
   const currChannel = params.channel || '';
 
   if (channel !== currChannel) {
     console.log('init channel value', currChannel);
     updateChannel(currChannel);
   }
-  
+
   useEffect(() => {
     if (inWechat()) {
       setLoading(true);
-      console.log('inWechat...');
       const currCode = params.code;
-
       if (!currCode) {
         wechatLogin({
           appId: process.env.REACT_APP_APP_ID,
         });
         return
       }
-
       if (currCode !== wechatCode) {
-        console.log('init wechatcode value', currCode);
         updateWechatCode(currCode);
       }
-    } 
+    }
     setLoading(false);
   }, [params.code, updateWechatCode, wechatCode])
 
   // 挂载 debugger
   useEffect(() => {
     window.ztDebug = {};
-
     return () => {
       delete window.ztDebug;
     };

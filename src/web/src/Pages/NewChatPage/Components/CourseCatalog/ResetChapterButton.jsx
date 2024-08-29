@@ -4,6 +4,7 @@ import classNames from 'classnames';
 import { useCourseStore } from 'stores/useCourseStore.js';
 import { Modal } from 'antd';
 import { useTracking, EVENT_NAMES } from 'common/hooks/useTracking.js';
+import { useTranslation } from 'react-i18next';
 
 export const ResetChapterButton = ({
   className,
@@ -12,6 +13,7 @@ export const ResetChapterButton = ({
   onClick,
   onConfirm,
 }) => {
+  const { t } = useTranslation();
   const { trackEvent } = useTracking();
   const { resetChapter } = useCourseStore((state) => ({
     resetChapter: state.resetChapter,
@@ -20,8 +22,8 @@ export const ResetChapterButton = ({
   const onButtonClick = useCallback(
     (e) => {
       Modal.confirm({
-        title: '确认重修',
-        content: '重修会清空当前学习数据。确定重修？',
+        title: t('lesson.reset.resetConfirmTitle'),
+        content: t('lesson.reset.resetConfirmContent'),
         onOk: () => {
           resetChapter(chapterId);
           trackEvent(EVENT_NAMES.RESET_CHAPTER_CONFIRM, {
@@ -37,7 +39,7 @@ export const ResetChapterButton = ({
       });
       onClick?.(e);
     },
-    [chapterId, chapterName, onClick, onConfirm, resetChapter, trackEvent]
+    [chapterId, chapterName, onClick, onConfirm, resetChapter, t, trackEvent]
   );
 
   return (
@@ -48,7 +50,7 @@ export const ResetChapterButton = ({
         size="small"
         shape="round"
       >
-        重修
+        {t('lesson.reset.resetTitle') }
       </LineButton>
     </>
   );
