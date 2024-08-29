@@ -126,6 +126,7 @@ export const PayModal = ({ open = false, onCancel, onOk }) => {
     setPrice(resp.value_to_pay);
     const orderId = resp.order_id;
     setOrderId(orderId);
+    setDiscount(resp.discount);
 
     if (
       resp.status === ORDER_STATUS.BUY_STATUS_INIT ||
