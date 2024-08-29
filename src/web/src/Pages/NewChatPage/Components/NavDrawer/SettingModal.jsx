@@ -17,13 +17,14 @@ import PayModalM from '../Pay/PayModalM.jsx';
 export const SettingModal = ({
   open,
   onClose,
+  onNavClose = () => {},
   style,
   onLoginClick = () => {},
   onGoToSetting = () => {},
   className,
 }) => {
   const { hasLogin, userInfo, logout, refreshUserInfo  } = useUserStore((state) => state);
-  const { frameLayout, mobileStyle } = useContext(AppContext);
+  const { mobileStyle } = useContext(AppContext);
 
   const {
     open: payModalOpen,
@@ -49,8 +50,11 @@ export const SettingModal = ({
       onLoginClick?.();
     } else {
       onGoToSetting?.();
+      if (mobileStyle) {
+        onNavClose?.();
+      }
     }
-  }, [hasLogin, onGoToSetting, onLoginClick]);
+  }, [hasLogin, mobileStyle, onGoToSetting, onLoginClick, onNavClose]);
 
   const onMemberRowClick = useCallback(() => {
     if (!hasLogin) {
