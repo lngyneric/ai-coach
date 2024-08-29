@@ -37,6 +37,7 @@ export const SettingModal = ({
       content: '确认退出登录么',
       onOk: async () => {
         await logout();
+        window.location.reload();
         onClose?.(e);
       },
     });
