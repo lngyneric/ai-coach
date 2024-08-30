@@ -13,7 +13,7 @@ from flaskr.service.order.consts import (
     BUY_STATUS_VALUES,
 )
 from flaskr.service.common.dtos import USER_STATE_PAID
-from flaskr.service.user.models import User
+from flaskr.service.user.models import User, UserConversion
 from flaskr.service.active import query_active_record, query_and_join_active
 from flaskr.service.order.query_discount import query_discount_record
 from flaskr.common.swagger import register_schema_to_swagger
@@ -134,6 +134,15 @@ def send_order_feishu(app: Flask, record_id: str):
     msgs.append("用户姓名:{}".format(urser_info.name))
     msgs.append("课程名称:{}".format(order_info.course_id))
     msgs.append("付款金额:{}".format(order_info.value_to_pay))
+    user_convertion = UserConversion.query.filter(
+        UserConversion.user_id == order_info.user_id
+    ).first()
+
+    channel = ""
+
+    if user_convertion:
+        channel = user_convertion.conversion_source
+    msgs.append("用户渠道:{}".format(channel))
     for item in order_info.price_item:
         msgs.append("{}-{}-{}".format(item.name, item.price_name, item.price))
     send_notify(app, title, msgs)
