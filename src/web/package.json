@@ -50,6 +50,7 @@
     "react-use": "^17.5.1",
     "rehype-raw": "^7.0.0",
     "remark-gfm": "^4.0.0",
+    "rimraf": "^6.0.1",
     "sass": "^1.77.4",
     "sse": "^0.0.8",
     "sse.js": "^0.6.1",
@@ -66,6 +67,7 @@
     "lint:knip": "knip",
     "build": "dotenv -e .local.single.env -e .env.prod craco build",
     "build:staging": "dotenv -e .local.single.env -e .env.staging craco build",
+    "clean": "rimraf build",
     "test": "craco test",
     "eject": "craco eject"
   },

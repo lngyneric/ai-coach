@@ -22,6 +22,8 @@ import ChatMobileHeader from './Components/ChatMobileHeader.jsx';
 import { useDisclosture } from 'common/hooks/useDisclosture.js';
 import { updateWxcode } from 'Api/user.js';
 
+import FeedbackModal from './Components/FeedbackModal/FeedbackModal.jsx';
+
 // 课程学习主页面
 const NewChatPage = (props) => {
   const { frameLayout, updateFrameLayout } = useUiLayoutStore((state) => state);
@@ -47,6 +49,7 @@ const NewChatPage = (props) => {
   const [showUserSettings, setShowUserSettings] = useState(false);
   const [loading, setLoading] = useState(false);
   const navigate = useNavigate();
+  const { open: feedbackModalOpen, onOpen: onFeedbackModalOpen, onClose: onFeedbackModalClose } = useDisclosture();
 
   const mobileStyle = frameLayout === FRAME_LAYOUT_MOBILE;
 
@@ -229,6 +232,10 @@ const NewChatPage = (props) => {
     );
   });
 
+  const onFeedbackClick = useCallback(() => {
+    onFeedbackModalOpen();
+  }, []);
+
   return (
     <div className={classNames(styles.newChatPage)}>
       <AppContext.Provider
@@ -268,6 +275,7 @@ const NewChatPage = (props) => {
             open={loginModalOpen}
             onClose={onLoginModalClose}
             destroyOnClose={true}
+            onFeedbackClick={onFeedbackClick}
           />
         )}
         {initialized && <TrackingVisit />}
@@ -279,6 +287,11 @@ const NewChatPage = (props) => {
             onSettingClick={onNavToggle}
           />
         )}
+
+        <FeedbackModal
+          open={feedbackModalOpen}
+          onClose={onFeedbackModalClose}
+        />
       </AppContext.Provider>
     </div>
   );
