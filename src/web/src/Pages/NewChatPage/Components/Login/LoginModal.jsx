@@ -9,6 +9,7 @@ import { genCheckCode } from 'Api/user.js';
 import { useUserStore } from 'stores/useUserStore.js';
 import { useTranslation } from 'react-i18next';
 import { memo } from 'react';
+import { useCallback } from 'react';
 
 const MODAL_STEP = {
   MOBILE: 1,
@@ -21,6 +22,7 @@ export const LoginModal = ({
   width,
   onClose = () => {},
   inMobile = false,
+  onFeedbackClick,
 }) => {
   const [mobile, setMobile] = useState('');
   const [mobileForm] = Form.useForm();
@@ -99,6 +101,15 @@ export const LoginModal = ({
       await onVerifyCodeFormOkClick();
     }
   };
+
+  const onFeedbackButtonClick = useCallback(
+    (e) => {
+      e.preventDefault();
+      onFeedbackClick?.();
+      onClose();
+    },
+    [onClose, onFeedbackClick]
+  );
 
   return (
     <Modal
@@ -212,7 +223,13 @@ export const LoginModal = ({
         </div>
         <div className={styles.feedback}>
           登录遇到问题？
-          <a className={styles.link} href="x" target="_blank" rel="noreferrer">
+          <a
+            href="x"
+            className={styles.link}
+            target="_blank"
+            rel="noreferrer"
+            onClick={onFeedbackButtonClick}
+          >
             我要反馈
           </a>
         </div>
