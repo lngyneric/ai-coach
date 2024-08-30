@@ -20,6 +20,7 @@ from ..service.user import (
     upload_user_avatar,
     update_user_open_id,
 )
+from ..service.feedback.funs import submit_feedback
 from .common import make_common_response, bypass_token_validation, by_pass_login_func
 from flaskr.dao import db
 
@@ -204,7 +205,9 @@ def register_user_handler(app: Flask, path_prefix: str) -> Flask:
         tmp_id = request.get_json().get("temp_id", None)
         source = request.get_json().get("source", "web")
         wx_code = request.get_json().get("wxcode", None)
-        app.logger.info(f"require_tmp tmp_id: {tmp_id}, source: {source}, wx_code: {wx_code}")
+        app.logger.info(
+            f"require_tmp tmp_id: {tmp_id}, source: {source}, wx_code: {wx_code}"
+        )
         if not tmp_id:
             raise_param_error("temp_id")
         user_token = generate_temp_user(app, tmp_id, source, wx_code)
@@ -450,6 +453,50 @@ def register_user_handler(app: Flask, path_prefix: str) -> Flask:
         return make_common_response(
             update_user_open_id(app, request.user.user_id, code)
         )
+
+    @app.route(path_prefix + "/submit-feedback", methods=["POST"])
+    def sumbit_feedback_api():
+
+        """
+        提交反馈
+        ---
+        tags:
+            - 用户
+        parameters:
+            - in: body
+              name: body
+              required: true
+              schema:
+                type: object
+                properties:
+                    feedback:
+                        type: string
+                        description: 反馈内容
+        responses:
+            200:
+                description: 提交成功
+                content:
+                    application/json:
+                        schema:
+                            properties:
+                                code:
+                                    type: integer
+                                    description: 返回码
+                                message:
+                                    type: string
+                                    description: 返回信息
+                                data:
+                                    type: integer
+                                    description: 反馈ID
+            400:
+                description: 参数错误
+        """
+
+        user_id = request.user.user_id
+        feedback = request.get_json().get("feedback", None)
+        if not feedback:
+            raise_param_error("feedback")
+        return make_common_response(submit_feedback(app, user_id, feedback))
 
     # 健康检查
     @app.route("/health", methods=["GET"])
