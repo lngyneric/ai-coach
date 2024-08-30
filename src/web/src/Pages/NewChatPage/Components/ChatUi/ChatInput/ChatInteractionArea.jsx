@@ -30,6 +30,7 @@ export const ChatInteractionArea = ({
   onSend = (type, val) => {},
   disabled = false,
   onSizeChange = ({ width, height }) => {},
+
 }) => {
   const displayType = INTERACTION_DISPLAY_MAP[type];
   const elemRef = useRef();

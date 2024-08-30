@@ -15,7 +15,7 @@ const OUTPUT_TYPE_MAP = {
   [INTERACTION_TYPE.CHECKCODE]: INTERACTION_OUTPUT_TYPE.CHECKCODE,
 };
 
-export const ChatInputText = ({ onClick, type, disabled = false }) => {
+export const ChatInputText = ({ onClick, type, disabled = false,props={} }) => {
   const [input, setInput] = useState('');
   const [messageApi, contextHolder] = message.useMessage();
 
@@ -50,7 +50,7 @@ export const ChatInputText = ({ onClick, type, disabled = false }) => {
             type="text"
             value={input}
             onChange={(v) => setInput(v)}
-            placeholder="请输入"
+            placeholder= {props?.content || '请输入内容'}
             className={styles.inputField}
             disabled={disabled}
             onKeyDown={(e) => {
