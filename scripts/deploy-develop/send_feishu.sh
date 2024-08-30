@@ -9,7 +9,7 @@ send_notify_to_feishu() {
         "content": {
             "post": {
                 "zh_cn": {
-                   "title": "'师傅~"$title"'",
+                   "title": "'[test]师傅~"$title"'",
                     "content": [
                         [
                             {
