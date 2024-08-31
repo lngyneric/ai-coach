@@ -199,6 +199,14 @@ def get_study_record(app: Flask, user_id: str, lesson_id: str) -> StudyRecordDTO
         last_attend_script = attend_scripts[-1]
         if last_attend.status == ATTEND_STATUS_COMPLETED:
             app.logger.info("last_attend is completed")
+            btn = [
+                {
+                    "label": last_script.script_ui_content,
+                    "value": last_script.script_ui_content,
+                    "type": INPUT_TYPE_CONTINUE,
+                }
+            ]
+            ret.ui = StudyUIDTO("buttons", {"title": "接下来", "buttons": btn}, lesson_id)
             return ret
         if (
             last_script.script_ui_type == UI_TYPE_INPUT
