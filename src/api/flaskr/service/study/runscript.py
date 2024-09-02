@@ -331,8 +331,6 @@ def run_script_inner(
                                     )
                         app.logger.info("script_info is None")
                 except BreakException:
-                    # app.logger.error("BreakException")
-                    # app.logger.error(e)
                     db.session.commit()
                     return
             else:
