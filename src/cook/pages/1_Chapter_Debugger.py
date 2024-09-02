@@ -137,13 +137,18 @@ if not st.session_state.has_started:
         if select_script:
             st.text_area('剧本内容', select_script.template, disabled=True, height=200)
 
-        col1, col2 = st.columns([1, 4])
+        col1, col2, col3 = st.columns([1, 2, 2])
         with col1:
             st.session_state.auto_continue = st.toggle("自动继续", True)
         with col2:
+            supported_models = [model for model in cfg.SUPPORT_MODELS]
+            model = st.selectbox('选择模型：', supported_models, index=cfg.SUPPORT_MODELS.index(cfg.DEFAULT_MODEL),
+                                 label_visibility='collapsed')
+            cfg.set_default_model(model)
+        with col3:
             if st.button('启动剧本', type='primary', use_container_width=True):
                 st.session_state.has_started = True
-                # st.rerun()
+                st.rerun()
 
     elif st.session_state['authentication_status'] is False:
         st.error('Username/password is incorrect')
