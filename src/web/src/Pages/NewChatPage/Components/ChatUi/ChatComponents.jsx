@@ -166,13 +166,15 @@ export const ChatComponents = forwardRef(
 
     const { userInfo, mobileStyle } = useContext(AppContext);
     const chatRef = useRef();
-    const { lessonId: currLessonId, changeCurrLesson, updateResetedChapterId } = useCourseStore(
-      (state) => ({
-        lessonId: state.lessonId,
-        changeCurrLesson: state.changeCurrLesson,
-        updateResetedChapterId: state.updateResetedChapterId,
-      })
-    );
+    const {
+      lessonId: currLessonId,
+      changeCurrLesson,
+      updateResetedChapterId,
+    } = useCourseStore((state) => ({
+      lessonId: state.lessonId,
+      changeCurrLesson: state.changeCurrLesson,
+      updateResetedChapterId: state.updateResetedChapterId,
+    }));
 
     const { messages, appendMsg, setTyping, updateMsg, resetList } =
       useMessages([]);
@@ -452,7 +454,7 @@ export const ChatComponents = forwardRef(
             // 恢复到 null
             updateResetedChapterId(null);
           } else {
-            return
+            return;
           }
         }
       );
