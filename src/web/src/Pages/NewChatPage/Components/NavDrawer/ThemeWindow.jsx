@@ -1,7 +1,9 @@
 import PopupModal from 'Components/PopupModal';
 import { memo } from 'react';
+import { useTranslation } from 'react-i18next';
 
 export const ThemeWindow = ({ open, onClose, style, className }) => {
+  const { t } = useTranslation();
   return (
     <PopupModal
       open={open}
@@ -18,7 +20,7 @@ export const ThemeWindow = ({ open, onClose, style, className }) => {
           alignItems: 'center',
         }}
       >
-        敬请期待
+        {t('common.waitingForCompletion')}
       </div>
     </PopupModal>
   );

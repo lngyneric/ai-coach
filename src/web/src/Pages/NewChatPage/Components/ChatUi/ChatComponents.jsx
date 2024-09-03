@@ -38,7 +38,7 @@ const USER_ROLE = {
   STUDENT: '学生',
 };
 
-const robotAvatar = require('@Assets/chat/sunner_icon.jpg');
+const robotAvatar = require('@Assets/newchat/sunner_icon.jpg');
 
 const createMessage = ({
   id = 0,
