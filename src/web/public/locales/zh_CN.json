@@ -1,11 +1,49 @@
 {
-    "hello": {
-        "world": "世界你好"
+  "common": {
+    "collapseExpand": "折叠/展开",
+    "expandCollapse": "展开/折叠",
+    "waitingForCompletion": "敬请期待",
+    "companyName": "北京潺潺山木科技有限公司",
+    "companyAddress": "北京朝阳区望京东煌大厦19层163室"
+  },
+  "user": {
+    "loginMainButton": "登录/注册",
+    "confirmLogoutTitle": "确认退出登录？",
+    "confirmLogoutContent": "确认退出登录么？",
+    "defaultUserName": "默认名称",
+    "notLogin": "未登录",
+    "logout": "退出登录"
+  },
+  "pay": {
+    "payModalTitle": "购买"
+  },
+  "navigation": {
+    "courseList": "课程列表",
+    "theChapter": "章",
+    "theLesson": "节",
+    "filing": "备案",
+    "skin": "皮肤",
+    "settings": "设置",
+    "memberSetting": "会员管理",
+    "icp": "京ICP备2024076754号-2",
+    "gongan": "京公网安备11010502055644号",
+    "feedbackTitle": "提交反馈",
+    "userAggrement": "服务协议",
+    "privacyPolicy": "隐私政策"
+  },
+
+  "lesson": {
+    "reset": {
+      "resetTitle": "重修",
+      "resetConfirmTitle": "确认重修",
+      "resetConfirmContent": "重修会清空当前学习数据。确定重修？"
     },
-    "user": {
-        "loginMainButton": "登录/注册"
-    },
-    "pay": {
-        "payModalTitle": "购买"
+    "lessonStatus": {
+      "notStart": "未开始",
+      "prepareLearning": "可学习",
+      "locked": "未解锁",
+      "learning": "正在学",
+      "completed": "已完成"
     }
+  }
 }

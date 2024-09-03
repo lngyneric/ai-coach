@@ -38,7 +38,7 @@ const USER_ROLE = {
   STUDENT: '学生',
 };
 
-const robotAvatar = require('@Assets/chat/sunner_icon.jpg');
+const robotAvatar = require('@Assets/newchat/sunner_icon.jpg');
 
 const createMessage = ({
   id = 0,
@@ -164,15 +164,17 @@ export const ChatComponents = forwardRef(
     const [isStreaming, setIsStreaming] = useState(false);
     const [initRecords, setInitRecords] = useState([]);
 
-    const { userInfo, frameLayout, mobileStyle } = useContext(AppContext);
+    const { userInfo, mobileStyle } = useContext(AppContext);
     const chatRef = useRef();
-    const { lessonId: currLessonId, changeCurrLesson, updateResetedChapterId } = useCourseStore(
-      (state) => ({
-        lessonId: state.lessonId,
-        changeCurrLesson: state.changeCurrLesson,
-        updateResetedChapterId: state.updateResetedChapterId,
-      })
-    );
+    const {
+      lessonId: currLessonId,
+      changeCurrLesson,
+      updateResetedChapterId,
+    } = useCourseStore((state) => ({
+      lessonId: state.lessonId,
+      changeCurrLesson: state.changeCurrLesson,
+      updateResetedChapterId: state.updateResetedChapterId,
+    }));
 
     const { messages, appendMsg, setTyping, updateMsg, resetList } =
       useMessages([]);
@@ -452,7 +454,7 @@ export const ChatComponents = forwardRef(
             // 恢复到 null
             updateResetedChapterId(null);
           } else {
-            return
+            return;
           }
         }
       );
@@ -614,7 +616,8 @@ export const ChatComponents = forwardRef(
       }
 
       messageListElem.style.paddingBottom = `${height}px`;
-    });
+    }, []);
+
     return (
       <div
         className={classNames(

@@ -1,4 +1,4 @@
-import { Button, Modal, Select } from 'antd';
+import { Button, Modal } from 'antd';
 import { useCallback } from 'react';
 import { memo, useState } from 'react';
 import { useTranslation } from 'react-i18next';
@@ -6,11 +6,7 @@ import styles from './PayModal.module.scss';
 import { useDisclosture } from 'common/hooks/useDisclosture.js';
 import CouponCodeModal from './CouponCodeModal.jsx';
 import { QRCode } from 'antd';
-import {
-  ORDER_STATUS,
-  PAY_CHANNEL_WECHAT,
-  getPayChannelOptions,
-} from './constans.js';
+import { ORDER_STATUS, PAY_CHANNEL_WECHAT } from './constans.js';
 import {
   getPayUrl,
   initOrder,
@@ -250,8 +246,15 @@ export const PayModal = ({ open = false, onCancel, onOk }) => {
                 />
               </div>
               <div className={styles.channelSwitchWrapper}>
-                <PayChannelSwitch channel={payChannel} onChange={onPayChannelSelectChange} />
-                <div className={styles.channelDesc}>现已支持 <span style={{ fontWeight: 'bold'}}>微信 & 支付宝</span> 扫码支付</div>
+                <PayChannelSwitch
+                  channel={payChannel}
+                  onChange={onPayChannelSelectChange}
+                />
+                <div className={styles.channelDesc}>
+                  现已支持{' '}
+                  <span style={{ fontWeight: 'bold' }}>微信 & 支付宝</span>{' '}
+                  扫码支付
+                </div>
               </div>
               <div className={styles.couponCodeWrapper}>
                 <Button

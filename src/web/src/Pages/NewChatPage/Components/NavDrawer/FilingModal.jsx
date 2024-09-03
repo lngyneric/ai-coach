@@ -3,6 +3,7 @@ import { Button } from 'antd';
 
 import styles from './FilingModal.module.scss';
 import { memo } from 'react';
+import { useTranslation } from 'react-i18next';
 
 export const FillingModal = ({
   open,
@@ -11,6 +12,7 @@ export const FillingModal = ({
   onFeedbackClick,
   className,
 }) => {
+  const { t } = useTranslation();
   return (
     <PopupModal
       open={open}
@@ -19,8 +21,8 @@ export const FillingModal = ({
       className={className}
     >
       <div className={styles.filingModal}>
-        <div>北京潺潺山木科技有限公司</div>
-        <div>北京朝阳区望京东煌大厦19层163室</div>
+        <div>{t('common.companyName')}</div>
+        <div>{t('common.companyAddress')}</div>
         <div>
           <a
             className={styles.miitLink}
@@ -28,16 +30,16 @@ export const FillingModal = ({
             target="_blank"
             rel="noreferrer"
           >
-            京ICP备2024076754号-2
+            {t('navigation.icp')}
           </a>
         </div>
         <div className={styles.gonganRow}>
           <img
             className={styles.beianIcon}
             src={require('@Assets/newchat/light/beian.png')}
-            alt="备案"
+            alt={t('navigation.filing')}
           />
-          <div>京公网安备11010502055644号</div>
+          <div>{t('navigation.gongan')}</div>
         </div>
         <div className={styles.btnGroup}>
           <Button
@@ -45,7 +47,7 @@ export const FillingModal = ({
             className={styles.actionBtn}
             onClick={onFeedbackClick}
           >
-            提交反馈
+            {t('navigation.feedbackTitle')}
           </Button>
           <div>|</div>
           <Button
@@ -55,7 +57,7 @@ export const FillingModal = ({
               window.open('/useraggrement');
             }}
           >
-            服务协议
+            {t('navigation.userAggrement')}
           </Button>
           <div>|</div>
           <Button
@@ -65,7 +67,7 @@ export const FillingModal = ({
               window.open('/privacypolicy');
             }}
           >
-            隐私政策
+            {t('navigation.privacyPolicy')}
           </Button>
         </div>
       </div>

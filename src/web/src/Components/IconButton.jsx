@@ -16,8 +16,6 @@ export const IconButton = ({
   const [isActive, setIsActive] = useState(false);
   const topRef = useRef();
 
-  useEffect(() => {}, selected);
-
   useEffect(() => {
     const onMouseEnter = () => {
       setIsHover(true);
