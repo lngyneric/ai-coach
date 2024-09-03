@@ -164,7 +164,7 @@ export const ChatComponents = forwardRef(
     const [isStreaming, setIsStreaming] = useState(false);
     const [initRecords, setInitRecords] = useState([]);
 
-    const { userInfo, frameLayout, mobileStyle } = useContext(AppContext);
+    const { userInfo, mobileStyle } = useContext(AppContext);
     const chatRef = useRef();
     const { lessonId: currLessonId, changeCurrLesson, updateResetedChapterId } = useCourseStore(
       (state) => ({
@@ -614,7 +614,8 @@ export const ChatComponents = forwardRef(
       }
 
       messageListElem.style.paddingBottom = `${height}px`;
-    });
+    }, []);
+
     return (
       <div
         className={classNames(

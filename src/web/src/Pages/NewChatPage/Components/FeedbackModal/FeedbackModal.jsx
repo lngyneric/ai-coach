@@ -5,7 +5,6 @@ import styles from './FeedbackModal.module.scss';
 import { memo } from 'react';
 import { useCallback } from 'react';
 import { submitFeedback } from 'Api/bz.js';
-import { useState } from 'react';
 
 const FEEDBACK_MAX_LENGTH = 300;
 

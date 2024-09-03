@@ -47,7 +47,6 @@ const NewChatPage = (props) => {
   const { lessonId, changeCurrLesson, chapterId, updateChapterId } =
     useCourseStore((state) => state);
   const [showUserSettings, setShowUserSettings] = useState(false);
-  const [loading, setLoading] = useState(false);
   const navigate = useNavigate();
   const { open: feedbackModalOpen, onOpen: onFeedbackModalOpen, onClose: onFeedbackModalClose } = useDisclosture();
 
@@ -91,14 +90,11 @@ const NewChatPage = (props) => {
   const checkUrl = useCallback(async () => {
     let nextTree;
     if (!tree) {
-      setLoading(true);
       nextTree = await loadTree(cid, lessonId);
     } else {
-      setLoading(true);
       nextTree = await reloadTree(cid, lessonId);
     }
 
-    setLoading(false);
     if (cid) {
       if (!checkChapterAvaiableStatic(nextTree, cid)) {
         navigate('/newchat');
@@ -234,7 +230,7 @@ const NewChatPage = (props) => {
 
   const onFeedbackClick = useCallback(() => {
     onFeedbackModalOpen();
-  }, []);
+  }, [onFeedbackModalOpen]);
 
   return (
     <div className={classNames(styles.newChatPage)}>

@@ -10,7 +10,6 @@ export const BirthdaySettingModal = ({
   onOk = ({ birthday }) => {},
 }) => {
   const [value, setValue] = useState(new Date());
-  const [showPicker, setShowPicker] = useState(true);
   const onOkClick = () => {
     onOk({ birthday: value });
   };
@@ -28,7 +27,6 @@ export const BirthdaySettingModal = ({
       open={open}
       onClose={onClose}
       onOk={onOkClick}
-      loading={!showPicker}
       closeOnMaskClick={true}
     >
       <DatePickerView

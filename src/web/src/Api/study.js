@@ -1,5 +1,4 @@
 import { SSE } from "sse.js";
-import Cookies from "js-cookie";
 import request from "../Service/Request";
 import { tokenStore } from "Service/storeUtil.js";
 
