@@ -151,6 +151,17 @@ def extract_json(app: Flask, text: str):
     return {}
 
 
+def extract_variables(template: str) -> list:
+    # 使用正则表达式匹配单层 {} 中的内容，忽略双层大括号
+    pattern = r"\{([^{}]+)\}(?!})"
+    matches = re.findall(pattern, template)
+
+    # 去重并过滤包含双引号的元素
+    variables = list(set(matches))
+    filtered_variables = [var for var in variables if '"' not in var]
+    return filtered_variables
+
+
 def get_fmt_prompt(
     app: Flask,
     user_id: str,
@@ -173,7 +184,7 @@ def get_fmt_prompt(
     app.logger.info(propmpt_keys)
     app.logger.info(profiles)
     prompt_template_lc = PromptTemplate.from_template(profile_tmplate)
-    keys = prompt_template_lc.input_variables
+    keys = extract_variables(profile_tmplate)
     fmt_keys = {}
     for key in keys:
         if key in profiles:
