@@ -29,9 +29,29 @@ llm:
       - gpt-4-0125-preview
       - gpt-4-turbo-2024-04-09
       - gpt-3.5-turbo-0125
-
     organization: org-fC5Q2f4MQIEaTOa3k8vTQu6G
     default_temperature: 0.4  # [0, 2.0]
+  deepseek:
+    models:
+      - deepseek-chat
+      - deepseek-coder
+    default_temperature: 0.8  # [0, 2]
+
+  bailian:
+    models:
+      - qwen2-72b-instruct
+      - qwen2-57b-a14b-instruct
+      - qwen2-7b-instruct
+      - qwen2-1.5b-instruct
+      - qwen2-0.5b-instruct
+      - qwen1.5-110b-chat
+      - qwen1.5-72b-chat
+      - qwen1.5-32b-chat
+      - qwen1.5-14b-chat
+      - qwen1.5-7b-chat
+      - qwen1.5-1.8b-chat
+      - qwen1.5-0.5b-chat
+    default_temperature: 0.8  # [0, 2)
 
 lark:
   app_token: IjfsbaLaQah0Wts1VaDcq0ePnGe  # 新主体 Python 教练 正式剧本

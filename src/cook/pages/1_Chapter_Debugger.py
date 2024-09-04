@@ -1,11 +1,13 @@
 import logging
 import time
+from collections import defaultdict
 
 import yaml
 from yaml.loader import SafeLoader
 import streamlit as st
 import streamlit_authenticator as stauth
 from streamlit_extras.bottom_container import bottom
+from langchain_core.messages import HumanMessage, AIMessage
 
 from models.course import get_courses_by_user_from_sqlite
 from tools.lark import get_bitable_tables
@@ -62,6 +64,21 @@ if 'system_miss_vars' not in st.session_state:
 if 'auto_continue' not in st.session_state:
     st.session_state.auto_continue = True
 
+if 'chat_history_list' not in st.session_state:
+    st.session_state.chat_history_list = [HumanMessage('开始讲课吧')]
+
+if 'follow_up_history_count' not in st.session_state:
+    st.session_state.follow_up_history_count = 0
+
+if 'has_follow_up_ask' not in st.session_state:
+    st.session_state.has_follow_up_ask = False
+
+if 'user_follow_up_ask' not in st.session_state:
+    st.session_state.user_follow_up_ask = ''
+
+if 'progress_follow_up_ask_counter' not in st.session_state:
+    st.session_state.progress_follow_up_ask_counter = defaultdict(int)
+
 # ======================================================
 
 # ==================== Sidebar ====================
@@ -69,6 +86,9 @@ with st.sidebar:
     st.caption('飞书中更新后可以点击清除缓存')
     if st.button('Clean all cache', use_container_width=True):
         st.cache_data.clear()
+
+    # Debug of follow-up ask
+    # st.write(st.session_state.chat_history_list)
 
 
 # ==================== 主体框架 ====================
@@ -249,8 +269,25 @@ else:
         if not st.session_state.miss_vars:
 
             # ========== 内容输出部分 ==========
+            # 如果有追问的内容，先完成追问的回答
+            if st.session_state.has_follow_up_ask:
+                chat_box.user_say(st.session_state.user_follow_up_ask)  # 展示用户输入信息
+
+                full_result = streaming_for_follow_up_ask(
+                    chat_box, st.session_state.user_follow_up_ask,
+                    st.session_state.chat_history_list[-st.session_state.follow_up_history_count:],
+                )
+
+                st.session_state.chat_history_list.append(HumanMessage(st.session_state.user_follow_up_ask))  # 将输出添加到历史列表中
+                st.session_state.chat_history_list.append(AIMessage(full_result))  # 将输出添加到历史列表中
+
+                if st.session_state.has_follow_up_ask:
+                    script.btn_label = '好的，让我继续教学吧~'
+
+                st.session_state.has_follow_up_ask = False
+
             # 如果剧本没有输出过，则进行输出
-            if script.id not in st.session_state.script_has_output:
+            elif script.id not in st.session_state.script_has_output:
                 full_result = None
 
                 # ===【固定剧本】：模拟流式输出
@@ -274,12 +311,17 @@ else:
                 st.session_state.script_has_output.add(script.id)
                 logging.debug(f'script id: {script.id}, chat result: {full_result}')
 
+                # 将输出添加到历史列表中
+                if full_result:
+                    st.session_state.chat_history_list.append(AIMessage(full_result))
+
             # ========== 处理【后续交互】 ==========
             # === 显示 输入框
             if script.next_action == NextAction.ShowInput:
                 # 获取用户输入
                 if user_input := st.chat_input(script.input_placeholder):
                     chat_box.user_say(user_input)  # 展示用户输入信息
+                    st.session_state.chat_history_list.append(HumanMessage(user_input))  # 将输出添加到历史列表中
 
                     # 通过 `检查模版` 提取变量（JSON mode）
                     is_ok = parse_vars_from_template(chat_box, script.check_template, {'input': user_input},
@@ -293,16 +335,19 @@ else:
 
             # === 显示 按钮
             elif script.next_action == NextAction.ShowBtn:
-                if st.session_state.auto_continue:
-                    chat_box.user_say(script.btn_label)
+                def handle_button_click():
+                    chat_box.user_say(script.btn_label)  # 展示用户输入信息
+                    st.session_state.chat_history_list.append(HumanMessage(script.btn_label))  # 将输出添加到历史列表中
                     st.session_state.progress += 1
+                    st.session_state.has_follow_up_ask = False
                     st.rerun()
+
+                if st.session_state.auto_continue:
+                    handle_button_click()
                 else:
                     with bottom():
                         if st.button(script.btn_label, type='primary', use_container_width=True):
-                            chat_box.user_say(script.btn_label)
-                            st.session_state.progress += 1
-                            st.rerun()
+                            handle_button_click()
 
             # === 显示 按钮组
             elif script.next_action == NextAction.ShowBtnGroup:
@@ -315,6 +360,8 @@ else:
                                                  use_container_width=True):
                                 # 获取用户点击按钮的 value
                                 st.session_state[script.btn_group_cfg['var_name']] = btn['value']
+                                chat_box.user_say(btn['value'])  # 展示用户输入信息
+                                st.session_state.chat_history_list.append(HumanMessage(btn['value']))  # 将输出添加到历史列表中
                                 st.session_state.progress += 1
                                 st.rerun()
 
@@ -342,6 +389,8 @@ else:
                                     + sub_script_list
                                     + st.session_state.script_list[st.session_state.progress + 1:]
                             )
+                            chat_box.user_say(script.btn_label)  # 展示用户输入信息
+                            st.session_state.chat_history_list.append(HumanMessage(script.btn_label))  # 将输出添加到历史列表中
                             # 更新剧本总长度
                             st.session_state.script_list_len = len(st.session_state.script_list)
                             # 更新剧本进度
@@ -383,6 +432,24 @@ else:
             else:
                 st.session_state.progress += 1
                 st.rerun()
+
+            with (bottom()):
+                # follow_up_history_count = 0  # 0 代表全部
+                col1, col2 = st.columns([1, 2])
+                with col1:
+                    history_count_options = ['使用全部历史', '使用 1 条历史', '使用 2 条历史', '使用 3 条历史',
+                                             '使用 4 条历史', '使用 5 条历史', '使用 6 条历史', '使用 10 条历史',
+                                             '使用 16 条历史', '使用 32 条历史']
+                    select_option = st.selectbox('使用历史记录数量:', history_count_options, label_visibility='collapsed')
+                    st.session_state.follow_up_history_count = history_count_options.index(select_option)
+                    # st.write(st.session_state.follow_up_history_count)
+
+                with col2:
+                    # 获取用户输入
+                    if user_input := st.chat_input('输入追问内容'):
+                        st.session_state.user_follow_up_ask = user_input
+                        st.session_state.has_follow_up_ask = True
+                        st.rerun()
 
 
 
