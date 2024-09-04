@@ -302,7 +302,7 @@ else:
                 # == 【Prompt】：剧本内容提交给 LLM，获得AI回复输出
                 elif script.type == ScriptType.PROMPT:
                     full_result = streaming_from_template(
-                        chat_box, script.template + '\n\n 请使用英文输出',
+                        chat_box, script.template,
                         {v: st.session_state[v] for v in script.template_vars} if script.template_vars else None,
                         model=script.custom_model, temperature=script.temperature
                     )
