@@ -176,6 +176,7 @@ def run_script_inner(
             trace_args["input"] = input
             trace_args["name"] = "ai-python"
             trace = langfuse.trace(**trace_args)
+
             trace_args["output"] = ""
             next = 0
             is_first_add = False

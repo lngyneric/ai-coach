@@ -2,6 +2,7 @@ import datetime
 import json
 import re
 from flask import Flask
+from flaskr.util.uuid import generate_id
 from langchain.prompts import PromptTemplate
 from ...service.lesson.const import (
     LESSON_TYPE_BRANCH_HIDDEN,
@@ -42,6 +43,7 @@ def generation_attend(
     attendScript.lesson_id = script_info.lesson_id
     attendScript.course_id = attend.course_id
     attendScript.script_id = script_info.script_id
+    attendScript.log_id = generate_id(app)
     return attendScript
 
 
