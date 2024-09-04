@@ -367,14 +367,27 @@ def update_attend_lesson_info(app: Flask, attend_id: str) -> list[AILessonAttend
         next_lessons = get_lesson_and_attend_info(
             app, next_no, lesson.course_id, attend_info.user_id
         )
+
+        app.logger.info("next_no:" + next_no)
         if len(next_lessons) > 0:
             # 解锁
+            app.logger.info(
+                "next lesson: {} ".format(
+                    ",".join(
+                        [
+                            (nl["lesson"].lesson_no + ":" + str(nl["attend"].status))
+                            for nl in next_lessons
+                        ]
+                    )
+                )
+            )
             for next_lesson_attend in next_lessons:
                 if next_lesson_attend["lesson"].lesson_no == next_no and (
                     next_lesson_attend["attend"].status == ATTEND_STATUS_LOCKED
                     or next_lesson_attend["attend"].status == ATTEND_STATUS_NOT_STARTED
                     or next_lesson_attend["attend"].status == ATTEND_STATUS_IN_PROGRESS
                 ):
+                    app.logger.info("unlock next lesson")
                     next_lesson_attend["attend"].status = ATTEND_STATUS_NOT_STARTED
                     res.append(
                         AILessonAttendDTO(
@@ -389,6 +402,7 @@ def update_attend_lesson_info(app: Flask, attend_id: str) -> list[AILessonAttend
                     or next_lesson_attend["attend"].status == ATTEND_STATUS_NOT_STARTED
                     or next_lesson_attend["attend"].status == ATTEND_STATUS_IN_PROGRESS
                 ):
+                    app.logger.info("unlock next lesson")
                     next_lesson_attend["attend"].status = ATTEND_STATUS_NOT_STARTED
                     res.append(
                         AILessonAttendDTO(
@@ -398,6 +412,8 @@ def update_attend_lesson_info(app: Flask, attend_id: str) -> list[AILessonAttend
                             ATTEND_STATUS_VALUES[ATTEND_STATUS_NOT_STARTED],
                         )
                     )
+        else:
+            app.logger.info("no next lesson")
     for i in range(len(attend_lesson_infos)):
         if (
             i > 0
@@ -414,4 +430,5 @@ def update_attend_lesson_info(app: Flask, attend_id: str) -> list[AILessonAttend
                     ATTEND_STATUS_VALUES[ATTEND_STATUS_NOT_STARTED],
                 )
             )
+    app.logger.info("res:{}".format(",".join([r.lesson_no for r in res])))
     return res
