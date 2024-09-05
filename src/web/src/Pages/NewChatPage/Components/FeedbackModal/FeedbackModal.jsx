@@ -43,7 +43,7 @@ export const FeedbackModal = ({ open, onClose, inMobile = false }) => {
           rules={[{ required: true, message:t('feedback.feedbackPlaceholder') }]}
         >
           <TextArea
-            value={feedback}
+            // value={feedback}
             showCount
             maxLength={FEEDBACK_MAX_LENGTH}
             minLength={5}
