@@ -2,7 +2,7 @@
 
 ## User Privacy Agreement
 
-This agreement details how Beijing Chanchan Shanmu Technology Co., Ltd. (hereinafter referred to as “we”) will collect, use, share, store, and protect your personal information through Ai! Shifu (hereinafter referred to as “the product”), as well as how you can manage your personal information. Please carefully read and understand this policy before using our products and services to ensure that you fully comprehend and agree before proceeding.
+This agreement details how Beijing Chanchan Shanmu Technology Co., Ltd. (hereinafter referred to as “we”) will collect, use, share, store, and protect your personal information through AI Shifu (hereinafter referred to as “the product”), as well as how you can manage your personal information. Please carefully read and understand this policy before using our products and services to ensure that you fully comprehend and agree before proceeding.
 
 ### User Information Collection
 
