@@ -1,6 +1,4 @@
-
 from ...common.swagger import register_schema_to_swagger
-
 
 
 USER_STATE_UNTEGISTERED = 0
@@ -13,8 +11,9 @@ USE_STATE_VALUES = {
     USER_STATE_UNTEGISTERED: "未注册",
     USER_STATE_REGISTERED: "已注册",
     USER_STATE_TRAIL: "试用",
-    USER_STATE_PAID: "已付费"
+    USER_STATE_PAID: "已付费",
 }
+
 
 @register_schema_to_swagger
 class UserInfo:
@@ -25,7 +24,20 @@ class UserInfo:
     mobile: str
     model: str
     user_state: str
-    def __init__(self, user_id, username, name, email, mobile,model,user_state,wx_openid):
+    language: str
+
+    def __init__(
+        self,
+        user_id,
+        username,
+        name,
+        email,
+        mobile,
+        model,
+        user_state,
+        wx_openid,
+        language,
+    ):
         self.user_id = user_id
         self.username = username
         self.name = name
@@ -34,6 +46,8 @@ class UserInfo:
         self.model = model
         self.user_state = USE_STATE_VALUES[user_state]
         self.wx_openid = wx_openid
+        self.language = language
+
     def __json__(self):
         return {
             "user_id": self.user_id,
@@ -42,8 +56,10 @@ class UserInfo:
             "email": self.email,
             "mobile": self.mobile,
             "state": self.user_state,
-            "openid": self.wx_openid
+            "openid": self.wx_openid,
+            "language": self.language,
         }
+
     def __html__(self):
         return self.__json__()
 
@@ -52,9 +68,11 @@ class UserInfo:
 class UserToken:
     userInfo: UserInfo
     token: str
-    def __init__(self,userInfo:UserInfo, token):
+
+    def __init__(self, userInfo: UserInfo, token):
         self.userInfo = userInfo
         self.token = token
+
     def __json__(self):
         return {
             "userInfo": self.userInfo,
@@ -62,24 +80,20 @@ class UserToken:
         }
 
 
-
-
-
-
-
 @register_schema_to_swagger
 class PageNationDTO:
-    def __init__(self,page:int,page_size:int,total:int,data) -> None:
+    def __init__(self, page: int, page_size: int, total: int, data) -> None:
         self.page = page
         self.page_size = page_size
         self.total = total
-        self.page_count = total//page_size + 1
+        self.page_count = total // page_size + 1
         self.data = data
+
     def __json__(self):
         return {
             "page": self.page,
             "page_size": self.page_size,
             "total": self.total,
-            "page_count":self.page_count,
-            "items":self.data
+            "page_count": self.page_count,
+            "items": self.data,
         }

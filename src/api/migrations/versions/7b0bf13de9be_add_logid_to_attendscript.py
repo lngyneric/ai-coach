@@ -1,7 +1,7 @@
 """add logid to attendscript
 
 Revision ID: 7b0bf13de9be
-Revises: 01891133d0a2
+Revises: becca0e0502d
 Create Date: 2024-09-04 07:31:21.568723
 
 """
@@ -11,7 +11,7 @@ import sqlalchemy as sa
 
 # revision identifiers, used by Alembic.
 revision = "7b0bf13de9be"
-down_revision = "01891133d0a2"
+down_revision = "becca0e0502d"
 branch_labels = None
 depends_on = None
 

@@ -44,8 +44,8 @@ export const runScript = (course_id, lesson_id, input, input_type, script_id, on
 
 /**
  * 获取课程学习记录
- * @param {*} lessonId 
- * @returns 
+ * @param {*} lessonId
+ * @returns
  */
 export const getLessonStudyRecord = async (lessonId) => {
   return request({

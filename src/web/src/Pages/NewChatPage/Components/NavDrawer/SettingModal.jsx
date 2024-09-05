@@ -101,6 +101,7 @@ export const SettingModal = ({
               <img className={styles.rowIcon} src={exitLoginIcon} alt="" />
             </div>
           )}
+
         </div>
       </PopupModal>
 

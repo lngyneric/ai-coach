@@ -12,10 +12,36 @@
     "confirmLogoutContent": "确认退出登录么？",
     "defaultUserName": "默认名称",
     "notLogin": "未登录",
-    "logout": "退出登录"
+    "logout": "退出登录",
+    "loginTitle": "登录",
+    "loginFeedback": "提交反馈",
+    "msgHaveRead": "我已阅读并同意",
+    "msgAggrement": "服务协议 & 隐私政策",
+    "msgToAgree": "请勾选同意协议",
+    "msgLoginProblem": "登录遇到问题",
+    "msgLoginSuccess": "登录成功",
+    "msgToInputPhone": "请输入11位手机号",
+    "mstPhoneReg": "手机号格式不正确",
+    "msgPhonePlaceHolder": "请输入手机号",
+    "msgToInputCode": "请输入4位短信验证码",
+    "msgToInputCode4": "请输入4位验证码",
+    "msgResendCode": "重新发送",
+    "msgToInputPwd": "请输入密码",
+    "msgCheckCode": "图形验证码",
+    "msgToCheckAgreement": "请勾选同意协议"
+
   },
   "pay": {
-    "payModalTitle": "购买"
+    "payModalTitle": "购买",
+    "payChannel": "支付方式",
+    "payChannelWechat": "微信",
+    "payChannelAlipay": "支付宝"
+
+  },
+  "groupon":{
+    "grouponTitle": "优惠码",
+    "grouponPlaceholder": "请输入优惠码",
+    "grouponInputMsg": "请输入优惠码"
   },
   "navigation": {
     "courseList": "课程列表",
@@ -30,6 +56,27 @@
     "feedbackTitle": "提交反馈",
     "userAggrement": "服务协议",
     "privacyPolicy": "隐私政策"
+  },
+  "settings":{
+    "home": "主页",
+    "settingTite": "个人信息"
+  },
+  "feedback": {
+    "feedbackTitle": "反馈",
+    "feedbackContent": "反馈内容",
+    "feedbackPlaceholder": "请输入反馈内容",
+    "feedbackSubmit": "提交",
+    "feedbackSuccess": "反馈成功,感谢你的反馈。",
+    "feedbackFail": "反馈失败",
+    "feedbackContentEmpty": "反馈内容不能为空",
+    "feedbackContactEmpty": "联系方式不能为空"
+  },
+  "chat":{
+    "chatInputWarn": "请输入内容",
+    "chatInputPlaceholder": "请输入内容",
+    "chatTips":"内容由 AI 大模型生成，无法确保真实准确，仅供学习参考",
+    "copyText": "复制",
+    "copySuccess": "已复制到剪切板"
   },
 
   "lesson": {

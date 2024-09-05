@@ -5,10 +5,12 @@ import styles from './FeedbackModal.module.scss';
 import { memo } from 'react';
 import { useCallback } from 'react';
 import { submitFeedback } from 'Api/bz.js';
+import { useTranslation } from 'react-i18next';
 
 const FEEDBACK_MAX_LENGTH = 300;
 
 export const FeedbackModal = ({ open, onClose, inMobile = false }) => {
+  const { t } = useTranslation();
   const { TextArea } = Input;
   const [form] = Form.useForm();
   const [messageApi, contextHolder] = message.useMessage();
@@ -19,7 +21,7 @@ export const FeedbackModal = ({ open, onClose, inMobile = false }) => {
       const { feedback } = data;
       await submitFeedback(feedback);
       messageApi.success({
-        content: '反馈成功，感谢你的反馈。',
+        content: t('feedback.feedbackSuccess'),
       });
       onClose();
     } catch {}
@@ -34,13 +36,14 @@ export const FeedbackModal = ({ open, onClose, inMobile = false }) => {
       maskClosable={true}
       onCancel={onClose}
     >
-      <div className={styles.title}>反馈</div>
+      <div className={styles.title}>{t('feedback.feedbackTitle')}</div>
       <Form form={form} className={styles.formWrapper}>
         <Form.Item
           name="feedback"
-          rules={[{ required: true, message: '请输入反馈内容' }]}
+          rules={[{ required: true, message:t('feedback.feedbackPlaceholder') }]}
         >
           <TextArea
+            // value={feedback}
             showCount
             maxLength={FEEDBACK_MAX_LENGTH}
             minLength={5}
@@ -53,9 +56,9 @@ export const FeedbackModal = ({ open, onClose, inMobile = false }) => {
         width="100%"
         onClick={onSubmitFeedback}
       >
-        提交
+        {t('feedback.feedbackSubmit')}
       </MainButton>
-      {contextHolder}
+      { contextHolder }
     </Modal>
   );
 };

@@ -130,7 +130,6 @@ const NewChatPage = (props) => {
     if (cid === chapterId) {
       return;
     }
-    console.log('update cid: ', cid);
     updateChapterId(cid);
     checkUrl(cid);
   }, [chapterId, checkUrl, cid, updateChapterId]);

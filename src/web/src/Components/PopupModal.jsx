@@ -1,13 +1,13 @@
-import { useEffect, useRef } from 'react';
+import {  useEffect, useRef } from 'react';
 import classNames from 'classnames';
 import styles from './PopupModal.module.scss'
 import { useCallback } from 'react';
 
-export const PopupModal = ({ 
-  open = false, 
+export const PopupModal = ({
+  open = false,
   onClose = (event) => {},
-  children, 
-  style, 
+  children,
+  style,
   wrapStyle,
   className
 }) => {

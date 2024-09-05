@@ -20,13 +20,13 @@ export const NavFooter = forwardRef(({
   const fillBtnRef = useRef(null);
   const themeBtnRef = useRef(null);
   const settingBtnRef = useRef(null);
-  
+
   const containElement = (elem) => {
     return (fillBtnRef.current && fillBtnRef.current.contains(elem))
     || (themeBtnRef.current && themeBtnRef.current.contains(elem))
     || (settingBtnRef.current && settingBtnRef.current.contains(elem));
   }
-  
+
   useImperativeHandle(ref, () => ({
     containElement,
   }));
@@ -44,6 +44,7 @@ export const NavFooter = forwardRef(({
       <img src={settingsIcon} className={styles.icon} alt={t('navigation.settings')} />
       <div className={styles.btnText}>{t('navigation.settings')}</div>
     </div>
+
   </div>);
 });
 

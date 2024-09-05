@@ -42,6 +42,7 @@ def generate_temp_user(
             wx_data = get_wechat_access_token(app, wx_code)
             if wx_data:
                 wx_openid = wx_data.get("openid", "")
+                # wx_uinionid = wx_data.get("unionid", "")
         if not convert_user:
             if wx_openid != "":
                 user_info = (
@@ -60,6 +61,7 @@ def generate_temp_user(
                             model=user_info.default_model,
                             user_state=user_info.user_state,
                             wx_openid=user_info.user_open_id,
+                            language=user_info.user_language,
                         ),
                         token=generate_token(app, user_id=user_info.user_id),
                     )
@@ -87,6 +89,7 @@ def generate_temp_user(
                     model=new_user.default_model,
                     user_state=new_user.user_state,
                     wx_openid=new_user.user_open_id,
+                    language=new_user.user_language,
                 ),
                 token=token,
             )
@@ -108,6 +111,7 @@ def generate_temp_user(
                             model=user.default_model,
                             user_state=user.user_state,
                             wx_openid=user.user_open_id,
+                            language=user.user_language,
                         ),
                         token=generate_token(app, user_id=user.user_id),
                     )
@@ -125,6 +129,7 @@ def generate_temp_user(
                     model=user.default_model,
                     user_state=user.user_state,
                     wx_openid=user.user_open_id,
+                    language=user.user_language,
                 ),
                 token=token,
             )

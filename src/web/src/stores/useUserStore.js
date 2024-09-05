@@ -4,7 +4,7 @@ import { userInfoStore, tokenTool } from 'Service/storeUtil.js';
 import { genUuid } from 'Utils/common.js';
 import { verifySmsCode } from 'Api/user.js';
 import { subscribeWithSelector } from 'zustand/middleware'
-
+import i18n from '../i18n.js';
 export const useUserStore = create(
   subscribeWithSelector((set) => ({
     hasLogin: false,
@@ -19,6 +19,7 @@ export const useUserStore = create(
         hasLogin: true,
         userInfo,
       }));
+      i18n.changeLanguage(userInfo.language);
 
     },
 
@@ -60,6 +61,7 @@ export const useUserStore = create(
             userInfo: userInfo,
           }));
         }
+        i18n.changeLanguage(userInfo.language);
       } catch (err) {
         if ((err.status && err.status === 403) || (err.code && err.code === 1005) || (err.code && err.code === 1001)) {
           const res = await registerTmp({ temp_id: genUuid() });
@@ -107,6 +109,8 @@ export const useUserStore = create(
           ...res.data
         }
       }))
+      i18n.changeLanguage(res.data.language);
+
     }
   }))
 );

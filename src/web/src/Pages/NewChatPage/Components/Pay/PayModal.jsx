@@ -17,6 +17,7 @@ import { useEffect } from 'react';
 import classNames from 'classnames';
 import { useInterval } from 'react-use';
 import { message } from 'antd';
+import { Translation } from 'react-i18next';
 import contactBzWechatImg from 'Assets/newchat/contact-bz-wechat.png';
 
 import payInfoBg from 'Assets/newchat/pay-info-bg.png';
@@ -26,7 +27,7 @@ import PayChannelSwitch from './PayChannelSwitch.jsx';
 const DEFAULT_QRCODE = 'DEFAULT_QRCODE';
 const MAX_TIMEOUT = 1000 * 60 * 3;
 const COUNTDOWN_INTERVAL = 1000;
-
+// const t = Translation();
 const CompletedSection = memo(() => {
   return (
     <div className={styles.completedSection}>
