@@ -35,5 +35,24 @@ def load_llm(model: str = None, temperature: float = None, json_mode=False):
                               model_kwargs={"response_format": {"type": "json_object"}})
         else:
             return ChatOpenAI(model=model, temperature=temperature, organization=cfg.OPENAI_ORG)
+    elif model in cfg.DEEPSEEK_MODELS:
+        temperature = temperature if temperature else cfg.DEEPSEEK_DEF_TMP
+        if json_mode:
+            return ChatOpenAI(model=model, temperature=temperature, organization=cfg.OPENAI_ORG,
+                              model_kwargs={"response_format": {"type": "json_object"}},
+                              api_key=os.getenv("DEEPSEEK_API_KEY"), base_url=os.getenv("DEEPSEEK_BASE_URL"))
+        else:
+            return ChatOpenAI(model=model, temperature=temperature, organization=cfg.OPENAI_ORG,
+                              api_key=os.getenv("DEEPSEEK_API_KEY"), base_url=os.getenv("DEEPSEEK_BASE_URL"))
+    elif model in cfg.BAILIAN_MODELS:
+        temperature = temperature if temperature else cfg.BAILIAN_DEF_TMP
+        if json_mode:
+            return ChatOpenAI(model=model, temperature=temperature, organization=cfg.OPENAI_ORG,
+                              model_kwargs={"response_format": {"type": "json_object"}},
+                              api_key=os.getenv("DASHSCOPE_API_KEY"), base_url=os.getenv("DASHSCOPE_BASE_URL"))
+        else:
+            return ChatOpenAI(model=model, temperature=temperature, organization=cfg.OPENAI_ORG,
+                              api_key=os.getenv("DASHSCOPE_API_KEY"), base_url=os.getenv("DASHSCOPE_BASE_URL"))
+
     else:
         raise Exception('模型名称错误（不支持）')

@@ -29,7 +29,7 @@ PROFILES_LABLES = {
         "label": "性别",
         "mapping": "user_sex",
         "items": ["保密", "男性", "女性"],
-        "items_mapping": {"保密": 0, "男性": 1, "女性": 2},
+        "items_mapping": {0: "保密", 1: "男性", 2: "女性"},
     },
     "birth": {"label": "生日", "mapping": "user_birth", "type": "date"},
     "avatar": {"label": "头像", "mapping": "user_avatar", "type": "image"},
@@ -37,7 +37,12 @@ PROFILES_LABLES = {
     "occupation": {
         "label": "职业",
     },
-    "language": {"label": "语言", "items": ["中文", "英文"]},
+    "language": {
+        "label": "语言",
+        "items": ["中文", "English"],
+        "mapping": "user_language",
+        "items_mapping": {"zh_CN": "中文", "en": "English"},
+    },
     "ai_tools": {
         "label": "编程工具",
         "items": ["GitHub Copilot", "通义灵码"],
@@ -162,9 +167,11 @@ def get_user_profile_labels(app: Flask, user_id: str):
                     "items": PROFILES_LABLES[key].get("items"),
                 }
                 if PROFILES_LABLES[key].get("items_mapping"):
-                    item["value"] = PROFILES_LABLES[key]["items"][
-                        getattr(user_info, PROFILES_LABLES[key]["mapping"])
-                    ]
+                    item["value"] = PROFILES_LABLES[key]["items_mapping"].get(
+                        getattr(user_info, PROFILES_LABLES[key]["mapping"]),
+                        PROFILES_LABLES[key].get("items")[0],
+                    )
+
                 result.append(item)
 
     for user_profile in user_profiles:

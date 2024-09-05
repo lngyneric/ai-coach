@@ -7,7 +7,6 @@
     "companyAddress": "北京朝阳区望京东煌大厦19层163室"
   },
   "user": {
-
     "loginMainButton": "登录/注册",
     "confirmLogoutTitle": "确认退出登录？",
     "confirmLogoutContent": "确认退出登录么？",
@@ -94,5 +93,4 @@
       "completed": "已完成"
     }
   }
-
 }

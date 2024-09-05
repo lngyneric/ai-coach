@@ -2,6 +2,7 @@ import datetime
 import json
 import re
 from flask import Flask
+from flaskr.util.uuid import generate_id
 from langchain.prompts import PromptTemplate
 from ...service.lesson.const import (
     LESSON_TYPE_BRANCH_HIDDEN,
@@ -42,6 +43,7 @@ def generation_attend(
     attendScript.lesson_id = script_info.lesson_id
     attendScript.course_id = attend.course_id
     attendScript.script_id = script_info.script_id
+    attendScript.log_id = generate_id(app)
     return attendScript
 
 
@@ -151,6 +153,17 @@ def extract_json(app: Flask, text: str):
     return {}
 
 
+def extract_variables(template: str) -> list:
+    # 使用正则表达式匹配单层 {} 中的内容，忽略双层大括号
+    pattern = r"\{([^{}]+)\}(?!})"
+    matches = re.findall(pattern, template)
+
+    # 去重并过滤包含双引号的元素
+    variables = list(set(matches))
+    filtered_variables = [var for var in variables if '"' not in var]
+    return filtered_variables
+
+
 def get_fmt_prompt(
     app: Flask,
     user_id: str,
@@ -173,7 +186,7 @@ def get_fmt_prompt(
     app.logger.info(propmpt_keys)
     app.logger.info(profiles)
     prompt_template_lc = PromptTemplate.from_template(profile_tmplate)
-    keys = prompt_template_lc.input_variables
+    keys = extract_variables(profile_tmplate)
     fmt_keys = {}
     for key in keys:
         if key in profiles:
@@ -356,14 +369,27 @@ def update_attend_lesson_info(app: Flask, attend_id: str) -> list[AILessonAttend
         next_lessons = get_lesson_and_attend_info(
             app, next_no, lesson.course_id, attend_info.user_id
         )
+
+        app.logger.info("next_no:" + next_no)
         if len(next_lessons) > 0:
             # 解锁
+            app.logger.info(
+                "next lesson: {} ".format(
+                    ",".join(
+                        [
+                            (nl["lesson"].lesson_no + ":" + str(nl["attend"].status))
+                            for nl in next_lessons
+                        ]
+                    )
+                )
+            )
             for next_lesson_attend in next_lessons:
                 if next_lesson_attend["lesson"].lesson_no == next_no and (
                     next_lesson_attend["attend"].status == ATTEND_STATUS_LOCKED
                     or next_lesson_attend["attend"].status == ATTEND_STATUS_NOT_STARTED
                     or next_lesson_attend["attend"].status == ATTEND_STATUS_IN_PROGRESS
                 ):
+                    app.logger.info("unlock next lesson")
                     next_lesson_attend["attend"].status = ATTEND_STATUS_NOT_STARTED
                     res.append(
                         AILessonAttendDTO(
@@ -378,6 +404,7 @@ def update_attend_lesson_info(app: Flask, attend_id: str) -> list[AILessonAttend
                     or next_lesson_attend["attend"].status == ATTEND_STATUS_NOT_STARTED
                     or next_lesson_attend["attend"].status == ATTEND_STATUS_IN_PROGRESS
                 ):
+                    app.logger.info("unlock next lesson")
                     next_lesson_attend["attend"].status = ATTEND_STATUS_NOT_STARTED
                     res.append(
                         AILessonAttendDTO(
@@ -387,6 +414,8 @@ def update_attend_lesson_info(app: Flask, attend_id: str) -> list[AILessonAttend
                             ATTEND_STATUS_VALUES[ATTEND_STATUS_NOT_STARTED],
                         )
                     )
+        else:
+            app.logger.info("no next lesson")
     for i in range(len(attend_lesson_infos)):
         if (
             i > 0
@@ -403,4 +432,5 @@ def update_attend_lesson_info(app: Flask, attend_id: str) -> list[AILessonAttend
                     ATTEND_STATUS_VALUES[ATTEND_STATUS_NOT_STARTED],
                 )
             )
+    app.logger.info("res:{}".format(",".join([r.lesson_no for r in res])))
     return res

@@ -1,7 +1,7 @@
 """add feedback table
 
 Revision ID: 01891133d0a2
-Revises: 1219f7486dc3
+Revises: 7b0bf13de9be
 Create Date: 2024-08-30 08:42:35.187750
 
 """
@@ -11,7 +11,7 @@ from sqlalchemy.dialects import mysql
 
 # revision identifiers, used by Alembic.
 revision = "01891133d0a2"
-down_revision = "1219f7486dc3"
+down_revision = "7b0bf13de9be"
 branch_labels = None
 depends_on = None
 

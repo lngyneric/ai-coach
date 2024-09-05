@@ -28,6 +28,12 @@ credentials:
       logged_in: false
       name: 'yfge'
       password: ai-shifu
+    shiqinying:
+      email: 530877873@qq.com
+      failed_login_attempts: 3
+      logged_in: false
+      name: 'shiqinying'
+      password: ai-shifu
 pre-authorized:
   emails:
   - abc@gmail.com

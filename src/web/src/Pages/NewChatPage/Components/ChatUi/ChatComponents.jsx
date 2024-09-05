@@ -32,6 +32,7 @@ import { tokenTool } from '@Service/storeUtil.js';
 import MarkdownBubble from './ChatMessage/MarkdownBubble.jsx';
 import { useTracking, EVENT_NAMES } from 'common/hooks/useTracking.js';
 import PayModalM from '../Pay/PayModalM.jsx';
+import { smoothScroll }  from 'Utils/smoothScroll.js'
 
 const USER_ROLE = {
   TEACHER: '老师',
@@ -138,6 +139,7 @@ const convertEventInputModal = ({ type, content }) => {
   }
 };
 
+const SCROLL_BOTTOM_THROTTLE = 100;
 export const ChatComponents = forwardRef(
   (
     {
@@ -164,6 +166,8 @@ export const ChatComponents = forwardRef(
     const [isStreaming, setIsStreaming] = useState(false);
     const [initRecords, setInitRecords] = useState([]);
 
+    const [autoScroll, setAutoScroll] = useState(true);
+
     const { userInfo, mobileStyle } = useContext(AppContext);
     const chatRef = useRef();
     const {
@@ -176,7 +180,7 @@ export const ChatComponents = forwardRef(
       updateResetedChapterId: state.updateResetedChapterId,
     }));
 
-    const { messages, appendMsg, setTyping, updateMsg, resetList } =
+    const { messages, appendMsg, setTyping, updateMsg, resetList, deleteMsg } =
       useMessages([]);
 
     const { checkLogin, updateUserInfo, refreshUserInfo } = useUserStore(
@@ -353,18 +357,63 @@ export const ChatComponents = forwardRef(
       ]
     );
 
+    useEffect(() => {
+      const scrollWrapper = document.querySelector(
+        `.${styles.chatComponents} .PullToRefresh`
+      );
+      const inner = document.querySelector(
+        `.${styles.chatComponents} .PullToRefresh-inner`
+      );
+
+      const onScroll = () => {
+        if (
+          scrollWrapper.scrollTop > 0 &&
+          scrollWrapper.scrollTop + scrollWrapper.clientHeight <
+            inner.clientHeight - SCROLL_BOTTOM_THROTTLE
+        ) {
+          if (
+            messages.length &&
+            messages[messages.length - 1].position === 'pop'
+          ) {
+            return;
+          }
+          setAutoScroll(false);
+          appendMsg({ id: genUuid(), type: 'loading', position: 'pop' });
+        } else {
+          if (
+            messages.length &&
+            messages[messages.length - 1].position === 'pop'
+          ) {
+            setAutoScroll(true);
+            deleteMsg(messages[messages.length - 1].id);
+          }
+        }
+      };
+
+      scrollWrapper.addEventListener('scroll', onScroll);
+      if (scrollWrapper && inner) {
+        return;
+      }
+
+      return () => {
+        scrollWrapper.removeEventListener('scroll', onScroll);
+      };
+    }, [appendMsg, deleteMsg, messages]);
+
     const scrollToBottom = useCallback(() => {
       const inner = document.querySelector(
         `.${styles.chatComponents} .PullToRefresh-inner`
       );
-      document
-        .querySelector(`.${styles.chatComponents} .PullToRefresh`)
-        .scrollTo(0, inner.clientHeight);
+      const wrapper = document.querySelector(`.${styles.chatComponents} .PullToRefresh`);
+      smoothScroll({ el: wrapper, to: inner.clientHeight });
     }, []);
 
     const onImageLoaded = useCallback(() => {
+      if (!autoScroll) {
+        return
+      }
       scrollToBottom();
-    }, [scrollToBottom]);
+    }, [autoScroll, scrollToBottom]);
 
     useEffect(() => {
       if (!loadedData) {
@@ -532,9 +581,10 @@ export const ChatComponents = forwardRef(
 
         setTyping(true);
         setInputDisabled(true);
+        scrollToBottom();
         nextStep({ chatId, lessonId, type, val, scriptId });
       },
-      [appendMsg, chatId, lessonId, nextStep, setTyping, userInfo]
+      [appendMsg, chatId, lessonId, nextStep, scrollToBottom, setTyping, userInfo]
     );
 
     const onPayModalOk = useCallback(() => {

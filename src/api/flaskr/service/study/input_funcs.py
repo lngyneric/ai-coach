@@ -14,6 +14,7 @@ from flaskr.service.study.models import AICourseAttendAsssotion
 from flaskr.service.lesson.const import UI_TYPE_BRANCH
 from flaskr.service.view.models import INPUT_TYPE_SELECT, INPUT_TYPE_TEXT
 from flaskr.api.llm import invoke_llm
+from flaskr.api.edun import check_text
 from flaskr.service.common.models import AppException
 from flaskr.service.profile.funcs import (
     get_user_profiles,
@@ -23,6 +24,7 @@ from flaskr.service.profile.funcs import (
 )
 from flaskr.service.study.utils import extract_json, generation_attend, get_fmt_prompt
 from flaskr.service.user import verify_sms_code_without_phone
+from flaskr.service.check_risk import add_risk_control_result
 
 from ...service.lesson.models import AILesson, AILessonScript
 from ...service.order.models import AICourseLessonAttend
@@ -77,7 +79,14 @@ def handle_input_text(
     log_script.script_content = input
     log_script.script_role = ROLE_STUDENT
     db.session.add(log_script)
+
     span = trace.span(name="user_input", input=input)
+    res = check_text(log_script.log_id, input)
+    span.event(name="check_text", input=input, output=res)
+    add_risk_control_result(
+        app, log_script.log_id, user_id, input, "edun", str(res), "", 1, "check_text"
+    )
+
     resp = invoke_llm(
         app,
         span,

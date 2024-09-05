@@ -8,7 +8,7 @@ import { useSystemStore } from 'stores/useSystemStore.js';
 import i18n from './i18n.js';
 import { inWechat, wechatLogin } from 'constants/uiConstants.js';
 import { getBoolEnv } from 'Utils/envUtils.js';
-
+import { userInfoStore } from 'Service/storeUtil.js';
 if (getBoolEnv('REACT_APP_ERUDA')) {
   import('eruda').then(eruda => eruda.default.init());
 }
@@ -18,7 +18,18 @@ const RouterView = () => useRoutes(routes);
 const App = () => {
   const { updateChannel, channel, wechatCode, updateWechatCode } =
     useSystemStore();
-  const [language, setLanguage] = useState(useSystemStore().language);
+
+
+  var initLang = useSystemStore().language;
+
+  if (userInfoStore.get()) {
+
+    initLang = userInfoStore.get().language;
+  }
+
+
+  console.log('initLang', initLang);
+  const [language, setLanguage] = useState(initLang);
   const [loading, setLoading] = useState(true);
   const params = parseUrlParams();
   console.debug('params', params);
@@ -28,6 +39,10 @@ const App = () => {
     console.log('init channel value', currChannel);
     updateChannel(currChannel);
   }
+
+
+
+
 
   useEffect(() => {
     if (inWechat()) {

@@ -53,6 +53,40 @@ def simulate_streaming(chat_box, template: str, variables=None,
     return current_text
 
 
+def streaming_for_follow_up_ask(chat_box, user_input, chat_history):
+    """
+    用于处理用户输入后的后续提问，目前仅用于处理用户输入内容的Prompt
+    :param chat_box: ChatBox 对象
+    :param user_input: 用户输入内容
+    :param chat_history: 历史对话内容
+    """
+    llm = load_llm()
+
+    chat_box.ai_say
+    chat_box.ai_say(Markdown('', in_expander=False))
+
+    llm_input = []
+
+    # 有配置 系统角色 且 不是检查用户输入内容的Prompt时，加入系统角色
+    if 'system_role' in st.session_state:
+        llm_input.append(SystemMessage(st.session_state.system_role))
+        logging.debug(f'调用LLM（System）：{st.session_state.system_role}')
+
+    llm_input += chat_history
+    llm_input.append(HumanMessage(user_input))
+
+
+    full_result = ''
+    for chunk in llm.stream(llm_input):
+        full_result += chunk.content
+        chat_box.update_msg(full_result, element_index=0, streaming=True)
+
+    chat_box.update_msg(full_result + '\n\n 没有其他问题的话，就让我们继续学习吧~',
+                        element_index=0, streaming=False, state="complete")
+
+    return full_result
+
+
 def streaming_from_template(chat_box, template, variables,
                             input_done_with=None, parse_keys=None, update=False,
                             model=None, temperature=None):

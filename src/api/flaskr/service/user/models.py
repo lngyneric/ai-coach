@@ -47,7 +47,7 @@ class User(db.Model):
         String(255), nullable=True, index=True, default="", comment="user unicon id"
     )
     user_language = Column(
-        String(30), nullable=True, default="zh", comment="user language"
+        String(30), nullable=True, default="zh_CN", comment="user language"
     )
 
     def __init__(
@@ -60,6 +60,7 @@ class User(db.Model):
         mobile="",
         default_model="gpt-3.5-turbo-0613",
         user_state=0,
+        language="zh_CN",
     ):
         self.user_id = user_id
         self.username = username
@@ -69,6 +70,7 @@ class User(db.Model):
         self.mobile = mobile
         self.default_model = default_model
         self.user_state = user_state
+        self.user_language = language
 
 
 class UserConversion(db.Model):
