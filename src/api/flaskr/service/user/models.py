@@ -47,7 +47,7 @@ class User(db.Model):
         String(255), nullable=True, index=True, default="", comment="user unicon id"
     )
     user_language = Column(
-        String(30), nullable=True, default="zh_CN", comment="user language"
+        String(30), nullable=True, default="zh", comment="user language"
     )
 
     def __init__(

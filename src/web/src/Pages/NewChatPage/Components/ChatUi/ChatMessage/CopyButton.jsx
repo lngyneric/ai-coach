@@ -6,14 +6,14 @@ import styles from './CopyButton.module.scss';
 import { useRef } from 'react';
 import classNames from 'classnames';
 import { copyText } from 'Utils/textutils.js';
-import { Translation } from 'react-i18next';
+import { useTranslation } from 'react-i18next';
 
 const TIMEOUT = 5000;
 
 export const CopyButton = ({ content }) => {
   const [hasCopy, setHasCopy] = useState(false);
   const timeoutRef = useRef();
-  const t = Translation();
+  const {t} = useTranslation();
 
   const onCopyClick = () => {
     copyText(content);

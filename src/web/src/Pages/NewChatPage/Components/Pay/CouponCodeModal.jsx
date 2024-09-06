@@ -2,11 +2,11 @@ import { Modal, Form, Input } from 'antd';
 import { useCallback } from 'react';
 import { memo } from 'react';
 import styles from './CouponCodeModal.module.scss';
-import { Translation } from 'react-i18next';
+import { useTranslation } from 'react-i18next';
 
 export const CouponCodeModal = ({ open = false, onCancel, onOk }) => {
   const [form] = Form.useForm();
-  const t = Translation();
+  const {t} = useTranslation();
 
   const _onOk = useCallback(async () => {
     try {

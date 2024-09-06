@@ -228,7 +228,12 @@ def require_reset_pwd_code(app: Flask, login: str):
                 ex=app.config["RESET_PWD_CODE_EXPIRE_TIME"],
             )
             send_email(
-                app, "小卡AI助理", user.email, user.email, "重置密码", "您的重置密码验证码为：" + str(code)
+                app,
+                "AI-Shifu",
+                user.email,
+                user.email,
+                "重置密码",
+                "您的重置密码验证码为：" + str(code),
             )
             return True
         else:
