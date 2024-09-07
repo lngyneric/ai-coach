@@ -1,6 +1,5 @@
 import MainLayout from "../Layout/MainLayout";
 import CommonListPage from "../Pages/CommonListPage/CommonListPage";
-import SchedeleComponent from "../Pages/SchedulePage/SchedulePage";
 import LoginPage from "../Pages/LoginPage/LoginPage";
 import RegisterPage from "../Pages/RegisterPage/RegisterPage";
 import ContactsComponant from "../Pages/ContactListPage/ContactListPage";
@@ -38,7 +37,7 @@ const authRoutes = [
   {
     path: "/order",
     element: <CommonListPage viewName="order"></CommonListPage>,
-  
+
     title: "订单",
   },
   {
