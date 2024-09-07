@@ -21,7 +21,11 @@ def register_route(app):
     app = register_callback_handler(app, prefix + "/callback")
     app = register_test_routes(app, prefix + "/test")
 
+    mode = app.config.get("MODE", "api")
+    app.logger.info("current run mode:{}".format(mode))
+
     if app.config.get("MODE", "api") == "admin":
+        app.logger.info("current mode is admin register admin api")
         from .admin.user import register_user_route
 
         app = register_user_route(app, prefix + "/user")
