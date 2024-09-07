@@ -9,7 +9,7 @@ st.set_page_config(
 
 """
 # 哎！师傅：课程制作中心
-> 请收藏该网址 http://cook.ai-shifu.com/
+> 请收藏该网址 https://cook.ai-shifu.com/
 """
 
 add_vertical_space(3)

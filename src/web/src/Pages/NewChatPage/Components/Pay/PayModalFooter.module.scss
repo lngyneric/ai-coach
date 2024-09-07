@@ -1,0 +1,19 @@
+.protocalWrapper {
+  display: flex;
+  flex-flow: column nowrap;
+  justify-content: center;
+  align-items: center;
+  font-size: var(--font-size-5);
+
+  .protocalDesc {
+    color: var(--color-8);
+  }
+
+  .protocalLinks {
+    margin-top: 6px;
+
+    .protocalLink {
+      text-decoration: none;
+    }
+  }
+}

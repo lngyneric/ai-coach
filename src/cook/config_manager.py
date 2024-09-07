@@ -1,5 +1,8 @@
 import os
 import yaml
+from dotenv import load_dotenv, find_dotenv
+
+_ = load_dotenv(find_dotenv())
 
 
 class ConfigManager:
@@ -24,14 +27,30 @@ class ConfigManager:
             self.DEFAULT_MODEL = _cfg_llm['default_model']
             self.DEFAULT_TMP = _cfg_llm['default_temperature']
             self.ORIGINAL_DEFAULT_MODEL = _cfg_llm['default_model']
+
             self.QIANFAN_MODELS = _cfg_llm['qianfan']['models']
             self.QIANFAN_DEF_TMP = _cfg_llm['qianfan']['default_temperature']
+
             self.ZHIPU_MODELS = _cfg_llm['zhipu']['models']
             self.ZHIPU_DEF_TMP = _cfg_llm['zhipu']['default_temperature']
+
             self.OPENAI_MODELS = _cfg_llm['openai']['models']
             self.OPENAI_ORG = _cfg_llm['openai']['organization']
             self.OPENAI_DEF_TMP = _cfg_llm['openai']['default_temperature']
-            self.SUPPORT_MODELS = self.QIANFAN_MODELS + self.ZHIPU_MODELS + self.OPENAI_MODELS
+
+            self.DEEPSEEK_MODELS = _cfg_llm['deepseek']['models']
+            self.DEEPSEEK_DEF_TMP = _cfg_llm['deepseek']['default_temperature']
+
+            self.BAILIAN_MODELS = _cfg_llm['bailian']['models']
+            self.BAILIAN_DEF_TMP = _cfg_llm['bailian']['default_temperature']
+
+            self.SUPPORT_MODELS = (
+                    self.QIANFAN_MODELS +
+                    self.ZHIPU_MODELS +
+                    self.OPENAI_MODELS +
+                    self.DEEPSEEK_MODELS +
+                    self.BAILIAN_MODELS
+            )
 
             _cfg_lark = config['lark']
             self.LARK_APP_TOKEN = _cfg_lark['app_token']
@@ -60,3 +79,9 @@ class ConfigManager:
 
     def set_openai_default_temperature(self, temperature):
         self.OPENAI_DEF_TMP = temperature
+
+
+if __name__ == "__main__":
+    cfg = ConfigManager()
+    print(cfg.SUPPORT_MODELS)
+

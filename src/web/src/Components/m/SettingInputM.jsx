@@ -35,7 +35,9 @@ export const SettingInputM = ({
       if (!ret) {
         setIsError(true);
         setErrorMessage(r.message);
+        return true
       }
+      return false
     });
   };
 

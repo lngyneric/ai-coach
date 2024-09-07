@@ -6,6 +6,7 @@ import {
   useImperativeHandle,
   useState,
   useContext,
+  useRef,
 } from 'react';
 import { runScript, getLessonStudyRecord } from 'Api/study';
 import { genUuid } from 'Utils/common.js';
@@ -23,7 +24,6 @@ import {
 import classNames from 'classnames';
 import { useUserStore } from 'stores/useUserStore.js';
 import { fixMarkdown, fixMarkdownStream } from 'Utils/markdownUtils.js';
-import { FRAME_LAYOUT_MOBILE } from 'constants/uiConstants.js';
 import PayModal from '../Pay/PayModal.jsx';
 import { useDisclosture } from 'common/hooks/useDisclosture.js';
 import { memo } from 'react';
@@ -32,13 +32,15 @@ import { tokenTool } from '@Service/storeUtil.js';
 import MarkdownBubble from './ChatMessage/MarkdownBubble.jsx';
 import { useTracking, EVENT_NAMES } from 'common/hooks/useTracking.js';
 import PayModalM from '../Pay/PayModalM.jsx';
+import { smoothScroll } from 'Utils/smoothScroll.js';
+import { throttle } from 'throttle-debounce';
 
 const USER_ROLE = {
   TEACHER: '老师',
   STUDENT: '学生',
 };
 
-const robotAvatar = require('@Assets/chat/sunner_icon.jpg');
+const robotAvatar = require('@Assets/newchat/sunner_icon.jpg');
 
 const createMessage = ({
   id = 0,
@@ -138,6 +140,7 @@ const convertEventInputModal = ({ type, content }) => {
   }
 };
 
+const SCROLL_BOTTOM_THROTTLE = 60;
 export const ChatComponents = forwardRef(
   (
     {
@@ -146,10 +149,11 @@ export const ChatComponents = forwardRef(
       onGoChapter = (id) => {},
       chapterId,
       onPurchased,
+      chapterUpdate,
     },
     ref
   ) => {
-    const { trackEvent } = useTracking();
+    const { trackEvent, trackTrailProgress } = useTracking();
     const [chatId, setChatId] = useState('');
     const [lessonId, setLessonId] = useState(null);
     const [inputDisabled, setInputDisabled] = useState(false);
@@ -163,17 +167,31 @@ export const ChatComponents = forwardRef(
     const [isStreaming, setIsStreaming] = useState(false);
     const [initRecords, setInitRecords] = useState([]);
 
-    const { userInfo, frameLayout } = useContext(AppContext);
-    const { lessonId: currLessonId, changeCurrLesson } = useCourseStore(
-      (state) => state
-    );
+    const [autoScroll, setAutoScroll] = useState(true);
 
-    const { messages, appendMsg, setTyping, updateMsg, resetList } =
+    const { userInfo, mobileStyle } = useContext(AppContext);
+    const chatRef = useRef();
+    const {
+      lessonId: currLessonId,
+      changeCurrLesson,
+      updateResetedChapterId,
+    } = useCourseStore((state) => ({
+      lessonId: state.lessonId,
+      changeCurrLesson: state.changeCurrLesson,
+      updateResetedChapterId: state.updateResetedChapterId,
+    }));
+
+    const { messages, appendMsg, setTyping, updateMsg, resetList, deleteMsg } =
       useMessages([]);
 
-    const { checkLogin, updateUserInfo } = useUserStore((state) => state);
+    const { checkLogin, updateUserInfo, refreshUserInfo } = useUserStore(
+      (state) => ({
+        checkLogin: state.checkLogin,
+        updateUserInfo: state.updateUserInfo,
+        refreshUserInfo: state.refreshUserInfo,
+      })
+    );
 
-    const mobileStyle = frameLayout === FRAME_LAYOUT_MOBILE;
     const {
       open: payModalOpen,
       onOpen: onPayModalOpen,
@@ -184,10 +202,6 @@ export const ChatComponents = forwardRef(
       onPayModalClose();
       setInputDisabled(false);
     }, [onPayModalClose]);
-
-    const _onMobileSettingClick = useCallback(() => {
-      onPayModalOpen();
-    }, [onPayModalOpen]);
 
     useEffect(() => {
       setLessonId(currLessonId);
@@ -236,6 +250,19 @@ export const ChatComponents = forwardRef(
             isEnd = v;
             return v;
           });
+
+          const scriptId = response.script_id;
+          if (
+            [
+              RESP_EVENT_TYPE.TEXT_END,
+              RESP_EVENT_TYPE.PHONE,
+              RESP_EVENT_TYPE.CHECKCODE,
+              RESP_EVENT_TYPE.ORDER,
+              RESP_EVENT_TYPE.USER_LOGIN,
+            ].includes(response.type)
+          ) {
+            trackTrailProgress(scriptId);
+          }
 
           try {
             if (response.type === RESP_EVENT_TYPE.TEXT) {
@@ -291,7 +318,8 @@ export const ChatComponents = forwardRef(
             } else if (response.type === RESP_EVENT_TYPE.LESSON_UPDATE) {
               lessonUpdateResp(response, isEnd, nextStep);
             } else if (response.type === RESP_EVENT_TYPE.CHAPTER_UPDATE) {
-              const { status, lesson_id: lessonId } = response.content;
+              const { status, lesson_id: chapterId } = response.content;
+              chapterUpdate?.({ id: chapterId, status });
               if (status === LESSON_STATUS.COMPLETED) {
                 isEnd = true;
                 setLessonEnd(true);
@@ -302,7 +330,7 @@ export const ChatComponents = forwardRef(
                   type: INTERACTION_TYPE.NEXT_CHAPTER,
                   props: {
                     label: '下一章',
-                    lessonId,
+                    lessonId: chapterId,
                   },
                 });
                 setInputDisabled(false);
@@ -319,27 +347,68 @@ export const ChatComponents = forwardRef(
       },
       [
         appendMsg,
+        chapterUpdate,
         checkLogin,
         lessonUpdateResp,
         setTyping,
+        trackTrailProgress,
         updateMsg,
         updateUserInfo,
         userInfo,
       ]
     );
 
+    const onMessageListScroll = useCallback(
+      (e) => {
+        const scrollWrapper = e.target;
+        const inner = scrollWrapper.children[0];
+
+        if (!scrollWrapper || !inner) {
+          return;
+        }
+
+        if (
+          scrollWrapper.scrollTop > 0 &&
+          scrollWrapper.scrollTop + scrollWrapper.clientHeight <
+            inner.clientHeight - SCROLL_BOTTOM_THROTTLE
+        ) {
+          if (
+            messages.length &&
+            messages[messages.length - 1].position === 'pop'
+          ) {
+            return;
+          }
+          setAutoScroll(false);
+          appendMsg({ _id: genUuid(), type: 'loading', position: 'pop' });
+        } else {
+          if (
+            messages.length &&
+            messages[messages.length - 1].position === 'pop'
+          ) {
+            setAutoScroll(true);
+            deleteMsg(messages[messages.length - 1]._id);
+          }
+        }
+      },
+      [appendMsg, messages, deleteMsg]
+    );
+
     const scrollToBottom = useCallback(() => {
       const inner = document.querySelector(
         `.${styles.chatComponents} .PullToRefresh-inner`
       );
-      document
-        .querySelector(`.${styles.chatComponents} .PullToRefresh`)
-        .scrollTo(0, inner.clientHeight);
+      const wrapper = document.querySelector(
+        `.${styles.chatComponents} .PullToRefresh`
+      );
+      smoothScroll({ el: wrapper, to: inner.clientHeight });
     }, []);
 
     const onImageLoaded = useCallback(() => {
+      if (!autoScroll) {
+        return;
+      }
       scrollToBottom();
-    }, [scrollToBottom]);
+    }, [autoScroll, scrollToBottom]);
 
     useEffect(() => {
       if (!loadedData) {
@@ -359,61 +428,91 @@ export const ChatComponents = forwardRef(
       setLoadedData(false);
     }, [chatId, initRecords, lessonId, loadedData, nextStep, scrollToBottom]);
 
-    useEffect(() => {
-      async function resetAndLoadData() {
-        // 只有课程切换时才重置数据
-        if (!chapterId || loadedChapterId === chapterId) {
-          return;
-        }
-        setIsStreaming(false);
-        setTyping(false);
-        setInputDisabled(true);
-        setLessonEnd(false);
-        resetList();
-        setInitRecords(null);
+    const resetAndLoadData = useCallback(async () => {
+      if (!chapterId) {
+        return;
+      }
+      setIsStreaming(false);
+      setTyping(false);
+      setInputDisabled(true);
+      setLessonEnd(false);
+      resetList();
+      setInitRecords(null);
 
-        const resp = await getLessonStudyRecord(chapterId);
-        const records = resp.data.records;
-        setInitRecords(records);
-        const ui = resp.data.ui;
+      const resp = await getLessonStudyRecord(chapterId);
+      const records = resp.data?.records || [];
+      setInitRecords(records);
+      const ui = resp.data?.ui || null;
 
-        if (records) {
-          records.forEach((v, i) => {
-            if (v.script_type === CHAT_MESSAGE_TYPE.LESSON_SEPARATOR) {
-            } else {
-              const newMessage = convertMessage(
-                {
-                  ...v,
-                  id: i,
-                  script_type: CHAT_MESSAGE_TYPE.TEXT,
-                },
-                userInfo
-              );
-              appendMsg(newMessage);
-            }
-          });
+      if (records && records.length > 0) {
+        records.forEach((v, i) => {
+          if (v.script_type === CHAT_MESSAGE_TYPE.LESSON_SEPARATOR) {
+          } else {
+            const newMessage = convertMessage(
+              {
+                ...v,
+                id: i,
+                script_type: CHAT_MESSAGE_TYPE.TEXT,
+              },
+              userInfo
+            );
+            appendMsg(newMessage);
+          }
+        });
 
-          setLessonId(records[records.length - 1].lesson_id);
-        }
-
-        if (ui) {
-          initLoadedInteraction(ui);
-        }
-
-        setLoadedData(true);
-        setLoadedChapterId(chapterId);
+        setLessonId(records[records.length - 1].lesson_id);
       }
 
-      resetAndLoadData();
+      if (ui) {
+        initLoadedInteraction(ui);
+      }
+
+      setLoadedData(true);
+      setLoadedChapterId(chapterId);
     }, [
       appendMsg,
       chapterId,
       initLoadedInteraction,
-      loadedChapterId,
       resetList,
       setTyping,
       userInfo,
     ]);
+
+    useEffect(() => {
+      if (loadedChapterId !== chapterId) {
+        setLoadedChapterId(chapterId);
+        resetAndLoadData();
+      }
+    }, [chapterId, loadedChapterId, resetAndLoadData]);
+
+    useEffect(() => {
+      return useCourseStore.subscribe(
+        (state) => state.resetedChapterId,
+        (curr) => {
+          if (!curr) {
+            return;
+          }
+
+          if (curr === loadedChapterId) {
+            resetAndLoadData();
+            // 恢复到 null
+            updateResetedChapterId(null);
+          } else {
+            return;
+          }
+        }
+      );
+    });
+
+    useEffect(() => {
+      return useUserStore.subscribe(
+        (state) => state.hasLogin,
+        () => {
+          setLoadedChapterId(chapterId);
+          resetAndLoadData();
+        }
+      );
+    }, [chapterId, resetAndLoadData]);
 
     // debugger
     useEffect(() => {
@@ -477,16 +576,25 @@ export const ChatComponents = forwardRef(
 
         setTyping(true);
         setInputDisabled(true);
+        scrollToBottom();
         nextStep({ chatId, lessonId, type, val, scriptId });
       },
-      [appendMsg, chatId, lessonId, nextStep, setTyping, userInfo]
+      [
+        appendMsg,
+        chatId,
+        lessonId,
+        nextStep,
+        scrollToBottom,
+        setTyping,
+        userInfo,
+      ]
     );
 
     const onPayModalOk = useCallback(() => {
       handleSend(INTERACTION_OUTPUT_TYPE.ORDER);
       onPurchased?.();
-      onPayModalClose();
-    }, [handleSend, onPayModalClose, onPurchased]);
+      refreshUserInfo();
+    }, [handleSend, onPurchased, refreshUserInfo]);
 
     const renderMessageContent = useCallback(
       (msg) => {
@@ -529,23 +637,40 @@ export const ChatComponents = forwardRef(
       }
     };
 
-    const onChatInputSend = async (type, val, scriptId) => {
-      if (type === INTERACTION_OUTPUT_TYPE.NEXT_CHAPTER) {
-        onGoChapter?.(val.lessonId);
-        return;
-      }
+    const onChatInputSend = useCallback(
+      async (type, val, scriptId) => {
+        if (type === INTERACTION_OUTPUT_TYPE.NEXT_CHAPTER) {
+          onGoChapter?.(val.lessonId);
+          return;
+        }
 
-      if (type === INTERACTION_OUTPUT_TYPE.ORDER) {
-        setInputDisabled(true);
-        trackEvent(EVENT_NAMES.POP_PAY, { from: 'script', way: 'manual' });
-        onPayModalOpen();
-        return;
-      }
+        if (type === INTERACTION_OUTPUT_TYPE.ORDER) {
+          setInputDisabled(true);
+          trackEvent(EVENT_NAMES.POP_PAY, { from: 'script', way: 'manual' });
+          onPayModalOpen();
+          return;
+        }
 
-      handleSend(type, val, scriptId);
-    };
+        handleSend(type, val, scriptId);
+      },
+      [handleSend, onGoChapter, onPayModalOpen, trackEvent]
+    );
 
     useImperativeHandle(ref, () => ({}));
+
+    const onChatInteractionAreaSizeChange = useCallback(({ height }) => {
+      if (!chatRef || !chatRef.current) {
+        return;
+      }
+
+      const messageListElem = chatRef.current.querySelector('.MessageList');
+      if (!messageListElem) {
+        return;
+      }
+
+      messageListElem.style.paddingBottom = `${height}px`;
+    }, []);
+
     return (
       <div
         className={classNames(
@@ -553,6 +678,7 @@ export const ChatComponents = forwardRef(
           className,
           mobileStyle ? styles.mobile : ''
         )}
+        ref={chatRef}
       >
         <Chat
           navbar={null}
@@ -564,6 +690,7 @@ export const ChatComponents = forwardRef(
           Composer={() => {
             return <></>;
           }}
+          onScroll={onMessageListScroll}
         />
 
         {inputModal && (
@@ -571,24 +698,24 @@ export const ChatComponents = forwardRef(
             type={inputModal.type}
             props={inputModal.props}
             disabled={inputDisabled}
-            onSend={(type, val) => {
-              onChatInputSend(type, val);
-            }}
+            onSend={onChatInputSend}
+            onSizeChange={onChatInteractionAreaSizeChange}
           />
         )}
-        {payModalOpen && (mobileStyle ? (
-          <PayModalM
-            open={payModalOpen}
-            onCancel={_onPayModalClose}
-            onOk={onPayModalOk}
-          />
-        ) : (
-          <PayModal
-            open={payModalOpen}
-            onCancel={_onPayModalClose}
-            onOk={onPayModalOk}
-          />
-        ))}
+        {payModalOpen &&
+          (mobileStyle ? (
+            <PayModalM
+              open={payModalOpen}
+              onCancel={_onPayModalClose}
+              onOk={onPayModalOk}
+            />
+          ) : (
+            <PayModal
+              open={payModalOpen}
+              onCancel={_onPayModalClose}
+              onOk={onPayModalOk}
+            />
+          ))}
       </div>
     );
   }

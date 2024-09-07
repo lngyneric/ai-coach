@@ -1,7 +1,9 @@
 import { useCallback } from 'react';
-import { tracking } from 'common/tools/tracking.js';
+import { EVENT_NAMES, tracking } from 'common/tools/tracking.js';
 import { useUserStore } from 'stores/useUserStore.js';
 import { useUiLayoutStore } from 'stores/useUiLayoutStore.js';
+import { FRAME_LAYOUT_MOBILE } from 'constants/uiConstants.js';
+import { getScriptInfo } from 'Api/lesson.js';
 export { EVENT_NAMES } from 'common/tools/tracking.js';
 
 const USER_STATE_DICT = {
@@ -10,16 +12,16 @@ const USER_STATE_DICT = {
   '已付费': 'member',
 }
 export const useTracking = () => {
-  const { isMobile } = useUiLayoutStore((state) => state);
+  const { frameLayout } = useUiLayoutStore((state) => state);
   const { userInfo } = useUserStore((state) => state);
 
   const getEventBasicData = useCallback(() => {
     return {
-      user_type: userInfo.state ? USER_STATE_DICT[userInfo.state] : 'guest',
+      user_type: userInfo?.state ? USER_STATE_DICT[userInfo.state] : 'guest',
       user_id: userInfo?.user_id || 0,
-      device: isMobile ? 'H5' : 'Web',
+      device: frameLayout === FRAME_LAYOUT_MOBILE ? 'H5' : 'Web',
     }
-  }, [isMobile, userInfo?.state, userInfo?.user_id])
+  }, [frameLayout, userInfo?.state, userInfo?.user_id])
 
   const trackEvent = useCallback(async (eventName, eventData) => {
     try {
@@ -32,5 +34,23 @@ export const useTracking = () => {
     } catch { }
   }, [getEventBasicData])
 
-  return { trackEvent }
+
+  const trackTrailProgress = useCallback(async (scriptId) => {
+    try {
+      const { data: scriptInfo } = await getScriptInfo(scriptId);
+
+      // 是否体验课
+      if (!scriptInfo?.is_trial_lesson) {
+        return;
+      }
+
+      trackEvent(EVENT_NAMES.TRIAL_PROGRESS, {
+        progress_no: scriptInfo.script_index,
+        progress_desc: scriptInfo.script_name,
+      });
+    } catch { }
+  }, [trackEvent]) 
+
+  return { trackEvent, trackTrailProgress }
 }
+

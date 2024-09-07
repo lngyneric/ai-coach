@@ -1,8 +1,20 @@
 import { create } from 'zustand';
+import { subscribeWithSelector } from 'zustand/middleware'
+import { resetChapter as apiResetChapter } from 'Api/lesson.js';
 
-export const useCourseStore = create((set) => ({
-  lessonId: null,
-  changeCurrLesson: (lessonId) => set(() => ({ lessonId })),
-  purchased: false,
-  changePurchased: (purchased) => set(() => ({ purchased })),
-}));
+export const useCourseStore = create(
+  subscribeWithSelector((set) => ({
+    lessonId: null,
+    changeCurrLesson: (lessonId) => set(() => ({ lessonId })),
+    chapterId: '',
+    updateChapterId: (chapterId) => set(() => { console.log('updateChapterId:'); return { chapterId }; }),
+    purchased: false,
+    changePurchased: (purchased) => set(() => ({ purchased })),
+    // 用于重置章节
+    resetedChapterId: null,
+    updateResetedChapterId: (resetedChapterId) => set(() => ({ resetedChapterId })),
+    resetChapter: async (resetedChapterId) => {
+      await apiResetChapter({ chapterId: resetedChapterId });
+      set({ resetedChapterId });
+    },
+  })));

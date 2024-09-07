@@ -1,4 +1,5 @@
 import logging
+from contextlib import contextmanager
 
 import streamlit as st
 import streamlit_authenticator as stauth
@@ -7,7 +8,7 @@ import yaml
 from yaml.loader import SafeLoader
 
 
-def get_authenticator():
+def get_auth_and_config():
     with open('auth_config.yml') as file:
         config = yaml.load(file, Loader=SafeLoader)
 
@@ -16,33 +17,24 @@ def get_authenticator():
         config['cookie']['name'],
         config['cookie']['key'],
         config['cookie']['expiry_days'],
-        config['pre-authorized']
     )
     return authenticator, config
 
 
+@contextmanager
 def login():
-    # st.write(st.session_state)
-    # if 'username' not in st.session_state:
-    logging.debug('=== need login')
-    authenticator, config = get_authenticator()
+    authenticator, config = get_auth_and_config()
+    authenticator.login()
 
-    # 初始化登录成功欢迎记录
-    if 'is_login_welcome' not in st.session_state:
-        st.session_state.is_login_welcome = False
-
-    login_result = authenticator.login()
-
-    if login_result[1]:
-        if not st.session_state.is_login_welcome:
-            st.toast(f'欢迎回来，{st.session_state["name"]}', icon='🎈')
-            st.session_state.is_login_welcome = True
-        return authenticator, config
+    if st.session_state['authentication_status']:
+        yield authenticator, config
     else:
-        return False, False
-    # else:
-    #     logging.debug(f'username: {st.session_state.username}')
-    #     return True, True
+        status = st.session_state['authentication_status']
+        if status is False:
+            st.error('Username/password is incorrect')
+        elif status is None:
+            st.warning('Please enter your username and password')
+        st.stop()
 
 
 

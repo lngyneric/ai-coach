@@ -27,23 +27,25 @@ const CommonListPage = ({viewName}) => {
   const [loading, setLoading] = useState(false);
   const [colum, setColum] = useState([]);
   const [searchParams, setSearchParams] = useState({});
-  const [query, setQuery] = useState({});
+  const [searchDefine,setSearchDefine]=useState({})
   /**
    *@description 点击搜索的方法
    *
    * @param {*} searchParams 搜索表单中的条件
    */
   const onSearch = (searchParams) => {
-    setQuery(searchParams);
+    setSearchParams(searchParams)
     setCurrentPage(1);
   };
 
   const onReset = (searchParams) => {
-    setQuery({});
     setCurrentPage(1);
+    searchParams(searchParams)
+    // queryAllContacts();
   };
 
   useEffect(() => {
+    console.log('set view')
     getViewInfo(viewName).then((res) => {
       console.log(res);
       const columns = res.data.items.map((item) => {
@@ -54,22 +56,19 @@ const CommonListPage = ({viewName}) => {
         };
       });
       setColum(columns);
-      setSearchParams(res.data.queryinput);
-      queryAllContacts();
-
+      setSearchDefine(res.data.queryinput);
+      setSearchParams({})
+      setCurrentPage(1)
     });
   }, [viewName]);
-
   const [contactInfoList, setContactInfoList] = useState([]);
   /**
    * @description 联系人数据
    */
   const queryAllContacts = () => {
     setLoading(true);
-    queryView(viewName,currentPage,pageSize,query)
+    queryView(viewName,currentPage,pageSize,searchParams)
       .then((res) => {
-        setCurrentPage(res.data.page);
-        setPageSize(res.data.page_size);
         setTotal(res.data.total);
         setContactInfoList(res.data.items);
         setLoading(false);
@@ -157,45 +156,10 @@ const CommonListPage = ({viewName}) => {
     });
   };
 
-  /**
-   * @description 点击表格中的详情的方法
-   */
-  const onClickTableDetail = (row) => {
-    setContactDetailModalProps({
-      open: true,
-      detailData: row,
-    });
-  };
 
-  /**
-   * @description 联系人信息 Modal 关闭的方法
-   */
-  const onContactDetailModalCancel = () => {
-    setContactDetailModalProps({
-      ...contactDetailModalProps,
-      open: false,
-    });
-  };
 
-  /**
-   * @description 点击批量删除的方法
-   */
-  const onClickDelete = () => {
-    Modal.confirm({
-      title: "确认删除？",
-      content: <p>删除后不可恢复，请谨慎操作！！！</p>,
-      onOk: () => {
-        // deleteContact(contactIds).then((res) => {
-          // queryAllContacts();
-          // setContactIds([]);
-        // });
-      },
-    });
-  };
 
   const onTableSelectChange = (selectedRowKeys) => {
-    console.log(selectedRowKeys);
-    setContactIds(selectedRowKeys);
   };
 
   const onPaginationChange = (page, pageSize) => {
@@ -205,32 +169,17 @@ const CommonListPage = ({viewName}) => {
 
   useEffect(() => {
     queryAllContacts();
-  }, [pageSize,currentPage,query]);
+  }, [pageSize,currentPage,searchParams]);
   return (
     <Space direction="vertical" size="large" style={{ display: "flex" }}>
-      <SearchForm onSearch={onSearch} onReset={onReset} inputs={searchParams}></SearchForm>
+      <SearchForm onSearch={onSearch} onReset={onReset} inputs={searchDefine}></SearchForm>
       <CommonListTable
         dataColumns={colum}
         dataSource={contactInfoList}
-        onClickEdit={onClickTableRowEdit}
-        onClickDelete={onClickTableRowDelte}
-        onClickDetail={onClickTableDetail}
         loading={loading}
         onTableSelectChange={onTableSelectChange}
       ></CommonListTable>
       <Pagination pageSize={pageSize} onChange={onPaginationChange} current={currentPage} total={total} ></Pagination>
-      <EditContactModal
-        open={editContactModalProps.open}
-        state={editContactModalProps.state}
-        onCancel={onEditContactCancel}
-        onAsyncOk={onEditAsyncOk}
-        formData={editContactModalProps.detailData}
-      ></EditContactModal>
-      <ContactDetailModal
-        open={contactDetailModalProps.open}
-        detailData={contactDetailModalProps.detailData}
-        onCancel={onContactDetailModalCancel}
-      ></ContactDetailModal>
     </Space>
   );
 };

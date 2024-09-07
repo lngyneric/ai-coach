@@ -9,6 +9,7 @@ import { genCheckCode } from 'Api/user.js';
 import { useUserStore } from 'stores/useUserStore.js';
 import { useTranslation } from 'react-i18next';
 import { memo } from 'react';
+import { useCallback } from 'react';
 
 const MODAL_STEP = {
   MOBILE: 1,
@@ -21,6 +22,7 @@ export const LoginModal = ({
   width,
   onClose = () => {},
   inMobile = false,
+  onFeedbackClick,
 }) => {
   const [mobile, setMobile] = useState('');
   const [mobileForm] = Form.useForm();
@@ -76,12 +78,12 @@ export const LoginModal = ({
       const { smsCode } = await codeForm.validateFields();
 
       if (!aggrement) {
-        messageApi.error('请勾选同意协议');
+        messageApi.error(t('user.msgToAgree'));
         return;
       }
 
       await login({ mobile, smsCode });
-      messageApi.success('登录成功');
+      messageApi.success(t('user.msgLoginSuccess'));
       onClose?.();
     } catch {}
   };
@@ -100,6 +102,15 @@ export const LoginModal = ({
     }
   };
 
+  const onFeedbackButtonClick = useCallback(
+    (e) => {
+      e.preventDefault();
+      onFeedbackClick?.();
+      onClose();
+    },
+    [onClose, onFeedbackClick]
+  );
+
   return (
     <Modal
       open={open}
@@ -108,7 +119,7 @@ export const LoginModal = ({
       width={calModalWidth({ inMobile, width })}
       onCancel={onClose}
     >
-      <div className={styles.title}>登录</div>
+      <div className={styles.title}>{t("user.loginTitle")}</div>
       <div className={styles.formWrapper}>
         {modalStep === MODAL_STEP.MOBILE && (
           <Form form={mobileForm} className={styles.mobileForm}>
@@ -117,14 +128,14 @@ export const LoginModal = ({
               rules={[
                 {
                   required: true,
-                  message: '请输入11位手机号',
+                  message: t('user.msgToInputPhone'),
                   pattern: /^1\d{10}$/,
                 },
               ]}
             >
               <Input
                 className={classNames(styles.mobile, styles.sfInput)}
-                placeholder="请输入手机号"
+                placeholder={t('user.msgToInputPhone')}
                 maxLength={11}
                 onPressEnter={onMobileFormOkClick}
               />
@@ -138,7 +149,7 @@ export const LoginModal = ({
               rules={[
                 {
                   required: true,
-                  message: '请输入4位短信验证码',
+                  message: t('user.msgToInputCode'),
                   pattern: /^\d{4}$/,
                 },
               ]}
@@ -146,7 +157,7 @@ export const LoginModal = ({
               <Input
                 className={classNames(styles.smsCode, styles.sfInput)}
                 maxLength={4}
-                placeholder="请输入4位短信验证码"
+                placeholder={t('user.msgToInputCode')}
                 onPressEnter={onCodeFormkOkClick}
               />
             </Form.Item>
@@ -156,7 +167,7 @@ export const LoginModal = ({
               type="link"
               onClick={onResendClick}
             >
-              {countDown > 0 ? `重新发送(${countDown})` : '重新发送'}
+              {countDown > 0 ? t('user.msgResendCode')+`(${countDown})` : t('user.msgResendCode')}
             </Button>
           </Form>
         )}
@@ -167,21 +178,21 @@ export const LoginModal = ({
               rules={[
                 {
                   required: true,
-                  message: '请输入4位验证码',
+                  message: t('user.msgToInputCode4'),
                 },
               ]}
             >
               <Input
                 className={classNames(styles.verifyCode, styles.sfInput)}
                 maxLength={4}
-                placeholder="请输入4位验证码"
+                placeholder={t('user.msgToInputCode4')}
                 onPressEnter={onVerifyCodeFormOkClick}
               />
             </Form.Item>
             <img
               className={styles.vcodeImage}
               src={verifyCodeImage}
-              alt="图形验证码"
+              alt={t('user.msgCheckCode')}
               onClick={() => {
                 updateVerifyCodeImage(mobile);
               }}
@@ -199,21 +210,27 @@ export const LoginModal = ({
             className={styles.checkbox}
             onChange={(e) => setAggrement(e.target.checked)}
           >
-            我已阅读并同意
+            {t('user.msgHaveRead')}
             <a
               className={styles.link}
               href="x"
               target="_blank"
               rel="noreferrer"
             >
-              服务协议 & 隐私政策
+              {t('user.msgAggrement')}
             </a>
           </Checkbox>
         </div>
         <div className={styles.feedback}>
-          登录遇到问题？
-          <a className={styles.link} href="x" target="_blank" rel="noreferrer">
-            我要反馈
+          {t('user.msgLoginProblem')}
+          <a
+            href="x"
+            className={styles.link}
+            target="_blank"
+            rel="noreferrer"
+            onClick={onFeedbackButtonClick}
+          >
+             {t('user.loginFeedback')}
           </a>
         </div>
       </div>

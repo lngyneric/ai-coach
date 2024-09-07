@@ -7,46 +7,63 @@ import locale from 'antd/locale/zh_CN';
 import { useSystemStore } from 'stores/useSystemStore.js';
 import i18n from './i18n.js';
 import { inWechat, wechatLogin } from 'constants/uiConstants.js';
+import { getBoolEnv } from 'Utils/envUtils.js';
+import { userInfoStore } from 'Service/storeUtil.js';
+if (getBoolEnv('REACT_APP_ERUDA')) {
+  import('eruda').then(eruda => eruda.default.init());
+}
 
 const RouterView = () => useRoutes(routes);
 
 const App = () => {
-  const { language, updateChannel, channel, wechatCode, updateWechatCode } =
+  const { updateChannel, channel, wechatCode, updateWechatCode } =
     useSystemStore();
-  const [loading, setLoading] = useState(true);
 
+
+  var initLang = useSystemStore().language;
+
+  if (userInfoStore.get()) {
+
+    initLang = userInfoStore.get().language;
+  }
+
+
+  console.log('initLang', initLang);
+  const [language, setLanguage] = useState(initLang);
+  const [loading, setLoading] = useState(true);
   const params = parseUrlParams();
-  console.log('params', params);
+  console.debug('params', params);
   const currChannel = params.channel || '';
 
   if (channel !== currChannel) {
+    console.log('init channel value', currChannel);
     updateChannel(currChannel);
   }
-  
+
+
+
+
+
   useEffect(() => {
     if (inWechat()) {
       setLoading(true);
-      console.log('inWechat...');
       const currCode = params.code;
-
       if (!currCode) {
         wechatLogin({
           appId: process.env.REACT_APP_APP_ID,
         });
         return
       }
-
       if (currCode !== wechatCode) {
         updateWechatCode(currCode);
       }
-    } 
+    }
     setLoading(false);
   }, [params.code, updateWechatCode, wechatCode])
 
   // 挂载 debugger
   useEffect(() => {
     window.ztDebug = {};
-
     return () => {
       delete window.ztDebug;
     };

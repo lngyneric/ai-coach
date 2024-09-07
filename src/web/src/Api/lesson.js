@@ -6,3 +6,19 @@ export const getLessonTree = async () => {
     method: "get",
   });
 }
+
+export const getScriptInfo = async (scriptId) => {
+  return request({
+    url: `/api/study/query-script-into?script_id=${scriptId}`,
+    method: 'GET',
+    
+  })
+};
+
+export const resetChapter = async ({ chapterId }) => {
+  return request({
+    url: '/api/study/reset-study-progress',
+    method: 'POST',
+    data: { lesson_id: chapterId }
+  });
+}

@@ -128,22 +128,35 @@ class ViewDef:
                 for data in datas
             ]
 
-            items_model = {}
-            for item in items:
-                for column in self.items:
-                    if column.model and column.display:
-                        if not items_model.get(column.model):
-                            items_model[column.model] = []
-                        items_model[column.model].append(item[column.column])
-            for model in items_model.keys():
-                app.logger.info("query")
+            # 筛选出带有 model 和 display 属性的列
+            model_display_items = [
+                item
+                for item in self.items
+                if item.model and item.display and item.index_id
+            ]
+
+            for sub_item in model_display_items:
+                model = sub_item.model
+                column = sub_item.index_id
+                query_filters = [str(getattr(data, sub_item.column)) for data in datas]
+                app.logger.info(
+                    "sub query,model:{},column:{},filter{}".format(
+                        model.__class__, column, query_filters
+                    )
+                )
                 model_data = model.query.filter(
-                    getattr(model, "user_id").in_(items_model[model])
+                    getattr(model, column).in_(query_filters)
                 ).all()
-                app.logger.info("model_data:" + str(model_data))
-                for data in model_data:
-                    for item in items:
-                        pass
+                app.logger.info("{}".format(model_data))
+                for item in items:
+                    data_items = [
+                        data
+                        for data in model_data
+                        if getattr(data, column) == item[column]
+                    ]
+                    if len(data_items) > 0:
+                        item[column] = getattr(data_items[0], sub_item.display)
+                pass
 
             app.logger.info("query done" + str(items))
             return PageNationDTO(page, page_size, count, items)

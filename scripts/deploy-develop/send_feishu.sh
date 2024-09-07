@@ -1,4 +1,4 @@
-URL="https://open.feishu.cn/open-apis/bot/v2/hook/3b7b9e11-498d-4598-b2c3-cad985d6e299"
+URL="https://open.feishu.cn/open-apis/bot/v2/hook/639524e5-d290-4749-9f09-d0f3ef4db101"
 
 send_notify_to_feishu() {
     local title="$1"
@@ -9,7 +9,7 @@ send_notify_to_feishu() {
         "content": {
             "post": {
                 "zh_cn": {
-                    "title": "'"$title"'",
+                   "title": "'[test]师傅~"$title"'",
                     "content": [
                         [
                             {

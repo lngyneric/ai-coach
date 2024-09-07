@@ -11,7 +11,12 @@ from flaskr.api.sendcloud import send_email
 
 from ...api.aliyun import send_sms_code_ali
 
-from ..common.dtos import USER_STATE_REGISTERED, UserInfo, UserToken
+from ..common.dtos import (
+    USER_STATE_REGISTERED,
+    USER_STATE_UNTEGISTERED,
+    UserInfo,
+    UserToken,
+)
 from ..common.models import (
     OLD_PASSWORD_ERROR,
     RESET_PWD_CODE_ERROR,
@@ -23,7 +28,7 @@ from ..common.models import (
     USER_TOKEN_EXPIRED,
     USER_NOT_LOGIN,
 )
-from .utils import generate_token, get_user_openid
+from .utils import generate_token, get_user_language, get_user_openid
 from ...dao import redis_client as redis, db
 from .models import User as CommonUser, AdminUser as AdminUser
 
@@ -32,7 +37,6 @@ FIX_CHECK_CODE = "0615"
 
 
 def get_model(app: Flask):
-    app.logger.info("MODE:" + app.config.get("MODE", "api"))
     if app.config.get("MODE", "api") == "admin":
         return AdminUser
     else:
@@ -61,6 +65,7 @@ def verify_user(app: Flask, login: str, raw_password: str) -> UserToken:
                         model=user.default_model,
                         user_state=user.user_state,
                         wx_openid=get_user_openid(user),
+                        language=get_user_language(user),
                     ),
                     token=token,
                 )
@@ -76,8 +81,6 @@ def validate_user(app: Flask, token: str) -> UserInfo:
         if token is None:
             raise USER_NOT_LOGIN
         try:
-            app.logger.info("token:" + token)
-            app.logger.info("env:" + app.config.get("ENVERIMENT", "prod"))
             if app.config.get("ENVERIMENT", "prod") == "dev":
                 user_id = token
                 user = User.query.filter_by(user_id=user_id).first()
@@ -92,6 +95,7 @@ def validate_user(app: Flask, token: str) -> UserInfo:
                         model=user.default_model,
                         user_state=user.user_state,
                         wx_openid=get_user_openid(user),
+                        language=get_user_language(user),
                     )
             else:
                 user_id = jwt.decode(
@@ -122,6 +126,7 @@ def validate_user(app: Flask, token: str) -> UserInfo:
                         model=user.default_model,
                         user_state=user.user_state,
                         wx_openid=get_user_openid(user),
+                        language=get_user_language(user),
                     )
                 else:
                     raise USER_TOKEN_EXPIRED
@@ -155,6 +160,7 @@ def update_user_info(
                 model=dbuser.default_model,
                 user_state=dbuser.user_state,
                 wx_openid=get_user_openid(user),
+                language=get_user_language(user),
             )
         else:
             raise USER_NOT_FOUND
@@ -180,6 +186,7 @@ def change_user_passwd(app: Flask, user: UserInfo, oldpwd, newpwd) -> UserInfo:
                     model=user.default_model,
                     user_state=user.user_state,
                     wx_openid=get_user_openid(user),
+                    language=get_user_language(user),
                 )
             else:
                 raise OLD_PASSWORD_ERROR
@@ -201,6 +208,7 @@ def get_user_info(app: Flask, user_id: str) -> UserInfo:
                 model=user.default_model,
                 user_state=user.user_state,
                 wx_openid=get_user_openid(user),
+                language=get_user_language(user),
             )
         else:
             raise USER_NOT_FOUND
@@ -220,7 +228,12 @@ def require_reset_pwd_code(app: Flask, login: str):
                 ex=app.config["RESET_PWD_CODE_EXPIRE_TIME"],
             )
             send_email(
-                app, "小卡AI助理", user.email, user.email, "重置密码", "您的重置密码验证码为：" + str(code)
+                app,
+                "AI-Shifu",
+                user.email,
+                user.email,
+                "重置密码",
+                "您的重置密码验证码为：" + str(code),
             )
             return True
         else:
@@ -311,7 +324,9 @@ def verify_sms_code_without_phone(app: Flask, user_id: str, checkcode) -> UserTo
             )
             if user:
                 user_id = user.user_id
-        return verify_sms_code(app, user_id, phone, checkcode)
+        ret = verify_sms_code(app, user_id, phone, checkcode)
+        db.session.commit()
+        return ret
 
 
 # 验证短信验证码
@@ -319,30 +334,49 @@ def verify_sms_code(app: Flask, user_id, phone: str, chekcode: str) -> UserToken
     User = get_model(app)
     app.logger.info("phone:" + phone + " chekcode:" + chekcode)
     check_save = redis.get(app.config["REDIS_KEY_PRRFIX_PHONE_CODE"] + phone)
-    if check_save is None:
+    if check_save is None and chekcode != FIX_CHECK_CODE:
         raise SMS_SEND_EXPIRED
-    check_save_str = str(check_save, encoding="utf-8")
+    check_save_str = str(check_save, encoding="utf-8") if check_save else ""
     if chekcode != check_save_str and chekcode != FIX_CHECK_CODE:
         raise SMS_CHECK_ERROR
     else:
+        app.logger.info("query by phone:" + phone)
         user_info = (
             User.query.filter(User.mobile == phone).order_by(User.id.asc()).first()
         )
         if not user_info:
+            # app.logger.info("user_info is None,query user_id:" + user_id)
             user_info = (
                 User.query.filter(User.user_id == user_id)
                 .order_by(User.id.asc())
                 .first()
             )
+        elif user_id != user_info.user_id:
+            origin_user = User.query.filter(User.user_id == user_id).first()
+            if (
+                origin_user
+                and origin_user.user_open_id != user_info.user_open_id
+                and (user_info.user_open_id is None or user_info.user_open_id == "")
+            ):
+                user_info.user_open_id = origin_user.user_open_id
 
         if user_info is None:
+            app.logger.info("user_info is None,create new user")
             user_id = str(uuid.uuid4()).replace("-", "")
             user_info = User(
                 user_id=user_id, username="", name="", email="", mobile=phone
             )
-            user_info.user_state = USER_STATE_REGISTERED
+
+            if (
+                user_info.user_state is None
+                or user_info.user_state == USER_STATE_UNTEGISTERED
+            ):
+                user_info.user_state = USER_STATE_REGISTERED
             user_info.mobile = phone
             db.session.add(user_info)
+        if user_info.user_state == USER_STATE_UNTEGISTERED:
+            app.logger.info("user_state is unregistered")
+            user_info.user_state = USER_STATE_REGISTERED
         user_id = user_info.user_id
         token = generate_token(app, user_id=user_id)
         db.session.flush()
@@ -356,6 +390,7 @@ def verify_sms_code(app: Flask, user_id, phone: str, chekcode: str) -> UserToken
                 model=user_info.default_model,
                 user_state=user_info.user_state,
                 wx_openid=get_user_openid(user_info),
+                language=get_user_language(user_info),
             ),
             token,
         )

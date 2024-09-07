@@ -2,6 +2,7 @@
 import { memo } from 'react';
 import CourseCatalog from './CourseCatalog.jsx';
 import styles from './CourseCatalogList.module.scss';
+import { useTranslation } from 'react-i18next';
 
 export const CourseCatalogList = ({
   catalogs = [],
@@ -11,6 +12,7 @@ export const CourseCatalogList = ({
   onLessonSelect = ({ id }) => {},
   onTryLessonSelect = ({ chapterId, lessonId}) => {},
 }) => {
+  const { t } = useTranslation();
   return (
     <div className={styles.courseCatalogList}>
       <div className={styles.titleRow}>
@@ -18,12 +20,12 @@ export const CourseCatalogList = ({
           <img
             className={styles.icon}
             src={require('@Assets/newchat/light/icon16-course-list.png')}
-            alt="课程列表"
+            alt={t('navigation.courseList')}
           />
-          <div className={styles.titleName}>课程列表</div>
+          <div className={styles.titleName}>{t('navigation.courseList')}</div>
         </div>
         <div className={styles.chapterCount}>
-          {lessonCount}节/{catalogCount}章
+          {lessonCount}{t('navigation.theLesson')}/{catalogCount}{t('navigation.theChapter')}
         </div>
       </div>
       <div className={styles.listRow}>
@@ -33,6 +35,7 @@ export const CourseCatalogList = ({
               key={catalog.id}
               id={catalog.id}
               name={catalog.name}
+              status={catalog.status}
               lessons={catalog.lessons}
               collapse={catalog.collapse}
               onCollapse={onChapterCollapse}

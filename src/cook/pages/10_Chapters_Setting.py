@@ -161,69 +161,7 @@ def stdf_manage(df, title, has_delete=True):
 
 
 # 需要登录
-if login():
-
-    # tab1, tab2 = st.tabs(['👩🏻‍🏫 教研平台 ', '👩🏻‍🎓 正式环境 '])
-
-    # with tab1:
-    # '## 👩🏻‍🏫 教研平台 章节配置'
-    # df_chapters = DataFrame([chapter.__dict__ for chapter in load_chapters_from_sqlite()])
-    # # df_chapters 只保留部分列
-    # df_chapters = df_chapters[['id', 'name', 'lark_table_id', 'lark_view_id', 'rank']]
-    # df_chapters.set_index('id', inplace=True)
-    # df_chapters.sort_values('rank', inplace=True)
-    # event = st.dataframe(
-    #     df_chapters,
-    #     column_config={
-    #         'name': '章节名称',
-    #         'lark_table_id': '飞书表格 ID',
-    #         'lark_view_id': '飞书表格 ViewID',
-    #         'rank': '排序权重',
-    #     },
-    #     use_container_width=True,
-    #     hide_index=True,
-    #     on_select='rerun',
-    #     selection_mode='single-row',
-    #     key='教研平台剧本列表'
-    # )
-    #
-    # if event.selection['rows']:
-    #     selected_chapter = df_chapters.iloc[event.selection['rows'][0]]
-    #
-    #     col1, col2 = st.columns(2)
-    #     with col1:
-    #         if st.button(f'✏️ 修改 {selected_chapter["name"]}', use_container_width=True):
-    #             edit_chapter(df_chapters, int(selected_chapter.name), staff=True)
-    #
-    #     with col2:
-    #         if st.button(f'❌ 删除 {selected_chapter["name"]}', use_container_width=True):
-    #             delete_chapter(df_chapters, int(selected_chapter.name), staff=True)
-    #
-    # # 添加 章节剧本文档
-    # with st.expander('➕ 添加 章节剧本文档'):
-    #     with st.form('add_row'):
-    #         max_rank = df_chapters['rank'].max() if not df_chapters.empty else 0
-    #         params = {
-    #             'name': st.text_input('章节名称'),
-    #             'lark_table_id': st.text_input('飞书表格 ID'),
-    #             'lark_view_id': st.text_input('飞书表格 ViewID', value='vewlGkI2Jp'),
-    #             'rank': st.number_input('排序权重', value=max_rank + 1),
-    #         }
-    #
-    #         submit_button = st.form_submit_button('添加', type='primary', use_container_width=True)
-    #         if submit_button:
-    #             conn = sqlite3.connect(cfg.SQLITE_DB_PATH)
-    #             cursor = conn.cursor()
-    #             c = cursor.execute('INSERT INTO `chapters` (name, lark_table_id, lark_view_id, rank) VALUES (?, ?, ?, ?)',
-    #                                (params['name'], params['lark_table_id'], params['lark_view_id'], params['rank']))
-    #             conn.commit()
-    #             conn.close()
-    #             st.rerun()
-    #
-    #
-    # #################################################################################
-    # # 正式环境
-    # # with tab2:
+with login():
 
     add_vertical_space(1)
     '-----'
@@ -264,10 +202,6 @@ if login():
     df_chapters_hidden.set_index('id', inplace=True)
 
 
-    # df_chapters_api.set_index('id', inplace=True)
-
-    # df_chapters_api.sort_values('rank', inplace=True)
-
     stdf_manage(df_chapters_trial, '体验章节配置', has_delete=False)
     stdf_manage(df_chapters_norm, '正式章节配置')
     stdf_manage(df_chapters_hidden, '隐藏分支章节配置')
@@ -277,6 +211,4 @@ if login():
     '-----'
     if st.button(f'➕ 添加章节', use_container_width=True):
         add_chapter(max_index)
-
-
 

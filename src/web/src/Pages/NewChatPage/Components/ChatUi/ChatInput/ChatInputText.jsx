@@ -1,6 +1,7 @@
 import { useState, useEffect } from 'react';
 import { message } from 'antd';
 import { Input } from '@chatui/core';
+import { useTranslation } from 'react-i18next';
 import {
   INTERACTION_TYPE,
   INTERACTION_OUTPUT_TYPE,
@@ -15,7 +16,8 @@ const OUTPUT_TYPE_MAP = {
   [INTERACTION_TYPE.CHECKCODE]: INTERACTION_OUTPUT_TYPE.CHECKCODE,
 };
 
-export const ChatInputText = ({ onClick, type, disabled = false }) => {
+export const ChatInputText = ({ onClick, type, disabled = false,props={} }) => {
+  const {t}= useTranslation();
   const [input, setInput] = useState('');
   const [messageApi, contextHolder] = message.useMessage();
 
@@ -23,7 +25,7 @@ export const ChatInputText = ({ onClick, type, disabled = false }) => {
 
   const onSendClick = async () => {
     if (input.trim() === '') {
-      messageApi.warning('请输入内容');
+      messageApi.warning(t('chat.chatInputWarn'));
       return;
     }
 
@@ -50,7 +52,7 @@ export const ChatInputText = ({ onClick, type, disabled = false }) => {
             type="text"
             value={input}
             onChange={(v) => setInput(v)}
-            placeholder="请输入"
+            placeholder= {props?.content || t('chat.chatInputPlaceholder')}
             className={styles.inputField}
             disabled={disabled}
             onKeyDown={(e) => {

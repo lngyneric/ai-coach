@@ -15,6 +15,7 @@ import styles from './NavDrawer.module.scss';
 import FeedbackModal from '../FeedbackModal/FeedbackModal.jsx';
 import classNames from 'classnames';
 import { useTracking, EVENT_NAMES } from 'common/hooks/useTracking.js';
+import { getBoolEnv } from 'Utils/envUtils.js'
 
 import {
   FRAME_LAYOUT_PAD,
@@ -67,7 +68,7 @@ const NavDrawer = ({
   onClose = () => {},
 }) => {
   const { trackEvent } = useTracking();
-  const { frameLayout, hasLogin } = useContext(AppContext);
+  const { frameLayout, hasLogin, mobileStyle } = useContext(AppContext);
   const [isCollapse, setIsCollapse] = useState(false);
   const [popupModalState, setPopupModalState] = useState(
     POPUP_WINDOW_STATE_CLOSE
@@ -75,9 +76,7 @@ const NavDrawer = ({
 
   const [feedbackModalOpen, setFeedbackModalOpen] = useState(false);
 
-  const alwaysShowLessonTree = !!parseInt(
-    process.env.REACT_APP_ALWAYS_SHOW_LESSON_TREE
-  );
+  const alwaysShowLessonTree = getBoolEnv('REACT_APP_ALWAYS_SHOW_LESSON_TREE');
   const footerRef = useRef(null);
 
   const onHeaderCloseClick = () => {
@@ -98,8 +97,6 @@ const NavDrawer = ({
   const popupWindowClassname = () => {
     return isCollapse ? styles.popUpWindowCollapse : styles.popUpWindowExpand;
   };
-
-  const mobileStyle = frameLayout === FRAME_LAYOUT_MOBILE;
 
   return (
     <div
@@ -179,6 +176,7 @@ const NavDrawer = ({
           onClose={onPopupModalClose}
           onLoginClick={onLoginClick}
           onGoToSetting={onGoToSetting}
+          onNavClose={onClose}
         />
         <FeedbackModal
           open={feedbackModalOpen}

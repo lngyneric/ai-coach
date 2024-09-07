@@ -13,20 +13,20 @@ import exitLoginIcon from 'Assets/newchat/light/exit-login-2x.png';
 import { useDisclosture } from 'common/hooks/useDisclosture.js';
 import PayModal from '../Pay/PayModal.jsx';
 import PayModalM from '../Pay/PayModalM.jsx';
-import { FRAME_LAYOUT_MOBILE } from 'constants/uiConstants';
+import { useTranslation } from 'react-i18next';
 
 export const SettingModal = ({
   open,
   onClose,
+  onNavClose = () => {},
   style,
   onLoginClick = () => {},
   onGoToSetting = () => {},
   className,
 }) => {
-  const { hasLogin, userInfo, logout } = useUserStore((state) => state);
-  const { frameLayout } = useContext(AppContext);
-
-  const mobileStyle = frameLayout === FRAME_LAYOUT_MOBILE;
+  const { t } = useTranslation();
+  const { hasLogin, userInfo, logout, refreshUserInfo  } = useUserStore((state) => state);
+  const { mobileStyle } = useContext(AppContext);
 
   const {
     open: payModalOpen,
@@ -36,10 +36,11 @@ export const SettingModal = ({
 
   const onLogoutClick = async (e) => {
     await Modal.confirm({
-      title: '确认退出登录？',
-      content: '确认退出登录么',
+      title: t('user.confirmLogoutTitle'),
+      content: t('user.confirmLogoutContent'),
       onOk: async () => {
         await logout();
+        window.location.reload();
         onClose?.(e);
       },
     });
@@ -51,8 +52,11 @@ export const SettingModal = ({
       onLoginClick?.();
     } else {
       onGoToSetting?.();
+      if (mobileStyle) {
+        onNavClose?.();
+      }
     }
-  }, [hasLogin, onGoToSetting, onLoginClick]);
+  }, [hasLogin, mobileStyle, onGoToSetting, onLoginClick, onNavClose]);
 
   const onMemberRowClick = useCallback(() => {
     if (!hasLogin) {
@@ -60,7 +64,11 @@ export const SettingModal = ({
     } else {
       onPayModalOpen();
     }
-  }, []);
+  }, [hasLogin, onLoginClick, onPayModalOpen]);
+
+  const onPayOk = useCallback( () => {
+    refreshUserInfo();
+  }, [refreshUserInfo]);
 
   return (
     <>
@@ -78,21 +86,22 @@ export const SettingModal = ({
             <div className={styles.loginLeft}>
               <Avatar src={avatar} size={20} />
               <div className={styles.userName}>
-                {hasLogin ? userInfo?.name || '默认名称' : '未登录'}
+                {hasLogin ? userInfo?.name || t('user.defaultUserName') : t('user.notLogin')}
               </div>
             </div>
             <img className={styles.rowIcon} src={editIcon} alt="" />
           </div>
           <div className={styles.settingRow} onClick={onMemberRowClick}>
-            <div>会员管理</div>
+            <div>{t('navigation.memberSetting')}</div>
             <img className={styles.rowIcon} src={memberIcon} alt="" />
           </div>
           {hasLogin && (
             <div className={styles.settingRow} onClick={onLogoutClick}>
-              <div>退出登录</div>
+              <div>{t('user.logout')}</div>
               <img className={styles.rowIcon} src={exitLoginIcon} alt="" />
             </div>
           )}
+
         </div>
       </PopupModal>
 
@@ -101,13 +110,13 @@ export const SettingModal = ({
           <PayModalM
             open={payModalOpen}
             onCancel={onPayModalClose}
-            onOk={onPayModalClose}
+            onOk={onPayOk}
           />
         ) : (
           <PayModal
             open={payModalOpen}
             onCancel={onPayModalClose}
-            onOk={onPayModalClose}
+            onOk={onPayOk}
           />
         ))}
     </>

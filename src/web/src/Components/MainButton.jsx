@@ -1,9 +1,11 @@
-import { Button } from "antd";
-import styles from "./MainButton.module.scss";
-import classNames from "classnames";
-import { ConfigProvider } from "antd";
+import { Button } from 'antd';
+import styles from './MainButton.module.scss';
+import classNames from 'classnames';
+import { ConfigProvider } from 'antd';
+import { forwardRef, memo } from 'react';
 
-export const MainButton = ({ disabled, children, width, height = 40, style, onClick, className }) => {
+export const MainButton = forwardRef((props, ref) => {
+  const height = props.height || 40;
   return (
     <ConfigProvider
       theme={{
@@ -18,17 +20,17 @@ export const MainButton = ({ disabled, children, width, height = 40, style, onCl
       }}
     >
       <Button
+        ref={ref}
+        {...props}
         type="primary"
         shape="round"
-        disabled={disabled}
-        className={classNames(styles.mainButton, className)}
-        style={{ width, height, ...style }}
-        onClick={onClick}
+        className={classNames(styles.mainButton, props.className)}
+        style={{ width: props.width, height, ...props.style }}
       >
-        {children}
+        {props.children}
       </Button>
     </ConfigProvider>
   );
-};
+});
 
-export default MainButton;
+export default memo(MainButton);

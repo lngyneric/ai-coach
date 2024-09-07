@@ -3,12 +3,12 @@ import { useSystemStore } from 'stores/useSystemStore.js';
 
 /**
  * @description 用户注册接口
- * @param {*} username 
- * @param {*} password 
- * @param {*} name 
- * @param {*} mobile 
- * @param {*} email 
- * @returns 
+ * @param {*} username
+ * @param {*} password
+ * @param {*} name
+ * @param {*} mobile
+ * @param {*} email
+ * @returns
  */
 export const register = ({ username, password, mobile, email }) => {
   return request({
@@ -20,9 +20,9 @@ export const register = ({ username, password, mobile, email }) => {
 
 /**
  * 用户注册接口
- * @param {*} username 
- * @param {*} password 
- * @returns 
+ * @param {*} username
+ * @param {*} password
+ * @returns
  */
 export const login = (username, password) => {
   return request({
@@ -34,7 +34,7 @@ export const login = (username, password) => {
 
 /**
  * @description 查询用户信息
- * @returns 
+ * @returns
  */
 export const getUserInfo = () => {
   return request({
@@ -45,7 +45,7 @@ export const getUserInfo = () => {
 
 
 /**
- * 
+ *
  */
 export const updateUserInfo = (name) => {
   return request({
@@ -84,13 +84,13 @@ export const resetPassword = (username, new_password, code) => {
 /**
  * 获取临时 token，在用户正常登录的时候，也需要有一个 token
  * @param tmp_id 客户端生成的 id，可以用来换 token
- * @returns 
- * 
+ * @returns
+ *
  * https://agiclass.feishu.cn/docx/WyXhdgeVzoKVqDx1D4wc0eMknmg
  */
 export const registerTmp = ({ temp_id }) => {
   const { channel: source, wechatCode: wxcode } = useSystemStore.getState();
-  console.log('registerTmp', source, wxcode);
+  console.log(`registerTmp source: ${source}, wxcode: ${wxcode}, temp_id: ${temp_id}`);
 
   return request(
     {
@@ -103,7 +103,7 @@ export const registerTmp = ({ temp_id }) => {
 
 /**
  * 更新微信code
- * @returns 
+ * @returns
  */
 export const updateWxcode = () => {
   const { wechatCode: wxcode } = useSystemStore.getState();
@@ -144,7 +144,7 @@ export const sendSmsCode = ({ mobile, check_code }) => {
  * 验证手机号
  * @param {mobile} 手机号
  * @param {sms_code} 短信验证码
- * @returns 
+ * @returns
  */
 export const verifySmsCode = ({ mobile, sms_code }) => {
   return request({
@@ -183,5 +183,15 @@ export const updateUserProfile = (data) => {
     data: {
       "profiles": data
     }
+  })
+}
+
+
+// submit feedback
+export const submitFeedback = (feedback) => {
+  return request({
+    url: '/api/user/submit-feedback',
+    method: 'POST',
+    data: {feedback}
   })
 }
