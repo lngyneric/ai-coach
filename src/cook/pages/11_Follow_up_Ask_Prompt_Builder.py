@@ -1,3 +1,5 @@
+import sqlite3
+
 import streamlit as st
 from langchain_core.messages import HumanMessage
 from langchain_core.prompts import PromptTemplate
@@ -25,11 +27,13 @@ prompt_summarize_chapter = """
 
 当前要整理的章节是： `{chapter_name}`
 
-整理总结后输出内容格式如下（摘要内容在200-500字；教学要点总结不要超过8条）：
+整理总结后输出内容格式如下（摘要内容在200字以内；教学要点总结不要超过5条）：
 ```
 ### 章节 `xxx`：
+
 #### 章节 `xxx` 的摘要：
 【一段文本概述章节内容】
+
 #### 章节 `xxx` 的教学要点有：
 1. 【要点1】
 2. 【要点2】
@@ -43,7 +47,8 @@ prompt_summarize_chapter = """
 """
 
 prompt_follow_up_ask = """
-学员在学习上述教学内容时，产生了一些疑问，你需要恰当的回答学员的追问。
+# 现在学员在学习上述教学内容时，产生了一些疑问，你需要恰当的回答学员的追问。
+**你就是老师本人，不要打招呼，直接用第一人称回答！**
 
 如果学员的追问内容与当前章节教学内容有关，请优先结合当前章节中已经输出的内容进行回答。
 
@@ -57,12 +62,17 @@ prompt_follow_up_ask = """
 学员的追问是：
 `{follow_up_ask}`
 
-当前章节的内容是：
-{current_chapter_summary}
-
-课程其他章节的内容是：
-{other_chapters_summary}
 """
+
+
+def update_follow_up_ask_prompt_template(lark_app_token, lark_table_id, prompt_template):
+    conn = sqlite3.connect(cfg.SQLITE_DB_PATH)
+    cursor = conn.cursor()
+    cursor.execute('INSERT INTO `chapters_follow_up_ask_prompt` (lark_app_token, lark_table_id, prompt_template) '
+                   'VALUES (?, ?, ?) ON CONFLICT (lark_app_token, lark_table_id) DO UPDATE SET prompt_template=?',
+                   (lark_app_token, lark_table_id, prompt_template, prompt_template))
+    conn.commit()
+    conn.close()
 
 
 with login():
@@ -73,53 +83,59 @@ with login():
             st.switch_page("pages/100_My_Account.py")
         st.stop()
 
-    col1, col2 = st.columns(2)
-    with col1:
-        selected_course = st.selectbox('Select Course:', (course.course_name for course in courses))
+    selected_course = st.selectbox('Select Course:', (course.course_name for course in courses))
 
-    if selected_course:
+    if st.button('Generate all chapters follow-up ask prompt template', use_container_width=True):
         st.session_state.lark_app_token = next(
             (course.lark_app_token for course in courses if course.course_name == selected_course), None)
         tables = get_bitable_tables(st.session_state.lark_app_token)
 
-        with col2:
-            select_table = st.selectbox('Select Chapter:', (
-                table.name for table in tables if not table.name.startswith('字典-')))
-            st.session_state.lark_table_id = next(
-                (table.table_id for table in tables if table.name == select_table), None)
-            # Load script and system roles
-            if 'script_list' in st.session_state:
-                del st.session_state['script_list']  # clear before load
-            load_scripts(st.session_state.lark_app_token, st.session_state.lark_table_id)
+        chapters_summary = {}
+        for table in tables:
+            if table.name.startswith('字典-'):
+                continue
 
+            load_scripts(st.session_state.lark_app_token, table.table_id)
 
-    if st.button('Summarize chapter content and teaching points', use_container_width=True):
+            scripts_content = ""
+            for index, script in enumerate(st.session_state.script_list):
+                scripts_content += f'#### 第{index}小节: {script.desc}:\n'
+                scripts_content += script.template + '\n\n\n'
 
-        # st.write(st.session_state.script_list)
+            variables = {
+                'course_name': selected_course,
+                'chapter_name': table.name,
+                'scripts_content': scripts_content
+            }
 
-        scripts_content = ""
-        for index, script in enumerate(st.session_state.script_list):
-            # st.write(f'#### {index} {script.desc}({script.type}):')
-            # st.write(script.template)
-            # st.write('-----')
+            llm = load_llm('gpt-4o-2024-05-13')
+            prompt = PromptTemplate(input_variables=list(variables.keys()), template=prompt_summarize_chapter)
+            prompt = prompt.format(**variables)
 
-            scripts_content += f'#### 第{index}小节: {script.desc}:\n'
-            scripts_content += script.template + '\n\n\n'
+            with st.spinner(f'Chapter {table.name} is summarizing...'):
+                response = llm.invoke([HumanMessage(prompt)])
+                print(response.content)
+                st.write(f'### Chapter {table.name} Summary:')
+                st.write(response.content)
+                st.write('-----')
+                chapters_summary[table.name] = response.content
 
-        print(scripts_content)
+            del st.session_state['script_list']  # clear before next iteration
 
-        variables = {
-            'course_name': selected_course,
-            'chapter_name': select_table,
-            'scripts_content': scripts_content
-        }
+        for table in tables:
+            if table.name.startswith('字典-'):
+                continue
 
-        llm = load_llm('gpt-4o-2024-05-13')
-        prompt = PromptTemplate(input_variables=list(variables.keys()), template=prompt_summarize_chapter)
-        prompt = prompt.format(**variables)
+            follow_up_ask_prompt_template = prompt_follow_up_ask
+            follow_up_ask_prompt_template += "当前章节的内容是：\n"
+            follow_up_ask_prompt_template += chapters_summary[table.name] + "\n\n"
+            follow_up_ask_prompt_template += "课程其他章节的内容是：\n"
+            for chapter_name, summary in chapters_summary.items():
+                if chapter_name != table.name:
+                    follow_up_ask_prompt_template += summary + "\n\n"
 
-        with st.spinner('Summary in progress...'):
-            response = llm.invoke([HumanMessage(prompt)])
-            print(response.content)
-            st.write(response.content)
+            update_follow_up_ask_prompt_template(st.session_state.lark_app_token,
+                                                 table.table_id,
+                                                 follow_up_ask_prompt_template)
+
 

@@ -11,6 +11,7 @@ from langchain_core.prompts import PromptTemplate
 from langchain_core.messages import HumanMessage, SystemMessage
 
 from init import *
+from models.chapter import get_follow_up_ask_prompt_template
 from models.script import *
 
 _ = load_dotenv(find_dotenv())
@@ -65,6 +66,9 @@ def streaming_for_follow_up_ask(chat_box, user_input, chat_history):
     chat_box.ai_say
     chat_box.ai_say(Markdown('', in_expander=False))
 
+    prompt = PromptTemplate.from_template(get_follow_up_ask_prompt_template(st.session_state.lark_table_id))
+    prompt = prompt.format(follow_up_ask=user_input)
+
     llm_input = []
 
     # 有配置 系统角色 且 不是检查用户输入内容的Prompt时，加入系统角色
@@ -73,7 +77,8 @@ def streaming_for_follow_up_ask(chat_box, user_input, chat_history):
         logging.debug(f'调用LLM（System）：{st.session_state.system_role}')
 
     llm_input += chat_history
-    llm_input.append(HumanMessage(user_input))
+    llm_input.append(HumanMessage(prompt))
+    print(llm_input)
 
 
     full_result = ''
