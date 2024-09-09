@@ -11,6 +11,7 @@ from langchain_core.prompts import PromptTemplate
 from langchain_core.messages import HumanMessage, SystemMessage
 
 from init import *
+from models.chapter import get_follow_up_ask_prompt_template
 from models.script import *
 
 _ = load_dotenv(find_dotenv())
@@ -65,6 +66,9 @@ def streaming_for_follow_up_ask(chat_box, user_input, chat_history):
     chat_box.ai_say
     chat_box.ai_say(Markdown('', in_expander=False))
 
+    prompt = PromptTemplate.from_template(get_follow_up_ask_prompt_template(st.session_state.lark_table_id))
+    prompt = prompt.format(follow_up_ask=user_input)
+
     llm_input = []
 
     # 有配置 系统角色 且 不是检查用户输入内容的Prompt时，加入系统角色
@@ -73,7 +77,8 @@ def streaming_for_follow_up_ask(chat_box, user_input, chat_history):
         logging.debug(f'调用LLM（System）：{st.session_state.system_role}')
 
     llm_input += chat_history
-    llm_input.append(HumanMessage(user_input))
+    llm_input.append(HumanMessage(prompt))
+    print(llm_input)
 
 
     full_result = ''
@@ -324,7 +329,7 @@ def load_scripts(
         del st.session_state['system_role_id']
     # system_role_script = None
     if 'script_list' not in st.session_state:
-        with st.spinner('正在加载剧本...'):
+        with st.spinner('Loading script...'):
             st.session_state.script_list = load_scripts_from_bitable(app_token, table_id, view_id)
             if st.session_state.script_list[0].type == ScriptType.SYSTEM:
                 # system_role_script = st.session_state.script_list.pop(0)
@@ -333,18 +338,6 @@ def load_scripts(
                 if not st.session_state.system_role_script.template_vars:
                     st.session_state.system_role = template
                     st.session_state.system_role_id = st.session_state.system_role_script.id
-
-                # variables = {v: st.session_state[v] for v in
-                #              system_role_script.template_vars} if system_role_script.template_vars else None
-                #
-                # if variables:
-                #     prompt = PromptTemplate(input_variables=list(variables.keys()), template=template)
-                #     prompt = prompt.format(**variables)
-                # else:
-                #     prompt = template
-                #
-                # st.session_state.system_role = prompt
-                # st.session_state.system_role_id = system_role_script.id
 
             st.session_state.script_list_len = len(st.session_state.script_list)
     # return system_role_script

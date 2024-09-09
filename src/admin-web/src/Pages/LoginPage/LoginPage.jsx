@@ -53,7 +53,7 @@ const LoginForm = ({ handLogin }) => {
         UploadEvent("config", {
           user_unique_id: res.data.userInfo.user_id,
         });
-        navigate("/"); 
+        navigate("/");
     })
     .catch(() => {
       setLoading(false);
@@ -269,9 +269,9 @@ const LoginForm = ({ handLogin }) => {
                 游客
               </Button>
             </Form.Item>
-            <Form.Item>
+            {/* <Form.Item>
               还没有账号？<Link to={{ pathname: "/register" }}>现在注册!</Link>
-            </Form.Item>
+            </Form.Item> */}
           </Form>
           <ForgetPasswordModal
             open={forgetPasswordModalProps.open}
@@ -286,7 +286,7 @@ const LoginForm = ({ handLogin }) => {
               target="_blank"
               rel="noreferrer"
             >
-              
+
             </a>
             京ICP备2023005708号
             <a

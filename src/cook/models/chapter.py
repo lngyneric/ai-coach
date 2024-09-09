@@ -113,10 +113,24 @@ def delete_chapter_from_api(table_id):
         streamlit.toast(f"删除失败，错误码: {response.status_code}", icon="🚨")
 
 
+def get_follow_up_ask_prompt_template(lark_table_id):
+    conn = sqlite3.connect(cfg.SQLITE_DB_PATH)
+    cursor = conn.cursor()
+    cursor.execute('SELECT * FROM `chapters_follow_up_ask_prompt` WHERE lark_table_id=?',
+                   (lark_table_id,))
+    result = cursor.fetchone()
+    result = result[2] if result else ''
+    conn.close()
+    return result
+
+
 if __name__ == '__main__':
+    prompt = get_follow_up_ask_prompt_template('tbldUsmPMh6vcBxh')
+    print(len(prompt), prompt)
+
 
     # 从API获取章节信息
-    chapters = load_chapters_from_api()
+    # chapters = load_chapters_from_api()
 
 
     # 从本地数据库获取

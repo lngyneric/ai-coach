@@ -141,7 +141,7 @@ if not st.session_state.has_started:
                 # Load script and system roles
                 if 'script_list' in st.session_state:
                     del st.session_state['script_list']  # clear before load
-                system_role_script = load_scripts(st.session_state.lark_app_token, st.session_state.lark_table_id)
+                load_scripts(st.session_state.lark_app_token, st.session_state.lark_table_id)
 
             with (col3):
                 select_script = st.selectbox('Starting position:', st.session_state.script_list)

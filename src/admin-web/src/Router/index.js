@@ -19,6 +19,11 @@ const authRoutes = [
     title: "用户",
   },
   {
+    path: "/feedback",
+    element: <CommonListPage viewName="feedback"></CommonListPage>,
+    title: "反馈",
+  },
+  {
     path: "/order",
     element: <CommonListPage viewName="order"></CommonListPage>,
 
