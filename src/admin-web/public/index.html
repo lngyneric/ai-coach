@@ -19,24 +19,7 @@
       user's mobile device or desktop. See https://developers.google.com/web/fundamentals/web-app-manifest/
     -->
     <!-- <link rel="manifest" href="%PUBLIC_URL%/manifest.json" /> -->
-    <script>
-      (function(win, export_obj) {
-          win['TeaAnalyticsObject'] = export_obj;
-          if (!win[export_obj]) {
-              function _collect() {
-                  _collect.q.push(arguments);
-              }
-              _collect.q = _collect.q || [];
-              win[export_obj] = _collect;
-          }
-          win[export_obj].l = +new Date();
-      })(window, 'collectEvent');
-      </script>
-      <!-- <script async src="https://lf3-data.volccdn.com/obj/data-static/log-sdk/collect/collect-autotrack-rangers.js"></script> -->
-      <script async src="https://lf3-data.volccdn.com/obj/data-static/log-sdk/collect/5.0/collect-rangers-v5.1.6.js"></script>
-      <script>
-       
-      </script>
+
     <!--
       Notice the use of %PUBLIC_URL% in the tags above.
       It will be replaced with the URL of the `public` folder during the build.
