@@ -4,10 +4,6 @@ import LoginPage from "../Pages/LoginPage/LoginPage";
 import RegisterPage from "../Pages/RegisterPage/RegisterPage";
 import ContactsComponant from "../Pages/ContactListPage/ContactListPage";
 import { Navigate } from "react-router-dom";
-import {
-  ReadOutlined,
-  SettingOutlined,
-} from "@ant-design/icons";
 import SettingPage from "../Pages/SettingPage/SettingPage";
 import BeforeEach from "./BeforeEach";
 import NewChatPage from "../Pages/NewChatPage/NewChatPage.jsx";
@@ -17,22 +13,15 @@ import NewChatPage from "../Pages/NewChatPage/NewChatPage.jsx";
  * @type {*}
  * */
 const authRoutes = [
-  // {
-  //   path: "/chat",
-  //   element: <ChatPage></ChatPage>,
-  //   title: "学习",
-  //   icon: <ReadOutlined></ReadOutlined>,
-  // },
-  // {
-  //   path: "/course",
-  //   element: <ChatPage></ChatPage>,
-  //   title: "课程",
-  //   icon: <ReadOutlined></ReadOutlined>,
-  // },
   {
     path: "/user",
     element: <ContactsComponant></ContactsComponant>,
     title: "用户",
+  },
+  {
+    path: "/feedback",
+    element: <CommonListPage viewName="feedback"></CommonListPage>,
+    title: "反馈",
   },
   {
     path: "/order",

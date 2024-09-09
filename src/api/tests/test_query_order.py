@@ -1,7 +1,4 @@
-
-
 def test_query_order(app):
-    from flaskr.service.view.modes import OrderView
+    from flaskr.service.order import OrderView
 
-
-    OrderView.query(app,1,20,{})
+    OrderView.query(app, 1, 20, {})

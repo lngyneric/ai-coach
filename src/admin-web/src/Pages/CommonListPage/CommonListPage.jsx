@@ -1,4 +1,4 @@
-import { Button, Space, Modal } from "antd";
+import {  Space, Modal } from "antd";
 import SearchForm from "./SearchForm";
 import CommonListTable from "./CommonListTable";
 import { useEffect, useState } from "react";
@@ -8,14 +8,8 @@ import ContactDetailModal from "./Modal/ContactDetailModel";
 
 import { Pagination } from "antd";
 
-// import { GetAllContacts, deleteContact } from "../../Api/contact";
-import {getUserList} from "../../Api/admin"
-
-import { DeleteColumnOutlined, DeleteOutlined } from "@ant-design/icons";
-import { TRUE } from "sass";
-import { set } from "store";
-
 import {getViewInfo,queryView} from "../../Api/manager"
+import { set } from "store";
 
 const CommonListPage = ({viewName}) => {
 
@@ -31,7 +25,6 @@ const CommonListPage = ({viewName}) => {
    */
   const params = {};
   const [loading, setLoading] = useState(false);
-  const [contactIds, setContactIds] = useState([]);
   const [colum, setColum] = useState([]);
   const [searchParams, setSearchParams] = useState({});
   const [searchDefine,setSearchDefine]=useState({})
@@ -165,7 +158,7 @@ const CommonListPage = ({viewName}) => {
 
 
   const onTableSelectChange = (selectedRowKeys) => {
-    setContactIds(selectedRowKeys);
+    // setContactIds(selectedRowKeys);
   };
 
   const onPaginationChange = (page, pageSize) => {
@@ -174,7 +167,6 @@ const CommonListPage = ({viewName}) => {
   }
 
   useEffect(() => {
-    setLoading(true);
     queryAllContacts();
   }, [pageSize,currentPage,searchParams]);
   return (
