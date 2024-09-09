@@ -35,11 +35,11 @@ const CommonListPage = ({viewName}) => {
    */
   const onSearch = (searchParams) => {
     setSearchParams(searchParams)
-    console.log(searchParams);
     setCurrentPage(1);
   };
 
   const onReset = (searchParams) => {
+    setCurrentPage(1);
     searchParams(searchParams)
     // queryAllContacts();
   };
@@ -57,14 +57,16 @@ const CommonListPage = ({viewName}) => {
       });
       setColum(columns);
       setSearchDefine(res.data.queryinput);
-
+      setSearchParams({})
+      setCurrentPage(1)
     });
-  }, []);
+  }, [viewName]);
   const [contactInfoList, setContactInfoList] = useState([]);
   /**
    * @description 联系人数据
    */
   const queryAllContacts = () => {
+    setLoading(true);
     queryView(viewName,currentPage,pageSize,searchParams)
       .then((res) => {
         setTotal(res.data.total);
@@ -158,7 +160,6 @@ const CommonListPage = ({viewName}) => {
 
 
   const onTableSelectChange = (selectedRowKeys) => {
-    // setContactIds(selectedRowKeys);
   };
 
   const onPaginationChange = (page, pageSize) => {
