@@ -22,6 +22,8 @@ import ChatMobileHeader from './Components/ChatMobileHeader.jsx';
 import { useDisclosture } from 'common/hooks/useDisclosture.js';
 import { updateWxcode } from 'Api/user.js';
 
+import FeedbackModal from './Components/FeedbackModal/FeedbackModal.jsx';
+
 // 课程学习主页面
 const NewChatPage = (props) => {
   const { frameLayout, updateFrameLayout } = useUiLayoutStore((state) => state);
@@ -45,8 +47,8 @@ const NewChatPage = (props) => {
   const { lessonId, changeCurrLesson, chapterId, updateChapterId } =
     useCourseStore((state) => state);
   const [showUserSettings, setShowUserSettings] = useState(false);
-  const [loading, setLoading] = useState(false);
   const navigate = useNavigate();
+  const { open: feedbackModalOpen, onOpen: onFeedbackModalOpen, onClose: onFeedbackModalClose } = useDisclosture();
 
   const mobileStyle = frameLayout === FRAME_LAYOUT_MOBILE;
 
@@ -88,14 +90,11 @@ const NewChatPage = (props) => {
   const checkUrl = useCallback(async () => {
     let nextTree;
     if (!tree) {
-      setLoading(true);
       nextTree = await loadTree(cid, lessonId);
     } else {
-      setLoading(true);
       nextTree = await reloadTree(cid, lessonId);
     }
 
-    setLoading(false);
     if (cid) {
       if (!checkChapterAvaiableStatic(nextTree, cid)) {
         navigate('/newchat');
@@ -131,7 +130,6 @@ const NewChatPage = (props) => {
     if (cid === chapterId) {
       return;
     }
-    console.log('update cid: ', cid);
     updateChapterId(cid);
     checkUrl(cid);
   }, [chapterId, checkUrl, cid, updateChapterId]);
@@ -229,6 +227,10 @@ const NewChatPage = (props) => {
     );
   });
 
+  const onFeedbackClick = useCallback(() => {
+    onFeedbackModalOpen();
+  }, [onFeedbackModalOpen]);
+
   return (
     <div className={classNames(styles.newChatPage)}>
       <AppContext.Provider
@@ -268,6 +270,7 @@ const NewChatPage = (props) => {
             open={loginModalOpen}
             onClose={onLoginModalClose}
             destroyOnClose={true}
+            onFeedbackClick={onFeedbackClick}
           />
         )}
         {initialized && <TrackingVisit />}
@@ -279,6 +282,11 @@ const NewChatPage = (props) => {
             onSettingClick={onNavToggle}
           />
         )}
+
+        <FeedbackModal
+          open={feedbackModalOpen}
+          onClose={onFeedbackModalClose}
+        />
       </AppContext.Provider>
     </div>
   );

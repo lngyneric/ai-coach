@@ -37,6 +37,31 @@ DOCKERFILE_PATH="Dockerfile"
 # 设置 Docker 镜像仓库信息
 REGISTRY="registry.cn-beijing.aliyuncs.com/agix"
 
+
+
+
+
+# 获取最近一次提交的基本信息
+latest_commit=$(git log -1 --pretty=format:"%H")
+author=$(git log -1 --pretty=format:"%an")
+date=$(git log -1 --pretty=format:"%ad")
+message=$(git log -1 --pretty=format:"%s")
+
+# 检查是否为 merge 提交
+is_merge_commit=$(git log -1 --merges --pretty=format:"%H")
+
+if [ "$latest_commit" == "$is_merge_commit" ]; then
+    # 获取被合并的提交
+    merged_commits=$(git show --pretty=format:"%P" -s $latest_commit | xargs -n1 git log --pretty=format:"哈希: %H, 作者: %an, 提交信息: %s" -n 1)
+
+    git_msg="最近的提交是一个合并提交：\n提交哈希: $latest_commit\n作者: $author\n提交时间: $date\n合并信息: $message\n被合并的提交有：\n$merged_commits"
+else
+    git_msg="最近的提交信息：\n提交哈希: $latest_commit\n作者: $author\n提交时间: $date\n提交信息: $message"
+fi
+
+
+echo $git_msg
+
 # 构建 Docker 镜像
 echo "Building Docker image..."
 docker build -t "$IMAGE_NAME:$IMAGE_TAG" -f "$DOCKERFILE_PATH" .
@@ -47,7 +72,7 @@ docker tag "$IMAGE_NAME:$IMAGE_TAG" "$REGISTRY/$IMAGE_NAME:$IMAGE_TAG"
 
 # 推送 Docker 镜像到仓库
 echo "Pushing Docker image to registry..."
-docker push "$REGISTRY/$IMAGE_NAME:$IMAGE_TAG" 
+docker push "$REGISTRY/$IMAGE_NAME:$IMAGE_TAG"
 
 # 部署 Docker 容器
 # 固定变量
@@ -75,14 +100,13 @@ else
 fi
 
 # 使用更新的镜像和自定义容器名称运行新容器
-CONTAINER_NAME="sifu_api_v1_$TIMESTAMP" 
+CONTAINER_NAME="sifu_api_v1_$TIMESTAMP"
 echo "Starting a new container with the name $CONTAINER_NAME..."
-docker run --env-file  /item/.env  -v /data/cert/pingxx_test_key.gem:/key/pingxx_test_key.gem -v /data/logs/api:/var/log/ -p $TARGET_PORT:5800 --name "$CONTAINER_NAME" -d "$FULL_IMAGE_NAME"  
+docker run --env-file  /item/.env  -v /data/cert/pingxx_test_key.gem:/key/pingxx_test_key.gem -v /data/logs/api:/var/log/ -p $TARGET_PORT:5800 --name "$CONTAINER_NAME" -d "$FULL_IMAGE_NAME"
 
-sh $script_dir/send_feishu.sh "sifu_api_v1 部署成功" "$CONTAINER_NAME $FULL_IMAGE_NAME 部署成功！"
+sh $script_dir/send_feishu.sh "sifu_api_v1 部署成功" "$CONTAINER_NAME $FULL_IMAGE_NAME 部署成功！\n $git_msg "
 # 打印容器日志
 echo "Container logs for $CONTAINER_NAME:"
 docker logs "$CONTAINER_NAME"
 
 echo "Deployment completed successfully."
-

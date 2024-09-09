@@ -2,8 +2,10 @@ import { Breadcrumb } from 'antd';
 import styles from './SettingHeader.module.scss';
 import classNames from 'classnames';
 import { memo } from 'react';
+import { useTranslation } from 'react-i18next';
 
 export const SettingHeader = ({ className, onHomeClick }) => {
+  const { t } = useTranslation();
   return (
     <div className={classNames(styles.settingHeader, className)}>
       <Breadcrumb
@@ -11,11 +13,11 @@ export const SettingHeader = ({ className, onHomeClick }) => {
           {
             title: (
               <span className={styles.clickable} onClick={onHomeClick}>
-                主页
+                {t('settings.home')}
               </span>
             ),
           },
-          { title: <span>个人信息</span> },
+          { title: <span>{t("settings.settingTite")}</span> },
         ]}
       />
     </div>

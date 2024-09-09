@@ -1,5 +1,4 @@
 import { SSE } from "sse.js";
-import Cookies from "js-cookie";
 import request from "../Service/Request";
 import { tokenStore } from "Service/storeUtil.js";
 
@@ -45,8 +44,8 @@ export const runScript = (course_id, lesson_id, input, input_type, script_id, on
 
 /**
  * 获取课程学习记录
- * @param {*} lessonId 
- * @returns 
+ * @param {*} lessonId
+ * @returns
  */
 export const getLessonStudyRecord = async (lessonId) => {
   return request({

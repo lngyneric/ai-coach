@@ -32,13 +32,15 @@ import { tokenTool } from '@Service/storeUtil.js';
 import MarkdownBubble from './ChatMessage/MarkdownBubble.jsx';
 import { useTracking, EVENT_NAMES } from 'common/hooks/useTracking.js';
 import PayModalM from '../Pay/PayModalM.jsx';
+import { smoothScroll } from 'Utils/smoothScroll.js';
+import { throttle } from 'throttle-debounce';
 
 const USER_ROLE = {
   TEACHER: '老师',
   STUDENT: '学生',
 };
 
-const robotAvatar = require('@Assets/chat/sunner_icon.jpg');
+const robotAvatar = require('@Assets/newchat/sunner_icon.jpg');
 
 const createMessage = ({
   id = 0,
@@ -138,6 +140,7 @@ const convertEventInputModal = ({ type, content }) => {
   }
 };
 
+const SCROLL_BOTTOM_THROTTLE = 60;
 export const ChatComponents = forwardRef(
   (
     {
@@ -164,17 +167,21 @@ export const ChatComponents = forwardRef(
     const [isStreaming, setIsStreaming] = useState(false);
     const [initRecords, setInitRecords] = useState([]);
 
-    const { userInfo, frameLayout, mobileStyle } = useContext(AppContext);
-    const chatRef = useRef();
-    const { lessonId: currLessonId, changeCurrLesson, updateResetedChapterId } = useCourseStore(
-      (state) => ({
-        lessonId: state.lessonId,
-        changeCurrLesson: state.changeCurrLesson,
-        updateResetedChapterId: state.updateResetedChapterId,
-      })
-    );
+    const [autoScroll, setAutoScroll] = useState(true);
 
-    const { messages, appendMsg, setTyping, updateMsg, resetList } =
+    const { userInfo, mobileStyle } = useContext(AppContext);
+    const chatRef = useRef();
+    const {
+      lessonId: currLessonId,
+      changeCurrLesson,
+      updateResetedChapterId,
+    } = useCourseStore((state) => ({
+      lessonId: state.lessonId,
+      changeCurrLesson: state.changeCurrLesson,
+      updateResetedChapterId: state.updateResetedChapterId,
+    }));
+
+    const { messages, appendMsg, setTyping, updateMsg, resetList, deleteMsg } =
       useMessages([]);
 
     const { checkLogin, updateUserInfo, refreshUserInfo } = useUserStore(
@@ -351,18 +358,57 @@ export const ChatComponents = forwardRef(
       ]
     );
 
+    const onMessageListScroll = useCallback(
+      (e) => {
+        const scrollWrapper = e.target;
+        const inner = scrollWrapper.children[0];
+
+        if (!scrollWrapper || !inner) {
+          return;
+        }
+
+        if (
+          scrollWrapper.scrollTop > 0 &&
+          scrollWrapper.scrollTop + scrollWrapper.clientHeight <
+            inner.clientHeight - SCROLL_BOTTOM_THROTTLE
+        ) {
+          if (
+            messages.length &&
+            messages[messages.length - 1].position === 'pop'
+          ) {
+            return;
+          }
+          setAutoScroll(false);
+          appendMsg({ _id: genUuid(), type: 'loading', position: 'pop' });
+        } else {
+          if (
+            messages.length &&
+            messages[messages.length - 1].position === 'pop'
+          ) {
+            setAutoScroll(true);
+            deleteMsg(messages[messages.length - 1]._id);
+          }
+        }
+      },
+      [appendMsg, messages, deleteMsg]
+    );
+
     const scrollToBottom = useCallback(() => {
       const inner = document.querySelector(
         `.${styles.chatComponents} .PullToRefresh-inner`
       );
-      document
-        .querySelector(`.${styles.chatComponents} .PullToRefresh`)
-        .scrollTo(0, inner.clientHeight);
+      const wrapper = document.querySelector(
+        `.${styles.chatComponents} .PullToRefresh`
+      );
+      smoothScroll({ el: wrapper, to: inner.clientHeight });
     }, []);
 
     const onImageLoaded = useCallback(() => {
+      if (!autoScroll) {
+        return;
+      }
       scrollToBottom();
-    }, [scrollToBottom]);
+    }, [autoScroll, scrollToBottom]);
 
     useEffect(() => {
       if (!loadedData) {
@@ -452,7 +498,7 @@ export const ChatComponents = forwardRef(
             // 恢复到 null
             updateResetedChapterId(null);
           } else {
-            return
+            return;
           }
         }
       );
@@ -530,9 +576,18 @@ export const ChatComponents = forwardRef(
 
         setTyping(true);
         setInputDisabled(true);
+        scrollToBottom();
         nextStep({ chatId, lessonId, type, val, scriptId });
       },
-      [appendMsg, chatId, lessonId, nextStep, setTyping, userInfo]
+      [
+        appendMsg,
+        chatId,
+        lessonId,
+        nextStep,
+        scrollToBottom,
+        setTyping,
+        userInfo,
+      ]
     );
 
     const onPayModalOk = useCallback(() => {
@@ -614,7 +669,8 @@ export const ChatComponents = forwardRef(
       }
 
       messageListElem.style.paddingBottom = `${height}px`;
-    });
+    }, []);
+
     return (
       <div
         className={classNames(
@@ -634,6 +690,7 @@ export const ChatComponents = forwardRef(
           Composer={() => {
             return <></>;
           }}
+          onScroll={onMessageListScroll}
         />
 
         {inputModal && (

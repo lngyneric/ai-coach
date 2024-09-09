@@ -11,6 +11,7 @@ from langchain_core.prompts import PromptTemplate
 from langchain_core.messages import HumanMessage, SystemMessage
 
 from init import *
+from models.chapter import get_follow_up_ask_prompt_template
 from models.script import *
 
 _ = load_dotenv(find_dotenv())
@@ -51,6 +52,44 @@ def simulate_streaming(chat_box, template: str, variables=None,
 
     chat_box.update_msg(current_text, element_index=0, streaming=False, state="complete")
     return current_text
+
+
+def streaming_for_follow_up_ask(chat_box, user_input, chat_history):
+    """
+    用于处理用户输入后的后续提问，目前仅用于处理用户输入内容的Prompt
+    :param chat_box: ChatBox 对象
+    :param user_input: 用户输入内容
+    :param chat_history: 历史对话内容
+    """
+    llm = load_llm()
+
+    chat_box.ai_say
+    chat_box.ai_say(Markdown('', in_expander=False))
+
+    prompt = PromptTemplate.from_template(get_follow_up_ask_prompt_template(st.session_state.lark_table_id))
+    prompt = prompt.format(follow_up_ask=user_input)
+
+    llm_input = []
+
+    # 有配置 系统角色 且 不是检查用户输入内容的Prompt时，加入系统角色
+    if 'system_role' in st.session_state:
+        llm_input.append(SystemMessage(st.session_state.system_role))
+        logging.debug(f'调用LLM（System）：{st.session_state.system_role}')
+
+    llm_input += chat_history
+    llm_input.append(HumanMessage(prompt))
+    print(llm_input)
+
+
+    full_result = ''
+    for chunk in llm.stream(llm_input):
+        full_result += chunk.content
+        chat_box.update_msg(full_result, element_index=0, streaming=True)
+
+    chat_box.update_msg(full_result + '\n\n 没有其他问题的话，就让我们继续学习吧~',
+                        element_index=0, streaming=False, state="complete")
+
+    return full_result
 
 
 def streaming_from_template(chat_box, template, variables,
@@ -290,7 +329,7 @@ def load_scripts(
         del st.session_state['system_role_id']
     # system_role_script = None
     if 'script_list' not in st.session_state:
-        with st.spinner('正在加载剧本...'):
+        with st.spinner('Loading script...'):
             st.session_state.script_list = load_scripts_from_bitable(app_token, table_id, view_id)
             if st.session_state.script_list[0].type == ScriptType.SYSTEM:
                 # system_role_script = st.session_state.script_list.pop(0)
@@ -299,18 +338,6 @@ def load_scripts(
                 if not st.session_state.system_role_script.template_vars:
                     st.session_state.system_role = template
                     st.session_state.system_role_id = st.session_state.system_role_script.id
-
-                # variables = {v: st.session_state[v] for v in
-                #              system_role_script.template_vars} if system_role_script.template_vars else None
-                #
-                # if variables:
-                #     prompt = PromptTemplate(input_variables=list(variables.keys()), template=template)
-                #     prompt = prompt.format(**variables)
-                # else:
-                #     prompt = template
-                #
-                # st.session_state.system_role = prompt
-                # st.session_state.system_role_id = system_role_script.id
 
             st.session_state.script_list_len = len(st.session_state.script_list)
     # return system_role_script
@@ -335,6 +362,19 @@ def extract_variables(template: str) -> list:
 
     # 返回去重后的变量名列表
     return list(set(matches))
+
+
+def count_lines(text: str, one_line_max=60):
+    """
+    计算文本的行数
+    返回的第一个数值是正常的行数
+    返回的第二个数值按照一行的最大值计算折行后的总行数（单行总数/最大值 之后 取上整）
+    """
+    lines = text.split('\n')
+    total_lines = len(lines)
+    total_lines_with_wrap = sum([len(line) // one_line_max + 1 for line in lines])
+
+    return total_lines, total_lines_with_wrap
 
 
 if __name__ == '__main__':

@@ -9,7 +9,6 @@ import ChangeAvatar from './ChangeAvatar.jsx';
 import SexSettingModal from './SexSettingModal.jsx';
 import { useState } from 'react';
 import { useCallback } from 'react';
-import { SettingRadioElement } from './SettingRadioElement.jsx';
 import { SettingInputElement } from './SettingInputElement.jsx';
 import SettingSelectElement from './SettingSelectElement.jsx';
 import { memo } from 'react';
@@ -18,10 +17,15 @@ import { useEffect } from 'react';
 import BirthdaySettingModal from './BirthdaySettingModal.jsx';
 import { SEX, SEX_NAMES } from 'constants/userConstants.js';
 import DynamicSettingItem from './DynamicSettingItem.jsx';
+import { useUserStore } from 'stores/useUserStore.js';
 
 const fixed_keys = ['nickname', 'avatar', 'sex', 'birth'];
 
 export const UserSettings = ({ onHomeClick, className, onClose }) => {
+  const { refreshUserInfo } = useUserStore((state) => ({
+    refreshUserInfo: state.refreshUserInfo
+  }));
+
   const [sexSettingModalOpen, setSexSettingModalOpen] = useState(false);
   const [birthModalOpen, setBirthModalOpen] = useState(false);
 
@@ -61,8 +65,10 @@ export const UserSettings = ({ onHomeClick, className, onClose }) => {
       });
     });
     await updateUserProfile(data);
+    await refreshUserInfo();
+
     onClose();
-  }, [avatar, birth, dynFormData, nickName, onClose, sex]);
+  }, [avatar, birth, dynFormData, nickName, onClose, refreshUserInfo, sex]);
 
   const onNickNameChanged = useCallback(
     (e) => {

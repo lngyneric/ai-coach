@@ -141,6 +141,8 @@ def run_script_inner(
                         yield make_script_dto("text_end", "", None)
 
                     attends = update_attend_lesson_info(app, attend_info.attend_id)
+
+                    app.logger.info("===========update_attend_lesson_info")
                     for attend_update in attends:
                         if len(attend_update.lesson_no) > 2:
                             yield make_script_dto(
@@ -157,7 +159,6 @@ def run_script_inner(
                                 yield make_script_dto(
                                     "next_chapter", attend_update.__json__(), ""
                                 )
-                        return
                 lesson_id = attend_info.lesson_id
                 attend = AICourseLessonAttendDTO(
                     attend_info.attend_id,
@@ -175,6 +176,7 @@ def run_script_inner(
             trace_args["input"] = input
             trace_args["name"] = "ai-python"
             trace = langfuse.trace(**trace_args)
+
             trace_args["output"] = ""
             next = 0
             is_first_add = False
@@ -331,8 +333,6 @@ def run_script_inner(
                                     )
                         app.logger.info("script_info is None")
                 except BreakException:
-                    # app.logger.error("BreakException")
-                    # app.logger.error(e)
                     db.session.commit()
                     return
             else:

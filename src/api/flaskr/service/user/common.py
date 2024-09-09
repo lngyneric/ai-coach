@@ -28,7 +28,7 @@ from ..common.models import (
     USER_TOKEN_EXPIRED,
     USER_NOT_LOGIN,
 )
-from .utils import generate_token, get_user_openid
+from .utils import generate_token, get_user_language, get_user_openid
 from ...dao import redis_client as redis, db
 from .models import User as CommonUser, AdminUser as AdminUser
 
@@ -65,6 +65,7 @@ def verify_user(app: Flask, login: str, raw_password: str) -> UserToken:
                         model=user.default_model,
                         user_state=user.user_state,
                         wx_openid=get_user_openid(user),
+                        language=get_user_language(user),
                     ),
                     token=token,
                 )
@@ -94,6 +95,7 @@ def validate_user(app: Flask, token: str) -> UserInfo:
                         model=user.default_model,
                         user_state=user.user_state,
                         wx_openid=get_user_openid(user),
+                        language=get_user_language(user),
                     )
             else:
                 user_id = jwt.decode(
@@ -124,6 +126,7 @@ def validate_user(app: Flask, token: str) -> UserInfo:
                         model=user.default_model,
                         user_state=user.user_state,
                         wx_openid=get_user_openid(user),
+                        language=get_user_language(user),
                     )
                 else:
                     raise USER_TOKEN_EXPIRED
@@ -157,6 +160,7 @@ def update_user_info(
                 model=dbuser.default_model,
                 user_state=dbuser.user_state,
                 wx_openid=get_user_openid(user),
+                language=get_user_language(user),
             )
         else:
             raise USER_NOT_FOUND
@@ -182,6 +186,7 @@ def change_user_passwd(app: Flask, user: UserInfo, oldpwd, newpwd) -> UserInfo:
                     model=user.default_model,
                     user_state=user.user_state,
                     wx_openid=get_user_openid(user),
+                    language=get_user_language(user),
                 )
             else:
                 raise OLD_PASSWORD_ERROR
@@ -203,6 +208,7 @@ def get_user_info(app: Flask, user_id: str) -> UserInfo:
                 model=user.default_model,
                 user_state=user.user_state,
                 wx_openid=get_user_openid(user),
+                language=get_user_language(user),
             )
         else:
             raise USER_NOT_FOUND
@@ -222,7 +228,12 @@ def require_reset_pwd_code(app: Flask, login: str):
                 ex=app.config["RESET_PWD_CODE_EXPIRE_TIME"],
             )
             send_email(
-                app, "小卡AI助理", user.email, user.email, "重置密码", "您的重置密码验证码为：" + str(code)
+                app,
+                "AI-Shifu",
+                user.email,
+                user.email,
+                "重置密码",
+                "您的重置密码验证码为：" + str(code),
             )
             return True
         else:
@@ -379,6 +390,7 @@ def verify_sms_code(app: Flask, user_id, phone: str, chekcode: str) -> UserToken
                 model=user_info.default_model,
                 user_state=user_info.user_state,
                 wx_openid=get_user_openid(user_info),
+                language=get_user_language(user_info),
             ),
             token,
         )
