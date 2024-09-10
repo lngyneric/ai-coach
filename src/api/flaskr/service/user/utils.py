@@ -21,9 +21,9 @@ def get_user_openid(user):
 
 def get_user_language(user):
     if hasattr(user, "user_language"):
-        return user.user_language if user.user_language else "zh"
+        return user.user_language if user.user_language else "zh_CN"
     else:
-        return "zh"
+        return "zh_CN"
 
 
 # generate token

@@ -251,7 +251,7 @@ def generate_charge(
         if buy_record.status == BUY_STATUS_SUCCESS:
             app.logger.error("buy record:{} status is not init".format(record_id))
             raise ORDER_HAS_PAID
-        amount = int(buy_record.pay_value) * 100
+        amount = int(buy_record.pay_value * 100)
         product_id = course.course_id
         subject = course.course_name
         body = course.course_name
