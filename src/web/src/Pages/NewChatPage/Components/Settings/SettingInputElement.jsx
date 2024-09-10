@@ -11,6 +11,7 @@ export const SettingInputElement = ({
   placeholder = '',
   title = '',
   className = '',
+  maxLength = null
 }) => {
   const [_value, _setValue] = useState(value);
 
@@ -35,6 +36,7 @@ export const SettingInputElement = ({
           placeholder={placeholder}
           value={_value}
           onChange={onInputChanged}
+          maxLength={maxLength}
         />
       </div>
     </div>
