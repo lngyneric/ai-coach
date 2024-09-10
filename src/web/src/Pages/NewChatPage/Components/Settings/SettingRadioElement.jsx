@@ -34,7 +34,7 @@ export const SettingRadioElement = ({
           <Space direction="vertical">
             {options.map((v) => {
               const { label, value } = v;
-              return <Radio value={value} checked={value === curr} className={styles.inputElement}>{label}</Radio>;
+              return <Radio key={value} value={value} checked={value === curr} className={styles.inputElement}>{label}</Radio>;
             })}
           </Space>
         </Radio.Group>
