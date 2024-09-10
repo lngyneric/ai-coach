@@ -8,7 +8,7 @@ import { Menu } from "antd";
  * @return {*}
  */
 const generateMenuItemlist = () => {
-  const menuItemList = authRoutes.map(({ title, path, icon }) => ({
+  const menuItemList = authRoutes.filter(({ showInMenu }) => showInMenu).map(({ title, path, icon }) => ({
     title,
     key: path,
     label: title,
