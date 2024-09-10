@@ -158,6 +158,7 @@ export const UserSettings = ({ onHomeClick, className, onClose }) => {
               onChange={onNickNameChanged}
               className={styles.inputUnit}
               value={nickName}
+              maxLength={10}
             />
             <SettingSelectElement
               title="性别"

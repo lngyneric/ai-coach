@@ -10,6 +10,7 @@ import { useUserStore } from 'stores/useUserStore.js';
 import { useTranslation } from 'react-i18next';
 import { memo } from 'react';
 import { useCallback } from 'react';
+import { useRef } from 'react';
 
 const MODAL_STEP = {
   MOBILE: 1,
@@ -35,6 +36,10 @@ export const LoginModal = ({
   const [messageApi, contextHolder] = message.useMessage();
   const login = useUserStore((state) => state.login);
   const { t } = useTranslation();
+
+  const mobileInputRef = useRef(null);
+  const smsCodeInputRef = useRef(null);
+  const verifyCodeInputRef = useRef(null);
 
   const updateVerifyCodeImage = async (mobile) => {
     const { data: res } = await genCheckCode(mobile);
@@ -111,6 +116,16 @@ export const LoginModal = ({
     [onClose, onFeedbackClick]
   );
 
+  const onAfterOpenChange = useCallback(() => {
+    if (modalStep === MODAL_STEP.MOBILE) {
+      mobileInputRef.current?.focus();
+    } else if (modalStep === MODAL_STEP.CODE) {
+      smsCodeInputRef.current?.focus();
+    } else if (modalStep === MODAL_STEP.VERIFY_CODE) {
+      verifyCodeInputRef.current?.focus();
+    }
+  }, [modalStep]);
+
   return (
     <Modal
       open={open}
@@ -118,8 +133,9 @@ export const LoginModal = ({
       className={styles.loginModal}
       width={calModalWidth({ inMobile, width })}
       onCancel={onClose}
+      afterOpenChange={onAfterOpenChange}
     >
-      <div className={styles.title}>{t("user.loginTitle")}</div>
+      <div className={styles.title}>{t('user.loginTitle')}</div>
       <div className={styles.formWrapper}>
         {modalStep === MODAL_STEP.MOBILE && (
           <Form form={mobileForm} className={styles.mobileForm}>
@@ -134,6 +150,7 @@ export const LoginModal = ({
               ]}
             >
               <Input
+                ref={mobileInputRef}
                 className={classNames(styles.mobile, styles.sfInput)}
                 placeholder={t('user.msgToInputPhone')}
                 maxLength={11}
@@ -155,6 +172,7 @@ export const LoginModal = ({
               ]}
             >
               <Input
+                ref={smsCodeInputRef}
                 className={classNames(styles.smsCode, styles.sfInput)}
                 maxLength={4}
                 placeholder={t('user.msgToInputCode')}
@@ -167,7 +185,9 @@ export const LoginModal = ({
               type="link"
               onClick={onResendClick}
             >
-              {countDown > 0 ? t('user.msgResendCode')+`(${countDown})` : t('user.msgResendCode')}
+              {countDown > 0
+                ? t('user.msgResendCode') + `(${countDown})`
+                : t('user.msgResendCode')}
             </Button>
           </Form>
         )}
@@ -183,6 +203,7 @@ export const LoginModal = ({
               ]}
             >
               <Input
+                ref={verifyCodeInputRef}
                 className={classNames(styles.verifyCode, styles.sfInput)}
                 maxLength={4}
                 placeholder={t('user.msgToInputCode4')}
@@ -230,7 +251,7 @@ export const LoginModal = ({
             rel="noreferrer"
             onClick={onFeedbackButtonClick}
           >
-             {t('user.loginFeedback')}
+            {t('user.loginFeedback')}
           </a>
         </div>
       </div>

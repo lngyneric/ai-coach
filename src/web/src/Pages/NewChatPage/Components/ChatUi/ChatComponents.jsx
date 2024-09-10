@@ -140,7 +140,7 @@ const convertEventInputModal = ({ type, content }) => {
   }
 };
 
-const SCROLL_BOTTOM_THROTTLE = 60;
+const SCROLL_BOTTOM_THROTTLE = 50;
 export const ChatComponents = forwardRef(
   (
     {
@@ -379,7 +379,7 @@ export const ChatComponents = forwardRef(
             return;
           }
           setAutoScroll(false);
-          appendMsg({ _id: genUuid(), type: 'loading', position: 'pop' });
+          appendMsg({ type: 'loading', position: 'pop' });
         } else {
           if (
             messages.length &&
