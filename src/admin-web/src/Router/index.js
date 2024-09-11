@@ -68,6 +68,18 @@ const authRoutes = [
     title: "脚本",
     showInMenu: false,
   },
+  {
+    path: "/attendlessonview",
+    element: <CommonListPage viewName="attendlessonview"></CommonListPage>,
+    title: "学习记录",
+    showInMenu: false,
+  },
+  {
+    path: "/logscriptview",
+    element: <CommonListPage viewName="logscriptview"></CommonListPage>,
+    title: "学习记录",
+    showInMenu: false,
+  },
 ];
 
 const routes = [

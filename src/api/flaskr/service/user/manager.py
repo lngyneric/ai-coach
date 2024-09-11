@@ -30,7 +30,12 @@ UserView = ViewDef(
     ],
     User,
     [
-        OperationItem("编辑", OperationType.GO_TO_DETAIL, "edit", "edit", {}),
-        OperationItem("删除", OperationType.OPERATION, "delete", "delete", {"id": "id"}),
+        OperationItem(
+            "学习记录",
+            OperationType.GO_TO_LIST,
+            "attendlessonview",
+            "attendlessonview",
+            {"user_id": "user_id"},
+        ),
     ],
 )

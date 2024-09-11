@@ -184,7 +184,10 @@ class ViewDef:
             for sub_item in model_display_items:
                 model = sub_item.model
                 column = sub_item.index_id
-                query_filters = [str(getattr(data, sub_item.column)) for data in datas]
+                query_filters = [
+                    str(getattr(data, get_column_name(sub_item.column)))
+                    for data in datas
+                ]
                 app.logger.info(
                     "sub query,model:{},column:{},filter{}".format(
                         model.__class__, column, query_filters
@@ -216,7 +219,8 @@ class ViewDef:
             item = {
                 "id": data.id,
                 "data": {
-                    item.lable: str(getattr(data, item.column)) for item in self.items
+                    item.lable: str(getattr(data, get_column_name(item.display)))
+                    for item in self.items
                 },
             }
             return item
