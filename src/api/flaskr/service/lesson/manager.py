@@ -8,7 +8,13 @@ from flaskr.service.view.models import (
 )
 
 from .models import AICourse, AILesson, AILessonScript
-from .const import LESSON_TYPES
+from .const import (
+    LESSON_TYPES,
+    SCRIPT_TYPE_VALUES,
+    SCRIPT_TYPES,
+    UI_TYPE_VALUES,
+    UI_TYPES,
+)
 
 
 AILessonView = ViewDef(
@@ -81,19 +87,24 @@ AILessonScriptView = ViewDef(
     [
         TableColumnItem(AILessonScript.id, "ID"),
         TableColumnItem(AILessonScript.script_name, "名称"),
-        TableColumnItem(AILessonScript.script_type, "类型"),
+        TableColumnItem(AILessonScript.script_type, "类型", items=SCRIPT_TYPE_VALUES),
         TableColumnItem(AILessonScript.script_model, "内容"),
         TableColumnItem(AILessonScript.script_index, "序号"),
-        TableColumnItem(AILessonScript.script_ui_type, "UI类型"),
+        TableColumnItem(AILessonScript.script_ui_type, "UI类型", items=UI_TYPE_VALUES),
         TableColumnItem(AILessonScript.status, "状态"),
         TableColumnItem(AILessonScript.created, "创建时间"),
         TableColumnItem(AILessonScript.updated, "更新时间"),
     ],
     [
         InputItem("id", "ID", "like", INPUT_TYPE_TEXT),
-        InputItem("name", "名称", "like", INPUT_TYPE_TEXT),
-        InputItem("type", "类型", "like", INPUT_TYPE_TEXT),
+        InputItem("script_name", "名称", "like", INPUT_TYPE_TEXT),
+        InputItem(
+            "script_type", "类型", "like", INPUT_TYPE_TEXT, input_options=SCRIPT_TYPES
+        ),
         InputItem("status", "状态", "like", INPUT_TYPE_TEXT),
+        InputItem(
+            "script_ui_type", "UI类型", "like", INPUT_TYPE_TEXT, input_options=UI_TYPES
+        ),
         InputItem("created", "创建时间", "like", INPUT_TYPE_TEXT),
         InputItem("updated", "更新时间", "like", INPUT_TYPE_TEXT),
     ],
