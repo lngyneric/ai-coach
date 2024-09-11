@@ -1,6 +1,7 @@
 import sqlite3
 
 import streamlit as st
+from streamlit_extras.add_vertical_space import add_vertical_space
 from langchain_core.messages import HumanMessage
 from langchain_core.prompts import PromptTemplate
 
@@ -18,12 +19,11 @@ st.set_page_config(
 )
 
 # The main title and subtitle on the page
-'# Follow-up Ask Prompt Builder 🛠️📝🛠️'
+'# Follow-up Ask Prompt Builder 📝🛠️'
 st.caption('Help build follow-up ask prompt templates for each chapter')
 
 
-prompt_summarize_chapter = """
-你需要总结AI个性化教学课程 `{course_name}` 中某个章节的主要内容和教学要点，以便后续制作该章节的追问 Prompt 模版。
+prompt_summarize_chapter = """# 你需要总结AI个性化教学课程 `{course_name}` 中某个章节的主要内容和教学要点。
 
 当前要整理的章节是： `{chapter_name}`
 
@@ -46,8 +46,8 @@ prompt_summarize_chapter = """
 
 """
 
-prompt_follow_up_ask = """
-# 现在学员在学习上述教学内容时，产生了一些疑问，你需要恰当的回答学员的追问。
+prompt_follow_up_ask = """# 现在学员在学习上述教学内容时，产生了一些疑问，你需要恰当的回答学员的追问。
+
 **你就是老师本人，不要打招呼，直接用第一人称回答！**
 
 如果学员的追问内容与当前章节教学内容有关，请优先结合当前章节中已经输出的内容进行回答。
@@ -61,7 +61,6 @@ prompt_follow_up_ask = """
 
 学员的追问是：
 `{follow_up_ask}`
-
 """
 
 
@@ -83,59 +82,107 @@ with login():
             st.switch_page("pages/100_My_Account.py")
         st.stop()
 
-    selected_course = st.selectbox('Select Course:', (course.course_name for course in courses))
+    with st.expander('The beginning of the **Follow-up Ask Prompt Template**:'):
+        prompt_follow_up_ask = st.text_area(
+            'Please KEEP the variable name for follow-up ask as `follow_up_ask`:',
+            prompt_follow_up_ask, height=500
+        )
 
-    if st.button('Generate all chapters follow-up ask prompt template', use_container_width=True):
+    with st.expander('**Summary Prompt Template**:'):
+        prompt_summarize_chapter = st.text_area(
+            'Please KEEP the variable names for `course_name`, `chapter_name` and `scripts_content`:',
+            prompt_summarize_chapter, height=500
+        )
+
+    """
+    > After clicking the generate button below, 
+    the summary for each chapter will be generated using the **Summary Prompt Template** above.
+    > 
+    > Then, for each chapter, the **Follow-up Ask Prompt Template** above will be used as the beginning, 
+    followed by the current chapter summary and other chapter summaries.
+    """
+
+    add_vertical_space(1)
+    col1, col2, col3 = st.columns([1, 1, 1])
+    with col1:
+        selected_course = st.selectbox('Select Course:', (course.course_name for course in courses))
+    with col2:
+        model = st.selectbox('Select Model (only for summarize):', cfg.SUPPORT_MODELS,
+                             index=cfg.SUPPORT_MODELS.index("gpt-4o-2024-05-13"))
+    with col3:
+        temperature = get_default_temperature(model)
+        temperature = st.number_input('Temperature:', value=temperature, min_value=0.0, max_value=2.0, step=0.01)
+
+    if st.button('Generate all chapters follow-up ask prompt template', use_container_width=True, type='primary'):
         st.session_state.lark_app_token = next(
             (course.lark_app_token for course in courses if course.course_name == selected_course), None)
         tables = get_bitable_tables(st.session_state.lark_app_token)
 
         chapters_summary = {}
         for table in tables:
-            if table.name.startswith('字典-'):
-                continue
+            try:
+                if table.name.startswith('字典-'):
+                    continue
 
-            load_scripts(st.session_state.lark_app_token, table.table_id)
+                load_scripts(st.session_state.lark_app_token, table.table_id)
 
-            scripts_content = ""
-            for index, script in enumerate(st.session_state.script_list):
-                scripts_content += f'#### 第{index}小节: {script.desc}:\n'
-                scripts_content += script.template + '\n\n\n'
+                scripts_content = ""
+                for index, script in enumerate(st.session_state.script_list):
+                    scripts_content += f'#### 第{index}小节: {script.desc}:\n'
+                    scripts_content += script.template + '\n\n\n'
 
-            variables = {
-                'course_name': selected_course,
-                'chapter_name': table.name,
-                'scripts_content': scripts_content
-            }
+                variables = {
+                    'course_name': selected_course,
+                    'chapter_name': table.name,
+                    'scripts_content': scripts_content
+                }
 
-            llm = load_llm('gpt-4o-2024-05-13')
-            prompt = PromptTemplate(input_variables=list(variables.keys()), template=prompt_summarize_chapter)
-            prompt = prompt.format(**variables)
+                llm = load_llm(model)
+                prompt = PromptTemplate(input_variables=list(variables.keys()), template=prompt_summarize_chapter)
+                prompt = prompt.format(**variables)
 
-            with st.spinner(f'Chapter {table.name} is summarizing...'):
-                response = llm.invoke([HumanMessage(prompt)])
-                print(response.content)
-                st.write(f'### Chapter {table.name} Summary:')
-                st.write(response.content)
-                st.write('-----')
-                chapters_summary[table.name] = response.content
+                with st.spinner(f'Chapter {table.name} is summarizing...'):
+                    response = llm.invoke([HumanMessage(prompt)])
+                    print(response.content)
+                    with st.expander(f'### Chapter {table.name} Summary:'):
+                        # st.write(f'### Chapter {table.name} Summary:')
+                        st.write(response.content)
+                        # st.write('-----')
+                    chapters_summary[table.name] = response.content
 
-            del st.session_state['script_list']  # clear before next iteration
+                del st.session_state['script_list']  # clear before next iteration
+            except Exception as e:
+                st.error(f"Error occurred when summarizing chapter {table.name}: \n{e}")
+                st.stop()
 
+        st.write('Chapter summary completed, starting to splice the Follow-up Ask Templates for each chapter...')
         for table in tables:
-            if table.name.startswith('字典-'):
-                continue
+            try:
+                if table.name.startswith('字典-'):
+                    continue
 
-            follow_up_ask_prompt_template = prompt_follow_up_ask
-            follow_up_ask_prompt_template += "当前章节的内容是：\n"
-            follow_up_ask_prompt_template += chapters_summary[table.name] + "\n\n"
-            follow_up_ask_prompt_template += "课程其他章节的内容是：\n"
-            for chapter_name, summary in chapters_summary.items():
-                if chapter_name != table.name:
-                    follow_up_ask_prompt_template += summary + "\n\n"
+                follow_up_ask_prompt_template = prompt_follow_up_ask + '\n'
+                follow_up_ask_prompt_template += "当前章节的内容是：\n"
+                follow_up_ask_prompt_template += chapters_summary[table.name] + "\n\n"
+                follow_up_ask_prompt_template += "课程其他章节的内容是：\n"
+                for chapter_name, summary in chapters_summary.items():
+                    if chapter_name != table.name:
+                        follow_up_ask_prompt_template += summary + "\n\n"
 
-            update_follow_up_ask_prompt_template(st.session_state.lark_app_token,
-                                                 table.table_id,
-                                                 follow_up_ask_prompt_template)
+                update_follow_up_ask_prompt_template(st.session_state.lark_app_token,
+                                                     table.table_id,
+                                                     follow_up_ask_prompt_template)
+            except Exception as e:
+                st.error(f"Error occurred when splice Follow-up Ask Prompt Template for chapter {table.name}: \n{e}")
+                st.stop()
 
+        st.success('All chapters Follow-up Ask Prompt Templates have been generated successfully.')
 
+    st.caption("""
+    Due to the large amount of script content, the generation process may take some time.
+    Please be patient.
+    
+    For the same reason, some models with a context length of 6K/8K may report errors due to
+    context length limitations when summarizing.
+    so we recommended models are: `gpt-4o`、`qwen2-72b`、`deepseek`
+    """)

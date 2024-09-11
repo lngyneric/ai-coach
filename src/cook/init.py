@@ -25,7 +25,7 @@ def load_llm(model: str = None, temperature: float = None, json_mode=False):
     elif model in cfg.ZHIPU_MODELS:
         temperature = temperature if temperature else cfg.ZHIPU_DEF_TMP
         if json_mode:
-            raise Exception('ZhipuAI 暂不支持 JSON 模式')
+            raise Exception('ZhipuAI does not currently support JSON mode')
         else:
             return ChatZhipuAI(streaming=True, model=model, temperature=temperature)
     elif model in cfg.OPENAI_MODELS:
@@ -55,4 +55,19 @@ def load_llm(model: str = None, temperature: float = None, json_mode=False):
                               api_key=os.getenv("DASHSCOPE_API_KEY"), base_url=os.getenv("DASHSCOPE_BASE_URL"))
 
     else:
-        raise Exception('模型名称错误（不支持）')
+        raise Exception('Model name error (not supported)')
+
+
+def get_default_temperature(model: str):
+    if model in cfg.QIANFAN_MODELS:
+        return cfg.QIANFAN_DEF_TMP
+    elif model in cfg.ZHIPU_MODELS:
+        return cfg.ZHIPU_DEF_TMP
+    elif model in cfg.OPENAI_MODELS:
+        return cfg.OPENAI_DEF_TMP
+    elif model in cfg.DEEPSEEK_MODELS:
+        return cfg.DEEPSEEK_DEF_TMP
+    elif model in cfg.BAILIAN_MODELS:
+        return cfg.BAILIAN_DEF_TMP
+    else:
+        raise Exception('Model name error (not supported)')
