@@ -79,14 +79,12 @@ def handle_input_text(
     log_script.script_content = input
     log_script.script_role = ROLE_STUDENT
     db.session.add(log_script)
-
     span = trace.span(name="user_input", input=input)
     res = check_text(log_script.log_id, input)
     span.event(name="check_text", input=input, output=res)
     add_risk_control_result(
         app, log_script.log_id, user_id, input, "edun", str(res), "", 1, "check_text"
     )
-
     resp = invoke_llm(
         app,
         span,
@@ -182,9 +180,9 @@ def handle_input_continue(
                         if next_attend:
                             assoation = AICourseAttendAsssotion.query.filter(
                                 AICourseAttendAsssotion.from_attend_id
-                                == attend_info.attend_id,
+                                == attend_info.attend_id,  # noqa: W503
                                 AICourseAttendAsssotion.to_attend_id
-                                == next_attend.attend_id,
+                                == next_attend.attend_id,  # noqa: W503
                             ).first()
                             if not assoation:
                                 assoation = AICourseAttendAsssotion()

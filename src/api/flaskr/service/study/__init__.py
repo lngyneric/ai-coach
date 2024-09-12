@@ -3,3 +3,4 @@ from .dtos import *  # noqa: F401
 from .funcs import *  # noqa: F401
 from .runscript import run_script  # noqa: F401
 from .manager import *  # noqa: F401
+from .models import *  # noqa: F401

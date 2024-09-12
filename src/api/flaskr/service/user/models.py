@@ -26,7 +26,6 @@ class User(db.Model):
     updated = Column(
         TIMESTAMP,
         nullable=False,
-        default=func.now(),
         onupdate=func.now(),
         comment="Update time",
     )
@@ -172,3 +171,24 @@ class AdminUser(db.Model):
         self.mobile = mobile
         self.default_model = default_model
         self.user_state = user_state
+
+
+class UserToken(db.Model):
+    __tablename__ = "user_token"
+    id = Column(BIGINT, primary_key=True, comment="Unique ID", autoincrement=True)
+    user_id = Column(String(36), nullable=False, default="", comment="User UUID")
+    token = Column(String(255), nullable=False, default="", comment="Token")
+    token_type = Column(Integer, nullable=False, default=0, comment="Token type")
+    token_expired_at = Column(
+        TIMESTAMP, nullable=True, default=func.now(), comment="Token expired time"
+    )
+    created = Column(
+        TIMESTAMP, nullable=False, default=func.now(), comment="Creation time"
+    )
+    updated = Column(
+        TIMESTAMP,
+        nullable=False,
+        default=func.now(),
+        onupdate=func.now(),
+        comment="Update time",
+    )
