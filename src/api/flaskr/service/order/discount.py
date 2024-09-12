@@ -29,6 +29,7 @@ from ..common import (
     ORDER_NOT_FOUND,
     DISCOUNT_NOT_FOUND,
     DISCOUNT_ALREADY_USED,
+    ORDER_DISCOUNT_ALREADY_USED,
 )
 
 
@@ -102,6 +103,14 @@ def use_discount_code(app: Flask, user_id, discount_code, order_id):
         ).first()
         if not buy_record:
             return ORDER_NOT_FOUND
+        order_discount = DiscountRecord.query.filter(
+            DiscountRecord.record_id == order_id,
+            DiscountRecord.status == DISCOUNT_STATUS_USED,
+        ).first()
+        if order_discount:
+            raise ORDER_DISCOUNT_ALREADY_USED
+        if order_discount:
+            return order_discount
         discountRecord = DiscountRecord.query.filter(
             DiscountRecord.discount_code == discount_code,
             DiscountRecord.status == DISCOUNT_STATUS_ACTIVE,
