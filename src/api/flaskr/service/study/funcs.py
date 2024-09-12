@@ -22,6 +22,8 @@ from ...service.order.consts import (
     ATTEND_STATUS_BRANCH,
     ATTEND_STATUS_LOCKED,
     ATTEND_STATUS_NOT_STARTED,
+    ATTEND_STATUS_COMPLETED,
+    ATTEND_STATUS_IN_PROGRESS,
     ATTEND_STATUS_RESET,
     ATTEND_STATUS_VALUES,
     BUY_STATUS_SUCCESS,
@@ -49,8 +51,6 @@ from ...service.order.funs import (
     init_trial_lesson,
 )
 from ...service.order.models import (
-    ATTEND_STATUS_COMPLETED,
-    ATTEND_STATUS_IN_PROGRESS,
     AICourseBuyRecord,
     AICourseLessonAttend,
 )

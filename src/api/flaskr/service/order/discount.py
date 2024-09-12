@@ -103,14 +103,16 @@ def use_discount_code(app: Flask, user_id, discount_code, order_id):
         if not buy_record:
             return ORDER_NOT_FOUND
         discountRecord = DiscountRecord.query.filter(
-            DiscountRecord.discount_code == discount_code
+            DiscountRecord.discount_code == discount_code,
+            DiscountRecord.status == DISCOUNT_STATUS_ACTIVE,
         ).first()
         if not discountRecord:
             # query fixcode
+            app.logger.info("query fixcode")
             discount = Discount.query.filter(
                 Discount.discount_code == discount_code
             ).first()
-            if not discountRecord:
+            if not discount:
                 return DISCOUNT_NOT_FOUND
             discountRecord = DiscountRecord()
             discountRecord.record_id = generate_id(app)
@@ -122,8 +124,6 @@ def use_discount_code(app: Flask, user_id, discount_code, order_id):
             discountRecord.created = datetime.now()
             discountRecord.updated = datetime.now()
             db.session.add(discountRecord)
-        if discountRecord.status == DISCOUNT_STATUS_ACTIVE:
-            return DISCOUNT_ALREADY_USED
         if discount is None:
             discount = Discount.query.filter(
                 Discount.discount_id == discountRecord.discount_id
@@ -131,9 +131,8 @@ def use_discount_code(app: Flask, user_id, discount_code, order_id):
 
         if not discount:
             return DISCOUNT_NOT_FOUND
-        if discount.status != DISCOUNT_STATUS_ACTIVE:
+        if discountRecord.status != DISCOUNT_STATUS_ACTIVE:
             raise DISCOUNT_ALREADY_USED
-            return None
 
         discountRecord.status = DISCOUNT_STATUS_USED
         discountRecord.updated = datetime.now()
