@@ -59,7 +59,10 @@ class InputItem:
         if input_options is not None:
             options = []
             for key in input_options.keys():
-                options.append({"value": input_options.get(key), "label": key})
+                if isinstance(key, str):
+                    options.append({"value": input_options.get(key), "label": key})
+                elif isinstance(key, int):
+                    options.append({"value": key, "label": input_options.get(key)})
         self.input_options = options
         self.input_view = input_view
 
@@ -118,6 +121,16 @@ class ViewDef:
         self.items = items
         self.model = model
         self.queryinput = queryinput
+        # print("queryinput:" + str(self.queryinput))
+        for item in self.queryinput:
+            if item.input_options is not None:
+                print(
+                    "item input_options:" + str(item.input_options.__class__.__name__)
+                )
+                if isinstance(item.input_options, dict):
+                    input_options = {v: k for k, v in item.input_options.items()}
+                    item.input_options = input_options
+                    print("input_options:" + str(item.input_options))
         self.operation_items = operation_items
         views[name] = self
 

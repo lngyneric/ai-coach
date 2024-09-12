@@ -19,13 +19,17 @@ from ...dao import db
 from .consts import (
     DISCOUNT_APPLY_TYPE_ALL,
     DISCOUNT_STATUS_ACTIVE,
-    DISCOUNT_STATUS_INACTIVE,
     DISCOUNT_TYPE_FIXED,
     DISCOUNT_TYPE_PERCENT,
     DISCOUNT_STATUS_USED,
 )
 from flask import Flask
 from ...util import generate_id
+from ..common import (
+    ORDER_NOT_FOUND,
+    DISCOUNT_NOT_FOUND,
+    DISCOUNT_ALREADY_USED,
+)
 
 
 # 生成折扣码
@@ -93,27 +97,44 @@ def generate_discount_code_by_rule(app: Flask, discount_id):
 # 使用折扣码
 def use_discount_code(app: Flask, user_id, discount_code, order_id):
     with app.app_context():
-        discountRecord = DiscountRecord.query.filter(
-            DiscountRecord.discount_code == discount_code
-        ).first()
-        if not discountRecord:
-            app.logger.error("discount code not exists")
-            return None
-        if discountRecord.status == DISCOUNT_STATUS_INACTIVE:
-            return None
-        discount = Discount.query.filter(
-            Discount.discount_id == discountRecord.discount_id
-        ).first()
         buy_record = AICourseBuyRecord.query.filter(
             AICourseBuyRecord.record_id == order_id
         ).first()
         if not buy_record:
-            return None
+            return ORDER_NOT_FOUND
+        discountRecord = DiscountRecord.query.filter(
+            DiscountRecord.discount_code == discount_code
+        ).first()
+        if not discountRecord:
+            # query fixcode
+            discount = Discount.query.filter(
+                Discount.discount_code == discount_code
+            ).first()
+            if not discountRecord:
+                return DISCOUNT_NOT_FOUND
+            discountRecord = DiscountRecord()
+            discountRecord.record_id = generate_id(app)
+            discountRecord.discount_id = discount.discount_id
+            discountRecord.discount_code = discount_code
+            discountRecord.discount_type = discount.discount_type
+            discountRecord.discount_value = discount.discount_value
+            discountRecord.status = DISCOUNT_STATUS_ACTIVE
+            discountRecord.created = datetime.now()
+            discountRecord.updated = datetime.now()
+            db.session.add(discountRecord)
+        if discountRecord.status == DISCOUNT_STATUS_ACTIVE:
+            return DISCOUNT_ALREADY_USED
+        if discount is None:
+            discount = Discount.query.filter(
+                Discount.discount_id == discountRecord.discount_id
+            ).first()
+
         if not discount:
+            return DISCOUNT_NOT_FOUND
+        if discount.status != DISCOUNT_STATUS_ACTIVE:
+            raise DISCOUNT_ALREADY_USED
             return None
-        if discount.status == DISCOUNT_STATUS_INACTIVE:
-            app.logger.error("discount not exists")
-            return None
+
         discountRecord.status = DISCOUNT_STATUS_USED
         discountRecord.updated = datetime.now()
         discountRecord.updated = datetime.now()
@@ -134,6 +155,8 @@ def use_discount_code(app: Flask, user_id, discount_code, order_id):
         if buy_record.pay_value < 0:
             buy_record.pay_value = 0
         buy_record.updated = datetime.now()
+        discountRecord.updated = datetime.now()
+        discount.d = discount.discount_count + 1
         db.session.commit()
         if buy_record.discount_value >= buy_record.price:
             return success_buy_record(app, buy_record.record_id)

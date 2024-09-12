@@ -355,8 +355,11 @@ def verify_sms_code(app: Flask, user_id, phone: str, chekcode: str) -> UserToken
             origin_user = User.query.filter(User.user_id == user_id).first()
             if (
                 origin_user
-                and origin_user.user_open_id != user_info.user_open_id
-                and (user_info.user_open_id is None or user_info.user_open_id == "")
+                and origin_user.user_open_id != user_info.user_open_id  # noqa W503
+                and (
+                    user_info.user_open_id is None  # noqa W503
+                    or user_info.user_open_id == ""
+                )
             ):
                 user_info.user_open_id = origin_user.user_open_id
 
@@ -366,10 +369,9 @@ def verify_sms_code(app: Flask, user_id, phone: str, chekcode: str) -> UserToken
             user_info = User(
                 user_id=user_id, username="", name="", email="", mobile=phone
             )
-
             if (
                 user_info.user_state is None
-                or user_info.user_state == USER_STATE_UNTEGISTERED
+                or user_info.user_state == USER_STATE_UNTEGISTERED  # noqa W503
             ):
                 user_info.user_state = USER_STATE_REGISTERED
             user_info.mobile = phone

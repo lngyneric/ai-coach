@@ -44,12 +44,6 @@ const authRoutes = [
     title: "优惠",
     showInMenu: true,
   },
-  // {
-  //   path: "/channel",
-  //   element: <ContactsComponant></ContactsComponant>,
-  //   title: "渠道",
-  //   showInMenu: true,
-  // },
   {
     path: "/setting",
     element: <SettingPage></SettingPage>,
@@ -80,6 +74,12 @@ const authRoutes = [
     title: "学习记录",
     showInMenu: false,
   },
+  {
+    path: "/:viewName",
+    element: <CommonListPage></CommonListPage>,
+    title: "列表",
+    showInMenu: false,
+  }
 ];
 
 const routes = [

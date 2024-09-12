@@ -12,17 +12,31 @@ import { useLocation,useSearchParams } from "react-router-dom";
 import { Pagination } from "antd";
 
 import {getViewInfo,queryView} from "../../Api/manager"
-import { set } from "store";
+import { useParams } from "react-router-dom";
+
 
 const CommonListPage = ({viewName}) => {
+  const params = useParams()
+
+  const [pageViewName,setPageViewName] = useState(viewName)
+
+
+  useEffect(()=>{
+    // console.debug('viewName in useEffect ',viewName)
+    if (viewName !== undefined) {
+    setPageViewName(viewName)
+    }else{
+      console.debug('params.viewName in useEffect ',params.viewName)
+      setPageViewName(params.viewName)
+    }
+  },[viewName])
+
 
   const queryStrings  = new URLSearchParams(useLocation().search)
-  console.log('queryStrings', queryStrings)
   const defaultParams = {}
   queryStrings.forEach((value, key) => {
     defaultParams[key] = value
   });
-  console.log('defaultParams', defaultParams)
   const [pageSize, setPageSize] = useState(10);
   const [currentPage, setCurrentPage] = useState(1);
   const [total, setTotal] = useState(0);
@@ -50,8 +64,7 @@ const CommonListPage = ({viewName}) => {
   };
 
   useEffect(() => {
-    getViewInfo(viewName).then((res) => {
-      console.log(res);
+    getViewInfo(pageViewName).then((res) => {
       const columns = res.data.items.map((item) => {
         return {
           title: item.lable,
@@ -65,7 +78,7 @@ const CommonListPage = ({viewName}) => {
       setSearchParams({})
       setCurrentPage(1)
     });
-  }, [viewName]);
+  }, [pageViewName]);
   const [contactInfoList, setContactInfoList] = useState([]);
   /**
    * @description 联系人数据
@@ -77,7 +90,7 @@ const CommonListPage = ({viewName}) => {
       ...defaultParams
     }
     console.log(params)
-    queryView(viewName,currentPage,pageSize,params)
+    queryView(pageViewName,currentPage,pageSize,params)
       .then((res) => {
         setTotal(res.data.total);
         setContactInfoList(res.data.items);
