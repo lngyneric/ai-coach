@@ -23,7 +23,6 @@ from ...service.order.consts import (
     ATTEND_STATUS_LOCKED,
     ATTEND_STATUS_NOT_STARTED,
     ATTEND_STATUS_RESET,
-    ATTEND_STATUS_UNAVAILABE,
     ATTEND_STATUS_VALUES,
     BUY_STATUS_SUCCESS,
 )
@@ -90,13 +89,14 @@ def get_lesson_tree_to_study(app: Flask, user_id: str, course_id: str) -> AICour
         lesson_dict = {}
         for lesson in lessons:
             attend_info = attend_infos_map.get(lesson.lesson_id, None)
-            if not attend_info:
-                continue
-            status = ATTEND_STATUS_VALUES[
-                attend_info.status if attend_info else ATTEND_STATUS_UNAVAILABE
-            ]
+            # if not attend_info:
+            #     continue
+
+            status = attend_info.status if attend_info else ATTEND_STATUS_LOCKED
             if status == ATTEND_STATUS_BRANCH:
                 status = ATTEND_STATUS_IN_PROGRESS
+            status = ATTEND_STATUS_VALUES[status]
+
             lessonInfo = AILessonAttendDTO(
                 lesson.lesson_no, lesson.lesson_name, lesson.lesson_id, status, []
             )
@@ -210,7 +210,7 @@ def get_study_record(app: Flask, user_id: str, lesson_id: str) -> StudyRecordDTO
             return ret
         if (
             last_script.script_ui_type == UI_TYPE_INPUT
-            and last_attend_script.script_role == ROLE_TEACHER
+            and last_attend_script.script_role == ROLE_TEACHER  # noqa W503
         ):
             ret.ui = StudyUIDTO("input", last_script.script_ui_content, lesson_id)
         elif last_script.script_ui_type == UI_TYPE_BUTTON:
@@ -226,7 +226,7 @@ def get_study_record(app: Flask, user_id: str, lesson_id: str) -> StudyRecordDTO
             ret.ui = StudyUIDTO(
                 "buttons",
                 {
-                    "title": "继续",
+                    "title": last_script.script_ui_content,
                     "buttons": [
                         {"label": "继续", "value": "继续", "type": INPUT_TYPE_CONTINUE}
                     ],
@@ -260,6 +260,7 @@ def get_study_record(app: Flask, user_id: str, lesson_id: str) -> StudyRecordDTO
             )
         elif last_script.script_ui_type == UI_TYPE_CHECKCODE:
             expires = get_sms_code_info(app, user_id, False)
+            expires["content"] = last_script.script_ui_content
             ret.ui = StudyUIDTO(INPUT_TYPE_CHECKCODE, expires, lesson_id)
         elif last_script.script_ui_type == UI_TYPE_LOGIN:
             ret.ui = StudyUIDTO(
