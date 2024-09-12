@@ -4,6 +4,9 @@ import CommonListTable from "./CommonListTable";
 import { useEffect, useState } from "react";
 import EditContactModal from "./Modal/EditContactModal";
 import ContactDetailModal from "./Modal/ContactDetailModel";
+import { useLocation,useSearchParams } from "react-router-dom";
+
+
 
 
 import { Pagination } from "antd";
@@ -13,21 +16,24 @@ import { set } from "store";
 
 const CommonListPage = ({viewName}) => {
 
-
-
-
-
+  const queryStrings  = new URLSearchParams(useLocation().search)
+  console.log('queryStrings', queryStrings)
+  const defaultParams = {}
+  queryStrings.forEach((value, key) => {
+    defaultParams[key] = value
+  });
+  console.log('defaultParams', defaultParams)
   const [pageSize, setPageSize] = useState(10);
   const [currentPage, setCurrentPage] = useState(1);
   const [total, setTotal] = useState(0);
   /**
    * @description 查询参数
    */
-  const params = {};
   const [loading, setLoading] = useState(false);
   const [colum, setColum] = useState([]);
   const [searchParams, setSearchParams] = useState({});
   const [searchDefine,setSearchDefine]=useState({})
+  const [operationItems,setOperationItems]=useState([])
   /**
    *@description 点击搜索的方法
    *
@@ -41,11 +47,9 @@ const CommonListPage = ({viewName}) => {
   const onReset = (searchParams) => {
     setCurrentPage(1);
     searchParams(searchParams)
-    // queryAllContacts();
   };
 
   useEffect(() => {
-    console.log('set view')
     getViewInfo(viewName).then((res) => {
       console.log(res);
       const columns = res.data.items.map((item) => {
@@ -55,6 +59,7 @@ const CommonListPage = ({viewName}) => {
           key: item.name,
         };
       });
+      setOperationItems(res.data.operation_items)
       setColum(columns);
       setSearchDefine(res.data.queryinput);
       setSearchParams({})
@@ -67,7 +72,12 @@ const CommonListPage = ({viewName}) => {
    */
   const queryAllContacts = () => {
     setLoading(true);
-    queryView(viewName,currentPage,pageSize,searchParams)
+    const params = {
+      ...searchParams,
+      ...defaultParams
+    }
+    console.log(params)
+    queryView(viewName,currentPage,pageSize,params)
       .then((res) => {
         setTotal(res.data.total);
         setContactInfoList(res.data.items);
@@ -76,90 +86,6 @@ const CommonListPage = ({viewName}) => {
       .catch(() => {
         setLoading(false);
       });
-  };
-  /**
-   * @description 联系人编辑表单 modal 的参数
-   */
-  const [editContactModalProps, setEditContactModalProps] = useState({
-    open: false,
-    state: "add",
-    detailData: {},
-  });
-
-  /**
-   * @description 查看联系详情的 Modal 的参数
-   */
-  const [contactDetailModalProps, setContactDetailModalProps] = useState({
-    open: false,
-    detailData: {},
-  });
-
-  /**
-   * @description 点击新建联系人
-   */
-  const onClickCreateContact = () => {
-    setEditContactModalProps({
-      detailData: {},
-      open: true,
-      state: "add",
-    });
-  };
-
-  /**
-   * @description 关闭编辑联系人的 FromModal
-   */
-  const onEditContactCancel = () => {
-    setEditContactModalProps({
-      ...editContactModalProps,
-      open: false,
-    });
-  };
-
-  /**
-   * @description 编辑联系人内 异步提交操作完成
-   */
-  const onEditAsyncOk = () => {
-    setEditContactModalProps({
-      ...editContactModalProps,
-      open: false,
-    });
-    queryAllContacts();
-  };
-
-  /**
-   *点击表格编辑的方法
-   * @param {*} row
-   */
-  const onClickTableRowEdit = (row) => {
-    console.log(row);
-    setEditContactModalProps({
-      open: true,
-      state: "edit",
-      detailData: row,
-    });
-  };
-
-  /**
-   *点击表格删除的方法
-   *
-   * @param {*} row
-   */
-  const onClickTableRowDelte = (row) => {
-    Modal.confirm({
-      title: "确认删除？",
-      content: <p>删除后不可恢复，请谨慎操作！！！</p>,
-      onOk: () => {
-        // deleteContact([row.contact_id]).then((res) => {
-        //   queryAllContacts();
-        // });
-      },
-    });
-  };
-
-
-
-
-  const onTableSelectChange = (selectedRowKeys) => {
   };
 
   const onPaginationChange = (page, pageSize) => {
@@ -174,10 +100,10 @@ const CommonListPage = ({viewName}) => {
     <Space direction="vertical" size="large" style={{ display: "flex" }}>
       <SearchForm onSearch={onSearch} onReset={onReset} inputs={searchDefine}></SearchForm>
       <CommonListTable
+        operationItems={operationItems}
         dataColumns={colum}
         dataSource={contactInfoList}
         loading={loading}
-        onTableSelectChange={onTableSelectChange}
       ></CommonListTable>
       <Pagination pageSize={pageSize} onChange={onPaginationChange} current={currentPage} total={total} ></Pagination>
     </Space>
