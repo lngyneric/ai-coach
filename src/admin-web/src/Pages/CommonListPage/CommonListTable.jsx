@@ -1,10 +1,7 @@
-import { Avatar } from "antd";
-import { Button, Space, Table } from "antd";
+import { Button, Table } from "antd";
 import { useEffect } from "react";
 import { useState, useRef } from "react";
 
-import { TableProps } from "antd";
-import CommonListPage from "./CommonListPage";
 import { useNavigate } from "react-router-dom";
 
 
@@ -32,11 +29,7 @@ const CommonListTable = ({
         render: (_, record) => (
           <Button
             type="link"
-
-
             onClick={() => {
-              // item.operation_view(record);
-              console.log(item)
               const params = {}
               if (item.operation_type === "go_to_list") {
                 for (const key in item.operation_map) {
@@ -49,7 +42,6 @@ const CommonListTable = ({
                     defaultParams: params
                   }
                 });
-
               }
             }}
           >
@@ -59,26 +51,14 @@ const CommonListTable = ({
       };
     }),
   ];
-
   const tableRef = useRef();
   let [tableOffsetTop, setTableOffsetTop] = useState(0);
-  console.log(operationItems)
   useEffect(() => {
-    console.log(tableRef.current);
     setTableOffsetTop(tableRef.current.offsetTop + 60);
-    console.log(tableOffsetTop);
   }, [tableOffsetTop]);
-
-
-  const [top, setTop] = useState('topLeft');
-  const [bottom, setBottom] = useState('bottomRight');
-
-
-
 
   return (
     <Table
-      // pagination={{ position: [top, bottom] }}
       ref={tableRef}
       scroll={{ y: `calc(100vh - ${tableOffsetTop}px)` }}
       showSorterTooltip={false}
