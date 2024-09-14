@@ -8,7 +8,7 @@
 from datetime import datetime
 import random
 import string
-
+import pytz
 from ...service.order.funs import (
     query_buy_record,
     success_buy_record,
@@ -100,6 +100,10 @@ def generate_discount_code_by_rule(app: Flask, discount_id):
 # 使用折扣码
 def use_discount_code(app: Flask, user_id, discount_code, order_id):
     with app.app_context():
+        # 创建时区信息
+        bj_time = pytz.timezone("Asia/Shanghai")
+        # 转换 record.created（一个浮点数时间戳）到北京时间
+        now = datetime.fromtimestamp(datetime.now().timestamp(), bj_time)
         buy_record = AICourseBuyRecord.query.filter(
             AICourseBuyRecord.record_id == order_id
         ).first()
@@ -125,7 +129,7 @@ def use_discount_code(app: Flask, user_id, discount_code, order_id):
             ).first()
             if not discount:
                 raise DISCOUNT_NOT_FOUND
-            if discount.discount_end < datetime.now():
+            if discount.discount_end < now:
                 raise DISCOUNT_ALREADY_EXPIRED
             if discount.discount_used + 1 >= discount.discount_limit:
                 raise DISCOUNT_LIMIT_EXCEEDED
@@ -137,8 +141,8 @@ def use_discount_code(app: Flask, user_id, discount_code, order_id):
             discountRecord.discount_type = discount.discount_type
             discountRecord.discount_value = discount.discount_value
             discountRecord.status = DISCOUNT_STATUS_ACTIVE
-            discountRecord.created = datetime.now()
-            discountRecord.updated = datetime.now()
+            discountRecord.created = now
+            discountRecord.updated = now
             db.session.add(discountRecord)
         if discount is None:
             discount = Discount.query.filter(
@@ -151,8 +155,7 @@ def use_discount_code(app: Flask, user_id, discount_code, order_id):
             raise DISCOUNT_ALREADY_USED
 
         discountRecord.status = DISCOUNT_STATUS_USED
-        discountRecord.updated = datetime.now()
-        discountRecord.updated = datetime.now()
+        discountRecord.updated = now
         discountRecord.user_id = user_id
         discountRecord.order_id = order_id
         if discount.discount_type == DISCOUNT_TYPE_FIXED:
@@ -169,8 +172,8 @@ def use_discount_code(app: Flask, user_id, discount_code, order_id):
         buy_record.pay_value = buy_record.price - buy_record.discount_value
         if buy_record.pay_value < 0:
             buy_record.pay_value = 0
-        buy_record.updated = datetime.now()
-        discountRecord.updated = datetime.now()
+        buy_record.updated = now
+        discountRecord.updated = now
         discount.discount_count = discount.discount_count + 1
         discount.discount_used = discount.discount_used + 1
         db.session.commit()
