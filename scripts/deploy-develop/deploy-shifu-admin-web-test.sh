@@ -68,7 +68,7 @@ fi
 pnpm install
 
 # Build the project with pnpm
-npm run build:staging
+pnpm run build
 
 # Sync build files to the specified directory
 rsync -av --delete /item/ai-shifu/src/admin-web/build/ /opt/1panel/apps/openresty/openresty/www/sites/backend-test.pillowai.cn/index
