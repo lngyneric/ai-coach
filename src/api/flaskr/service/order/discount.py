@@ -104,6 +104,7 @@ def use_discount_code(app: Flask, user_id, discount_code, order_id):
         bj_time = pytz.timezone("Asia/Shanghai")
         # 转换 record.created（一个浮点数时间戳）到北京时间
         now = datetime.fromtimestamp(datetime.now().timestamp(), bj_time)
+        app.logger.info("now: %s", now)
         buy_record = AICourseBuyRecord.query.filter(
             AICourseBuyRecord.record_id == order_id
         ).first()
@@ -124,14 +125,17 @@ def use_discount_code(app: Flask, user_id, discount_code, order_id):
         if not discountRecord:
             # query fixcode
             app.logger.info("query fixcode")
+
             discount = Discount.query.filter(
                 Discount.discount_code == discount_code
             ).first()
             if not discount:
                 raise DISCOUNT_NOT_FOUND
-            if discount.discount_end < now:
+            discount_end = bj_time.localize(discount.discount_end)
+            app.logger.info("discount_end: %s", discount_end)
+            if discount_end < now:
                 raise DISCOUNT_ALREADY_EXPIRED
-            if discount.discount_used + 1 >= discount.discount_limit:
+            if discount.discount_used + 1 > discount.discount_limit:
                 raise DISCOUNT_LIMIT_EXCEEDED
 
             discountRecord = DiscountRecord()
