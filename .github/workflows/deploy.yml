@@ -26,3 +26,4 @@ jobs:
             git pull
             bash /item/ai-shifu/scripts/deploy-develop/deploy-shifu-api-test.sh
             bash /item/ai-shifu/scripts/deploy-develop/deploy-shifu-web-test.sh
+            bash /item/ai-shifu/scripts/deploy-develop/deploy-shifu-admin-web-test.sh

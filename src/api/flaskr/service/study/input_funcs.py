@@ -149,7 +149,7 @@ def handle_input_continue(
     trace_args,
 ):
     log_script = generation_attend(app, attend, script_info)
-    log_script.script_content = "继续"
+    log_script.script_content = input
     log_script.script_role = ROLE_STUDENT
     db.session.add(log_script)
     span = trace.span(name="user_continue", input=input)
@@ -182,9 +182,9 @@ def handle_input_continue(
                         if next_attend:
                             assoation = AICourseAttendAsssotion.query.filter(
                                 AICourseAttendAsssotion.from_attend_id
-                                == attend_info.attend_id,
+                                == attend_info.attend_id,  # noqa: W503
                                 AICourseAttendAsssotion.to_attend_id
-                                == next_attend.attend_id,
+                                == next_attend.attend_id,  # noqa: W503
                             ).first()
                             if not assoation:
                                 assoation = AICourseAttendAsssotion()

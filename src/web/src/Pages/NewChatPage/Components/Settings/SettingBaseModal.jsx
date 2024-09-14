@@ -3,7 +3,8 @@ import { calModalWidth } from 'Utils/common.js';
 import { useUiLayoutStore } from 'stores/useUiLayoutStore.js';
 import MainButton from 'Components/MainButton.jsx';
 import styles from './SettingBaseModal.module.scss';
-import { memo } from 'react';
+import { memo, useContext } from 'react';
+import { AppContext } from 'Components/AppContext.js';
 
 export const SettingBaseModal = ({
   open,
@@ -14,8 +15,8 @@ export const SettingBaseModal = ({
   title = '设置',
   header = <div className={styles.header}>{title}</div>,
 }) => {
-  const { inMobile } = useUiLayoutStore((state) => state);
 
+  const { mobileStyle } = useContext(AppContext);
   return (
     <Modal
       visible={open}
@@ -24,7 +25,7 @@ export const SettingBaseModal = ({
       closeOnMaskClick={true}
       content={
         <div
-          style={{ width: calModalWidth({ inMobile, width: defaultWidth }) }}
+          style={{ width: calModalWidth({ inMobile: mobileStyle, width: defaultWidth }) }}
           className={styles.modalWrapper}
         >
           {header}

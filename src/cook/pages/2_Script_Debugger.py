@@ -115,13 +115,7 @@ with login():
         # if not st.session_state.debug_models:
         #     st.session_state.debug_models.append((cfg.DEFAULT_MODEL, cfg.DEFAULT_TMP))
         model = st.selectbox('选择模型：', supported_models_without_default, index=cfg.SUPPORT_MODELS.index(cfg.DEFAULT_MODEL))
-        temperature = 0
-        if model in cfg.QIANFAN_MODELS:
-            temperature = cfg.QIANFAN_DEF_TMP
-        elif model in cfg.ZHIPU_MODELS:
-            temperature = cfg.ZHIPU_DEF_TMP
-        elif model in cfg.OPENAI_MODELS:
-            temperature = cfg.OPENAI_DEF_TMP
+        temperature = get_default_temperature(model)
         temperature = st.number_input('设定温度：', value=temperature)
         if st.button('添加测试模型 -->',  use_container_width=True):
             if (model, temperature) not in st.session_state.debug_models:

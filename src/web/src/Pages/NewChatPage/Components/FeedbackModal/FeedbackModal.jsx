@@ -25,7 +25,7 @@ export const FeedbackModal = ({ open, onClose, inMobile = false }) => {
       });
       onClose();
     } catch {}
-  }, [form, messageApi, onClose]);
+  }, [form, messageApi, onClose, t]);
 
   return (
     <Modal

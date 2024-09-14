@@ -2,8 +2,7 @@ import {  Space, Modal } from "antd";
 import SearchForm from "./SearchForm";
 import CommonListTable from "./CommonListTable";
 import { useEffect, useState } from "react";
-import EditContactModal from "./Modal/EditContactModal";
-import ContactDetailModal from "./Modal/ContactDetailModel";
+import CommonCreateModel from "./Modal/CommonCreateModel";
 import { useLocation,useSearchParams } from "react-router-dom";
 
 
@@ -12,17 +11,33 @@ import { useLocation,useSearchParams } from "react-router-dom";
 import { Pagination } from "antd";
 
 import {getViewInfo,queryView} from "../../Api/manager"
-import { set } from "store";
+import { useParams } from "react-router-dom";
+
 
 const CommonListPage = ({viewName}) => {
+  const params = useParams()
+
+  const [pageViewName,setPageViewName] = useState(viewName)
+  const [createModelViewName,setCreateViewName] = useState("")
+  const [createModelLoad,setCreateModelLoad] = useState(false)
+
+
+  useEffect(()=>{
+    // console.debug('viewName in useEffect ',viewName)
+    if (viewName !== undefined) {
+    setPageViewName(viewName)
+    }else{
+      console.debug('params.viewName in useEffect ',params.viewName)
+      setPageViewName(params.viewName)
+    }
+  },[viewName])
+
 
   const queryStrings  = new URLSearchParams(useLocation().search)
-  console.log('queryStrings', queryStrings)
   const defaultParams = {}
   queryStrings.forEach((value, key) => {
     defaultParams[key] = value
   });
-  console.log('defaultParams', defaultParams)
   const [pageSize, setPageSize] = useState(10);
   const [currentPage, setCurrentPage] = useState(1);
   const [total, setTotal] = useState(0);
@@ -34,6 +49,7 @@ const CommonListPage = ({viewName}) => {
   const [searchParams, setSearchParams] = useState({});
   const [searchDefine,setSearchDefine]=useState({})
   const [operationItems,setOperationItems]=useState([])
+  const [formOperationItems,setFormOperationItems]=useState([])
   /**
    *@description 点击搜索的方法
    *
@@ -50,8 +66,7 @@ const CommonListPage = ({viewName}) => {
   };
 
   useEffect(() => {
-    getViewInfo(viewName).then((res) => {
-      console.log(res);
+    getViewInfo(pageViewName).then((res) => {
       const columns = res.data.items.map((item) => {
         return {
           title: item.lable,
@@ -60,12 +75,13 @@ const CommonListPage = ({viewName}) => {
         };
       });
       setOperationItems(res.data.operation_items)
+      setFormOperationItems(res.data.form_operation)
       setColum(columns);
       setSearchDefine(res.data.queryinput);
       setSearchParams({})
       setCurrentPage(1)
     });
-  }, [viewName]);
+  }, [pageViewName]);
   const [contactInfoList, setContactInfoList] = useState([]);
   /**
    * @description 联系人数据
@@ -77,7 +93,7 @@ const CommonListPage = ({viewName}) => {
       ...defaultParams
     }
     console.log(params)
-    queryView(viewName,currentPage,pageSize,params)
+    queryView(pageViewName,currentPage,pageSize,params)
       .then((res) => {
         setTotal(res.data.total);
         setContactInfoList(res.data.items);
@@ -93,12 +109,18 @@ const CommonListPage = ({viewName}) => {
     setPageSize(pageSize);
   }
 
+  const onClickOperation = (operation) => {
+    console.log(operation)
+    setCreateViewName(operation.operation_view)
+    setCreateModelLoad(true)
+  }
+
   useEffect(() => {
     queryAllContacts();
   }, [pageSize,currentPage,searchParams]);
   return (
     <Space direction="vertical" size="large" style={{ display: "flex" }}>
-      <SearchForm onSearch={onSearch} onReset={onReset} inputs={searchDefine}></SearchForm>
+      <SearchForm onSearch={onSearch} onReset={onReset} inputs={searchDefine} operations = {formOperationItems} onClickOperation={onClickOperation}></SearchForm>
       <CommonListTable
         operationItems={operationItems}
         dataColumns={colum}
@@ -106,6 +128,7 @@ const CommonListPage = ({viewName}) => {
         loading={loading}
       ></CommonListTable>
       <Pagination pageSize={pageSize} onChange={onPaginationChange} current={currentPage} total={total} ></Pagination>
+      <CommonCreateModel open={false} onCancel={()=>{}} onOk={()=>{}} viewName={createModelViewName} load={createModelLoad}></CommonCreateModel>
     </Space>
   );
 };

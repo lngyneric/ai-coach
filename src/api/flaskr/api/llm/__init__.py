@@ -7,8 +7,7 @@ from langfuse.client import StatefulSpanClient
 from langfuse.model import ModelUsage
 
 from openai.types.chat import ChatCompletionStreamOptionsParam
-from openai.types.chat.completion_create_params import ResponseFormat
-
+from openai.types.shared_params import ResponseFormatJSONObject
 
 from flaskr.common.config import get_config
 
@@ -72,7 +71,7 @@ def invoke_llm(
             messages.append({"content": system, "role": "system"})
         messages.append({"content": message, "role": "user"})
         if json:
-            kwargs["response_format"] = ResponseFormat(type="json_object")
+            kwargs["response_format"] = ResponseFormatJSONObject(type="json_object")
         kwargs["temperature"] = float(kwargs.get("temperature", 0.8))
         kwargs["stream_options"] = ChatCompletionStreamOptionsParam(include_usage=True)
         response = client.chat.completions.create(
