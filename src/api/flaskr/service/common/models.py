@@ -100,7 +100,7 @@ ERROR_MESSAGE = {
     "DISCOUNT_NOT_START": "折扣码未开始",
     "DISCOUNT_EXPIRED": "折扣码已过期",
     "ORDER_DISCOUNT_ALREADY_USED": "订单已使用折扣码",
-    "DISCOUNT_LIMIT_EXCEEDED": "折扣码数量限制",
+    "DISCOUNT_LIMIT_EXCEEDED": "折扣码使用次数已达到上限",
     "DISCOUNT_ALREADY_EXPIRED": "折扣码已过期",
     # 课程相关
     "COURSE_NOT_FOUND": "没有找到课程",
