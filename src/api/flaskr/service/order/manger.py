@@ -103,7 +103,7 @@ DisCountdRecordView = ViewDef(
             "创建折扣码",
             OperationType.OPERATION,
             "create",
-            "discount",
+            "discountcreate",
             {"discount_code": "discount_code"},
         ),
     ],
