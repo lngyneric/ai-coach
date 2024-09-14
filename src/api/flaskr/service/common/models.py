@@ -44,7 +44,7 @@ ERROR_CODE = {
     "ORDER_PAY_EXPIRED": 3006,
     "ORDER_PAY_NOT_FOUND": 3007,
     "ORDER_HAS_PAID": 3008,
-    # 折扣码相关
+    # 优惠码相关
     "DISCOUNT_NOT_FOUND": 3101,
     "DISCOUNT_ALREADY_USED": 3102,
     "DISCOUNT_LIMIT": 3103,
@@ -93,15 +93,15 @@ ERROR_MESSAGE = {
     "ORDER_PAY_EXPIRED": "订单支付过期",
     "ORDER_PAY_NOT_FOUND": "没有找到支付订单",
     "ORDER_HAS_PAID": "订单已经支付",
-    # 折扣码相关
-    "DISCOUNT_NOT_FOUND": "没有找到折扣码",
-    "DISCOUNT_ALREADY_USED": "折扣码已经使用",
-    "DISCOUNT_LIMIT": "折扣码数量限制",
-    "DISCOUNT_NOT_START": "折扣码未开始",
-    "DISCOUNT_EXPIRED": "折扣码已过期",
-    "ORDER_DISCOUNT_ALREADY_USED": "订单已使用折扣码",
-    "DISCOUNT_LIMIT_EXCEEDED": "折扣码使用次数已达到上限",
-    "DISCOUNT_ALREADY_EXPIRED": "折扣码已过期",
+    # 优惠码相关
+    "DISCOUNT_NOT_FOUND": "没有找到优惠码",
+    "DISCOUNT_ALREADY_USED": "优惠码已经使用",
+    "DISCOUNT_LIMIT": "优惠码数量限制",
+    "DISCOUNT_NOT_START": "优惠码未开始",
+    "DISCOUNT_EXPIRED": "优惠码已过期",
+    "ORDER_DISCOUNT_ALREADY_USED": "订单已使用优惠码",
+    "DISCOUNT_LIMIT_EXCEEDED": "优惠码使用次数已达到上限",
+    "DISCOUNT_ALREADY_EXPIRED": "优惠码已过期",
     # 课程相关
     "COURSE_NOT_FOUND": "没有找到课程",
     "LESSON_CANNOT_BE_RESET": "课程不能重置",
