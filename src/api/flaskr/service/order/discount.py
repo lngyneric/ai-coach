@@ -30,6 +30,8 @@ from ..common import (
     DISCOUNT_NOT_FOUND,
     DISCOUNT_ALREADY_USED,
     ORDER_DISCOUNT_ALREADY_USED,
+    DISCOUNT_LIMIT_EXCEEDED,
+    DISCOUNT_ALREADY_EXPIRED,
 )
 
 
@@ -122,7 +124,12 @@ def use_discount_code(app: Flask, user_id, discount_code, order_id):
                 Discount.discount_code == discount_code
             ).first()
             if not discount:
-                return DISCOUNT_NOT_FOUND
+                raise DISCOUNT_NOT_FOUND
+            if discount.discount_end < datetime.now():
+                raise DISCOUNT_ALREADY_EXPIRED
+            if discount.discount_used + 1 >= discount.discount_limit:
+                raise DISCOUNT_LIMIT_EXCEEDED
+
             discountRecord = DiscountRecord()
             discountRecord.record_id = generate_id(app)
             discountRecord.discount_id = discount.discount_id
@@ -165,6 +172,7 @@ def use_discount_code(app: Flask, user_id, discount_code, order_id):
         buy_record.updated = datetime.now()
         discountRecord.updated = datetime.now()
         discount.discount_count = discount.discount_count + 1
+        discount.discount_used = discount.discount_used + 1
         db.session.commit()
         if buy_record.discount_value >= buy_record.price:
             return success_buy_record(app, buy_record.record_id)
