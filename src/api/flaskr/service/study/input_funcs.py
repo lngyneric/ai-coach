@@ -147,7 +147,7 @@ def handle_input_continue(
     trace_args,
 ):
     log_script = generation_attend(app, attend, script_info)
-    log_script.script_content = "继续"
+    log_script.script_content = input
     log_script.script_role = ROLE_STUDENT
     db.session.add(log_script)
     span = trace.span(name="user_continue", input=input)
