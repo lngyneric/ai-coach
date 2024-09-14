@@ -4,7 +4,7 @@ import { Space } from "antd";
 import { useForm } from "antd/es/form/Form";
 import { useNavigate } from "react-router-dom";
 
-const SearchForm = ({ onSearch, onReset,inputs ,operations,onClickOperation}) => {
+const SearchForm = ({ onSearch, onReset, inputs, operations, onClickOperation }) => {
   const [form] = useForm();
   const navigate = useNavigate();
   const onClickReset = () => {
@@ -12,44 +12,38 @@ const SearchForm = ({ onSearch, onReset,inputs ,operations,onClickOperation}) =>
     onReset();
   };
 
-
-  function loadInputs(inputs){
-    let ret = []
-     for (let i = 0 ;i < inputs.length;i++){
-        let input = inputs[i];
-        let {label,column} = input;
-        if (input.input_options){
-
-          ret.push( (
-            <Form.Item label={label} name={column} >
-              <Select allowClear key={column} options = {input.input_options}  placeholder="请选择">
-              </Select>
-            </Form.Item>)
-          )
-
-        }else {
-        ret.push( (
-          <Form.Item label={label} name={column} >
-            <Input key={column} allowClear placeholder="请输入"></Input>
-
+  function loadInputs(inputs) {
+    let ret = [];
+    for (let i = 0; i < inputs.length; i++) {
+      let input = inputs[i];
+      let { label, column } = input;
+      if (input.input_options) {
+        ret.push(
+          <Form.Item label={label} name={column} key={column}>
+            <Select allowClear options={input.input_options} placeholder="请选择" />
           </Form.Item>
-        ))
+        );
+      } else {
+        ret.push(
+          <Form.Item label={label} name={column} key={column}>
+            <Input allowClear placeholder="请输入" />
+          </Form.Item>
+        );
       }
-     }
-      return ret;
+    }
+    return ret;
   }
 
   const onClickBack = () => {
-    navigate(-1)
-  }
-
+    navigate(-1);
+  };
 
   return (
     <div className="search-form_container">
       <Form
         layout="inline"
-        onFinish={(vlaues) => {
-          onSearch(vlaues);
+        onFinish={(values) => {
+          onSearch(values);
         }}
         form={form}
       >
@@ -60,19 +54,15 @@ const SearchForm = ({ onSearch, onReset,inputs ,operations,onClickOperation}) =>
               <Button key="search" type="primary" htmlType="submit">
                 搜索
               </Button>
-              <Button key="reset" htmlType="submit" onClick={onClickReset}>
+              <Button key="reset" htmlType="button" onClick={onClickReset}>
                 重置
               </Button>
-              {
-                operations.map((item) => {
-                  return (
-                    <Button htmlType="button" key={item.operation_value} onClick={() => onClickOperation(item)}>
-                      {item.label}
-                    </Button>
-                  )
-                })
-              }
-              <Button htmlType="" onClick={onClickBack}>
+              {operations.map((item) => (
+                <Button htmlType="button" key={item.operation_value} onClick={() => onClickOperation(item)}>
+                  {item.label}
+                </Button>
+              ))}
+              <Button htmlType="button" onClick={onClickBack}>
                 返回
               </Button>
             </Space>
