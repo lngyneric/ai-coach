@@ -135,7 +135,7 @@ def use_discount_code(app: Flask, user_id, discount_code, order_id):
             app.logger.info("discount_end: %s", discount_end)
             if discount_end < now:
                 raise DISCOUNT_ALREADY_EXPIRED
-            if discount.discount_used + 1 > discount.discount_limit:
+            if discount.discount_used + 1 > discount.discount_count:
                 raise DISCOUNT_LIMIT_EXCEEDED
 
             discountRecord = DiscountRecord()
