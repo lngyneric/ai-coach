@@ -99,10 +99,35 @@ else
     echo "No running container found on port $TARGET_PORT."
 fi
 
+# 部署 Docker 容器
+# 固定变量
+ADMIN_TARGET_PORT=5801
+
+# 生成完整的镜像名称
+FULL_IMAGE_NAME="$REGISTRY/$IMAGE_NAME:$IMAGE_TAG"
+
+# 查找使用目标端口的容器 ID
+CONTAINER_ID=$(docker ps -q -f "publish=$ADMIN_TARGET_PORT")
+
+if [ -n "$CONTAINER_ID" ]; then
+    # 获取容器 ID 对应的容器名称
+    EXISTING_CONTAINER_NAME=$(docker inspect --format '{{.Name}}' "$CONTAINER_ID" | sed 's/^\/\(.*\)/\1/')
+
+    # 停止现有容器
+    echo "Stopping existing container $EXISTING_CONTAINER_NAME..."
+    docker stop "$EXISTING_CONTAINER_NAME"
+
+    # 移除现有容器
+    echo "Removing existing container $EXISTING_CONTAINER_NAME..."
+    docker rm "$EXISTING_CONTAINER_NAME"
+else
+    echo "No running container found on port $TARGET_PORT."
+fi
 # 使用更新的镜像和自定义容器名称运行新容器
 CONTAINER_NAME="sifu_api_v1_$TIMESTAMP"
 echo "Starting a new container with the name $CONTAINER_NAME..."
 docker run --env-file  /item/.env  -v /data/cert/pingxx_test_key.gem:/key/pingxx_test_key.gem -v /data/logs/api:/var/log/ -p $TARGET_PORT:5800 --name "$CONTAINER_NAME" -d "$FULL_IMAGE_NAME"
+docker run --env-file  /item/.env  -v /data/cert/pingxx_test_key.gem:/key/pingxx_test_key.gem -v /data/logs/api:/var/log/ -p $ADMIN_TARGET_PORT:5801 --name "ADMIN$CONTAINER_NAME" -d "$FULL_IMAGE_NAME"
 
 sh $script_dir/send_feishu.sh "sifu_api_v1 部署成功" "$CONTAINER_NAME $FULL_IMAGE_NAME 部署成功！\n $git_msg "
 # 打印容器日志

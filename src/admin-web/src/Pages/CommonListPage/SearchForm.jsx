@@ -4,7 +4,7 @@ import { Space } from "antd";
 import { useForm } from "antd/es/form/Form";
 import { useNavigate } from "react-router-dom";
 
-const SearchForm = ({ onSearch, onReset,inputs }) => {
+const SearchForm = ({ onSearch, onReset,inputs ,operations,onClickOperation}) => {
   const [form] = useForm();
   const navigate = useNavigate();
   const onClickReset = () => {
@@ -22,9 +22,7 @@ const SearchForm = ({ onSearch, onReset,inputs }) => {
 
           ret.push( (
             <Form.Item label={label} name={column} >
-              <Select allowClear  options = {input.input_options}  placeholder="请选择">
-
-
+              <Select allowClear key={column} options = {input.input_options}  placeholder="请选择">
               </Select>
             </Form.Item>)
           )
@@ -32,7 +30,7 @@ const SearchForm = ({ onSearch, onReset,inputs }) => {
         }else {
         ret.push( (
           <Form.Item label={label} name={column} >
-            <Input allowClear placeholder="请输入"></Input>
+            <Input key={column} allowClear placeholder="请输入"></Input>
 
           </Form.Item>
         ))
@@ -44,6 +42,7 @@ const SearchForm = ({ onSearch, onReset,inputs }) => {
   const onClickBack = () => {
     navigate(-1)
   }
+
 
   return (
     <div className="search-form_container">
@@ -58,12 +57,21 @@ const SearchForm = ({ onSearch, onReset,inputs }) => {
           {loadInputs(inputs)}
           <Form.Item style={{ float: 'right' }}>
             <Space>
-              <Button type="primary" htmlType="submit">
+              <Button key="search" type="primary" htmlType="submit">
                 搜索
               </Button>
-              <Button htmlType="submit" onClick={onClickReset}>
+              <Button key="reset" htmlType="submit" onClick={onClickReset}>
                 重置
               </Button>
+              {
+                operations.map((item) => {
+                  return (
+                    <Button htmlType="button" key={item.operation_value} onClick={() => onClickOperation(item)}>
+                      {item.label}
+                    </Button>
+                  )
+                })
+              }
               <Button htmlType="" onClick={onClickBack}>
                 返回
               </Button>

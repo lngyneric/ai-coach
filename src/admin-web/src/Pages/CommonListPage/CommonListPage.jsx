@@ -2,8 +2,7 @@ import {  Space, Modal } from "antd";
 import SearchForm from "./SearchForm";
 import CommonListTable from "./CommonListTable";
 import { useEffect, useState } from "react";
-import EditContactModal from "./Modal/EditContactModal";
-import ContactDetailModal from "./Modal/ContactDetailModel";
+import CommonCreateModel from "./Modal/CommonCreateModel";
 import { useLocation,useSearchParams } from "react-router-dom";
 
 
@@ -19,6 +18,8 @@ const CommonListPage = ({viewName}) => {
   const params = useParams()
 
   const [pageViewName,setPageViewName] = useState(viewName)
+  const [createModelViewName,setCreateViewName] = useState("")
+  const [createModelLoad,setCreateModelLoad] = useState(false)
 
 
   useEffect(()=>{
@@ -48,6 +49,7 @@ const CommonListPage = ({viewName}) => {
   const [searchParams, setSearchParams] = useState({});
   const [searchDefine,setSearchDefine]=useState({})
   const [operationItems,setOperationItems]=useState([])
+  const [formOperationItems,setFormOperationItems]=useState([])
   /**
    *@description 点击搜索的方法
    *
@@ -73,6 +75,7 @@ const CommonListPage = ({viewName}) => {
         };
       });
       setOperationItems(res.data.operation_items)
+      setFormOperationItems(res.data.form_operation)
       setColum(columns);
       setSearchDefine(res.data.queryinput);
       setSearchParams({})
@@ -106,12 +109,18 @@ const CommonListPage = ({viewName}) => {
     setPageSize(pageSize);
   }
 
+  const onClickOperation = (operation) => {
+    console.log(operation)
+    setCreateViewName(operation.operation_view)
+    setCreateModelLoad(true)
+  }
+
   useEffect(() => {
     queryAllContacts();
   }, [pageSize,currentPage,searchParams]);
   return (
     <Space direction="vertical" size="large" style={{ display: "flex" }}>
-      <SearchForm onSearch={onSearch} onReset={onReset} inputs={searchDefine}></SearchForm>
+      <SearchForm onSearch={onSearch} onReset={onReset} inputs={searchDefine} operations = {formOperationItems} onClickOperation={onClickOperation}></SearchForm>
       <CommonListTable
         operationItems={operationItems}
         dataColumns={colum}
@@ -119,6 +128,7 @@ const CommonListPage = ({viewName}) => {
         loading={loading}
       ></CommonListTable>
       <Pagination pageSize={pageSize} onChange={onPaginationChange} current={currentPage} total={total} ></Pagination>
+      <CommonCreateModel open={false} onCancel={()=>{}} onOk={()=>{}} viewName={createModelViewName} load={createModelLoad}></CommonCreateModel>
     </Space>
   );
 };

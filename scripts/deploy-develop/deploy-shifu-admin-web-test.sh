@@ -19,7 +19,7 @@ script_dir="$(cd "$(dirname "${BASH_SOURCE[0]}")" && pwd)"
 nvm use v20.14.0
 
 # Change to the project directory
-cd /item/ai-shifu/src/web/
+cd /item/ai-shifu/src/admin-web/
 
 
 
@@ -71,11 +71,11 @@ pnpm install
 npm run build:staging
 
 # Sync build files to the specified directory
-rsync -av --delete /item/ai-shifu/src/web/build/ /opt/1panel/apps/openresty/openresty/www/sites/test-sifu.agiclass.cn/index
+rsync -av --delete /item/ai-shifu/src/admin-web/build/ /opt/1panel/apps/openresty/openresty/www/sites/backend-test.pillowai.cn/index
 
 
 
 
-sh $script_dir/send_feishu.sh "sifu_web 部署成功" "部署成功！"
+sh $script_dir/send_feishu.sh "admin-web 部署成功" "部署成功！"
 
 echo "Deployment completed successfully."

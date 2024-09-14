@@ -9,6 +9,14 @@ INPUT_TYPE_NUMBER = "number"
 INPUT_TYPE_DATETIME = "datetime"
 INPUT_TYPE_TIME = "time"
 INPUT_TYPE_CHECKBOX = "checkbox"
+INPUT_TYPE_OPTIONS = "options"
+INPUT_TYPE_OPERATION = "operation"
+
+
+VIEW_TYPE_LIST = "list"
+VIEW_TYPE_DETAIL = "detail"
+VIEW_TYPE_FORM = "form"
+
 
 # query list info
 
@@ -90,13 +98,22 @@ class OperationType(Enum):
 
 class OperationItem:
     def __init__(
-        self, label, operation_type, operation_value, operation_view, operation_map
+        self,
+        label,
+        operation_type,
+        operation_value,
+        operation_view,
+        operation_map,
+        operation_function="",
+        operation_api="",
     ):
         self.label = label
         self.operation_type = operation_type
         self.operation_value = operation_value
         self.operation_view = operation_view
         self.operation_map = operation_map
+        self.operation_function = operation_function
+        self.operation_api = operation_api
 
     def __json__(self):
         return {
@@ -116,12 +133,14 @@ class ViewDef:
         queryinput: list[InputItem],
         model,
         operation_items: list[OperationItem] = [],
+        form_operations: list[OperationItem] = [],
+        view_type=VIEW_TYPE_LIST,
     ):
         self.name = name
         self.items = items
         self.model = model
         self.queryinput = queryinput
-        # print("queryinput:" + str(self.queryinput))
+
         for item in self.queryinput:
             if item.input_options is not None:
                 print(
@@ -132,6 +151,8 @@ class ViewDef:
                     item.input_options = input_options
                     print("input_options:" + str(item.input_options))
         self.operation_items = operation_items
+        self.form_operations = form_operations
+        self.view_type = view_type
         views[name] = self
 
     def query(self, app: Flask, page: int = 1, page_size: int = 20, query=None):
@@ -253,4 +274,5 @@ class ViewDef:
             "items": self.items,
             "queryinput": self.queryinput,
             "operation_items": self.operation_items,
+            "form_operation": self.form_operations,
         }

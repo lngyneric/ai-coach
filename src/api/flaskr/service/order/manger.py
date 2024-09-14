@@ -10,6 +10,9 @@ from flaskr.service.order.consts import (
 from flaskr.service.order.models import AICourseBuyRecord, DiscountRecord, Discount
 from flaskr.service.view.models import (
     INPUT_TYPE_TEXT,
+    INPUT_TYPE_NUMBER,
+    INPUT_TYPE_DATETIME,
+    INPUT_TYPE_OPTIONS,
     InputItem,
     TableColumnItem,
     ViewDef,
@@ -82,6 +85,8 @@ DisCountdRecordView = ViewDef(
             INPUT_TYPE_TEXT,
             input_options=DISCOUNT_APPLY_TYPE_VALUES,
         ),
+        InputItem("discount_start", "开始时间", "like", INPUT_TYPE_DATETIME),
+        InputItem("discount_end", "结束时间", "like", INPUT_TYPE_DATETIME),
     ],
     Discount,
     [
@@ -91,6 +96,15 @@ DisCountdRecordView = ViewDef(
             "discountrecord",
             "discountrecord",
             {"discount_id": "discount_id"},
+        ),
+    ],
+    [
+        OperationItem(
+            "创建折扣码",
+            OperationType.OPERATION,
+            "create",
+            "discount",
+            {"discount_code": "discount_code"},
         ),
     ],
 )
@@ -117,4 +131,43 @@ DisCountRecordView = ViewDef(
         ),
     ],
     DiscountRecord,
+)
+
+
+DisCountCreateView = ViewDef(
+    "discountcreate",
+    [],
+    [
+        # InputItem("discount_code", "折扣码", "like", INPUT_TYPE_TEXT),
+        InputItem("discount_value", "折扣金额", "like", INPUT_TYPE_NUMBER),
+        InputItem(
+            "discount_type",
+            "折扣类型",
+            "like",
+            INPUT_TYPE_OPTIONS,
+            input_options=DISCOUNT_TYPE_VALUES,
+        ),
+        InputItem(
+            "discount_apply_type",
+            "折扣码类型",
+            "like",
+            INPUT_TYPE_OPTIONS,
+            input_options=DISCOUNT_APPLY_TYPE_VALUES,
+        ),
+        InputItem("discount_limit", "数量限制", "like", INPUT_TYPE_NUMBER),
+        InputItem("discount_channel", "渠道", "like", INPUT_TYPE_TEXT),
+        InputItem("discount_filter", "过滤条件", "like", INPUT_TYPE_TEXT),
+        InputItem("discount_start", "开始时间", "like", INPUT_TYPE_DATETIME),
+        InputItem("discount_end", "结束时间", "like", INPUT_TYPE_DATETIME),
+    ],
+    Discount,
+    [
+        OperationItem(
+            "创建折扣码",
+            OperationType.OPERATION,
+            "create",
+            "discount",
+            {"discount_code": "discount_code"},
+        ),
+    ],
 )
