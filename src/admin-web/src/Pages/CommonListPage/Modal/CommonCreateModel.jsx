@@ -1,7 +1,6 @@
 import { Row, Button, Col, Input,InputNumber, DatePicker,Select ,TimePicker} from "antd";
 import { Form } from "antd";
 import { Modal } from "antd";
-import { useForm } from "antd/es/form/Form";
 import { useEffect, useState } from "react";
 import {getViewInfo} from "../../../Api/manager"
 import {
@@ -10,6 +9,7 @@ import {
   UserOutlined,
 } from "@ant-design/icons";
 import { Upload } from "antd";
+import dayjs from 'dayjs';
 
 const CommonCreateModel = ({viewName,load})=>{
 
@@ -17,22 +17,43 @@ const CommonCreateModel = ({viewName,load})=>{
     const [onCancel,setOnCancel] = useState(()=>{})
     const [formItems, setFormItems] = useState([]);
     const [operationItems, setOperationItems] = useState([]);
-    const [form] = useForm();
-    const onOk = ()=>{
-        setOpen(false)
-        // setViewName("")
+    const [form] = Form.useForm();
+    const [formData,setFormData] = useState({})
+    const onOk = async () => {
+        try {
+            const data = await form.validateFields();
+            console.log(data);
+            setOpen(false);
+        } catch (error) {
+            console.error("Validation failed:", error);
+        }
     }
+
+    const handleButtonClick = async (operation) => {
+        try {
+            console.log(formData)
+            console.log(operation)
+            const data = await form.validateFields();
+            const operationData = {...formData,...data}
+            console.log(operationData)
+            // operation(form.getFieldsValue());
+        } catch (error) {
+            console.error("Validation failed:", error);
+        }
+    }
+
     useEffect(()=>{
+
         if (viewName!="" && load){
             getViewInfo(viewName).then((res)=>{
-                const formItems = res.data.queryinput.map((input) => {
+                const formItems = res.data.queryinput.map((input,index) => {
                     console.log(input)
                     if (input.input_type === "text") {
                         return (
                             <Form.Item
                                 label={input.label}
-                                name={input.name}
-                                key={input.column}
+                                name={input.column}
+                                key={index}
                             >
                                 <Input name={input.name} placeholder={input.placeholder} />
                             </Form.Item>
@@ -41,10 +62,11 @@ const CommonCreateModel = ({viewName,load})=>{
                         return (
                             <Form.Item
                                 label={input.label}
-                                name={input.name}
-                                key={input.column}
+                                name={input.column}
+                                key={index}
+                                // key={input.column}
                             >
-                                <Select options={input.input_options} placeholder={input.placeholder} />
+                                <Select key={input.name} options={input.input_options} placeholder={input.placeholder} />
                             </Form.Item>
                         );
                     }else if (input.input_type === "number") {
@@ -52,31 +74,39 @@ const CommonCreateModel = ({viewName,load})=>{
                     return (
                         <Form.Item
                             label={input.label}
-                            name={input.name}
-                            key={input.column}
+                            name={input.column}
+                            key={index}
                         >
-                            <InputNumber placeholder={input.placeholder} />
+                            <InputNumber key={input.name} placeholder={input.placeholder} />
                         </Form.Item>
                     );
                     }else if (input.input_type === "datetime") {
                         return (
                             <Form.Item
                                 label={input.label}
-                                name={input.name}
-                                key={input.column}
+                                // name={input.column}
+                                key={index}
                             >
-                                <DatePicker placeholder={input.placeholder} />
-                                {/* <TimePicker placeholder={input.placeholder} /> */}
+                                <DatePicker
+                                    name={input.name}
+                                    key={input.name}
+                                    placeholder={input.placeholder}
+                                    showTime
+                                    onChange={(date, dateString) => {
+                                        console.log({[input.column]:dateString})
+                                        setFormData({...formData,[input.column]:dateString})
+                                        // form.setFieldsValue({ [input.column]: dayjs(date).format('YYYY-MM-DD HH:mm:ss') });
+                                    }}
+                                />
                             </Form.Item>
                         );
                     }
                 });
-                const operationItems = res.data.operation_items.map((item)=>{
+                const operationItems = res.data.operation_items.map((item,index)=>{
                     return (
-                        <Button type="primary" onClick={()=>{
-                            // item.operation(form.getFieldsValue())
-                            console.log(form.getFieldsValue())
-                        }}>{item.label}</Button>
+                        <Button type="primary" text={item.label} key={index} onClick={() => handleButtonClick(item)}>
+                            {item.label}
+                        </Button>
                     )
                 })
                 setOperationItems(operationItems);
@@ -93,8 +123,9 @@ const CommonCreateModel = ({viewName,load})=>{
             onCancel={onCancel}
             onOk={onOk}
             title="创建"
+            footer={null}
         >
-            <Form  className="detail-form" title="创建">
+            <Form form={form} className="detail-form" title="创建">
                 {formItems}
             </Form>
             {operationItems}
