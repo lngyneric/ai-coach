@@ -122,6 +122,7 @@ def use_discount_code(app: Flask, user_id, discount_code, order_id):
             DiscountRecord.discount_code == discount_code,
             DiscountRecord.status == DISCOUNT_STATUS_ACTIVE,
         ).first()
+        discount = None
         if not discountRecord:
             # query fixcode
             app.logger.info("query fixcode")
