@@ -31,4 +31,4 @@ COPY . .
 EXPOSE 8501
 
 # 启动streamlit服务
-CMD streamlit run script.py
+CMD streamlit run Home.py

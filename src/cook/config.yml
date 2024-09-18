@@ -74,7 +74,7 @@ fileupload:
 
 db:
   sqlite:
-    path: codesifu-demo.db
+    path: /data/codesifu-demo.db
 
 api:
   test_url: https://test-api-sifu.agiclass.cn/api
