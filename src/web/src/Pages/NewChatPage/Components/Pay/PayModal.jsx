@@ -89,17 +89,21 @@ export const PayModal = ({ open = false, onCancel, onOk }) => {
 
   const refreshOrderQrcode = useCallback(
     async (orderId) => {
-      const { data: qrcodeResp } = await getPayUrl({
-        channel: payChannel,
-        orderId,
-      });
-      setQrUrl(qrcodeResp.qr_url);
-      if (qrcodeResp.status === ORDER_STATUS.BUY_STATUS_SUCCESS) {
-        setIsCompleted(true);
-        setInterval(null);
-      } else {
-        setCountDown(MAX_TIMEOUT);
-        setInterval(COUNTDOWN_INTERVAL);
+
+
+      if (orderId){
+        const { data: qrcodeResp } = await getPayUrl({
+          channel: payChannel,
+          orderId,
+        });
+        setQrUrl(qrcodeResp.qr_url);
+        if (qrcodeResp.status === ORDER_STATUS.BUY_STATUS_SUCCESS) {
+          setIsCompleted(true);
+          setInterval(null);
+        } else {
+          setCountDown(MAX_TIMEOUT);
+          setInterval(COUNTDOWN_INTERVAL);
+        }
       }
     },
     [payChannel, couponCode]
