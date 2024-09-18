@@ -1,5 +1,5 @@
 ### 使用一个官方Python运行时作为父镜像
-FROM python:3.11
+FROM python:3.9
 
 # 确保 /etc/apt/sources.list 存在并更改APT源为国内的镜像源
 RUN if [ -f /etc/apt/sources.list ]; then \
@@ -31,4 +31,4 @@ COPY . .
 EXPOSE 8501
 
 # 启动streamlit服务
-CMD streamlit run script.py 
+CMD streamlit run script.py
