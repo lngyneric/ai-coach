@@ -6,7 +6,7 @@ from yaml.loader import SafeLoader
 import streamlit_authenticator as stauth
 from streamlit_extras.add_vertical_space import add_vertical_space
 
-from models.course import get_courses_by_user_from_sqlite
+from models.course import get_courses_by_user
 from tools.auth import login
 from tools.lark import get_bitable_tables, update_bitable_record
 from tools.utils import *
@@ -155,7 +155,7 @@ with login():
     add_vertical_space(2)
     '-----'
     '## Step2: 指定要测试的单条剧本'
-    courses = get_courses_by_user_from_sqlite(st.session_state["username"])
+    courses = get_courses_by_user(st.session_state["username"])
     if not courses:
         st.warning(' 暂无课程，请前往我的账户新建课程。  ⬇️ ⬇️ ⬇️', icon='⚠️')
         if st.button('前往我的账户', type='primary', use_container_width=True):

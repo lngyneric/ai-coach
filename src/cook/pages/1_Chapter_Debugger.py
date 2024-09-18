@@ -9,7 +9,7 @@ import streamlit_authenticator as stauth
 from streamlit_extras.bottom_container import bottom
 from langchain_core.messages import HumanMessage, AIMessage
 
-from models.course import get_courses_by_user_from_sqlite
+from models.course import get_courses_by_user
 from tools.lark import get_bitable_tables
 from tools.utils import *
 from tools.dev_tools import *
@@ -116,7 +116,7 @@ if not st.session_state.has_started:
         # st.title('Some content')
 
 
-        courses = get_courses_by_user_from_sqlite(st.session_state["username"])
+        courses = get_courses_by_user(st.session_state["username"])
         # courses = get_courses_by_user_from_sqlite('kenrick')
         if not courses:
             st.warning(' No courses available, please go to `My Account` to create a new course.。  ⬇️ ⬇️ ⬇️', icon='⚠️')

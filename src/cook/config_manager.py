@@ -69,6 +69,9 @@ class ConfigManager:
 
             _cfg_api = config['api']
             self.API_URL = _cfg_api[f'{os.getenv("ENV")}_url']
+            
+            self.COOK_CONN_STR = f'mysql+pymysql://{os.getenv("COOK_DB_USERNAME")}:{os.getenv("COOK_DB_PASSWORD")}' \
+                                 f'@{os.getenv("COOK_DB_HOST")}:3306/{os.getenv("COOK_DB_DATABASE")}'
 
 
     def set_default_model(self, model):

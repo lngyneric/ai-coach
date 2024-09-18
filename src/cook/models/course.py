@@ -3,75 +3,89 @@ import sqlite3
 
 import streamlit as st
 from pandas import DataFrame
+from sqlalchemy import create_engine, select, Column, Integer, String
+from sqlalchemy.orm import sessionmaker, Session, declarative_base
 
 from init import cfg
 
+# Create engine
+engine = create_engine(cfg.COOK_CONN_STR)
+Session = sessionmaker(bind=engine)
 
-class Course:
-    def __init__(self, course_id, user_name, course_name, lark_app_token):
-        self.course_id = course_id
-        self.user_name = user_name
-        self.course_name = course_name
-        self.lark_app_token = lark_app_token
+Base = declarative_base()
+
+
+class Course(Base):
+    __tablename__ = 'courses'
+
+    id = Column(Integer, primary_key=True, autoincrement=True)
+    user_name = Column(String(24), nullable=False)
+    course_name = Column(String(64), nullable=False)
+    lark_app_token = Column(String(64), nullable=False)
 
     def __repr__(self):
         return f'{self.course_name}  (app_token:{self.lark_app_token}  --by {self.user_name})'
 
 
-def get_all_courses_from_sqlite() -> list[Course]:
-    all_courses = []
-    conn = sqlite3.connect(cfg.SQLITE_DB_PATH)
-    cursor = conn.cursor()
-    cursor.execute('SELECT * FROM `courses`')
-    for row in cursor.fetchall():
-        all_courses.append(Course(*row))
-    conn.close()
-    return all_courses
-
-
 @st.cache_data(show_spinner="Get courses from DB...")
-def get_courses_by_user_from_sqlite(user_name) -> list[Course]:
-    courses = []
-    conn = sqlite3.connect(cfg.SQLITE_DB_PATH)
-    cursor = conn.cursor()
-    cursor.execute('SELECT * FROM `courses` WHERE user_name=?', (user_name,))
-    for row in cursor.fetchall():
-        courses.append(Course(*row))
-    conn.close()
-    return courses
+def get_courses_by_user(user_name) -> list[Course]:
+    session = Session()
+    try:
+        # Query data using SQLAlchemy
+        stmt = select(Course).where(Course.user_name == user_name)
+        courses = session.execute(stmt).scalars().all()
+        return courses
+    finally:
+        session.close()
 
 
 def insert_course(user_name, course_name, lark_app_token):
-    conn = sqlite3.connect(cfg.SQLITE_DB_PATH)
-    cursor = conn.cursor()
-    cursor.execute('INSERT INTO `courses` (user_name, course_name, lark_app_token) VALUES (?, ?, ?)',
-                   (user_name, course_name, lark_app_token))
-    conn.commit()
-    conn.close()
+    session = Session()
+    try:
+        new_course = Course(user_name=user_name, course_name=course_name, lark_app_token=lark_app_token)
+        session.add(new_course)
+        session.commit()
+    except Exception as e:
+        session.rollback()
+        raise e
+    finally:
+        session.close()
 
-    get_courses_by_user_from_sqlite.clear()
+    get_courses_by_user.clear()
 
 
 def del_course_by_course_id(course_id):
-    conn = sqlite3.connect(cfg.SQLITE_DB_PATH)
-    cursor = conn.cursor()
-    cursor.execute('DELETE FROM `courses` WHERE id=?', (course_id,))
-    conn.commit()
-    conn.close()
+    session = Session()
+    try:
+        course = session.query(Course).filter(Course.id == course_id).first()
+        if course:
+            session.delete(course)
+            session.commit()
+    except Exception as e:
+        session.rollback()
+        raise e
+    finally:
+        session.close()
 
-    get_courses_by_user_from_sqlite.clear()
+    get_courses_by_user.clear()
 
 
 def update_course_by_course_id(course_id, user_name, course_name, lark_app_token):
-    conn = sqlite3.connect(cfg.SQLITE_DB_PATH)
-    cursor = conn.cursor()
-    print(f'UPDATE `courses` SET user_name={user_name}, course_name={course_name}, lark_app_token={lark_app_token} WHERE id={course_id}')
-    cursor.execute('UPDATE `courses` SET user_name=?, course_name=?, lark_app_token=? WHERE id=?',
-                   (user_name, course_name, lark_app_token, course_id))
-    conn.commit()
-    conn.close()
+    session = Session()
+    try:
+        course = session.query(Course).filter(Course.id == course_id).first()
+        if course:
+            course.user_name = user_name
+            course.course_name = course_name
+            course.lark_app_token = lark_app_token
+            session.commit()
+    except Exception as e:
+        session.rollback()
+        raise e
+    finally:
+        session.close()
 
-    get_courses_by_user_from_sqlite.clear()
+    get_courses_by_user.clear()
 
 
 if __name__ == '__main__':
@@ -88,5 +102,6 @@ if __name__ == '__main__':
     #     insert_course('lisi', f'Java{i}', f'123456{i}')
     #     insert_course('wangwu', f'C{i}', f'123456{i}')
 
-    courses = get_courses_by_user_from_sqlite('kenrick')
+    # courses = get_courses_by_user_from_sqlite('kenrick')
+    courses = get_courses_by_user('kenrick')
     print(courses)

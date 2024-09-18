@@ -6,7 +6,7 @@ from langchain_core.messages import HumanMessage
 from langchain_core.prompts import PromptTemplate
 
 from init import *
-from models.course import get_courses_by_user_from_sqlite
+from models.course import get_courses_by_user
 from tools.auth import login
 from tools.lark import get_bitable_tables
 from tools.utils import load_scripts
@@ -75,7 +75,7 @@ def update_follow_up_ask_prompt_template(lark_app_token, lark_table_id, prompt_t
 
 
 with login():
-    courses = get_courses_by_user_from_sqlite(st.session_state["username"])
+    courses = get_courses_by_user(st.session_state["username"])
     if not courses:
         st.warning(' No courses available, please go to `My Account` to create a new course.。  ⬇️ ⬇️ ⬇️', icon='⚠️')
         if st.button('Go to `My Account`', type='primary', use_container_width=True):
