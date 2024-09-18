@@ -93,9 +93,7 @@ export const PayModal = ({ open = false, onCancel, onOk }) => {
         channel: payChannel,
         orderId,
       });
-
       setQrUrl(qrcodeResp.qr_url);
-
       if (qrcodeResp.status === ORDER_STATUS.BUY_STATUS_SUCCESS) {
         setIsCompleted(true);
         setInterval(null);
@@ -104,7 +102,7 @@ export const PayModal = ({ open = false, onCancel, onOk }) => {
         setInterval(COUNTDOWN_INTERVAL);
       }
     },
-    [payChannel]
+    [payChannel, couponCode]
   );
 
   const loadPayInfo = useCallback(async () => {
@@ -186,9 +184,9 @@ export const PayModal = ({ open = false, onCancel, onOk }) => {
         messageApi.error(resp.message);
         return;
       }
-
-      onCouponCodeModalClose();
       refreshOrderQrcode();
+      onCouponCodeModalClose();
+
     },
     [messageApi, onCouponCodeModalClose, orderId, refreshOrderQrcode]
   );
