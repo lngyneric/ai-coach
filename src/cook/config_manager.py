@@ -86,5 +86,8 @@ class ConfigManager:
 
 if __name__ == "__main__":
     cfg = ConfigManager()
+    print(os.getenv("ENV"))
+    print(cfg.API_URL)
     print(cfg.SUPPORT_MODELS)
+    
 

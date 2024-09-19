@@ -39,6 +39,14 @@ def load_chapters_from_api() -> list[Chapter]:
     }
 
     response = requests.get(url, params=params)
+    print("请求详细信息:")
+    print(f"URL: {url}")
+    print(f"参数: {params}")
+    
+    print("\n响应详细信息:")
+    print(f"状态码: {response.status_code}")
+    print(f"响应头: {response.headers}")
+    print(f"响应内容: {response.text}")
 
     chapters = []
     if response.status_code == 200:
@@ -69,8 +77,8 @@ LESSON_TYPE_BRANCH_HIDDEN = 405
 LESSON_TYPES = {
     "试用课": LESSON_TYPE_TRIAL,
     "正式课": LESSON_TYPE_NORMAL,
-    "延展课": LESSON_TYPE_EXTEND,
-    "分支课": LESSON_TYPE_BRANCH,
+    # "延展课": LESSON_TYPE_EXTEND,
+    # "分支课": LESSON_TYPE_BRANCH,
     "隐藏分支课": LESSON_TYPE_BRANCH_HIDDEN
 }
 
