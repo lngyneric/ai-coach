@@ -52,9 +52,12 @@ def generate_discount_code(
     discount_channel,
     discount_type,
     discount_apply_type,
+    discount_count=100,
+    discount_code=None,
 ):
     with app.app_context():
-        discount_code = generate_discount_strcode(app)
+        if discount_code is None:
+            discount_code = generate_discount_strcode(app)
         discount = Discount()
         discount.discount_id = generate_id(app)
         discount.course_id = course_id
@@ -62,7 +65,7 @@ def generate_discount_code(
         discount.discount_type = discount_type
         discount.discount_apply_type = discount_apply_type
         discount.discount_value = discount_value
-        discount.discount_limit = 0
+        discount.discount_count = discount_count
         discount.discount_start = discout_start
         discount.discount_end = discount_end
         discount.discount_channel = discount_channel
@@ -122,6 +125,7 @@ def use_discount_code(app: Flask, user_id, discount_code, order_id):
             DiscountRecord.discount_code == discount_code,
             DiscountRecord.status == DISCOUNT_STATUS_ACTIVE,
         ).first()
+        discount = None
         if not discountRecord:
             # query fixcode
             app.logger.info("query fixcode")
