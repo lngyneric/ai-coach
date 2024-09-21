@@ -54,34 +54,8 @@ with st.sidebar:
 
 
 # ==================== Functions ====================
-
-def debug_model(model, temperature, script, system_role):
-    # ========== chat_box 初始化 ==========
-    chat_box = ChatBox(assistant_avatar=ICON_SIFU, session_key=str(uuid4()))
-    chat_box.init_session()
-    chat_box.output_messages()
-
-    st.session_state.system_role = system_role
-
-    if script.check_template != '未填写！':
-        full_result = streaming_from_template(
-            chat_box, script.check_template, {'input': user_input},
-            input_done_with=script.check_ok_sign,
-            parse_keys=script.parse_vars,
-            model=model, temperature=temperature)
-    else:
-        full_result = streaming_from_template(
-            chat_box, script.template,
-            {v: st.session_state[v] for v in script.template_vars} if script.template_vars else None,
-            model=model, temperature=temperature
-        )
-    logging.debug(f'scrip id: {script.id}, chat result: {full_result}')
-    # st.write(full_result)
-    return model, temperature, full_result
-
-
-def debug_model2(model, temperature, script, variables, system_role, user_input):
-    print(f'=== debug_model2: {model}, {temperature}, {script}, {variables}, {system_role}, {user_input}')
+def debug_model(model, temperature, script, variables, system_role, user_input):
+    print(f'=== debug_model: {model}, {temperature}, {script}, {variables}, {system_role}, {user_input}')
 
     if script.check_template == '未填写！':
         full_result = from_template(script.template, variables, system_role, model, temperature)
@@ -417,7 +391,7 @@ with login():
                     # future = executor.submit(debug_model, model, temperature, st.session_state.debug_script, st.session_state.system_role)
                     for i in range(test_times):
                         future = executor.submit(
-                            debug_model2, model, temperature, st.session_state.debug_script,
+                            debug_model, model, temperature, st.session_state.debug_script,
                             {v: st.session_state[v] for v in st.session_state.debug_script.template_vars} if st.session_state.debug_script.template_vars else None,
                             st.session_state.system_role if 'system_role' in st.session_state else None,
                             st.session_state.debugger_user_input)
