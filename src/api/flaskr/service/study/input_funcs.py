@@ -43,6 +43,7 @@ from .utils import (
     get_profile_array,
     check_phone_number,
 )
+from flaskr.util.uuid import generate_id
 
 
 class BreakException(Exception):
@@ -192,6 +193,13 @@ def handle_input_continue(
                             AICourseLessonAttend.course_id == next_lesson.course_id,
                             AICourseLessonAttend.lesson_id == next_lesson.lesson_id,
                         ).first()
+                        if next_attend is None:
+                            next_attend = AICourseLessonAttend()
+                            next_attend.user_id = user_id
+                            next_attend.course_id = next_lesson.course_id
+                            next_attend.lesson_id = next_lesson.lesson_id
+                            next_attend.attend_id = generate_id(app)
+                            db.session.add(next_attend)
                         if next_attend:
                             assoation = AICourseAttendAsssotion.query.filter(
                                 AICourseAttendAsssotion.from_attend_id
