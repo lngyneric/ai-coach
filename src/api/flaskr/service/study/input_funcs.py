@@ -177,6 +177,7 @@ def handle_input_continue(
                     )
                 )
                 if branch_value == rule.get("value", ""):
+                    app.logger.info("found branch rule")
                     attend_info = AICourseLessonAttend.query.filter(
                         AICourseLessonAttend.attend_id == attend.attend_id
                     ).first()
@@ -209,6 +210,12 @@ def handle_input_continue(
                             attend_info.status = ATTEND_STATUS_BRANCH
                             attend_info = next_attend
                             app.logger.info("branch jump")
+                    else:
+                        app.logger.info(
+                            "branch lesson not found: {}".format(
+                                rule.get("lark_table_id", "")
+                            )
+                        )
 
     db.session.flush()
 
