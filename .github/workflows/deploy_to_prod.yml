@@ -2,9 +2,7 @@ name: deploy-to-prod-env
 
 on:
   push:
-    branches: ["master"] # Trigger only on push to the develop branch
-
-
+    branches: ["master"] # Trigger only on push to the master branch
 
 jobs:
   build-and-sync:
@@ -12,6 +10,15 @@ jobs:
     steps:
       - name: Checkout
         uses: actions/checkout@v4
+
+      - name: Set deployment flags
+        id: set-flags
+        run: |
+          if git diff --name-only ${{ github.sha }}~1 ${{ github.sha }} | grep -q '^src/api/'; then echo "DEPLOY_API=true" >> $GITHUB_ENV; fi
+          if git diff --name-only ${{ github.sha }}~1 ${{ github.sha }} | grep -q '^src/web/'; then echo "DEPLOY_WEB=true" >> $GITHUB_ENV; fi
+          if git diff --name-only ${{ github.sha }}~1 ${{ github.sha }} | grep -q '^src/admin-web/'; then echo "DEPLOY_ADMIN_WEB=true" >> $GITHUB_ENV; fi
+          if git diff --name-only ${{ github.sha }}~1 ${{ github.sha }} | grep -q '^src/cook/'; then echo "DEPLOY_COOK=true" >> $GITHUB_ENV; fi
+
       - name: SSH to remote server and execute deployment script
         uses: appleboy/ssh-action@master
         with:
@@ -21,10 +28,11 @@ jobs:
           port: ${{ secrets.PORT }}
           script: |
             sudo su -
-            cd  /data/ai-shifu/deploy-config/
+            cd /data/ai-shifu/deploy-config/
             git pull
+
       - name: Deploy API
-        if: contains(github.event.head_commit.message, '/src/api/') || contains(github.event.commits[*].modified, 'src/api/')
+      #  if: env.DEPLOY_API == 'true'
         uses: appleboy/ssh-action@master
         with:
           host: ${{ secrets.PROD_DEPLOY_HOST }}
@@ -34,19 +42,21 @@ jobs:
           script: |
             sudo su -
             bash /data/ai-shifu/deploy-config/build-and-deploy-shifu-api.sh
+
       - name: Deploy Web
-        if: contains(github.event.head_commit.message, '/src/web/') || contains(github.event.commits[*].modified, 'src/web/')
+#        if: env.DEPLOY_WEB == 'true'
         uses: appleboy/ssh-action@master
         with:
-           host: ${{ secrets.PROD_DEPLOY_HOST }}
-           username: ${{ secrets.USERNAME }}
-           key: ${{ secrets.PROD_SSH_KEY }}
-           port: ${{ secrets.PORT }}
-           script: |
-             sudo su -
-             bash /data/ai-shifu/deploy-config/build-and-deploy-shifu-web.sh
+          host: ${{ secrets.PROD_DEPLOY_HOST }}
+          username: ${{ secrets.USERNAME }}
+          key: ${{ secrets.PROD_SSH_KEY }}
+          port: ${{ secrets.PORT }}
+          script: |
+            sudo su -
+            bash /data/ai-shifu/deploy-config/build-and-deploy-shifu-web.sh
+
       - name: Deploy Admin Web
-        if: contains(github.event.head_commit.message, '/src/admin-web/') || contains(github.event.commits[*].modified, 'src/admin-web/')
+#        if: env.DEPLOY_ADMIN_WEB == 'true'
         uses: appleboy/ssh-action@master
         with:
           host: ${{ secrets.PROD_DEPLOY_HOST }}
@@ -56,8 +66,9 @@ jobs:
           script: |
             sudo su -
             bash /data/ai-shifu/deploy-config/build-and-deploy-shifu-admin-web.sh
+
       - name: Deploy Cook
-        if: contains(github.event.head_commit.message, '/src/cook/') || contains(github.event.commits[*].modified, 'src/cook/')
+#        if: env.DEPLOY_COOK == 'true'
         uses: appleboy/ssh-action@master
         with:
           host: ${{ secrets.PROD_DEPLOY_HOST }}
@@ -66,4 +77,4 @@ jobs:
           port: ${{ secrets.PORT }}
           script: |
             sudo su -
-            bash /data/ai-shifu/deploy-config/build-and-deploy-shifu-admin-web.sh
+            bash /data/ai-shifu/deploy-config/build-and-deploy-shifu-cook.sh

@@ -43,6 +43,7 @@ from .utils import (
     get_profile_array,
     check_phone_number,
 )
+from flaskr.util.uuid import generate_id
 
 
 class BreakException(Exception):
@@ -156,15 +157,28 @@ def handle_input_continue(
     span.end()
     # 分支课程
     if script_info.script_ui_type == UI_TYPE_BRANCH:
-        app.logger.info("branch")
+        app.logger.info(
+            "script_id:{},branch:{}".format(
+                script_info.script_id, script_info.script_other_conf
+            )
+        )
         branch_info = json.loads(script_info.script_other_conf)
         branch_key = branch_info.get("var_name", "")
         profile = get_user_profiles(app, user_id, [branch_key])
         branch_value = profile.get(branch_key, "")
         jump_rule = branch_info.get("jump_rule", [])
+
+        app.logger.info("branch key:{}".format(branch_key))
+
         if attend.status != ATTEND_STATUS_BRANCH:
             for rule in jump_rule:
+                app.logger.info(
+                    "rule value:{},branch_value:{}".format(
+                        rule.get("value", ""), branch_value
+                    )
+                )
                 if branch_value == rule.get("value", ""):
+                    app.logger.info("found branch rule")
                     attend_info = AICourseLessonAttend.query.filter(
                         AICourseLessonAttend.attend_id == attend.attend_id
                     ).first()
@@ -179,6 +193,13 @@ def handle_input_continue(
                             AICourseLessonAttend.course_id == next_lesson.course_id,
                             AICourseLessonAttend.lesson_id == next_lesson.lesson_id,
                         ).first()
+                        if next_attend is None:
+                            next_attend = AICourseLessonAttend()
+                            next_attend.user_id = user_id
+                            next_attend.course_id = next_lesson.course_id
+                            next_attend.lesson_id = next_lesson.lesson_id
+                            next_attend.attend_id = generate_id(app)
+                            db.session.add(next_attend)
                         if next_attend:
                             assoation = AICourseAttendAsssotion.query.filter(
                                 AICourseAttendAsssotion.from_attend_id
@@ -197,6 +218,12 @@ def handle_input_continue(
                             attend_info.status = ATTEND_STATUS_BRANCH
                             attend_info = next_attend
                             app.logger.info("branch jump")
+                    else:
+                        app.logger.info(
+                            "branch lesson not found: {}".format(
+                                rule.get("lark_table_id", "")
+                            )
+                        )
 
     db.session.flush()
 
