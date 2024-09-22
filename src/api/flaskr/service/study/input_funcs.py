@@ -156,14 +156,26 @@ def handle_input_continue(
     span.end()
     # 分支课程
     if script_info.script_ui_type == UI_TYPE_BRANCH:
-        app.logger.info("branch")
+        app.logger.info(
+            "script_id:{},branch:{}".format(
+                script_info.script_id, script_info.script_other_conf
+            )
+        )
         branch_info = json.loads(script_info.script_other_conf)
         branch_key = branch_info.get("var_name", "")
         profile = get_user_profiles(app, user_id, [branch_key])
         branch_value = profile.get(branch_key, "")
         jump_rule = branch_info.get("jump_rule", [])
+
+        app.logger.info("branch key:{}".format(branch_key))
+
         if attend.status != ATTEND_STATUS_BRANCH:
             for rule in jump_rule:
+                app.logger.info(
+                    "rule value:{},branch_value:{}".format(
+                        rule.get("value", ""), branch_value
+                    )
+                )
                 if branch_value == rule.get("value", ""):
                     attend_info = AICourseLessonAttend.query.filter(
                         AICourseLessonAttend.attend_id == attend.attend_id
