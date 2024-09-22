@@ -246,7 +246,10 @@ def get_script(app: Flask, attend_id: str, next: int = 0):
                 AICourseLessonAttend.status != ATTEND_STATUS_RESET,
             ).first()
             is_first = True
-            if parent_attend.status == ATTEND_STATUS_NOT_STARTED:
+            if (
+                parent_attend is not None
+                and parent_attend.status == ATTEND_STATUS_NOT_STARTED
+            ):
                 parent_attend.status = ATTEND_STATUS_IN_PROGRESS
                 attend_infos.append(
                     AILessonAttendDTO(
