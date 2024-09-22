@@ -1,9 +1,24 @@
+import logging
 import requests
 import sqlite3
 
 import streamlit
 
 from init import cfg
+
+
+LESSON_TYPE_TRIAL = 401
+LESSON_TYPE_NORMAL = 402
+LESSON_TYPE_EXTEND = 403
+LESSON_TYPE_BRANCH = 404
+LESSON_TYPE_BRANCH_HIDDEN = 405
+LESSON_TYPES = {
+    "试用课": LESSON_TYPE_TRIAL,
+    "正式课": LESSON_TYPE_NORMAL,
+    # "延展课": LESSON_TYPE_EXTEND,
+    # "分支课": LESSON_TYPE_BRANCH,
+    "隐藏分支课": LESSON_TYPE_BRANCH_HIDDEN
+}
 
 
 class Chapter:
@@ -19,26 +34,15 @@ class Chapter:
         return f'{self.name}  ({self.lark_table_id})'
 
 
-def load_chapters_from_sqlite() -> list[Chapter]:
-    chapters = []
-    conn = sqlite3.connect(cfg.SQLITE_DB_PATH)
-    cursor = conn.cursor()
-    cursor.execute('SELECT * FROM `chapters`'
-                   'ORDER BY `rank` ASC')
-    for row in cursor.fetchall():
-        chapters.append(Chapter(*row))
-    conn.close()
-    return chapters
-
-
-def load_chapters_from_api() -> list[Chapter]:
-
-    url = f'{cfg.API_URL}/lesson/get_chatper_info'
+def load_chapters_from_api(base_url=cfg.API_URL) -> list[Chapter]:
+    url = f'{base_url}/lesson/get_chatper_info'
     params = {
         'doc_id': cfg.LARK_APP_TOKEN
     }
 
     response = requests.get(url, params=params)
+    logging.debug(f'load_chapters_from_api: {url}, {params}')
+    logging.info(f'load_chapters_from_api: {response.json()}')
 
     chapters = []
     if response.status_code == 200:
@@ -61,22 +65,8 @@ def load_chapters_from_api() -> list[Chapter]:
     return chapters
 
 
-LESSON_TYPE_TRIAL = 401
-LESSON_TYPE_NORMAL = 402
-LESSON_TYPE_EXTEND = 403
-LESSON_TYPE_BRANCH = 404
-LESSON_TYPE_BRANCH_HIDDEN = 405
-LESSON_TYPES = {
-    "试用课": LESSON_TYPE_TRIAL,
-    "正式课": LESSON_TYPE_NORMAL,
-    "延展课": LESSON_TYPE_EXTEND,
-    "分支课": LESSON_TYPE_BRANCH,
-    "隐藏分支课": LESSON_TYPE_BRANCH_HIDDEN
-}
-
-
-def update_chapter_from_api(table_id, view_id, title, index, lesson_type):
-    url = f'{cfg.API_URL}/lesson/update_lesson'
+def update_chapter_from_api(table_id, view_id, title, index, lesson_type, base_url=cfg.API_URL):
+    url = f'{base_url}/lesson/update_lesson'
     params = {
         'doc_id': cfg.LARK_APP_TOKEN,
         'table_id': table_id,
@@ -87,6 +77,8 @@ def update_chapter_from_api(table_id, view_id, title, index, lesson_type):
     }
 
     response = requests.get(url, params=params)
+    logging.debug(f'update_chapter_from_api: {url}, {params}')
+    logging.info(f'update_chapter_from_api: {response.json()}')
 
     if response.status_code == 200:
         print(response.json())
@@ -96,14 +88,16 @@ def update_chapter_from_api(table_id, view_id, title, index, lesson_type):
         streamlit.toast(f"《{title}》更新失败，错误码: {response.status_code}", icon="🚨")
 
 
-def delete_chapter_from_api(table_id):
-    url = f'{cfg.API_URL}/lesson/delete_lesson'
+def delete_chapter_from_api(table_id, base_url=cfg.API_URL):
+    url = f'{base_url}/lesson/delete_lesson'
     params = {
         # 'doc_id': cfg.LARK_APP_TOKEN,
         'table_id': table_id,
     }
 
     response = requests.get(url, params=params)
+    logging.debug(f'delete_chapter_from_api: {url}, {params}')
+    logging.info(f'delete_chapter_from_api: {response.json()}')
 
     if response.status_code == 200:
         print(response.json())
@@ -162,6 +156,4 @@ if __name__ == '__main__':
     # 测试删除章节
     # delete_chapter_from_api('tblkkj1WaozcngwQ')
     # delete_chapter_from_api('tblQhi1ZutfUhW2T')
-
-
 

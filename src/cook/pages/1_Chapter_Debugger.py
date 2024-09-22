@@ -9,7 +9,7 @@ import streamlit_authenticator as stauth
 from streamlit_extras.bottom_container import bottom
 from langchain_core.messages import HumanMessage, AIMessage
 
-from models.course import get_courses_by_user_from_sqlite
+from models.course import get_courses_by_user
 from tools.lark import get_bitable_tables
 from tools.utils import *
 from tools.dev_tools import *
@@ -29,8 +29,6 @@ st.caption('📚 Loading chapter script to simulate user experience for linear d
 
 
 # ========== Debug init ==========
-# Log level settings
-logging.basicConfig(level=logging.DEBUG)  # 如需要更细致的观察run状态时可以将 `level` 的值改为 `logging.DEBUG`
 # Enable developer mode?
 st.session_state.DEV_MODE = True if st.query_params.get('dev') else False
 logging.info(f'DEV_MODE: {st.session_state.DEV_MODE}')
@@ -116,7 +114,7 @@ if not st.session_state.has_started:
         # st.title('Some content')
 
 
-        courses = get_courses_by_user_from_sqlite(st.session_state["username"])
+        courses = get_courses_by_user(st.session_state["username"])
         # courses = get_courses_by_user_from_sqlite('kenrick')
         if not courses:
             st.warning(' No courses available, please go to `My Account` to create a new course.。  ⬇️ ⬇️ ⬇️', icon='⚠️')

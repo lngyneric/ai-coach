@@ -1,6 +1,8 @@
 import os
 import yaml
 from dotenv import load_dotenv, find_dotenv
+import logging
+import sys
 
 _ = load_dotenv(find_dotenv())
 
@@ -69,7 +71,47 @@ class ConfigManager:
 
             _cfg_api = config['api']
             self.API_URL = _cfg_api[f'{os.getenv("ENV")}_url']
+            self.API_URL_TEST = _cfg_api['test_url']
+            self.API_URL_PROD = _cfg_api['prod_url']
+            
+            _cfg_log = config['log']
+            self.LOG_LEVEL = _cfg_log['level']
+            self.LOG_OUT_LEVEL = _cfg_log['out_level']
+            self.LOG_OUT_PATH = _cfg_log['out_path']
+            self.LOG_ERR_LEVEL = _cfg_log['err_level']
+            self.LOG_ERR_PATH = _cfg_log['err_path']
+            
+            self.COOK_CONN_STR = f'mysql+pymysql://{os.getenv("COOK_DB_USERNAME")}:{os.getenv("COOK_DB_PASSWORD")}' \
+                                 f'@{os.getenv("COOK_DB_HOST")}:3306/{os.getenv("COOK_DB_DATABASE")}'
 
+
+        # 添加日志配置
+        self.setup_logging()
+
+    def setup_logging(self):
+        # 创建一个日志格式器
+        formatter = logging.Formatter('%(asctime)s - %(name)s - %(levelname)s - %(message)s')
+
+        # 创建一个处理器，输出到指定的日志文件
+        out_handler = logging.FileHandler(self.LOG_OUT_PATH)
+        out_handler.setLevel(self.LOG_OUT_LEVEL)
+        out_handler.setFormatter(formatter)
+
+        # 创建一个处理器，输出错误日志到指定的文件
+        err_handler = logging.FileHandler(self.LOG_ERR_PATH)
+        err_handler.setLevel(self.LOG_ERR_LEVEL)
+        err_handler.setFormatter(formatter)
+
+        # 获取根日志记录器
+        root_logger = logging.getLogger()
+        root_logger.setLevel(self.LOG_LEVEL)
+
+        # 清除现有的处理器（如果有的话）
+        root_logger.handlers = []
+
+        # 添加处理器到根日志记录器
+        root_logger.addHandler(out_handler)
+        root_logger.addHandler(err_handler)
 
     def set_default_model(self, model):
         self.DEFAULT_MODEL = model
@@ -83,5 +125,8 @@ class ConfigManager:
 
 if __name__ == "__main__":
     cfg = ConfigManager()
+    print(os.getenv("ENV"))
+    print(cfg.API_URL)
     print(cfg.SUPPORT_MODELS)
+    
 

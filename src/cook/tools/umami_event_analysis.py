@@ -5,8 +5,8 @@ import pandas as pd
 from dotenv import load_dotenv, find_dotenv
 
 _ = load_dotenv(find_dotenv())
-db_url = (f'mysql://{os.getenv("DB_USERNAME")}:{os.getenv("DB_PASSWORD")}'
-          f'@{os.getenv("DB_HOST")}:3306/{os.getenv("DB_DATABASE")}')
+db_url = (f'mysql://{os.getenv("UMAMI_DB_USERNAME")}:{os.getenv("UMAMI_DB_PASSWORD")}'
+          f'@{os.getenv("UMAMI_DB_HOST")}:3306/{os.getenv("UMAMI_DB_DATABASE")}')
 
 def get_trail_script_count():
     sql = """

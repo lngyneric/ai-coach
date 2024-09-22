@@ -17,14 +17,14 @@ st.set_page_config(
 
 '# 课程章节管理 📚📜📚 '
 """
-> 将飞书中的章节（数据表）更新至正式环境
+> 将飞书中的章节（数据表）更新至 C端环境
 """
-# '---'
+st.caption('章节类型：401-体验课； 402-正式课； 405-隐藏分支课')
 
 
 
 @st.dialog('➕ 添加 章节剧本文档')
-def add_chapter(max_index_now):
+def add_chapter(max_index_now, base_url):
     with st.form('edit_row'):
         params = {
             'name': st.text_input('章节名称'),
@@ -41,58 +41,39 @@ def add_chapter(max_index_now):
                 params['lark_view_id'],
                 params['name'],
                 params['id'],
-                params['chapter_type']
+                params['chapter_type'],
+                base_url
             )
             st.rerun()
 
 
 @st.dialog('✏️ 修改 章节剧本文档')
-def edit_chapter(df: DataFrame, chapter_id, staff=False):
+def edit_chapter(df: DataFrame, chapter_id, base_url):
     with st.form('edit_row'):
-        if staff:
-            params = {
-                'name': st.text_input('章节名称', df.loc[chapter_id, 'name']),
-                'lark_table_id': st.text_input('飞书表格 ID', df.loc[chapter_id, 'lark_table_id']),
-                'lark_view_id': st.text_input('飞书表格 ViewID', df.loc[chapter_id, 'lark_view_id']),
-                'rank': st.number_input('排序权重', value=df.loc[chapter_id, 'rank']),
-            }
-        else:
-            params = {
-                'name': st.text_input('章节名称', df.loc[chapter_id, 'name']),
-                'lark_table_id': st.text_input('飞书表格 ID', df.loc[chapter_id, 'lark_table_id']),
-                'lark_view_id': st.text_input('飞书表格 ViewID', df.loc[chapter_id, 'lark_view_id']),
-                'chapter_type': st.text_input('章节类型', df.loc[chapter_id, 'chapter_type']),
-            }
-            chapter_id = st.text_input('lesson_no(index)', chapter_id)
-
-
+        params = {
+            'name': st.text_input('章节名称', df.loc[chapter_id, 'name']),
+            'lark_table_id': st.text_input('飞书表格 ID', df.loc[chapter_id, 'lark_table_id']),
+            'lark_view_id': st.text_input('飞书表格 ViewID', df.loc[chapter_id, 'lark_view_id']),
+            'chapter_type': st.text_input('章节类型', df.loc[chapter_id, 'chapter_type']),
+            'chapter_id': st.text_input('lesson_no(index)', chapter_id)
+        }
 
         submit_button = st.form_submit_button('提交修改', type='primary', use_container_width=True)
         if submit_button:
-            if staff:
-                conn = sqlite3.connect(cfg.SQLITE_DB_PATH)
-                cursor = conn.cursor()
-                c = cursor.execute('UPDATE `chapters` SET name=?, lark_table_id=?, lark_view_id=?, rank=? WHERE id=?',
-                                   (params['name'], params['lark_table_id'], params['lark_view_id'], params['rank'],
-                                    chapter_id))
-                conn.commit()
-                conn.close()
-                st.rerun()
-            else:
-                # df.loc[chapter_id] = params
-                update_chapter_from_api(
-                    params['lark_table_id'],
-                    params['lark_view_id'],
-                    params['name'],
-                    chapter_id,
-                    params['chapter_type']
-                )
-                st.rerun()
-
+            # df.loc[chapter_id] = params
+            update_chapter_from_api(
+                params['lark_table_id'],
+                params['lark_view_id'],
+                params['name'],
+                params['chapter_id'],
+                params['chapter_type'],
+                base_url
+            )
+            st.rerun()
 
 
 @st.dialog('⚠️ 确认删除吗?')
-def delete_chapter(df: DataFrame, chapter_id, staff=False):
+def delete_chapter(df: DataFrame, chapter_id, base_url):
     with st.form('delete_row'):
         st.text_input('章节名称', df.loc[chapter_id, 'name'], disabled=True)
         table_id = st.text_input('飞书表格 ID', df.loc[chapter_id, 'lark_table_id'], disabled=True)
@@ -101,19 +82,12 @@ def delete_chapter(df: DataFrame, chapter_id, staff=False):
 
         submit_button = st.form_submit_button('确认删除', type='primary', use_container_width=True)
         if submit_button:
-            if staff:
-                conn = sqlite3.connect(cfg.SQLITE_DB_PATH)
-                cursor = conn.cursor()
-                c = cursor.execute('DELETE FROM `chapters` WHERE id=?', (chapter_id,))
-                conn.commit()
-                conn.close()
-                st.rerun()
-            else:
-                delete_chapter_from_api(table_id)
-                st.rerun()
+            delete_chapter_from_api(table_id, base_url)
+            st.rerun()
 
 
-def stdf_manage(df, title, has_delete=True):
+@st.fragment
+def stdf_manage(df, title, has_delete=True, base_url=cfg.API_URL):
     st.write(f'### {title}')
     event = st.dataframe(
         df,
@@ -131,7 +105,7 @@ def stdf_manage(df, title, has_delete=True):
         hide_index=True,
         on_select='rerun',
         selection_mode='single-row',
-        key=title
+        key=title + base_url
     )
 
     if event.selection['rows']:
@@ -147,40 +121,35 @@ def stdf_manage(df, title, has_delete=True):
                     view_id = selected_chapter['lark_view_id'],
                     title=selected_chapter['name'],
                     index=selected_chapter.name,
-                    lesson_type=selected_chapter['chapter_type']
+                    lesson_type=selected_chapter['chapter_type'],
+                    base_url=base_url
                 )
 
         with cols[1]:
             if st.button(f'✏️ 修改 {selected_chapter["name"]}', use_container_width=True):
-                edit_chapter(df, selected_chapter.name)
+                edit_chapter(df, selected_chapter.name, base_url=base_url)
 
         if has_delete:
             with cols[2]:
                 if st.button(f'❌ 删除 {selected_chapter["name"]}', use_container_width=True):
-                    delete_chapter(df, selected_chapter.name)
+                    delete_chapter(df, selected_chapter.name, base_url=base_url)
 
 
-# 需要登录
-with login():
+def display_chapter_management(base_url):
+    df_chapters_api = DataFrame([chapter.__dict__ for chapter in load_chapters_from_api(base_url=base_url)])
 
-    add_vertical_space(1)
-    '-----'
-    '## 👩🏻‍🎓 正式环境 章节配置'
-    '> 章节类型：401-体验课； 402-正式课； 405-隐藏分支课'
-    df_chapters_api = DataFrame([chapter.__dict__ for chapter in load_chapters_from_api()])
-
-    if st.button('⬆️🔄 批量全部更新 🔄⬆️', type='primary', use_container_width=True):
+    if st.button('⬆️🔄 批量全部更新 🔄⬆️', type='primary', use_container_width=True, key=f'update_{base_url}'):
         for index, row in df_chapters_api.iterrows():
             update_chapter_from_api(
                 table_id=row['lark_table_id'],
                 view_id=row['lark_view_id'],
                 title=row['name'],
                 index=row['id'],
-                lesson_type=row['chapter_type']
+                lesson_type=row['chapter_type'],
+                base_url=base_url
             )
             time.sleep(0.1)
         st.success('批量更新完成', icon='🎉')
-
 
     max_index = int(df_chapters_api['id'].max() if not df_chapters_api.empty else -1)
 
@@ -202,13 +171,30 @@ with login():
     df_chapters_hidden.set_index('id', inplace=True)
 
 
-    stdf_manage(df_chapters_trial, '体验章节配置', has_delete=False)
-    stdf_manage(df_chapters_norm, '正式章节配置')
-    stdf_manage(df_chapters_hidden, '隐藏分支章节配置')
+    stdf_manage(df_chapters_trial, '体验章节配置', has_delete=False, base_url=base_url)
+    stdf_manage(df_chapters_norm, '正式章节配置', base_url=base_url)
+    stdf_manage(df_chapters_hidden, '隐藏分支章节配置', base_url=base_url)
 
-
-    add_vertical_space(3)
     '-----'
-    if st.button(f'➕ 添加章节', use_container_width=True):
-        add_chapter(max_index)
+    if st.button(f'➕ 添加章节', use_container_width=True, key=f'add_chapter_{base_url}'):
+        add_chapter(max_index, base_url=base_url)
 
+
+# 需要登录
+with login():
+
+    tab1, tab2 = st.tabs(['测试环境', '正式环境'])
+    
+    with tab1:
+        '## 👩🏻‍🎓 测试环境 章节配置'
+        display_chapter_management(cfg.API_URL_TEST)
+    
+    with tab2:
+        '## ⚠️ 警告！这是正式环境，请谨慎操作！ ⚠️'
+        display_chapter_management(cfg.API_URL_PROD)
+
+
+# Avoid losing already activated tabs after rerun.
+if "initial_rerun_done" not in st.session_state:
+    st.session_state.initial_rerun_done = True
+    st.rerun()

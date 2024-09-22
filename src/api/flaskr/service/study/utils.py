@@ -216,7 +216,7 @@ def get_script(app: Flask, attend_id: str, next: int = 0):
     app.logger.info(
         "get next script,current:{},next:{}".format(attend_info.script_index, next)
     )
-    if attend_info.status == ATTEND_STATUS_NOT_STARTED or attend_info.script_index == 0:
+    if attend_info.status == ATTEND_STATUS_NOT_STARTED or attend_info.script_index <= 0:
         attend_info.status = ATTEND_STATUS_IN_PROGRESS
         attend_info.script_index = 1
 
@@ -246,7 +246,10 @@ def get_script(app: Flask, attend_id: str, next: int = 0):
                 AICourseLessonAttend.status != ATTEND_STATUS_RESET,
             ).first()
             is_first = True
-            if parent_attend.status == ATTEND_STATUS_NOT_STARTED:
+            if (
+                parent_attend is not None
+                and parent_attend.status == ATTEND_STATUS_NOT_STARTED
+            ):
                 parent_attend.status = ATTEND_STATUS_IN_PROGRESS
                 attend_infos.append(
                     AILessonAttendDTO(
