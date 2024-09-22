@@ -216,7 +216,7 @@ def get_script(app: Flask, attend_id: str, next: int = 0):
     app.logger.info(
         "get next script,current:{},next:{}".format(attend_info.script_index, next)
     )
-    if attend_info.status == ATTEND_STATUS_NOT_STARTED or attend_info.script_index == 0:
+    if attend_info.status == ATTEND_STATUS_NOT_STARTED or attend_info.script_index <= 0:
         attend_info.status = ATTEND_STATUS_IN_PROGRESS
         attend_info.script_index = 1
 
