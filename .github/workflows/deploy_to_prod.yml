@@ -32,7 +32,7 @@ jobs:
             git pull
 
       - name: Deploy API
-        if: env.DEPLOY_API == 'true'
+      #  if: env.DEPLOY_API == 'true'
         uses: appleboy/ssh-action@master
         with:
           host: ${{ secrets.PROD_DEPLOY_HOST }}
@@ -44,7 +44,7 @@ jobs:
             bash /data/ai-shifu/deploy-config/build-and-deploy-shifu-api.sh
 
       - name: Deploy Web
-        if: env.DEPLOY_WEB == 'true'
+#        if: env.DEPLOY_WEB == 'true'
         uses: appleboy/ssh-action@master
         with:
           host: ${{ secrets.PROD_DEPLOY_HOST }}
@@ -56,7 +56,7 @@ jobs:
             bash /data/ai-shifu/deploy-config/build-and-deploy-shifu-web.sh
 
       - name: Deploy Admin Web
-        if: env.DEPLOY_ADMIN_WEB == 'true'
+#        if: env.DEPLOY_ADMIN_WEB == 'true'
         uses: appleboy/ssh-action@master
         with:
           host: ${{ secrets.PROD_DEPLOY_HOST }}
@@ -68,7 +68,7 @@ jobs:
             bash /data/ai-shifu/deploy-config/build-and-deploy-shifu-admin-web.sh
 
       - name: Deploy Cook
-        if: env.DEPLOY_COOK == 'true'
+#        if: env.DEPLOY_COOK == 'true'
         uses: appleboy/ssh-action@master
         with:
           host: ${{ secrets.PROD_DEPLOY_HOST }}
