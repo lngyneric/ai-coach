@@ -24,7 +24,7 @@ jobs:
             cd  /data/ai-shifu/deploy-config/
             git pull
       - name: Deploy API
-        if: contains(github.event.head_commit.message, '/src/api/') || contains(github.event.commits[*].modified, 'src/api/')
+        if: contains(github.event.head_commit.message, 'src/api/') || contains(github.event.commits[*].modified, 'src/api/')
         uses: appleboy/ssh-action@master
         with:
           host: ${{ secrets.PROD_DEPLOY_HOST }}
@@ -35,7 +35,7 @@ jobs:
             sudo su -
             bash /data/ai-shifu/deploy-config/build-and-deploy-shifu-api.sh
       - name: Deploy Web
-        if: contains(github.event.head_commit.message, '/src/web/') || contains(github.event.commits[*].modified, 'src/web/')
+        if: contains(github.event.head_commit.message, 'src/web/') || contains(github.event.commits[*].modified, 'src/web/')
         uses: appleboy/ssh-action@master
         with:
            host: ${{ secrets.PROD_DEPLOY_HOST }}
@@ -46,7 +46,7 @@ jobs:
              sudo su -
              bash /data/ai-shifu/deploy-config/build-and-deploy-shifu-web.sh
       - name: Deploy Admin Web
-        if: contains(github.event.head_commit.message, '/src/admin-web/') || contains(github.event.commits[*].modified, 'src/admin-web/')
+        if: contains(github.event.head_commit.message, 'src/admin-web/') || contains(github.event.commits[*].modified, 'src/admin-web/')
         uses: appleboy/ssh-action@master
         with:
           host: ${{ secrets.PROD_DEPLOY_HOST }}
@@ -57,7 +57,7 @@ jobs:
             sudo su -
             bash /data/ai-shifu/deploy-config/build-and-deploy-shifu-admin-web.sh
       - name: Deploy Cook
-        if: contains(github.event.head_commit.message, '/src/cook/') || contains(github.event.commits[*].modified, 'src/cook/')
+        if: contains(github.event.head_commit.message, 'src/cook/') || contains(github.event.commits[*].modified, 'src/cook/')
         uses: appleboy/ssh-action@master
         with:
           host: ${{ secrets.PROD_DEPLOY_HOST }}
