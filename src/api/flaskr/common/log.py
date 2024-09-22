@@ -63,7 +63,6 @@ def init_log(app: Flask) -> Flask:
     formatter = RequestFormatter(log_format)
 
     log_file = app.config.get("LOGGING_PATH", "logs/ai-sifu.log")
-    # 如果目录不存在，创建目录
     log_dir = os.path.dirname(log_file)
     if not os.path.exists(log_dir):
         os.makedirs(log_dir)
