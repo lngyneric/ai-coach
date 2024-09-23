@@ -35,6 +35,7 @@ export const INTERACTION_OUTPUT_TYPE = {
   PHONE: 'phone', // 输入手机号
   CHECKCODE: 'checkcode', // 输入短信验证码
   ORDER: 'order', // 购买课程
+  ASK: 'ask', // 追问
 }
 
 // sse 返回的事件类型

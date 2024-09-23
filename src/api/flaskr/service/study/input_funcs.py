@@ -10,10 +10,13 @@ from flask import Flask
 from sqlalchemy import func
 
 from flaskr.service.order.consts import ATTEND_STATUS_BRANCH, ATTEND_STATUS_IN_PROGRESS
-from flaskr.service.study.models import AICourseAttendAsssotion
+from flaskr.service.study.models import (
+    AICourseAttendAsssotion,
+    AICourseLessonAttendScript,
+)
 from flaskr.service.lesson.const import UI_TYPE_BRANCH
 from flaskr.service.view.models import INPUT_TYPE_SELECT, INPUT_TYPE_TEXT
-from flaskr.api.llm import invoke_llm
+from flaskr.api.llm import chat_llm, invoke_llm
 from flaskr.api.edun import check_text
 from flaskr.service.common.models import AppException
 from flaskr.service.profile.funcs import (
@@ -40,6 +43,9 @@ from ...service.study.const import (
 )
 from ...dao import db
 from .utils import (
+    get_follow_up_ask_prompt,
+    get_follow_up_model,
+    get_lesson_system,
     make_script_dto,
     get_profile_array,
     check_phone_number,
@@ -383,11 +389,77 @@ def handle_input_ask(
     trace: Trace,
     trace_args,
 ):
-    msg = "追问内容：" + input
-    for i in msg:
-        yield make_script_dto("text", i, script_info.script_id)
-        time.sleep(0.01)
+    # msg = "追问内容：" + input
+    # for i in msg:
+    #     yield make_script_dto("text", i, script_info.script_id)
+    #     time.sleep(0.01)
+    # yield make_script_dto("text_end", "", script_info.script_id)
+
+    # get log history
+    history_scripts = (
+        AICourseLessonAttendScript.query.filter(
+            AICourseLessonAttendScript.attend_id == attend.attend_id,
+            AICourseLessonAttendScript.script_id == script_info.script_id,
+        )
+        .order_by(AICourseLessonAttendScript.script_index.asc())
+        .all()
+    )
+
+    messages = []
+    messages.append({"role": "user", "content": "你是老师，请扮演老师的角色回答学员的追问。"})
+    for script in history_scripts:
+        if script.script_role == ROLE_STUDENT:
+            messages.append({"role": "user", "content": script.script_content})
+        elif script.script_role == ROLE_TEACHER:
+            messages.append({"role": "assistant", "content": script.script_content})
+    # get system prompt
+    system_prompt = get_lesson_system(script_info.lesson_id)
+    if system_prompt:
+        # add system prompt to messages first
+        messages.insert(0, {"role": "system", "content": system_prompt})
+    # get follow up ask prompt
+    follow_up_ask_prompt = get_follow_up_ask_prompt(app, attend, script_info)
+    messages.append(
+        {"role": "user", "content": follow_up_ask_prompt.format(input=input)}
+    )
+    # get follow up model
+    follow_up_model = get_follow_up_model(app, attend, script_info)
+    # todo 换成通用的
+    log_script = generation_attend(app, attend, script_info)
+    log_script.script_content = input
+    log_script.script_role = ROLE_STUDENT
+    db.session.add(log_script)
+    span = trace.span(name="user_input", input=input)
+    res = check_text(log_script.log_id, input)
+    span.event(name="check_text", input=input, output=res)
+    add_risk_control_result(
+        app, log_script.log_id, user_id, input, "edun", str(res), "", 1, "check_text"
+    )
+
+    resp = chat_llm(
+        app,
+        span,
+        model=follow_up_model,
+        json=True,
+        stream=True,
+        temperature=script_info.script_temprature,
+        messages=messages,
+    )
+    response_text = ""
+    for i in resp:
+        current_content = i.result
+        if isinstance(current_content, str):
+            response_text += current_content
+            yield make_script_dto("text", i.result, script_info.script_id)
     yield make_script_dto("text_end", "", script_info.script_id)
+    log_script = generation_attend(app, attend, script_info)
+    log_script.script_content = response_text
+    log_script.script_role = ROLE_TEACHER
+    db.session.add(log_script)
+    span.end(output=response_text)
+    trace_args["output"] = trace_args["output"] + "\r\n" + response_text
+    trace.update(**trace_args)
+    db.session.flush()
 
 
 def handle_input(

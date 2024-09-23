@@ -95,7 +95,7 @@ export const ChatInteractionArea = ({
 
   const onSendAsk = (type, val) => {
     setInputVisible(false);
-    onSend?.(INTERACTION_TYPE.ASK, val, props.scriptId);
+    onSendFunc?.(INTERACTION_TYPE.ASK, val);
   };
 
   useEffect(() => {

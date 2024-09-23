@@ -562,7 +562,8 @@ export const ChatComponents = forwardRef(
             type === INTERACTION_OUTPUT_TYPE.SELECT ||
             type === INTERACTION_OUTPUT_TYPE.CONTINUE ||
             type === INTERACTION_OUTPUT_TYPE.PHONE ||
-            type === INTERACTION_OUTPUT_TYPE.CHECKCODE) &&
+            type === INTERACTION_OUTPUT_TYPE.CHECKCODE ||
+            type === INTERACTION_OUTPUT_TYPE.ASK) &&
           val.trim()
         ) {
           const message = createMessage({

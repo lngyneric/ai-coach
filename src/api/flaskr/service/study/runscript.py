@@ -236,7 +236,7 @@ def run_script_inner(
                             yield from response
 
                     # 如果是Start或是Continue，就不需要再次获取脚本
-                    if input_type == INPUT_TYPE_START or input_type == INPUT_TYPE_ASK:
+                    if input_type == INPUT_TYPE_START:
                         next = 0
                     else:
                         next = check_paid and 1 or 0

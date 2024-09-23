@@ -437,3 +437,26 @@ def update_attend_lesson_info(app: Flask, attend_id: str) -> list[AILessonAttend
             )
     app.logger.info("res:{}".format(",".join([r.lesson_no for r in res])))
     return res
+
+
+def get_follow_up_ask_prompt(app: Flask, attend, script) -> str:
+    return """# 现在学员在学习上述教学内容时，产生了一些疑问，你需要恰当的回答学员的追问。
+
+**你就是老师本人，不要打招呼，直接用第一人称回答！**
+
+如果学员的追问内容与当前章节教学内容有关，请优先结合当前章节中已经输出的内容进行回答。
+
+如果学员的追问内容与当前章节教学内容关系不大，但与该课程的其他章节有关，你可以简要回答并友好的告知学员稍安勿躁，后续xx章节有涉及学员追问问题的详细教学内容。
+
+如果学员的追问内容与课程教学内容无关，但与教学平台有关（平台使用问题；售卖、订单、退费等；账号、密码、登录等），请耐心的告知学员通过「哎师傅-AI学习社区」服务号找到我们进行相应的解决。
+
+如果学员的追问内容与课程教学内容无关，也与教学平台无关，请友好的回绝学员的追问，并请学员专注在该课程内容的学习上。
+
+
+学员的追问是：
+`{input}`
+"""
+
+
+def get_follow_up_model(app: Flask, attend, script) -> str:
+    return "ERNIE-4.0-8K"

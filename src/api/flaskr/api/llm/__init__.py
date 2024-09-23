@@ -1,5 +1,5 @@
 from typing import Generator
-from .ernie import get_ernie_response, get_erine_models
+from .ernie import get_ernie_response, get_erine_models, chat_ernie
 from .glm import get_zhipu_models, invoke_glm
 import openai
 from flask import Flask
@@ -103,7 +103,7 @@ def invoke_llm(
         if json:
             kwargs["response_format"] = "json_object"
         if kwargs.get("temperature", None) is not None:
-            kwargs["temperature"] = str(kwargs["temperature"])
+            kwargs["temperature"] = float(kwargs.get("temperature", 0.8))
         response = get_ernie_response(app, model, message, **kwargs)
         for res in response:
             response_text += res.result
@@ -154,7 +154,7 @@ def invoke_llm(
         if json:
             kwargs["response_format"] = "json_object"
         if kwargs.get("temperature", None) is not None:
-            kwargs["temperature"] = str(kwargs["temperature"])
+            kwargs["temperature"] = float(kwargs.get("temperature", 0.8))
         response = get_ernie_response(
             app, "ERNIE-4.0-8K-Preview-0518", message, **kwargs
         )
@@ -182,6 +182,120 @@ def invoke_llm(
         input=generation_input, output=response_text, usage=usage, metadata=kwargs
     )
     span.end(output=response_text)
+
+
+def chat_llm(
+    app: Flask,
+    span: StatefulSpanClient,
+    model: str,
+    messages: list,
+    json: bool = False,
+    **kwargs,
+) -> Generator[LLMStreamResponse, None, None]:
+    app.logger.info(f"chat_llm [{model}] {messages} ,json:{json} ,kwargs:{kwargs}")
+    kwargs.update({"stream": True})
+    model = model.strip()
+    generation_input = messages
+    generation = span.generation(model=model, input=generation_input)
+    response_text = ""
+    usage = None
+    if kwargs.get("temperature", None) is not None:
+        kwargs["temperature"] = float(kwargs.get("temperature", 0.8))
+    if model in OPENAI_MODELS or model.startswith("gpt"):
+        response = client.chat.completions.create(
+            model=model, messages=messages, **kwargs
+        )
+        for res in response:
+            if len(res.choices) and res.choices[0].delta.content:
+                response_text += res.choices[0].delta.content
+                yield LLMStreamResponse(
+                    res.id,
+                    True if res.choices[0].finish_reason else False,
+                    False,
+                    res.choices[0].delta.content,
+                    res.choices[0].finish_reason,
+                    None,
+                )
+            if res.usage:
+                usage = ModelUsage(
+                    unit="TOKENS",
+                    input=res.usage.prompt_tokens,
+                    output=res.usage.completion_tokens,
+                    total=res.usage.total_tokens,
+                )
+    elif model in ERNIE_MODELS:
+        if kwargs.get("temperature", None) is not None:
+            kwargs["temperature"] = float(kwargs.get("temperature", 0.8))
+        response = chat_ernie(app, model, messages, **kwargs)
+        for res in response:
+            response_text += res.result
+            if res.usage:
+                usage = ModelUsage(
+                    unit="TOKENS",
+                    input=res.usage.prompt_tokens,
+                    output=res.usage.completion_tokens,
+                    total=res.usage.total_tokens,
+                )
+            yield LLMStreamResponse(
+                res.id,
+                res.is_end,
+                res.is_truncated,
+                res.result,
+                res.finish_reason,
+                res.usage.__dict__,
+            )
+    elif model.lower() in GLM_MODELS:
+        if kwargs.get("temperature", None) is not None:
+            kwargs["temperature"] = str(kwargs["temperature"])
+        response = invoke_glm(app, model.lower(), messages, **kwargs)
+        for res in response:
+            response_text += res.choices[0].delta.content
+            if res.usage:
+                usage = ModelUsage(
+                    unit="TOKENS",
+                    input=res.usage.prompt_tokens,
+                    output=res.usage.completion_tokens,
+                    total=res.usage.total_tokens,
+                )
+            yield LLMStreamResponse(
+                res.id,
+                True if res.choices[0].finish_reason else False,
+                False,
+                res.choices[0].delta.content,
+                res.choices[0].finish_reason,
+                None,
+            )
+
+    else:
+        app.logger.error(f"model {model} not found,use ERNIE-4.0-8K-Preview-0518")
+        if json:
+            kwargs["response_format"] = "json_object"
+        if kwargs.get("temperature", None) is not None:
+            kwargs["temperature"] = str(kwargs["temperature"])
+        response = chat_ernie(app, "ERNIE-4.0-8K-Preview-0518", messages, **kwargs)
+        for res in response:
+            response_text += res.result
+            if res.usage:
+                usage = ModelUsage(
+                    unit="TOKENS",
+                    input=res.usage.prompt_tokens,
+                    output=res.usage.completion_tokens,
+                    total=res.usage.total_tokens,
+                )
+            yield LLMStreamResponse(
+                res.id,
+                res.is_end,
+                res.is_truncated,
+                res.result,
+                res.finish_reason,
+                res.usage.__dict__,
+            )
+
+    app.logger.info("invoke_llm response: {response_text} ")
+    app.logger.info("invoke_llm usage: " + usage.__str__())
+    generation.end(
+        input=generation_input, output=response_text, usage=usage, metadata=kwargs
+    )
 
 
 def get_current_models(app: Flask) -> list[str]:
