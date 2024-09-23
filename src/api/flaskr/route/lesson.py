@@ -10,6 +10,62 @@ def register_lesson_handler(app: Flask, path_prefix: str) -> Flask:
     @app.route(path_prefix + "/update_lesson", methods=["GET"])
     @bypass_token_validation
     def update_lesson():
+
+        """
+        更新课程
+        ---
+        tags:
+        - 课程
+        parameters:
+            - name: doc_id
+              in: query
+              description: 文档id
+              required: true
+              schema:
+                type: string
+            - name: table_id
+              in: query
+              description: 课程表格id
+              required: true
+              schema:
+                type: string
+            - name: title
+              in: query
+              description: 课程标题
+              required: true
+              schema:
+                type: string
+            - name: index
+              in: query
+              description: 课程序号
+              required: true
+              schema:
+                type: string
+            - name: view_id
+              in: query
+              description: 视图id
+              required: true
+              schema:
+                type: string
+            - name: lesson_type
+              in: query
+              description: 课程类型
+              required: false
+              schema:
+                type: string
+            - name: app_id
+              in: query
+              description: 飞书应用id
+              required: false
+              schema:
+                type: string
+            - name: app_secrect
+              in: query
+              description: 飞书应用秘钥
+              required: false
+              schema:
+                type: string
+        """
         doc_id = request.args.get("doc_id")
         table_id = request.args.get("table_id")
         title = request.args.get("title")
