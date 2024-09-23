@@ -7,6 +7,7 @@ import ChatInputText from './ChatInputText.jsx';
 import ChatButtonGroup from './ChatButtonGroup.jsx';
 import ChatInputButton from './ChatInputButton.jsx';
 import { useTranslation } from 'react-i18next';
+import { Button } from 'antd';
 import {
   INTERACTION_TYPE,
   INTERACTION_DISPLAY_TYPE,
@@ -14,6 +15,8 @@ import {
 import classNames from 'classnames';
 import { memo, useRef, useEffect } from 'react';
 import { useCallback } from 'react';
+import React, { useState } from 'react'; // 添加 useState
+import { Input } from 'antd-mobile';
 
 const INTERACTION_DISPLAY_MAP = {
   [INTERACTION_TYPE.CONTINUE]: INTERACTION_DISPLAY_TYPE.BUTTON,
@@ -23,6 +26,7 @@ const INTERACTION_DISPLAY_MAP = {
   [INTERACTION_TYPE.PHONE]: INTERACTION_DISPLAY_TYPE.TEXT,
   [INTERACTION_TYPE.CHECKCODE]: INTERACTION_DISPLAY_TYPE.TEXT,
   [INTERACTION_TYPE.ORDER]: INTERACTION_DISPLAY_TYPE.BUTTON,
+  // [INTERACTION_TYPE.ASK]: INTERACTION_DISPLAY_TYPE.TEXT,
 };
 
 export const ChatInteractionArea = ({
@@ -36,6 +40,7 @@ export const ChatInteractionArea = ({
   const displayType = INTERACTION_DISPLAY_MAP[type];
   const elemRef = useRef();
   const {t} = useTranslation();
+  const [isInputVisible, setInputVisible] = useState(false); // 添加状态
 
   const onSendFunc = (type, val) => {
     if (disabled) {
@@ -84,6 +89,16 @@ export const ChatInteractionArea = ({
       height: e.contentRect.height,
     });
   }, [onSizeChange]);
+  const handleAskClick = () => {
+    setInputVisible(!isInputVisible); // 显示输入框
+    // onSend?.(INTERACTION_TYPE.ASK, props.scriptId);
+  };
+
+  const onSendAsk = (type, val) => {
+    console.log('onSendAsk', type, val);
+    setInputVisible(false);
+    onSend?.(INTERACTION_TYPE.ASK, val, props.scriptId);
+  };
 
   useEffect(() => {
     // 监听的函数
@@ -102,15 +117,20 @@ export const ChatInteractionArea = ({
     };
   }, [resizeChange]);
 
+
   return (
     <div
       className={classNames(styles.chatInputArea, disabled && styles.disabled)}
       ref={elemRef}
     >
-      {genRenderControl()}
+      <div className={styles.controlContainer}>
+        {(!isInputVisible) && genRenderControl()} {/* 根据状态显示输入框 */}
+        {isInputVisible && <ChatInputText id="askInput" onClick={onSendAsk} type="text" props = {{content:"请输入追问内容"}} visible={isInputVisible}/>}
+        <Button onClick={handleAskClick} className={styles.askButton}>追问</Button>
+      </div>
       <div className={styles.tipText}>
         {t('chat.chatTips')}
-         </div>
+      </div>
     </div>
   );
 };

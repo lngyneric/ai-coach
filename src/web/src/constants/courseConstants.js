@@ -22,6 +22,7 @@ export const INTERACTION_TYPE = {
   PHONE: 'phone', // 输入手机号
   CHECKCODE: 'checkcode', // 输入验证码
   ORDER: 'order', // 购买课程
+  ASK: 'ask', // 追问
 }
 
 // 交互组件的输出类型

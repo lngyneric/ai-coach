@@ -27,6 +27,7 @@ from ...service.order.funs import (
 )
 from ...service.order.models import AICourseBuyRecord, AICourseLessonAttend
 from ...service.study.const import (
+    INPUT_TYPE_ASK,
     INPUT_TYPE_START,
 )
 from ...service.study.dtos import ScriptDTO
@@ -233,12 +234,13 @@ def run_script_inner(
                         )
                         if response:
                             yield from response
+
                     # 如果是Start或是Continue，就不需要再次获取脚本
-                    if input_type == INPUT_TYPE_START:
+                    if input_type == INPUT_TYPE_START or input_type == INPUT_TYPE_ASK:
                         next = 0
                     else:
                         next = check_paid and 1 or 0
-                    while True:
+                    while True and input_type != INPUT_TYPE_ASK:
                         app.logger.info(
                             "next:{} is_first:{}".format(next, is_first_add)
                         )
@@ -312,7 +314,6 @@ def run_script_inner(
                                 trace,
                                 trace_args,
                             )
-
                     else:
                         attends = update_attend_lesson_info(app, attend.attend_id)
                         for attend_update in attends:

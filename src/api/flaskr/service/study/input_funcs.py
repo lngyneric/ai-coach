@@ -36,6 +36,7 @@ from ...service.study.const import (
     INPUT_TYPE_START,
     ROLE_STUDENT,
     ROLE_TEACHER,
+    INPUT_TYPE_ASK,
 )
 from ...dao import db
 from .utils import (
@@ -368,7 +369,25 @@ def handle_input_start(
     trace: Trace,
     trace_args,
 ):
+
     return None
+
+
+@register_input_handler(input_type=INPUT_TYPE_ASK)
+def handle_input_ask(
+    app: Flask,
+    user_id: str,
+    attend: AICourseLessonAttend,
+    script_info: AILessonScript,
+    input: str,
+    trace: Trace,
+    trace_args,
+):
+    msg = "追问内容：" + input
+    for i in msg:
+        yield make_script_dto("text", i, script_info.script_id)
+        time.sleep(0.01)
+    yield make_script_dto("text_end", "", script_info.script_id)
 
 
 def handle_input(

@@ -22,3 +22,22 @@
     padding: 12px;
   }
 }
+.controlContainer {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  flex-grow: 1; /* 填满剩余空间 */
+
+  // width: 100%;
+}
+.askButton {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  width: 50px; /* 设置宽度 */
+  height: 50px; /* 设置高度 */
+  border-radius: 50%; /* 设置成圆形 */
+  background-color: #0F63EE; /* 设置底色 */
+  margin-left: 10px; /* 控制间距 */
+  color: white;
+}
