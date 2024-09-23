@@ -183,9 +183,9 @@ def list_records(
     page_token: str = None,
     page_size: int = None,
     app_id=APPID,
-    app_secret=APP_SECRET,
+    app_secrect=APP_SECRET,
 ):
-    token = get_tenat_token(app, app_id=app_id, app_secrect=app_secret)
+    token = get_tenat_token(app, app_id=app_id, app_secrect=app_secrect)
     # https://open.feishu.cn/open-apis/bitable/v1/apps/:app_token/tables/:table_id/records/search
     url = "https://open.feishu.cn/open-apis/bitable/v1/apps/{app_token}/tables/{table_id}/records/search".format(
         app_token=app_token, table_id=table_id
