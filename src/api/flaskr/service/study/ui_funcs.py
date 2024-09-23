@@ -39,7 +39,7 @@ UI_HANDLE_MAP = {}
 
 def register_ui_handler(ui_type):
     def decorator(func):
-        print(f"register_input_handler {ui_type} ==> {func.__name__}")
+        print(f"register_ui_geration_handler {ui_type} ==> {func.__name__}")
         UI_HANDLE_MAP[ui_type] = func
         return func
 

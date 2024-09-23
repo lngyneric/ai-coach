@@ -91,11 +91,9 @@ export const ChatInteractionArea = ({
   }, [onSizeChange]);
   const handleAskClick = () => {
     setInputVisible(!isInputVisible); // 显示输入框
-    // onSend?.(INTERACTION_TYPE.ASK, props.scriptId);
   };
 
   const onSendAsk = (type, val) => {
-    console.log('onSendAsk', type, val);
     setInputVisible(false);
     onSend?.(INTERACTION_TYPE.ASK, val, props.scriptId);
   };
