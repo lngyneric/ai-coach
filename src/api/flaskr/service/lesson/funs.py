@@ -165,11 +165,14 @@ def update_lesson_info(
     title: str = "vewlGkI2Jp",
     index: int = None,
     lesson_type: int = LESSON_TYPE_NORMAL,
+    app_id: str = None,
+    app_secrect: str = None,
 ):
     with app.app_context():
         # 检查课程
         # 用飞书的AppId做为课程的唯一标识
         course = AICourse.query.filter_by(course_feishu_id=doc_id).first()
+
         if course is None:
             course = AICourse()
             course.course_id = str(generate_id(app))
@@ -226,6 +229,11 @@ def update_lesson_info(
         subIndex = 0
         childLessons = [AILesson]
         script_index = 0
+        kwargs = {}
+        if app_id is not None:
+            kwargs["app_id"] = app_id
+        if app_secrect is not None:
+            kwargs["app_secrect"] = app_secrect
         while True:
             resp = list_records(
                 app,
@@ -234,6 +242,7 @@ def update_lesson_info(
                 view_id=view_id,
                 page_token=page_token,
                 page_size=100,
+                **kwargs
             )
             records = resp["data"]["items"]
             app.logger.info("records:" + str(len(records)))
