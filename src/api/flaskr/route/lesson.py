@@ -12,7 +12,7 @@ def register_lesson_handler(app: Flask, path_prefix: str) -> Flask:
     def update_lesson():
 
         """
-        更新课程
+        从飞书文档中更新课程
         ---
         tags:
         - 课程
@@ -55,13 +55,13 @@ def register_lesson_handler(app: Flask, path_prefix: str) -> Flask:
                 type: string
             - name: app_id
               in: query
-              description: 飞书应用id
+              description: 飞书应用id,不传则使用默认的飞书应用
               required: false
               schema:
                 type: string
             - name: app_secrect
               in: query
-              description: 飞书应用秘钥
+              description: 飞书应用秘钥,不传则使用默认的飞书应用秘钥
               required: false
               schema:
                 type: string
@@ -99,10 +99,38 @@ def register_lesson_handler(app: Flask, path_prefix: str) -> Flask:
     @app.route(path_prefix + "/get_chatper_info", methods=["GET"])
     @bypass_token_validation
     def get_chatper_info():
-        course_id = request.args.get("doc_id")
-        if not course_id:
+        """
+        获取课程列表
+        ---
+        tags:
+        - 课程
+        parameters:
+            - name: doc_id
+              in: query
+              description: 文档id
+              required: true
+        responses:
+            200:
+                description: 获取课程列表成功
+                content:
+                    application/json:
+                        schema:
+                            properties:
+                                code:
+                                    type: integer
+                                    description: 返回码
+                                message:
+                                    type: string
+                                    description: 返回信息
+                                data:
+                                    type: array
+                                    items:
+                                        $ref: "#/components/schemas/AILessonInfoDTO"
+        """
+        doc_id = request.args.get("doc_id")
+        if not doc_id:
             raise_param_error("doc_id is not found")
-        return make_common_response(get_lessons(app, course_id))
+        return make_common_response(get_lessons(app, doc_id))
 
     @app.route(path_prefix + "/delete_lesson", methods=["GET"])
     @bypass_token_validation
@@ -115,7 +143,7 @@ def register_lesson_handler(app: Flask, path_prefix: str) -> Flask:
         parameters:
             - name: table_id
               in: query
-              description: 课程表格id
+              description: 课程表格id 或是转入表格Id ，或是传入课程ID和课程编号
               required: true
               schema:
                 type: string
@@ -139,5 +167,42 @@ def register_lesson_handler(app: Flask, path_prefix: str) -> Flask:
         if not lesson_id and not course_id and not lesson_no:
             raise_param_error("lesson_id or course_id or lesson_no is not found")
         return make_common_response(delete_lesson(app, lesson_id, course_id, lesson_no))
+
+    @app.route(path_prefix + "/get_lesson_detail", methods=["GET"])
+    @bypass_token_validation
+    def get_lesson_detail():
+        """
+        获取课程详情
+        ---
+        tags:
+        - 课程
+        parameters:
+            - name: lesson_id
+              in: query
+              description: 课程id
+              required: true
+              schema:
+                type: string
+        responses:
+            200:
+                description: 获取课程详情成功
+                content:
+                    application/json:
+                        schema:
+                            properties:
+                                code:
+                                    type: integer
+                                    description: 返回码
+                                message:
+                                    type: string
+                                    description: 返回信息
+                                data:
+                                    $ref: "#/components/schemas/AILessonDetailDTO"
+
+        """
+        lesson_id = request.args.get("lesson_id")
+        if not lesson_id:
+            raise_param_error("lesson_id is not found")
+        return make_common_response(get_lesson_detail(app, lesson_id))
 
     return app

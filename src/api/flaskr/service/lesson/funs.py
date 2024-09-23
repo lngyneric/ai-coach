@@ -1,3 +1,5 @@
+from flaskr.common.swagger import register_schema_to_swagger
+from flaskr.service.common.models import LESSON_NOT_FOUND
 from .models import AICourse, AILesson, AILessonScript
 from .const import (
     CONTENT_TYPE_TEXT,
@@ -81,6 +83,77 @@ class AILessonInfoDTO:
             "lesson_id": self.lesson_id,
             "feishu_id": self.feishu_id,
             "lesson_type": self.lesson_type,
+        }
+
+
+@register_schema_to_swagger
+class AILessonDetailDTO:
+    def __init__(
+        self,
+        lesson_id: str,
+        lesson_name: str,
+        lesson_desc: str,
+        lesson_no: str,
+        lesson_index: int,
+        lesson_feishu_id: str,
+        lesson_status: int,
+        status: int,
+        lesson_type: int,
+        lesson_summary: str,
+        lesson_language: str,
+        lesson_name_multi_language: str,
+        ask_count_limit: int,
+        ask_model: str,
+        ask_prompt: int,
+        pre_lesson_no: str,
+        created_user_id: str,
+        updated_user_id: str,
+        created: str,
+        updated: str,
+    ):
+        self.lesson_id = lesson_id
+        self.lesson_name = lesson_name
+        self.lesson_desc = lesson_desc
+        self.lesson_no = lesson_no
+        self.lesson_index = lesson_index
+        self.lesson_feishu_id = lesson_feishu_id
+        self.lesson_status = lesson_status
+        self.status = status
+        self.lesson_type = lesson_type
+        self.lesson_summary = lesson_summary
+        self.lesson_language = lesson_language
+        self.lesson_name_multi_language = lesson_name_multi_language
+        self.ask_count_limit = ask_count_limit
+        self.ask_model = ask_model
+        self.ask_prompt = ask_prompt
+        self.pre_lesson_no = pre_lesson_no
+        self.created_user_id = created_user_id
+        self.updated_user_id = updated_user_id
+        self.created = created
+        self.updated = updated
+
+    def __json__(self):
+        return {
+            "lesson_id": self.lesson_id,
+            "lesson_name": self.lesson_name,
+            "lesson_desc": self.lesson_desc,
+            "lesson_no": self.lesson_no,
+            "lesson_index": self.lesson_index,
+            "lesson_feishu_id": self.lesson_feishu_id,
+            "lesson_status": self.lesson_status,
+            "status": self.status,
+            "lesson_type": self.lesson_type,
+            "lesson_summary": self.lesson_summary,
+            "lesson_language": self.lesson_language,
+            "lesson_name_multi_language": self.lesson_name_multi_language,
+            "ask_count_limit": self.ask_count_limit,
+            "ask_model": self.ask_model,
+            "ask_prompt": self.ask_prompt,
+            "pre_lesson_no": self.pre_lesson_no,
+            "created_user_id": self.created_user_id,
+            "updated_user_id": self.updated_user_id,
+            "created": self.created,
+            "updated": self.updated,
         }
 
 
@@ -420,6 +493,35 @@ def get_lessons(app: Flask, feshu_doc_id) -> list[AILessonInfoDTO]:
         return lessonInfos
 
 
+def get_lesson_detail(app: Flask, lesson_id: str) -> AILessonDetailDTO:
+    with app.app_context():
+        lesson = AILesson.query.filter_by(lesson_id=lesson_id).first()
+        if lesson is None:
+            return None
+        return AILessonDetailDTO(
+            lesson.lesson_id,
+            lesson.lesson_name,
+            lesson.lesson_desc,
+            lesson.lesson_no,
+            lesson.lesson_index,
+            lesson.lesson_feishu_id,
+            lesson.lesson_status,
+            lesson.status,
+            lesson.lesson_type,
+            lesson.lesson_summary,
+            lesson.lesson_language,
+            lesson.lesson_name_multi_language,
+            lesson.ask_count_limit,
+            lesson.ask_model,
+            lesson.ask_prompt,
+            lesson.pre_lesson_no,
+            lesson.created_user_id,
+            lesson.updated_user_id,
+            lesson.created,
+            lesson.updated,
+        )
+
+
 def delete_lesson(app: Flask, table_id: str, course_id: str, lesson_no: str):
     with app.app_context():
         if table_id:
@@ -432,5 +534,33 @@ def delete_lesson(app: Flask, table_id: str, course_id: str, lesson_no: str):
             return False
         for lesson in lessons:
             lesson.status = 0
+        db.session.commit()
+        return True
+
+
+def update_lesson_ask_info(
+    app: Flask,
+    lesson_id: str,
+    lesson_ask_count_limit: int,
+    lesson_ask_model: str,
+    lesson_ask_prompt: str,
+    lesson_ask_count_history: int,
+    lesson_summary: str,
+    lesson_language: str,
+    lesson_name_multi_language: str,
+    lesson_summary_multi_language: str,
+):
+    with app.app_context():
+        lesson = AILesson.query.filter_by(lesson_id=lesson_id).first()
+        if lesson is None:
+            raise LESSON_NOT_FOUND
+        lesson.lesson_ask_count_limit = lesson_ask_count_limit
+        lesson.lesson_ask_model = lesson_ask_model
+        lesson.lesson_ask_prompt = lesson_ask_prompt
+        lesson.lesson_ask_count_history = lesson_ask_count_history
+        lesson.lesson_summary = lesson_summary
+        lesson.lesson_language = lesson_language
+        lesson.lesson_name_multi_language = lesson_name_multi_language
+        lesson.lesson_summary_multi_language = lesson_summary_multi_language
         db.session.commit()
         return True

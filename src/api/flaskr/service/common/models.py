@@ -56,6 +56,7 @@ ERROR_CODE = {
     #  课程相关
     "COURSE_NOT_FOUND": 4001,
     "LESSON_CANNOT_BE_RESET": 4002,
+    "LESSON_NOT_FOUND": 4003,
     # 支付相关
     "PAY_CHANNEL_NOT_SUPPORT": 5001,
     # 文件上传相关
@@ -105,6 +106,7 @@ ERROR_MESSAGE = {
     # 课程相关
     "COURSE_NOT_FOUND": "没有找到课程",
     "LESSON_CANNOT_BE_RESET": "课程不能重置",
+    "LESSON_NOT_FOUND": "没有找到课程",
     # 支付相关
     "PAY_CHANNEL_NOT_SUPPORT": "不支持的支付渠道",
     # 文件上传相关
@@ -163,6 +165,9 @@ SMS_CHECK_ERROR = AppException(
     ERROR_MESSAGE["SMS_CHECK_ERROR"], ERROR_CODE["SMS_CHECK_ERROR"]
 )
 
+LESSON_NOT_FOUND = AppException(
+    ERROR_MESSAGE["LESSON_NOT_FOUND"], ERROR_CODE["LESSON_NOT_FOUND"]
+)
 ORDER_NOT_FOUND = AppException(
     ERROR_MESSAGE["ORDER_NOT_FOUND"], ERROR_CODE["ORDER_NOT_FOUND"]
 )
