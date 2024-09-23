@@ -1,5 +1,5 @@
 from flask import Flask, request
-from flaskr.service.lesson.funs import delete_lesson
+from flaskr.service.lesson.funs import delete_lesson, update_lesson_ask_info
 from flaskr.service.common.models import raise_param_error
 from flaskr.service.lesson.const import LESSON_TYPE_NORMAL
 from .common import bypass_token_validation, make_common_response
@@ -204,5 +204,114 @@ def register_lesson_handler(app: Flask, path_prefix: str) -> Flask:
         if not lesson_id:
             raise_param_error("lesson_id is not found")
         return make_common_response(get_lesson_detail(app, lesson_id))
+
+    @app.route(path_prefix + "/update_ask_info", methods=["POST"])
+    @bypass_token_validation
+    def update_ask_info():
+        """
+        更新课程问答信息
+        ---
+        tags:
+        - 课程
+        parameters:
+            - name: lesson_id
+              in: body
+              description: 课程id
+              required: true
+              schema:
+                type: string
+            - name: lesson_ask_count_limit
+              in: body
+              description: 课程问答次数限制
+              required: true
+              schema:
+                type: integer
+            - name: lesson_ask_model
+              in: body
+              description: 课程问答模型
+              required: true
+              schema:
+                type: string
+            - name: lesson_ask_prompt
+              in: body
+              description: 课程问答提示词
+              required: true
+              schema:
+                type: string
+            - name: lesson_ask_count_history
+              in: body
+              description: 课程问答历史次数
+              required: true
+              schema:
+                type: integer
+            - name: lesson_summary
+              in: body
+              description: 课程总结
+              required: true
+              schema:
+                type: string
+            - name: lesson_language
+              in: body
+              description: 课程语言
+              required: false
+              schema:
+                type: string
+            - name: lesson_name_multi_language
+              in: body
+              description: 课程名称多语言
+              required: false
+              schema:
+                type: string
+            - name: lesson_summary_multi_language
+              in: body
+              description: 课程总结多语言
+              required: false
+              schema:
+                type: string
+        responses:
+            200:
+                description: 更新课程问答信息成功
+                content:
+                    application/json:
+                        schema:
+                            properties:
+                                code:
+                                    type: integer
+                                    description: 返回码
+                                message:
+                                    type: string
+                                    description: 返回信息
+                                data:
+                                    type: boolean
+                                    description: 更新结果
+        """
+
+        lesson_id = request.get_json().get("lesson_id")
+        lesson_ask_count_limit = request.get_json().get("lesson_ask_count_limit")
+        lesson_ask_model = request.get_json().get("lesson_ask_model")
+        lesson_ask_prompt = request.get_json().get("lesson_ask_prompt")
+        lesson_ask_count_history = request.get_json().get("lesson_ask_count_history")
+        lesson_summary = request.get_json().get("lesson_summary")
+        lesson_language = request.get_json().get("lesson_language", "zh")
+        lesson_name_multi_language = request.get_json().get(
+            "lesson_name_multi_language", "{}"
+        )
+        lesson_summary_multi_language = request.get_json().get(
+            "lesson_summary_multi_language", "{}"
+        )
+        return make_common_response(
+            update_lesson_ask_info(
+                app,
+                lesson_id,
+                lesson_ask_count_limit,
+                lesson_ask_model,
+                lesson_ask_prompt,
+                lesson_ask_count_history,
+                lesson_summary,
+                lesson_language,
+                lesson_name_multi_language,
+                lesson_summary_multi_language,
+            )
+        )
 
     return app
