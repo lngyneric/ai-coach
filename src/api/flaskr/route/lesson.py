@@ -119,10 +119,25 @@ def register_lesson_handler(app: Flask, path_prefix: str) -> Flask:
               required: true
               schema:
                 type: string
+            - name: course_id
+              in: query
+              description: 课程id
+              required: true
+              schema:
+                type: string
+            - name: lesson_no
+              in: query
+              description: 课程编号
+              required: true
+              schema:
+                type: string
         """
-        lesson_id = request.args.get("table_id")
-        if not lesson_id:
-            raise_param_error("lesson_id is not found")
-        return make_common_response(delete_lesson(app, lesson_id))
+        lesson_id = request.args.get("table_id", None)
+        course_id = request.args.get("course_id", None)
+        lesson_no = request.args.get("lesson_no", None)
+
+        if not lesson_id and not course_id and not lesson_no:
+            raise_param_error("lesson_id or course_id or lesson_no is not found")
+        return make_common_response(delete_lesson(app, lesson_id, course_id, lesson_no))
 
     return app

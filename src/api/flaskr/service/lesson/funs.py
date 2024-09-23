@@ -420,11 +420,17 @@ def get_lessons(app: Flask, feshu_doc_id) -> list[AILessonInfoDTO]:
         return lessonInfos
 
 
-def delete_lesson(app: Flask, table_id: str):
+def delete_lesson(app: Flask, table_id: str, course_id: str, lesson_no: str):
     with app.app_context():
-        lesson = AILesson.query.filter(AILesson.lesson_feishu_id == table_id).first()
-        if lesson is None:
+        if table_id:
+            lessons = AILesson.query.filter(AILesson.lesson_feishu_id == table_id).all()
+        elif course_id and lesson_no:
+            lessons = AILesson.query.filter(
+                AILesson.course_id == course_id, AILesson.lesson_no == lesson_no
+            ).all()
+        if lessons is None:
             return False
-        lesson.status = 0
+        for lesson in lessons:
+            lesson.status = 0
         db.session.commit()
         return True
