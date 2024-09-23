@@ -214,60 +214,45 @@ def register_lesson_handler(app: Flask, path_prefix: str) -> Flask:
         tags:
         - 课程
         parameters:
-            - name: lesson_id
-              in: body
-              description: 课程id
-              required: true
-              schema:
-                type: string
-            - name: lesson_ask_count_limit
-              in: body
-              description: 课程问答次数限制
-              required: true
-              schema:
-                type: integer
-            - name: lesson_ask_model
-              in: body
-              description: 课程问答模型
-              required: true
-              schema:
-                type: string
-            - name: lesson_ask_prompt
-              in: body
-              description: 课程问答提示词
-              required: true
-              schema:
-                type: string
-            - name: lesson_ask_count_history
-              in: body
-              description: 课程问答历史次数
-              required: true
-              schema:
-                type: integer
-            - name: lesson_summary
-              in: body
-              description: 课程总结
-              required: true
-              schema:
-                type: string
-            - name: lesson_language
-              in: body
-              description: 课程语言
-              required: false
-              schema:
-                type: string
-            - name: lesson_name_multi_language
-              in: body
-              description: 课程名称多语言
-              required: false
-              schema:
-                type: string
-            - name: lesson_summary_multi_language
-              in: body
-              description: 课程总结多语言
-              required: false
-              schema:
-                type: string
+            -   in: body
+                required: true
+                schema:
+                    properties:
+                        lesson_id:
+                            type: string
+                            description: 课程id
+                        lesson_ask_count_limit:
+                            type: integer
+                            description: 课程追问次数限制
+                            required: true
+                        lesson_ask_model:
+                            type: string
+                            description: 课程追问模型
+                            required: true
+                        lesson_ask_prompt:
+                            type: string
+                            description: 课程追问提示词
+                            required: true
+                        lesson_ask_count_history:
+                            type: integer
+                            description: 课程追问包含的历史记录数
+                            required: true
+                        lesson_summary:
+                            type: string
+                            description: 课程总结，用于追问场景
+                            required: true
+                        lesson_language:
+                            type: string
+                            description: 课程语言,默认是zh,暂时不启用
+                            required: false
+                        lesson_name_multi_language:
+                            type: string
+                            description: 课程名称多语言,默认是zh,暂时不启用
+                            required: false
+                        lesson_summary_multi_language:
+                            type: string
+                            description: 课程总结多语言,默认是zh,暂时不启用
+                            required: false
         responses:
             200:
                 description: 更新课程问答信息成功
@@ -277,6 +262,7 @@ def register_lesson_handler(app: Flask, path_prefix: str) -> Flask:
                             properties:
                                 code:
                                     type: integer
+                                    type: integer
                                     description: 返回码
                                 message:
                                     type: string
@@ -285,7 +271,6 @@ def register_lesson_handler(app: Flask, path_prefix: str) -> Flask:
                                     type: boolean
                                     description: 更新结果
         """
-
         lesson_id = request.get_json().get("lesson_id")
         lesson_ask_count_limit = request.get_json().get("lesson_ask_count_limit")
         lesson_ask_model = request.get_json().get("lesson_ask_model")
