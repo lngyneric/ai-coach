@@ -62,12 +62,12 @@ class AILesson(db.Model):
     )
     lesson_status = Column(Integer, nullable=False, default=0, comment="Lesson status")
     lesson_type = Column(Integer, nullable=False, default=0, comment="Lesson type")
-    lesson_summary = Column(Text, nullable=False, comment="Lesson summary")
+    lesson_summary = Column(Text, nullable=False, default="", comment="Lesson summary")
     lesson_language = Column(
         String(255), nullable=False, default="", comment="Lesson language"
     )
     lesson_name_multi_language = Column(
-        Text, nullable=False, default=0, comment="Lesson multi language"
+        Text, nullable=False, default="", comment="Lesson multi language"
     )
     ask_count_limit = Column(
         Integer, nullable=False, default=0, comment="Ask count limit"
@@ -75,7 +75,7 @@ class AILesson(db.Model):
     ask_model = Column(
         String(255), nullable=False, default="", comment="Ask count model"
     )
-    ask_prompt = Column(Integer, nullable=False, default=0, comment="Ask count history")
+    ask_prompt = Column(Text, nullable=False, default=0, comment="Ask count history")
     pre_lesson_no = Column(
         String(255), nullable=False, default="", comment="pre_lesson_no"
     )

@@ -122,8 +122,10 @@ export const ChatInteractionArea = ({
       ref={elemRef}
     >
       <div className={styles.controlContainer}>
-        {(!isInputVisible) && genRenderControl()} {/* 根据状态显示输入框 */}
-        {isInputVisible && <ChatInputText id="askInput" onClick={onSendAsk} type="text" props = {{content:"请输入追问内容"}} visible={isInputVisible}/>}
+        <div className={styles.controlWrapper}>
+          {(!isInputVisible) && genRenderControl()} {/* 根据状态显示输入框 */}
+          {isInputVisible && <ChatInputText id="askInput" onClick={onSendAsk} type="text" props = {{content:"请输入追问内容"}} visible={isInputVisible}/>}
+        </div>
         <Button onClick={handleAskClick} className={styles.askButton}>追问</Button>
       </div>
       <div className={styles.tipText}>

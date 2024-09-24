@@ -17,7 +17,6 @@ APP_SECRET = get_config("FEISHU_APP_SECRET")
 FOLDER_ID = "QSN2fIQWqlubNxdHHoJcSbVknVh"
 REDIS_KEY_PREFIX = "feishu:token:"
 
-
 # 设置东八区时区
 TIME_ZONE = pytz.timezone("Asia/Shanghai")
 
@@ -25,7 +24,7 @@ TIME_ZONE = pytz.timezone("Asia/Shanghai")
 def get_tenat_token(app: Flask, app_id=APPID, app_secrect=APP_SECRET):
     from ..dao import redis_client as redis
 
-    token = redis.get(REDIS_KEY_PREFIX + "token")
+    token = redis.get(REDIS_KEY_PREFIX + app_id + "token")
     if token:
         app.logger.info("get_tenat_token:" + str(token, encoding="utf-8"))
         return str(token, encoding="utf-8")
@@ -206,7 +205,7 @@ def list_records(
         body["view_id"] = view_id
     app.logger.info("list_records:" + str(body))
     r = requests.post(url, headers=headers, data=json.dumps(body))
-    # app.logger.info('list_records:'+str(r.json()))
+    app.logger.info("list_records:" + str(r.json()))
 
     return r.json()
 

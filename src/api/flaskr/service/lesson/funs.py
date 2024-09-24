@@ -306,7 +306,7 @@ def update_lesson_info(
         if app_id is not None:
             kwargs["app_id"] = app_id
         if app_secrect is not None:
-            kwargs["app_secret"] = app_secrect
+            kwargs["app_secrect"] = app_secrect
         while True:
             resp = list_records(
                 app,
