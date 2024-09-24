@@ -29,9 +29,21 @@ class AICourse(db.Model):
     course_name_multi_language = Column(
         Text, nullable=False, default=0, comment="Course multi language"
     )
+
+    ask_count_limit = Column(
+        Integer, nullable=False, default=0, comment="Ask count limit"
+    )
+    ask_model = Column(
+        String(255), nullable=False, default="", comment="Ask count model"
+    )
+    ask_prompt = Column(Text, nullable=False, default="", comment="Ask Prompt")
+    ask_with_history = Column(
+        Integer, nullable=False, default=0, comment="Ask with history Count"
+    )
     created_user_id = Column(
         String(36), nullable=True, default="", comment="created user ID"
     )
+
     updated_user_id = Column(
         String(36), nullable=True, default="", comment="updated user ID"
     )
@@ -75,7 +87,10 @@ class AILesson(db.Model):
     ask_model = Column(
         String(255), nullable=False, default="", comment="Ask count model"
     )
-    ask_prompt = Column(Text, nullable=False, default=0, comment="Ask count history")
+    ask_prompt = Column(Text, nullable=False, default="", comment="Ask Prompt")
+    ask_with_history = Column(
+        Integer, nullable=False, default=0, comment="Ask with history Count"
+    )
     pre_lesson_no = Column(
         String(255), nullable=False, default="", comment="pre_lesson_no"
     )
@@ -148,7 +163,10 @@ class AILessonScript(db.Model):
     ask_model = Column(
         String(255), nullable=False, default="", comment="Ask count model"
     )
-    ask_prompt = Column(Integer, nullable=False, default=0, comment="Ask count history")
+    ask_prompt = Column(Text, nullable=False, default="", comment="Ask count history")
+    ask_with_history = Column(
+        Integer, nullable=False, default=0, comment="Ask with history Count"
+    )
     created_user_id = Column(
         String(36), nullable=True, default="", comment="created user ID"
     )
