@@ -33,7 +33,6 @@ import MarkdownBubble from './ChatMessage/MarkdownBubble.jsx';
 import { useTracking, EVENT_NAMES } from 'common/hooks/useTracking.js';
 import PayModalM from '../Pay/PayModalM.jsx';
 import { smoothScroll } from 'Utils/smoothScroll.js';
-import { throttle } from 'throttle-debounce';
 
 
 const USER_ROLE = {
@@ -472,7 +471,7 @@ export const ChatComponents = forwardRef(
       if (ui) {
         initLoadedInteraction(ui);
       }
-      setAskMode(resp.ask_mode)
+      setAskMode(resp.data?.ask_mode)
       setLoadedData(true);
       setLoadedChapterId(chapterId);
     }, [

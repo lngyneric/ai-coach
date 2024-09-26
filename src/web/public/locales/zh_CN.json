@@ -76,7 +76,9 @@
     "chatInputPlaceholder": "请输入内容",
     "chatTips":"内容由 AI 大模型生成，无法确保真实准确，仅供学习参考",
     "copyText": "复制",
-    "copySuccess": "已复制到剪切板"
+    "copySuccess": "已复制到剪切板",
+    "askContent":"请输入追问内容",
+    "ask":"追问"
   },
 
   "lesson": {
