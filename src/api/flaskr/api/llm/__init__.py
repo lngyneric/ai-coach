@@ -231,7 +231,9 @@ def chat_llm(
     kwargs.update({"stream": True})
     model = model.strip()
     generation_input = messages
-    generation = span.generation(model=model, input=generation_input)
+    generation = span.generation(
+        model=model, input=generation_input, name="user_follow_ask"
+    )
     response_text = ""
     usage = None
     if kwargs.get("temperature", None) is not None:

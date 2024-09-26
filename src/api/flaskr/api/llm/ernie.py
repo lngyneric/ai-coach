@@ -116,9 +116,17 @@ def chat_ernie(
 ) -> Generator[ErnieStreamResponse, None, None]:
     url = URLS[model]
     params = {"access_token": get_access_token()}
-    data = {"messages": messages, "stream": True}
+
+    data = {}
+    if messages[0].get("role", "") == "system":
+        data["system"] = messages[0].get("content", "")
+        messages = messages[1:]
+
+    data["messages"] = messages
+    data["stream"] = True
     for k, v in args.items():
         data[k] = v
+
     app.logger.info("ernie request data: {}".format(data))
     response = requests.post(
         url,

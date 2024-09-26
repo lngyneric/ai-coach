@@ -431,7 +431,7 @@ def handle_input_ask(
     log_script.script_content = input
     log_script.script_role = ROLE_STUDENT
     db.session.add(log_script)
-    span = trace.span(name="user_input", input=input)
+    span = trace.span(name="user_follow_up", input=input)
     res = check_text(log_script.log_id, input)
     span.event(name="check_text", input=input, output=res)
     add_risk_control_result(
