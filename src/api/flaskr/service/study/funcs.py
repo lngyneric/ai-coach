@@ -31,6 +31,8 @@ from ...service.order.consts import (
 
 from .dtos import AICourseDTO, StudyRecordItemDTO, StudyRecordProgressDTO, StudyUIDTO
 from ...service.lesson.const import (
+    ASK_MODE_DEFAULT,
+    ASK_MODE_ENABLE,
     LESSON_TYPE_BRANCH_HIDDEN,
     UI_TYPE_BRANCH,
     UI_TYPE_BUTTON,
@@ -74,7 +76,7 @@ def get_lesson_tree_to_study(app: Flask, user_id: str, course_id: str) -> AICour
             # 生成体验课记录
             init_trial_lesson(app, user_id, course_id)
         lessons = AILesson.query.filter(
-            course_id == course_id,
+            AILesson.course_id == course_id,
             AILesson.lesson_type != LESSON_TYPE_BRANCH_HIDDEN,
             AILesson.status == 1,
         ).all()
@@ -275,6 +277,20 @@ def get_study_record(app: Flask, user_id: str, lesson_id: str) -> StudyRecordDTO
                 ret.ui = StudyUIDTO(
                     "order", {"title": "买课！", "buttons": btn}, lesson_id
                 )
+        ask_mode = last_script.ask_mode
+        if ask_mode == ASK_MODE_DEFAULT:
+            lesson_info = AILesson.query.filter(
+                AILesson.lesson_id == last_script.lesson_id
+            ).first()
+            if lesson_info:
+                ask_mode = lesson_info.ask_mode
+            if ask_mode == ASK_MODE_DEFAULT:
+                course_info = AICourse.query.filter(
+                    AICourse.course_id == lesson_info.course_id
+                ).first()
+                if course_info:
+                    ask_mode = course_info.ask_mode
+        ret.ask_mode = True if ask_mode == ASK_MODE_ENABLE else False
 
         return ret
 

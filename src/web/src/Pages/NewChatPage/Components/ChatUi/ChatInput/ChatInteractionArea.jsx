@@ -34,7 +34,7 @@ export const ChatInteractionArea = ({
   props = {},
   onSend = (type, val) => {},
   disabled = false,
-  askEnable = true,
+  askMode = false,
   askVisible = true,
   askContent = "请输入追问内容",
   onSizeChange = ({ width, height }) => {},
@@ -127,11 +127,11 @@ export const ChatInteractionArea = ({
       <div className={styles.controlContainer}>
         <div className={styles.controlWrapper}>
           {(!isInputVisible) && genRenderControl()} {/* 根据状态显示输入框 */}
-          {isInputVisible && <ChatInputText id="askInput" onClick={onSendAsk} type="text" props = {{content:"请输入追问内容"}} visible={isInputVisible}/>}
+          {isInputVisible && <ChatInputText id="askInput" onClick={onSendAsk} type="text" props = {{content:"请输入追问内容"}}  visible={isInputVisible}/>}
         </div>
-        <Button onClick={handleAskClick} className={styles.askButton}>
+        <Button onClick={handleAskClick} className={styles.askButton} disabled={!askMode}>
           <div className={styles.askButtonContent}>
-            <img src={require('@Assets/newchat/light/icon16-ask@1x.png')} alt="" className={styles.askButtonIcon} />
+            <img src={require('@Assets/newchat/light/icon16-ask@1x.png')} alt=""  className={styles.askButtonIcon} />
             <span className={styles.askButtonText}>追问</span>
           </div>
         </Button>

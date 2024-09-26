@@ -35,6 +35,7 @@ import PayModalM from '../Pay/PayModalM.jsx';
 import { smoothScroll } from 'Utils/smoothScroll.js';
 import { throttle } from 'throttle-debounce';
 
+
 const USER_ROLE = {
   TEACHER: '老师',
   STUDENT: '学生',
@@ -169,6 +170,7 @@ export const ChatComponents = forwardRef(
     const [initRecords, setInitRecords] = useState([]);
 
     const [autoScroll, setAutoScroll] = useState(true);
+    const [askMode, setAskMode] = useState(false);
 
     const { userInfo, mobileStyle } = useContext(AppContext);
     const chatRef = useRef();
@@ -342,6 +344,9 @@ export const ChatComponents = forwardRef(
             } else if (response.type === RESP_EVENT_TYPE.PROFILE_UPDATE) {
               const content = response.content;
               updateUserInfo({ [content.key]: content.value });
+            } else if (response.type === RESP_EVENT_TYPE.ASK_MODE) {
+              const content = response.content;
+              setAskMode(content.ask_mode);
             }
           } catch (e) {}
         });
@@ -467,7 +472,7 @@ export const ChatComponents = forwardRef(
       if (ui) {
         initLoadedInteraction(ui);
       }
-
+      setAskMode(resp.ask_mode)
       setLoadedData(true);
       setLoadedChapterId(chapterId);
     }, [
@@ -697,6 +702,7 @@ export const ChatComponents = forwardRef(
 
         {inputModal && (
           <ChatInteractionArea
+            askMode={askMode}
             type={inputModal.type}
             props={inputModal.props}
             disabled={inputDisabled}

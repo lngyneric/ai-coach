@@ -19,8 +19,10 @@ from flaskr.service.study.const import (
 )
 from flaskr.service.study.models import AICourseAttendAsssotion
 from flaskr.service.user import send_sms_code_without_check
-from flaskr.service.lesson.models import AILesson, AILessonScript
+from flaskr.service.lesson.models import AICourse, AILesson, AILessonScript
 from flaskr.service.lesson.const import (
+    ASK_MODE_DEFAULT,
+    ASK_MODE_ENABLE,
     UI_TYPE_BRANCH,
     UI_TYPE_BUTTON,
     UI_TYPE_CHECKCODE,
@@ -223,6 +225,35 @@ def handle_input_to_pay(
         )
 
 
+def handle_ask_mode(
+    app: Flask,
+    user_id: str,
+    attend: AICourseLessonAttend,
+    script_info: AILessonScript,
+    input: str,
+    trace,
+    trace_args,
+):
+    ask_mode = script_info.ask_mode
+    if ask_mode == ASK_MODE_DEFAULT:
+        lesson_info = AILesson.query.filter(
+            AILesson.lesson_id == script_info.lesson_id
+        ).first()
+        if lesson_info:
+            ask_mode = lesson_info.ask_mode
+        if ask_mode == ASK_MODE_DEFAULT:
+            course_info = AICourse.query.filter(
+                AICourse.course_id == attend.course_id
+            ).first()
+            if course_info:
+                ask_mode = course_info.ask_mode
+    yield make_script_dto(
+        "ask_mode",
+        {"ask_mode": True if ask_mode == ASK_MODE_ENABLE else False},
+        script_info.script_id,
+    )
+
+
 def handle_ui(
     app: Flask,
     user_id: str,
@@ -242,6 +273,9 @@ def handle_ui(
             )
         )
         yield from UI_HANDLE_MAP[script_info.script_ui_type](
+            app, user_id, attend, script_info, input, trace, trace_args
+        )
+        yield from handle_ask_mode(
             app, user_id, attend, script_info, input, trace, trace_args
         )
     else:

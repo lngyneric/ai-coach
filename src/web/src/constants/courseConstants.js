@@ -52,6 +52,7 @@ export const RESP_EVENT_TYPE = {
   ORDER_SUCCESS: 'order_success',
   USER_LOGIN: 'user_login', // 用户登录成功
   PROFILE_UPDATE: 'profile_update', // 用户信息更新
+  ASK_MODE: 'ask_mode', // 追问模式
 }
 
 // chat message 类型

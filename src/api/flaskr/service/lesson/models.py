@@ -2,6 +2,7 @@ from sqlalchemy import Column, String, Integer, TIMESTAMP, Text, Numeric, DECIMA
 from sqlalchemy.dialects.mysql import BIGINT
 from sqlalchemy.sql import func
 from ...dao import db
+from .const import ASK_MODE_ENABLE
 
 
 class AICourse(db.Model):
@@ -40,7 +41,9 @@ class AICourse(db.Model):
     ask_with_history = Column(
         Integer, nullable=False, default=3, comment="Ask with history Count"
     )
-    ask_mode = Column(Integer, nullable=False, default=0, comment="Ask mode")
+    ask_mode = Column(
+        Integer, nullable=False, default=ASK_MODE_ENABLE, comment="Ask mode"
+    )
     created_user_id = Column(
         String(36), nullable=True, default="", comment="created user ID"
     )
@@ -92,7 +95,9 @@ class AILesson(db.Model):
     ask_with_history = Column(
         Integer, nullable=False, default=3, comment="Ask with history Count"
     )
-    ask_mode = Column(Integer, nullable=False, default=0, comment="Ask mode")
+    ask_mode = Column(
+        Integer, nullable=False, default=ASK_MODE_ENABLE, comment="Ask mode"
+    )
     pre_lesson_no = Column(
         String(255), nullable=False, default="", comment="pre_lesson_no"
     )
@@ -163,7 +168,7 @@ class AILessonScript(db.Model):
         Integer, nullable=False, default=5, comment="Ask count limit"
     )
     ask_model = Column(
-        String(255), nullable=False, default="", comment="Ask count model"
+        String(255), nullable=False, default=ASK_MODE_ENABLE, comment="Ask count model"
     )
     ask_prompt = Column(Text, nullable=False, default="", comment="Ask count history")
     ask_with_history = Column(

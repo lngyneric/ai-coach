@@ -172,13 +172,15 @@ class StudyUIDTO:
 class StudyRecordDTO:
     records: List[StudyRecordItemDTO]
     ui: StudyUIDTO
+    ask_mode: bool
 
-    def __init__(self, records, ui=None):
+    def __init__(self, records, ui=None, ask_mode=True):
         self.records = records
         self.ui = ui
+        self.ask_mode = ask_mode
 
     def __json__(self):
-        return {"records": self.records, "ui": self.ui}
+        return {"records": self.records, "ui": self.ui, "ask_mode": self.ask_mode}
 
 
 @register_schema_to_swagger
