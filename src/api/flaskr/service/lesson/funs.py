@@ -2,6 +2,7 @@ from flaskr.common.swagger import register_schema_to_swagger
 from flaskr.service.common.models import LESSON_NOT_FOUND
 from .models import AICourse, AILesson, AILessonScript
 from .const import (
+    ASK_MODE_ENABLE,
     CONTENT_TYPE_TEXT,
     CONTENT_TYPES,
     LESSON_TYPE_NORMAL,
@@ -225,6 +226,9 @@ DB_SAVE_MAP = {
     "按钮标题": "script_ui_content",
     "跳转配置": "script_other_conf",
     "temperature": "script_temprature",
+    "ask_count_history": "ask_with_history",
+    "ask_count_limit": "ask_count_limit",
+    "ask_model": "ask_model",
 }
 
 
@@ -409,6 +413,11 @@ def update_lesson_info(
                 scripDb["script_model"] = "ERNIE-4.0-8K"
                 scripDb["status"] = 1
                 scripDb["script_temprature"] = 0.4
+                scripDb["ask_count_limit"] = 5
+                scripDb["ask_mode"] = ASK_MODE_ENABLE
+                scripDb["ask_prompt"] = ""
+                scripDb["ask_with_history"] = 5
+                scripDb["ask_model"] = "deepseek-chat"
                 for field in record["fields"]:
                     val_obj = record["fields"][field]
                     db_field = DB_SAVE_MAP.get(field.strip())
