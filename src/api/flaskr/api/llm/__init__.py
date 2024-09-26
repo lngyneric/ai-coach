@@ -11,15 +11,20 @@ from openai.types.shared_params import ResponseFormatJSONObject
 
 from flaskr.common.config import get_config
 
-client = openai.Client(
+openai_client = openai.Client(
     api_key=get_config("OPENAI_API_KEY"), base_url=get_config("OPENAI_BASE_URL")
 )
 
 deepseek_client = openai.Client(
     api_key=get_config("DEEP_SEEK_API_KEY"), base_url=get_config("DEEP_SEEK_API_URL")
 )
+qwen_client = openai.Client(
+    api_key=get_config("QWEN_API_KEY"), base_url=get_config("QWEN_API_URL")
+)
 try:
-    OPENAI_MODELS = [i.id for i in client.models.list().data if i.id.startswith("gpt")]
+    OPENAI_MODELS = [
+        i.id for i in openai_client.models.list().data if i.id.startswith("gpt")
+    ]
 except Exception as e:
     print(e)
     # app.logger.error(f"get openai models error: {e}")
@@ -27,6 +32,43 @@ except Exception as e:
 ERNIE_MODELS = get_erine_models(Flask(__name__))
 GLM_MODELS = get_zhipu_models(Flask(__name__))
 DEEP_SEEK_MODELS = ["deepseek-chat"]
+QWEN_MODELS = [
+    "qwen-long",
+    "qwen-max",
+    "qwen-max-0428",
+    "qwen-max-0403",
+    "qwen-max-0107",
+    "qwen-max-longcontext",
+    "qwen-plus",
+    "qwen-plus-0806",
+    "qwen-plus-0723",
+    "qwen-plus-0624",
+    "qwen-plus-0206",
+    "qwen-turbo",
+    "qwen-turbo-0624",
+    "qwen-turbo-0206",
+    "qwen2-57b-a14b-instruct",
+    "qwen2-72b-instruct",
+    "qwen2-7b-instruct",
+    "qwen2-1.5b-instruct",
+    "qwen2-0.5b-instruct",
+    "qwen1.5-110b-chat",
+    "qwen1.5-72b-chat",
+    "qwen1.5-32b-chat",
+    "qwen1.5-14b-chat",
+    "qwen1.5-7b-chat",
+    "qwen1.5-1.8b-chat",
+    "qwen1.5-0.5b-chat",
+    "qwen1.5-7b-chat",
+    "qwen-72b-chat",
+    "qwen-14b-chat",
+    "qwen-7b-chat",
+    "qwen-1.8b-longcontext-chat",
+    "qwen-1.8b-chat",
+    "qwen2-math-72b-instruct",
+    "qwen2-math-7b-instruct",
+    "qwen2-math-1.5b-instruct",
+]
 
 
 class LLMStreamaUsage:
@@ -61,7 +103,6 @@ def invoke_llm(
     )
     kwargs.update({"stream": True})
     model = model.strip()
-
     generation_input = []
     if system:
         generation_input.append({"role": "system", "content": system})
@@ -69,7 +110,18 @@ def invoke_llm(
     generation = span.generation(model=model, input=generation_input)
     response_text = ""
     usage = None
-    if model in OPENAI_MODELS or model.startswith("gpt"):
+    if (
+        model in OPENAI_MODELS
+        or model.startswith("gpt")
+        or model in QWEN_MODELS
+        or model in DEEP_SEEK_MODELS
+    ):
+        if model in OPENAI_MODELS or model.startswith("gpt"):
+            client = openai_client
+        elif model in QWEN_MODELS:
+            client = qwen_client
+        elif model in DEEP_SEEK_MODELS:
+            client = deepseek_client
         messages = []
         if system:
             messages.append({"content": system, "role": "system"})
@@ -100,38 +152,6 @@ def invoke_llm(
                     output=res.usage.completion_tokens,
                     total=res.usage.total_tokens,
                 )
-    elif model in DEEP_SEEK_MODELS:
-        messages = []
-        if system:
-            messages.append({"content": system, "role": "system"})
-        messages.append({"content": message, "role": "user"})
-        if json:
-            kwargs["response_format"] = ResponseFormatJSONObject(type="json_object")
-        kwargs["temperature"] = float(kwargs.get("temperature", 0.8))
-        kwargs["stream_options"] = ChatCompletionStreamOptionsParam(include_usage=True)
-        response = deepseek_client.chat.completions.create(
-            model=model, messages=messages, **kwargs
-        )
-
-        for res in response:
-            if len(res.choices) and res.choices[0].delta.content:
-                response_text += res.choices[0].delta.content
-                yield LLMStreamResponse(
-                    res.id,
-                    True if res.choices[0].finish_reason else False,
-                    False,
-                    res.choices[0].delta.content,
-                    res.choices[0].finish_reason,
-                    None,
-                )
-            if res.usage:
-                usage = ModelUsage(
-                    unit="TOKENS",
-                    input=res.usage.prompt_tokens,
-                    output=res.usage.completion_tokens,
-                    total=res.usage.total_tokens,
-                )
-
     elif model in ERNIE_MODELS:
         if system:
             kwargs.update({"system": system})
@@ -238,29 +258,18 @@ def chat_llm(
     usage = None
     if kwargs.get("temperature", None) is not None:
         kwargs["temperature"] = float(kwargs.get("temperature", 0.8))
-    if model in OPENAI_MODELS or model.startswith("gpt"):
-        response = client.chat.completions.create(
-            model=model, messages=messages, **kwargs
-        )
-        for res in response:
-            if len(res.choices) and res.choices[0].delta.content:
-                response_text += res.choices[0].delta.content
-                yield LLMStreamResponse(
-                    res.id,
-                    True if res.choices[0].finish_reason else False,
-                    False,
-                    res.choices[0].delta.content,
-                    res.choices[0].finish_reason,
-                    None,
-                )
-            if res.usage:
-                usage = ModelUsage(
-                    unit="TOKENS",
-                    input=res.usage.prompt_tokens,
-                    output=res.usage.completion_tokens,
-                    total=res.usage.total_tokens,
-                )
-    elif model in DEEP_SEEK_MODELS:
+    if (
+        model in OPENAI_MODELS
+        or model.startswith("gpt")
+        or model in QWEN_MODELS
+        or model in DEEP_SEEK_MODELS
+    ):
+        if model in OPENAI_MODELS or model.startswith("gpt"):
+            client = openai_client
+        elif model in QWEN_MODELS:
+            client = qwen_client
+        elif model in DEEP_SEEK_MODELS:
+            client = deepseek_client
         response = client.chat.completions.create(
             model=model, messages=messages, **kwargs
         )
@@ -358,5 +367,4 @@ def chat_llm(
 
 
 def get_current_models(app: Flask) -> list[str]:
-    app.logger.info([i.id for i in client.models.list().data])
-    return OPENAI_MODELS + ERNIE_MODELS + GLM_MODELS
+    return OPENAI_MODELS + ERNIE_MODELS + GLM_MODELS + QWEN_MODELS + DEEP_SEEK_MODELS
