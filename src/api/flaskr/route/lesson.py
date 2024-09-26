@@ -65,6 +65,12 @@ def register_lesson_handler(app: Flask, path_prefix: str) -> Flask:
               required: false
               schema:
                 type: string
+            - name: course_id
+              in: query
+              description: 课程id
+              required: false
+              schema:
+                type: string
         """
         doc_id = request.args.get("doc_id")
         table_id = request.args.get("table_id")
@@ -74,6 +80,7 @@ def register_lesson_handler(app: Flask, path_prefix: str) -> Flask:
         lesson_type = request.args.get("lesson_type", LESSON_TYPE_NORMAL)
         app_id = request.args.get("app_id", None)
         app_secrect = request.args.get("app_secrect", None)
+        course_id = request.args.get("course_id", None)
         if not doc_id:
             raise_param_error("doc_id is not found")
         if not table_id:
@@ -93,6 +100,7 @@ def register_lesson_handler(app: Flask, path_prefix: str) -> Flask:
                 lesson_type,
                 app_id,
                 app_secrect,
+                course_id,
             )
         )
 

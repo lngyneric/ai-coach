@@ -61,6 +61,7 @@ class AILessonDTO:
         self.status = status
 
 
+@register_schema_to_swagger
 class AILessonInfoDTO:
     def __init__(
         self,
@@ -240,11 +241,16 @@ def update_lesson_info(
     lesson_type: int = LESSON_TYPE_NORMAL,
     app_id: str = None,
     app_secrect: str = None,
+    course_id: str = None,
 ):
     with app.app_context():
         # 检查课程
-        # 用飞书的AppId做为课程的唯一标识
-        course = AICourse.query.filter_by(course_feishu_id=doc_id).first()
+        # 用飞书的AppId做为课程的唯一标识「
+        course = None
+        if course_id is not None:
+            course = AICourse.query.filter(AICourse.course_id == course_id).first()
+        else:
+            course = AICourse.query.filter_by(course_feishu_id=doc_id).first()
 
         if course is None:
             course = AICourse()
