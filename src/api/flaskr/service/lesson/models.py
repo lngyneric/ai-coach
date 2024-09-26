@@ -40,6 +40,7 @@ class AICourse(db.Model):
     ask_with_history = Column(
         Integer, nullable=False, default=3, comment="Ask with history Count"
     )
+    ask_mode = (Column(Integer, nullable=False, default=0, comment="Ask mode"),)
     created_user_id = Column(
         String(36), nullable=True, default="", comment="created user ID"
     )
@@ -91,6 +92,7 @@ class AILesson(db.Model):
     ask_with_history = Column(
         Integer, nullable=False, default=3, comment="Ask with history Count"
     )
+    ask_mode = (Column(Integer, nullable=False, default=0, comment="Ask mode"),)
     pre_lesson_no = Column(
         String(255), nullable=False, default="", comment="pre_lesson_no"
     )
@@ -167,6 +169,7 @@ class AILessonScript(db.Model):
     ask_with_history = Column(
         Integer, nullable=False, default=3, comment="Ask with history Count"
     )
+    ask_mode = (Column(Integer, nullable=False, default=0, comment="Ask mode"),)
     created_user_id = Column(
         String(36), nullable=True, default="", comment="created user ID"
     )
