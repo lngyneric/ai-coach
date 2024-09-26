@@ -15,6 +15,9 @@ client = openai.Client(
     api_key=get_config("OPENAI_API_KEY"), base_url=get_config("OPENAI_BASE_URL")
 )
 
+deepseek_client = openai.Client(
+    api_key=get_config("DEEP_SEEK_API_KEY"), base_url=get_config("DEEP_SEEK_API_URL")
+)
 try:
     OPENAI_MODELS = [i.id for i in client.models.list().data if i.id.startswith("gpt")]
 except Exception as e:
@@ -23,6 +26,7 @@ except Exception as e:
     OPENAI_MODELS = []
 ERNIE_MODELS = get_erine_models(Flask(__name__))
 GLM_MODELS = get_zhipu_models(Flask(__name__))
+DEEP_SEEK_MODELS = ["deepseek-chat"]
 
 
 class LLMStreamaUsage:
@@ -75,6 +79,37 @@ def invoke_llm(
         kwargs["temperature"] = float(kwargs.get("temperature", 0.8))
         kwargs["stream_options"] = ChatCompletionStreamOptionsParam(include_usage=True)
         response = client.chat.completions.create(
+            model=model, messages=messages, **kwargs
+        )
+
+        for res in response:
+            if len(res.choices) and res.choices[0].delta.content:
+                response_text += res.choices[0].delta.content
+                yield LLMStreamResponse(
+                    res.id,
+                    True if res.choices[0].finish_reason else False,
+                    False,
+                    res.choices[0].delta.content,
+                    res.choices[0].finish_reason,
+                    None,
+                )
+            if res.usage:
+                usage = ModelUsage(
+                    unit="TOKENS",
+                    input=res.usage.prompt_tokens,
+                    output=res.usage.completion_tokens,
+                    total=res.usage.total_tokens,
+                )
+    elif model in DEEP_SEEK_MODELS:
+        messages = []
+        if system:
+            messages.append({"content": system, "role": "system"})
+        messages.append({"content": message, "role": "user"})
+        if json:
+            kwargs["response_format"] = ResponseFormatJSONObject(type="json_object")
+        kwargs["temperature"] = float(kwargs.get("temperature", 0.8))
+        kwargs["stream_options"] = ChatCompletionStreamOptionsParam(include_usage=True)
+        response = deepseek_client.chat.completions.create(
             model=model, messages=messages, **kwargs
         )
 
@@ -202,6 +237,28 @@ def chat_llm(
     if kwargs.get("temperature", None) is not None:
         kwargs["temperature"] = float(kwargs.get("temperature", 0.8))
     if model in OPENAI_MODELS or model.startswith("gpt"):
+        response = client.chat.completions.create(
+            model=model, messages=messages, **kwargs
+        )
+        for res in response:
+            if len(res.choices) and res.choices[0].delta.content:
+                response_text += res.choices[0].delta.content
+                yield LLMStreamResponse(
+                    res.id,
+                    True if res.choices[0].finish_reason else False,
+                    False,
+                    res.choices[0].delta.content,
+                    res.choices[0].finish_reason,
+                    None,
+                )
+            if res.usage:
+                usage = ModelUsage(
+                    unit="TOKENS",
+                    input=res.usage.prompt_tokens,
+                    output=res.usage.completion_tokens,
+                    total=res.usage.total_tokens,
+                )
+    elif model in DEEP_SEEK_MODELS:
         response = client.chat.completions.create(
             model=model, messages=messages, **kwargs
         )

@@ -43,8 +43,7 @@ from ...service.study.const import (
 )
 from ...dao import db
 from .utils import (
-    get_follow_up_ask_prompt,
-    get_follow_up_model,
+    get_follow_up_info,
     get_lesson_system,
     make_script_dto,
     get_profile_array,
@@ -389,41 +388,44 @@ def handle_input_ask(
     trace: Trace,
     trace_args,
 ):
-    # msg = "追问内容：" + input
-    # for i in msg:
-    #     yield make_script_dto("text", i, script_info.script_id)
-    #     time.sleep(0.01)
-    # yield make_script_dto("text_end", "", script_info.script_id)
 
-    # get log history
+    follow_up_info = get_follow_up_info(app, attend, script_info)
+    app.logger.info("follow_up_info:{}".format(follow_up_info.__json__()))
     history_scripts = (
         AICourseLessonAttendScript.query.filter(
             AICourseLessonAttendScript.attend_id == attend.attend_id,
-            AICourseLessonAttendScript.script_id == script_info.script_id,
         )
-        .order_by(AICourseLessonAttendScript.script_index.asc())
+        .order_by(AICourseLessonAttendScript.id.asc())
         .all()
     )
 
     messages = []
     messages.append({"role": "user", "content": "你是老师，请扮演老师的角色回答学员的追问。"})
     for script in history_scripts:
+        if script.script_content is None or script.script_content.strip() == "":
+            continue
         if script.script_role == ROLE_STUDENT:
-            messages.append({"role": "user", "content": script.script_content})
+            if messages[-1].get("role", "") != "user":
+                messages.append({"role": "user", "content": script.script_content})
+            else:
+                messages[-1]["content"] += "\n" + script.script_content
         elif script.script_role == ROLE_TEACHER:
-            messages.append({"role": "assistant", "content": script.script_content})
+            if messages[-1].get("role", "") != "assistant":
+                messages.append({"role": "assistant", "content": script.script_content})
+            else:
+                messages[-1]["content"] += "\n" + script.script_content
     # get system prompt
-    system_prompt = get_lesson_system(script_info.lesson_id)
+    system_prompt = get_lesson_system(app, script_info.lesson_id)
     if system_prompt:
         # add system prompt to messages first
         messages.insert(0, {"role": "system", "content": system_prompt})
     # get follow up ask prompt
-    follow_up_ask_prompt = get_follow_up_ask_prompt(app, attend, script_info)
+    follow_up_ask_prompt = follow_up_info.ask_prompt
     messages.append(
         {"role": "user", "content": follow_up_ask_prompt.format(input=input)}
     )
     # get follow up model
-    follow_up_model = get_follow_up_model(app, attend, script_info)
+    follow_up_model = follow_up_info.ask_model
     # todo 换成通用的
     log_script = generation_attend(app, attend, script_info)
     log_script.script_content = input

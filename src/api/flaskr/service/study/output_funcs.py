@@ -62,7 +62,7 @@ def generate_prompt_output(
     trace_args,
 ):
     span = trace.span(name="prompt_sript")
-    system = get_lesson_system(script_info.lesson_id)
+    system = get_lesson_system(app, script_info.lesson_id)
     system_prompt = (
         None if system is None or system == "" else get_fmt_prompt(app, user_id, system)
     )

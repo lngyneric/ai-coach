@@ -153,6 +153,7 @@ export const ChatComponents = forwardRef(
     },
     ref
   ) => {
+    // console.log('ChatComponents chapterId: ', chapterId);
     const { trackEvent, trackTrailProgress } = useTracking();
     const [chatId, setChatId] = useState('');
     const [lessonId, setLessonId] = useState(null);

@@ -32,9 +32,33 @@
 }
 
 .askButton {
-  width: 50px; /* 设置宽度 */
-  height: 50px; /* 设置高度 */
+  width: 60px; /* 设置宽度 */
+  height: 60px; /* 设置高度 */
   border-radius: 50%; /* 设置成圆形 */
   background-color: #0F63EE; /* 设置底色 */
+  position: absolute; /* 绝对定位 */
+  right: 0; /* 靠右 */
   bottom: 0; /* 靠底 */
+  display: flex;
+  align-items: center;
+  justify-content: center;
+}
+
+.askButtonContent {
+  align-items: center;
+  display: flex;
+  transition: opacity 0.8s ease;
+  flex-direction: column;
+}
+
+.askButtonIcon {
+  margin-bottom: 5px; /* 图标和文字之间的间距 */
+  margin-top: 12px;
+  width: 16px;
+  height: 16px;
+  align-self: center;
+}
+.askButtonText {
+  font-size: 12px;
+  color: #fff;
 }

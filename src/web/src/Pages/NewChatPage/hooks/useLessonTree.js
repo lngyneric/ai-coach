@@ -51,7 +51,6 @@ export const useLessonTree = () => {
   const loadTreeInner = async () => {
     const resp = await getLessonTree();
     const treeData = resp.data;
-
     let lessonCount = 0;
     const catalogs = treeData.lessons.map(l => {
       const lessons = l.children.map(c => {
@@ -163,6 +162,7 @@ export const useLessonTree = () => {
 
   const updateSelectedLesson = async (lessonId, forceExpand = false) => {
     setTree(old => {
+      console.log('old', old);
       if (!old) {
         return
       }
@@ -181,7 +181,6 @@ export const useLessonTree = () => {
           });
         });
       });
-
       return nextState;
     });
   }
@@ -190,12 +189,10 @@ export const useLessonTree = () => {
     if (!tree) {
       return
     }
-
     const ca = tree.catalogs.find(c => c.id === catalogId);
     if (!ca) {
       return
     }
-
     const l = ca.lessons[0];
     if (!l) {
       return

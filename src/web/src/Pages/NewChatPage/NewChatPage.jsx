@@ -127,12 +127,18 @@ const NewChatPage = (props) => {
   ]);
 
   useEffect(() => {
+    console.log('cid: ', cid);
+    console.log('chapterId: ', chapterId);
+    console.log('cid === chapterId: ', cid === chapterId);
+    console.log('cid: ', cid);
+    console.log('chapterId: ', chapterId);
     if (cid === chapterId) {
       return;
-    }
+    }else if (cid ){
     updateChapterId(cid);
-    checkUrl(cid);
-  }, [chapterId, checkUrl, cid, updateChapterId]);
+    }
+    checkUrl();
+  }, [cid, chapterId, checkUrl]);
 
   useEffectOnce(() => {
     (async () => {
@@ -163,7 +169,7 @@ const NewChatPage = (props) => {
   useEffect(() => {
     console.log('updateSelectedLesson: ', lessonId);
     updateSelectedLesson(lessonId);
-  }, [lessonId, updateSelectedLesson]);
+  }, [lessonId]);
 
   const onLoginModalClose = useCallback(async () => {
     setLoginModalOpen(false);
@@ -202,7 +208,6 @@ const NewChatPage = (props) => {
     if (!chapter) {
       return;
     }
-
     changeCurrLesson(id);
     setTimeout(() => {
       if (chapter.id !== chapterId) {

@@ -8,7 +8,7 @@ from ...service.lesson.const import (
     LESSON_TYPE_BRANCH_HIDDEN,
     SCRIPT_TYPE_SYSTEM,
 )
-from ...service.lesson.models import AILesson, AILessonScript
+from ...service.lesson.models import AICourse, AILesson, AILessonScript
 from ...service.order.consts import (
     ATTEND_STATUS_BRANCH,
     ATTEND_STATUS_COMPLETED,
@@ -56,7 +56,7 @@ def check_phone_number(app, user_id, input):
 # 得到一个课程的System Prompt
 
 
-def get_lesson_system(lesson_id: str) -> str:
+def get_lesson_system(app: Flask, lesson_id: str) -> str:
     # 缓存逻辑
     lesson_ids = [lesson_id]
     lesson = AILesson.query.filter(AILesson.lesson_id == lesson_id).first()
@@ -68,10 +68,12 @@ def get_lesson_system(lesson_id: str) -> str:
         parent_lesson = AILesson.query.filter(AILesson.lesson_no == parent_no).first()
         if parent_lesson:
             lesson_ids.append(parent_lesson.lesson_id)
+    app.logger.info("lesson_ids:{}".format(lesson_ids))
     scripts = AILessonScript.query.filter(
-        AILessonScript.lesson_id.in_(lesson_ids) is True,
+        AILessonScript.lesson_id.in_(lesson_ids),
         AILessonScript.script_type == SCRIPT_TYPE_SYSTEM,
     ).all()
+    app.logger.info("scripts:{}".format(scripts))
     if len(scripts) > 0:
         for script in scripts:
             if script.lesson_id == lesson_id:
@@ -439,8 +441,57 @@ def update_attend_lesson_info(app: Flask, attend_id: str) -> list[AILessonAttend
     return res
 
 
-def get_follow_up_ask_prompt(app: Flask, attend, script) -> str:
-    return """# 现在学员在学习上述教学内容时，产生了一些疑问，你需要恰当的回答学员的追问。
+class FollowUpInfo:
+
+    ask_model: str
+    ask_prompt: str
+    ask_history_count: int
+    ask_limit_count: int
+    model_args: dict
+
+    def __init__(
+        self, ask_model, ask_prompt, ask_history_count, ask_limit_count, model_args
+    ):
+        self.ask_model = ask_model
+        self.ask_prompt = ask_prompt
+        self.ask_history_count = ask_history_count
+        self.ask_limit_count = ask_limit_count
+        self.model_args = model_args
+
+    def __json__(self):
+        return {
+            "ask_model": self.ask_model,
+            "ask_prompt": self.ask_prompt,
+            "ask_history_count": self.ask_history_count,
+            "ask_limit_count": self.ask_limit_count,
+            "model_args": self.model_args,
+        }
+
+
+def get_follow_up_model(
+    app: Flask, attend: AICourseLessonAttend, script_info: AILessonScript
+) -> str:
+    if script_info.ask_model and script_info.ask_model.strip():
+        return script_info.ask_model
+
+    ai_lesson = AILesson.query.filter(
+        AILesson.lesson_id == script_info.lesson_id
+    ).first()
+    if ai_lesson and ai_lesson.ask_model and ai_lesson.ask_model.strip():
+        return ai_lesson.ask_model
+
+    ai_course = AICourse.query.filter(AICourse.course_id == ai_lesson.course_id).first()
+    if ai_course and ai_course.ask_model and ai_course.ask_model.strip():
+        return ai_course.ask_model
+
+    return "ERNIE-4.0-8K"
+
+
+def get_follow_up_info(
+    app: Flask, attend: AICourseLessonAttend, script_info: AILessonScript
+) -> FollowUpInfo:
+    ask_model = None
+    ask_prompt = """# 现在学员在学习上述教学内容时，产生了一些疑问，你需要恰当的回答学员的追问。
 
 **你就是老师本人，不要打招呼，直接用第一人称回答！**
 
@@ -456,7 +507,81 @@ def get_follow_up_ask_prompt(app: Flask, attend, script) -> str:
 学员的追问是：
 `{input}`
 """
+    ask_history_count = None
+    ask_limit_count = None
+    model_args = {}
 
+    if script_info.ask_model and script_info.ask_model.strip():
+        ask_model = script_info.ask_model
+    if script_info.ask_prompt and script_info.ask_prompt.strip():
+        ask_prompt = script_info.ask_prompt
+    if script_info.ask_with_history != 0:
+        ask_history_count = script_info.ask_with_history
+    if script_info.ask_count_limit != 0:
+        ask_limit_count = script_info.ask_count_limit
 
-def get_follow_up_model(app: Flask, attend, script) -> str:
-    return "ERNIE-4.0-8K"
+    if (
+        ask_model
+        and ask_prompt
+        and ask_history_count
+        and ask_limit_count
+        and model_args
+    ):
+        return FollowUpInfo(
+            ask_model, ask_prompt, ask_history_count, ask_limit_count, model_args
+        )
+    ai_lesson = AILesson.query.filter(
+        AILesson.lesson_id == script_info.lesson_id
+    ).first()
+    if (
+        ai_lesson
+        and ai_lesson.ask_model
+        and ai_lesson.ask_model.strip()
+        and ask_model is None
+    ):
+        ask_model = ai_lesson.ask_model
+    if (
+        ai_lesson
+        and ai_lesson.ask_prompt
+        and ai_lesson.ask_prompt.strip()
+        and ask_prompt is None
+    ):
+        ask_prompt = ai_lesson.ask_prompt
+    if ai_lesson and ai_lesson.ask_with_history != 0 and ask_history_count is None:
+        ask_history_count = ai_lesson.ask_with_history
+    if ai_lesson and ai_lesson.ask_count_limit != 0 and ask_limit_count is None:
+        ask_limit_count = ai_lesson.ask_count_limit
+
+    if (
+        ask_model
+        and ask_prompt
+        and ask_history_count
+        and ask_limit_count
+        and model_args
+    ):
+        return FollowUpInfo(
+            ask_model, ask_prompt, ask_history_count, ask_limit_count, model_args
+        )
+    ai_course = AICourse.query.filter(AICourse.course_id == ai_lesson.course_id).first()
+    if (
+        ai_course
+        and ai_course.ask_model
+        and ai_course.ask_model.strip()
+        and ask_model is None
+    ):
+        ask_model = ai_course.ask_model
+    if (
+        ai_course
+        and ai_course.ask_prompt
+        and ai_course.ask_prompt.strip()
+        and ask_prompt is None
+    ):
+        ask_prompt = ai_course.ask_prompt
+    if ai_course and ai_course.ask_with_history != 0 and ask_history_count is None:
+        ask_history_count = ai_course.ask_with_history
+    if ai_course and ai_course.ask_count_limit != 0 and ask_limit_count is None:
+        ask_limit_count = ai_course.ask_count_limit
+
+    return FollowUpInfo(
+        ask_model, ask_prompt, ask_history_count, ask_limit_count, model_args
+    )
