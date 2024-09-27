@@ -15,8 +15,23 @@ EDUN_BUSINESS_ID = get_config("EDUN_BUSINESS_ID")
 VERSION = "v5.3"
 
 
-print(EDUN_SECRET_ID)
-print(EDUN_SECRET_KEY)
+EDUN_RESULT_SUGGESTION_PASS = 0
+EDUN_RESULT_SUGGESTION_REVIEW = 1
+EDUN_RESULT_SUGGESTION_REJECT = 2
+
+
+RISK_LABLES = {
+    100: "色情",
+    200: "广告",
+    260: "广告法",
+    300: "暴恐",
+    400: "违禁",
+    500: "涉政",
+    600: "谩骂",
+    700: "灌水",
+    900: "其他",
+    1100: "涉价值观",
+}
 
 
 def gen_signature(params=None):

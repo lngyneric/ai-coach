@@ -54,6 +54,7 @@ def run_script_inner(
     script_id: str = None,
 ) -> Generator[str, None, None]:
     with app.app_context():
+        script_info = None
         try:
             course_info = AICourse.query.filter(AICourse.course_id == course_id).first()
             user_info = User.query.filter(User.user_id == user_id).first()
@@ -334,6 +335,17 @@ def run_script_inner(
                                     )
                         app.logger.info("script_info is None")
                 except BreakException:
+                    if script_info:
+                        yield make_script_dto("text_end", "", None)
+                        yield from handle_ui(
+                            app,
+                            user_id,
+                            attend,
+                            script_info,
+                            input,
+                            trace,
+                            trace_args,
+                        )
                     db.session.commit()
                     return
             else:
