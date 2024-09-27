@@ -243,6 +243,7 @@ export const ChatComponents = forwardRef(
 
     const nextStep = useCallback(
       ({ chatId, lessonId, val, type, scriptId }) => {
+        setAskMode(false);
         setLastSendMsg({ chatId, lessonId, val, type, scriptId });
         let lastMsg = null;
         let isEnd = false;
