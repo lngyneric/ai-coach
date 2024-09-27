@@ -17,6 +17,7 @@ import { memo, useRef, useEffect } from 'react';
 import { useCallback } from 'react';
 import React, { useState } from 'react'; // 添加 useState
 import { Input } from 'antd-mobile';
+import { ConfigProvider } from 'antd';
 
 const INTERACTION_DISPLAY_MAP = {
   [INTERACTION_TYPE.CONTINUE]: INTERACTION_DISPLAY_TYPE.BUTTON,
@@ -128,13 +129,14 @@ export const ChatInteractionArea = ({
         <div className={styles.controlWrapper}>
           {(!isInputVisible) && genRenderControl()} {/* 根据状态显示输入框 */}
           {isInputVisible && <ChatInputText id="askInput" onClick={onSendAsk} type="text" props = {t('chat.askContent')}  visible={isInputVisible}/>}
-        </div>
-        <Button onClick={handleAskClick} className={styles.askButton} disabled={!askMode}>
-          <div className={styles.askButtonContent}>
+
+          <Button onClick={handleAskClick} className={styles.askButton} disabled={!askMode}>
+            <div className={styles.askButtonContent}>
             <img src={require('@Assets/newchat/light/icon16-ask@1x.png')} alt=""  className={styles.askButtonIcon} />
             <span className={styles.askButtonText}>{t('chat.ask')}</span>
           </div>
         </Button>
+        </div>
       </div>
       <div className={styles.tipText}>
         {t('chat.chatTips')}
