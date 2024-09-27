@@ -40,7 +40,11 @@ class ErnieStreamResponse:
         self.result = result
         self.need_clear_history = need_clear_history
         self.finish_reason = finish_reason
-        self.usage = ErnieUsage(**usage) if usage else None
+        if usage:
+            valid_keys = ErnieUsage.__init__.__code__.co_varnames
+            filtered_data = {k: v for k, v in usage.items() if k in valid_keys}
+            self.usage = ErnieUsage(**filtered_data)
+        # self.usage = ErnieUsage(**usage) if usage else None
         self.content_type = content_type
 
 
