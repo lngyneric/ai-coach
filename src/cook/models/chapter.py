@@ -34,10 +34,10 @@ class Chapter:
         return f'{self.name}  ({self.lark_table_id})'
 
 
-def load_chapters_from_api(base_url=cfg.API_URL) -> list[Chapter]:
+def load_chapters_from_api(doc_id=cfg.LARK_APP_TOKEN, base_url=cfg.API_URL) -> list[Chapter]:
     url = f'{base_url}/lesson/get_chatper_info'
     params = {
-        'doc_id': cfg.LARK_APP_TOKEN
+        'doc_id': doc_id
     }
 
     response = requests.get(url, params=params)
