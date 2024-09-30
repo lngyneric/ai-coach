@@ -30,8 +30,9 @@ node_modules
 =======
 
 # cook
-# src/cook/test*.py
-# auth_config.yml
+src/cook/test*
+src/cook/codesifu-demo.db
+src/cook/auth_config.yml
 
 # Byte-compiled / optimized / DLL files
 __pycache__/
@@ -196,5 +197,3 @@ cython_debug/
 
 # VS Code
 .vscode/
-src/cook/test*
-src/cook/codesifu-demo.db
