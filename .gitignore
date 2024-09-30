@@ -28,7 +28,10 @@ yarn-error.log*
 node_modules
 >>>>>>> merge_api
 =======
-# test*.py
+
+# cook
+# src/cook/test*.py
+# auth_config.yml
 
 # Byte-compiled / optimized / DLL files
 __pycache__/
