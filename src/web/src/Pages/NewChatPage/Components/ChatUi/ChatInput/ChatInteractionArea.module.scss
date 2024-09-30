@@ -41,8 +41,9 @@
 
   position: absolute; /* 绝对定位 */
   right: 10px; /* 靠右 */
-  bottom: 10px; /* 靠底 */
+  bottom: 2px; /* 靠底 */
   display: flex;
+  flex-direction: row;
   align-items: center;
   justify-content: center;
 }
