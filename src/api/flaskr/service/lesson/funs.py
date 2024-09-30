@@ -570,9 +570,9 @@ def update_lesson_ask_info(
         if lesson is None:
             raise LESSON_NOT_FOUND
         lesson.lesson_ask_count_limit = lesson_ask_count_limit
-        lesson.lesson_ask_model = lesson_ask_model
-        lesson.lesson_ask_prompt = lesson_ask_prompt
-        lesson.lesson_ask_count_history = lesson_ask_count_history
+        lesson.ask_model = lesson_ask_model
+        lesson.ask_prompt = lesson_ask_prompt
+        lesson.ask_with_history = lesson_ask_count_history
         lesson.lesson_summary = lesson_summary
         lesson.lesson_language = lesson_language
         lesson.lesson_name_multi_language = lesson_name_multi_language
