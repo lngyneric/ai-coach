@@ -310,7 +310,7 @@ def register_lesson_handler(app: Flask, path_prefix: str) -> Flask:
         )
 
         app.logger.info(
-            "update_lesson_ask_info: lesson_id: %s, lesson_ask_count_limit: %s, lesson_ask_model: %s, lesson_ask_prompt: %s, lesson_ask_count_history: %s, lesson_summary: %s, lesson_language: %s, lesson_name_multi_language: %s, lesson_summary_multi_language: %s",  # noqa: E501
+            "update_lesson_ask_info: lesson_id: %s, lesson_ask_count_limit: %s, lesson_ask_model: %s, lesson_ask_prompt: %s, lesson_ask_count_history: %s, lesson_summary: %s, lesson_language: %s, lesson_name_multi_language: %s, lesson_summary_multi_language: %s",  # noqa
             lesson_id,
             lesson_ask_count_limit,
             lesson_ask_model,
