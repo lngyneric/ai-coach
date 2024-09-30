@@ -40,15 +40,11 @@
   // background-color: var(--color-1);/* 设置底色 */
 
   position: absolute; /* 绝对定位 */
-  right: 0; /* 靠右 */
-  bottom: 0; /* 靠底 */
+  right: 10px; /* 靠右 */
+  bottom: 10px; /* 靠底 */
   display: flex;
   align-items: center;
   justify-content: center;
-
-  // &:hover {
-  //   background-color: var(--color-6) !important;
-  // }
 }
 
 .askButtonContent {
