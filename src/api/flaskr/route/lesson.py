@@ -280,15 +280,31 @@ def register_lesson_handler(app: Flask, path_prefix: str) -> Flask:
                                     description: 更新结果
         """
         lesson_id = request.get_json().get("lesson_id")
+        if not lesson_id:
+            raise_param_error("lesson_id is not found")
         lesson_ask_count_limit = request.get_json().get("lesson_ask_count_limit")
+        if not lesson_ask_count_limit:
+            raise_param_error("lesson_ask_count_limit is not found")
         lesson_ask_model = request.get_json().get("lesson_ask_model")
+        if not lesson_ask_model:
+            raise_param_error("lesson_ask_model is not found")
         lesson_ask_prompt = request.get_json().get("lesson_ask_prompt")
+        if not lesson_ask_prompt:
+            raise_param_error("lesson_ask_prompt is not found")
         lesson_ask_count_history = request.get_json().get("lesson_ask_count_history")
+        if not lesson_ask_count_history:
+            raise_param_error("lesson_ask_count_history is not found")
         lesson_summary = request.get_json().get("lesson_summary")
+        if not lesson_summary:
+            raise_param_error("lesson_summary is not found")
         lesson_language = request.get_json().get("lesson_language", "zh")
+        if not lesson_language:
+            raise_param_error("lesson_language is not found")
         lesson_name_multi_language = request.get_json().get(
             "lesson_name_multi_language", "{}"
         )
+        if not lesson_name_multi_language:
+            raise_param_error("lesson_name_multi_language is not found")
         lesson_summary_multi_language = request.get_json().get(
             "lesson_summary_multi_language", "{}"
         )
