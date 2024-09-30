@@ -308,6 +308,19 @@ def register_lesson_handler(app: Flask, path_prefix: str) -> Flask:
         lesson_summary_multi_language = request.get_json().get(
             "lesson_summary_multi_language", "{}"
         )
+
+        app.logger.info(
+            "update_lesson_ask_info: lesson_id: %s, lesson_ask_count_limit: %s, lesson_ask_model: %s, lesson_ask_prompt: %s, lesson_ask_count_history: %s, lesson_summary: %s, lesson_language: %s, lesson_name_multi_language: %s, lesson_summary_multi_language: %s",  # noqa: E501
+            lesson_id,
+            lesson_ask_count_limit,
+            lesson_ask_model,
+            lesson_ask_prompt,
+            lesson_ask_count_history,
+            lesson_summary,
+            lesson_language,
+            lesson_name_multi_language,
+            lesson_summary_multi_language,
+        )
         return make_common_response(
             update_lesson_ask_info(
                 app,
