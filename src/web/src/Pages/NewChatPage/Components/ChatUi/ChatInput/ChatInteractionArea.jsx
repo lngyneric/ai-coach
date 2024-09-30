@@ -8,6 +8,8 @@ import ChatButtonGroup from './ChatButtonGroup.jsx';
 import ChatInputButton from './ChatInputButton.jsx';
 import { useTranslation } from 'react-i18next';
 import { Button } from 'antd';
+
+import MainButton from 'Components/MainButton.jsx';
 import {
   INTERACTION_TYPE,
   INTERACTION_DISPLAY_TYPE,
@@ -18,6 +20,7 @@ import { useCallback } from 'react';
 import React, { useState } from 'react'; // 添加 useState
 import { Input } from 'antd-mobile';
 import { ConfigProvider } from 'antd';
+import askIcon from '@Assets/newchat/light/svg-ask-16.svg';
 
 const INTERACTION_DISPLAY_MAP = {
   [INTERACTION_TYPE.CONTINUE]: INTERACTION_DISPLAY_TYPE.BUTTON,
@@ -129,13 +132,25 @@ export const ChatInteractionArea = ({
         <div className={styles.controlWrapper}>
           {(!isInputVisible) && genRenderControl()} {/* 根据状态显示输入框 */}
           {isInputVisible && <ChatInputText id="askInput" onClick={onSendAsk} type="text" props = {t('chat.askContent')}  visible={isInputVisible}/>}
-
-          <Button onClick={handleAskClick} className={styles.askButton} disabled={!askMode}>
+          <ConfigProvider
+      theme={{
+        components: {
+          Button: {
+            colorPrimary: '#042ED2',
+            colorPrimaryHover: '#3658DB',
+            colorPrimaryActive: '#0325A8',
+            lineWidth: 0,
+          },
+        },
+      }}
+    >
+          <Button   type="primary" onClick={handleAskClick} className={styles.askButton} disabled={!askMode}>
             <div className={styles.askButtonContent}>
-            <img src={require('@Assets/newchat/light/icon16-ask@1x.png')} alt=""  className={styles.askButtonIcon} />
+            <img src={askIcon} alt="" className={styles.askButtonIcon} />
             <span className={styles.askButtonText}>{t('chat.ask')}</span>
           </div>
         </Button>
+        </ConfigProvider>
         </div>
       </div>
       <div className={styles.tipText}>
