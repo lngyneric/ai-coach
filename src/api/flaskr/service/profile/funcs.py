@@ -46,7 +46,11 @@ PROFILES_LABLES = {
     "ai_tools": {
         "label": "编程工具",
         "items": ["GitHub Copilot", "通义灵码"],
-        "items_mapping": {"GitHub_Copilot": "GitHub Copilot", "通义灵码": "通义灵码"},
+        "items_mapping": {
+            "GitHub_Copilot": "GitHub Copilot",
+            "通义灵码": "通义灵码",
+            "Cursor": "Cursor",
+        },
     },
     "style": {"label": "授课风格", "items": ["幽默风趣", "严肃专业", "鼓励温暖"]},
     "programming": {"label": "编程熟悉程度", "items": ["完全没接触过", "学过但还无法编写程序", "会1门及以上语言"]},
