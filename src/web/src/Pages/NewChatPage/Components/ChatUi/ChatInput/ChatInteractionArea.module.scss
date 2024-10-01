@@ -8,8 +8,6 @@
   opacity: 1;
   background: rgba(255, 255, 255, 0.8);
   backdrop-filter: blur(15px);
-
-
   &.disabled {
     opacity: 0.3;
   }
@@ -22,6 +20,7 @@
     padding: 12px;
   }
 }
+
 .controlContainer {
   position: relative;
 }
@@ -31,43 +30,41 @@
   width: calc(100% - 60px); /* 减去按钮的宽度和间距 */
 }
 
-
 .controlWrapper {
-.askButton {
-  width: 60px;
-  height: 60px;
-  border-radius: 50%;
+  .askButton {
+    width: 60px;
+    height: 60px;
+    border-radius: 50%;
 
-  position: absolute;
-  right: 10px;
-  bottom: 2px;
-  display: flex;
-  flex-direction: row;
-  align-items: center;
-  justify-content: center;
-}
+    position: absolute;
+    right: 10px;
+    bottom: 2px;
+    display: flex;
+    flex-direction: row;
+    align-items: center;
+    justify-content: center;
+  }
 
-.askButtonContent {
-  align-items: center;
-  display: flex;
-  transition: opacity 0.8s ease;
-  flex-direction: column;
-}
+  .askButtonContent {
+    align-items: center;
+    display: flex;
+    transition: opacity 0.8s ease;
+    flex-direction: column;
+  }
 
-.askButtonIcon {
-  margin-bottom: 5px; /* 图标和文字之间的间距 */
-  margin-top: 12px;
-  width: 16px;
-  height: 16px;
-  align-self: center;
-}
-.askButtonText {
-  font-size: 12px;
-  color: #fff;
-  white-space: nowrap;
-  overflow: hidden;
-  text-overflow: ellipsis;
+  .askButtonIcon {
+    margin-bottom: 5px; /* margin between icon and text */
+    margin-top: 12px;
+    width: 16px;
+    height: 16px;
+    align-self: center;
+  }
 
-}
-
+  .askButtonText {
+    font-size: 12px;
+    color: #fff;
+    white-space: nowrap;
+    overflow: hidden;
+    text-overflow: ellipsis;
+  }
 }
