@@ -89,6 +89,41 @@ class AILessonInfoDTO:
 
 
 @register_schema_to_swagger
+class AICourseDetailDTO:
+    def __init__(
+        self,
+        course_id: str,
+        course_name: str,
+        course_desc: str,
+        course_price: str,
+        course_status: str,
+        course_feishu_id: str,
+        status: int,
+        lesson_list: list[AILessonInfoDTO],
+    ):
+        self.course_id = course_id
+        self.course_name = course_name
+        self.course_desc = course_desc
+        self.course_price = course_price
+        self.course_status = course_status
+        self.course_feishu_id = course_feishu_id
+        self.status = status
+        self.lesson_list = lesson_list
+
+    def __json__(self):
+        return {
+            "course_id": self.course_id,
+            "course_name": self.course_name,
+            "course_desc": self.course_desc,
+            "course_price": self.course_price,
+            "course_status": self.course_status,
+            "course_feishu_id": self.course_feishu_id,
+            "status": self.status,
+            "lesson_list": [lesson.__json__() for lesson in self.lesson_list],
+        }
+
+
+@register_schema_to_swagger
 class AILessonDetailDTO:
     def __init__(
         self,
@@ -482,11 +517,12 @@ def run_lesson_script(app: Flask, lesson_id: str, script_id: str):
 
 
 # 得到课程列表
-def get_lessons(app: Flask, feshu_doc_id) -> list[AILessonInfoDTO]:
+def get_lessons(app: Flask, feshu_doc_id) -> AICourseDetailDTO:
     with app.app_context():
         course = AICourse.query.filter(
             AICourse.course_feishu_id == feshu_doc_id
         ).first()
+
         if course is None:
             return []
         lessons = AILesson.query.filter(
@@ -505,7 +541,16 @@ def get_lessons(app: Flask, feshu_doc_id) -> list[AILessonInfoDTO]:
                 lesson.lesson_type,
             )
             lessonInfos.append(lessonInfo)
-        return lessonInfos
+        return AICourseDetailDTO(
+            course.course_id,
+            course.course_name,
+            course.course_desc,
+            course.course_price,
+            course.course_status,
+            course.course_feishu_id,
+            course.status,
+            lessonInfos,
+        )
 
 
 def get_lesson_detail(app: Flask, lesson_id: str) -> AILessonDetailDTO:
