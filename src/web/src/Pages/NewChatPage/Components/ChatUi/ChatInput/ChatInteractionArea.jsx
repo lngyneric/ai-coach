@@ -24,7 +24,6 @@ const INTERACTION_DISPLAY_MAP = {
   [INTERACTION_TYPE.PHONE]: INTERACTION_DISPLAY_TYPE.TEXT,
   [INTERACTION_TYPE.CHECKCODE]: INTERACTION_DISPLAY_TYPE.TEXT,
   [INTERACTION_TYPE.ORDER]: INTERACTION_DISPLAY_TYPE.BUTTON,
-  // [INTERACTION_TYPE.ASK]: INTERACTION_DISPLAY_TYPE.TEXT,
 };
 
 export const ChatInteractionArea = ({
@@ -33,10 +32,7 @@ export const ChatInteractionArea = ({
   onSend = (type, val) => {},
   disabled = false,
   askMode = false,
-  askVisible = true,
-  askContent = "请输入追问内容",
   onSizeChange = ({ width, height }) => {},
-
 }) => {
   const displayType = INTERACTION_DISPLAY_MAP[type];
   const elemRef = useRef();
@@ -107,13 +103,12 @@ export const ChatInteractionArea = ({
       }
     });
     resize.observe(elemRef?.current);
-    // 及时销毁监听函数（重要!!!）
+    // Destroy the observer in a timely manner (important!!!)
     const curr = elemRef?.current;
     return () => {
       resize.unobserve(curr);
     };
   }, [resizeChange]);
-
 
   return (
     <div
@@ -122,27 +117,27 @@ export const ChatInteractionArea = ({
     >
       <div className={styles.controlContainer}>
         <div className={styles.controlWrapper}>
-          {(!isInputVisible) && genRenderControl()} {/* 根据状态显示输入框 */}
+          {(!isInputVisible) && genRenderControl()} {/* Display input box based on state */}
           {isInputVisible && <ChatInputText id="askInput" onClick={onSendAsk} type="text" props = {t('chat.askContent')}  visible={isInputVisible}/>}
           <ConfigProvider
-      theme={{
-        components: {
-          Button: {
-            colorPrimary: '#042ED2',
-            colorPrimaryHover: '#3658DB',
-            colorPrimaryActive: '#0325A8',
-            lineWidth: 0,
-          },
-        },
-      }}
-    >
-          <Button   type="primary" onClick={handleAskClick} className={styles.askButton} disabled={!askMode}>
-            <div className={styles.askButtonContent}>
-            <img src={askIcon} alt="" className={styles.askButtonIcon} />
-            <span className={styles.askButtonText}>{t('chat.ask')}</span>
-          </div>
-        </Button>
-        </ConfigProvider>
+            theme={{
+              components: {
+                Button: {
+                  colorPrimary: '#042ED2',
+                  colorPrimaryHover: '#3658DB',
+                  colorPrimaryActive: '#0325A8',
+                  lineWidth: 0,
+                },
+              },
+            }}
+          >
+            <Button type="primary" onClick={handleAskClick} className={styles.askButton} disabled={!askMode}>
+              <div className={styles.askButtonContent}>
+                <img src={askIcon} alt="" className={styles.askButtonIcon} />
+                <span className={styles.askButtonText}>{t('chat.ask')}</span>
+              </div>
+            </Button>
+          </ConfigProvider>
         </div>
       </div>
       <div className={styles.tipText}>
