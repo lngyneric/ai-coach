@@ -133,7 +133,7 @@ def register_lesson_handler(app: Flask, path_prefix: str) -> Flask:
                                 data:
                                     type: array
                                     items:
-                                        $ref: "#/components/schemas/AILessonInfoDTO"
+                                        $ref: "#/components/schemas/AICourseDetailDTO"
         """
         doc_id = request.args.get("doc_id")
         if not doc_id:
