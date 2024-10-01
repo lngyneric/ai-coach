@@ -29,16 +29,14 @@
     "msgToInputPwd": "请输入密码",
     "msgCheckCode": "图形验证码",
     "msgToCheckAgreement": "请勾选同意协议"
-
   },
   "pay": {
     "payModalTitle": "购买",
     "payChannel": "支付方式",
     "payChannelWechat": "微信",
     "payChannelAlipay": "支付宝"
-
   },
-  "groupon":{
+  "groupon": {
     "grouponTitle": "优惠码",
     "grouponPlaceholder": "请输入优惠码",
     "grouponInputMsg": "请输入优惠码"
@@ -57,7 +55,7 @@
     "userAggrement": "服务协议",
     "privacyPolicy": "隐私政策"
   },
-  "settings":{
+  "settings": {
     "home": "主页",
     "settingTite": "个人信息"
   },
@@ -71,16 +69,15 @@
     "feedbackContentEmpty": "反馈内容不能为空",
     "feedbackContactEmpty": "联系方式不能为空"
   },
-  "chat":{
+  "chat": {
     "chatInputWarn": "请输入内容",
     "chatInputPlaceholder": "请输入内容",
-    "chatTips":"内容由 AI 大模型生成，无法确保真实准确，仅供学习参考",
+    "chatTips": "内容由 AI 大模型生成，无法确保真实准确，仅供学习参考",
     "copyText": "复制",
     "copySuccess": "已复制到剪切板",
-    "askContent":"请输入追问内容",
-    "ask":"追问"
+    "askContent": "对刚学的内容有什么问题？",
+    "ask": "追问"
   },
-
   "lesson": {
     "reset": {
       "resetTitle": "重修",
