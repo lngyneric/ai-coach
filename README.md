@@ -1,51 +1,32 @@
-# 哎！师傅
-
-
+AI Shifu is an open-source conversational AI powered by LLM, designed to lead and control dialogues. Unlike other chatbots, AI Shifu guides the conversation, while users can ask questions that influence the content, the dialogue always returns to the AI's main storyline. With human-designed prompt scripts, AI Shifu avoids hallucinations and minimizes user interference, offering a dynamic and autonomous conversational experience ideal for education, storytelling, product demos, surveys, interviews, and game NPCs.
 
 [![GitHub stars](https://img.shields.io/github/stars/ai-shifu/ai-shifu?style=social)](https://github.com/ai-shifu/ai-shifu/stargazers)
 [![GitHub followers](https://img.shields.io/github/followers/ai-shifu?style=social)](https://github.com/ai-shifu?tab=followers)
 
-## 我们是谁
+# Features
 
-## 我们在干什么
+To be filled
 
+# Using AI Shifu
 
+- **Platform**
+[AI-Shifu.com](https://ai-shifu.com) is an education platform powered by AI Shifu. You can try it and learn the AI-driven courses developed by experts.
 
-## 贡献者
+- **Self-hosting**
+Quickly get AI Shifu running in your environment with this [starter guide](#quick-start).
 
-[![GitHub contributors](https://img.shields.io/github/contributors/ai-shifu/ai-shifu?style=social)](https://github.com/ai-shifu/ai-shifu/graphs/contributors)
+# Quick Start
 
-## 如何开始
-
-clone 项目到本地
+Make sure that [Docker](https://docs.docker.com/get-docker/) and [Docker Compose](https://docs.docker.com/compose/install/) are installed on your machine. Then run the following command to start AI Shifu:
 
 ```bash
 git clone git@github.com:ai-shifu/ai-shifu.git
-```
-
-进入项目目录
-
-```bash
-cd ai-shifu
-```
-
-一健启动项目
-
-配置您的环境变量在 `docker/.env` 文件中
-
-```bash
-cd docker
-./run_in_docker.sh
-```
-
-或是集成开发环境
-配置您的环境变量在 `docker/.dev.env` 文件中
-```bash
-cd docker
+cd ai-shifu/docker
+cp .env.example .env
+# Edit .env file to fill your configure
 ./dev_in_docker.sh
 ```
 
-## 如何贡献
+# Contributors
 
-
-## 联系我们
+To be updated.
