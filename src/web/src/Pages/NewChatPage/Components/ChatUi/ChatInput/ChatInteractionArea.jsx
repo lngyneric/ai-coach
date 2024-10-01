@@ -1,7 +1,3 @@
-/**
- * 聊天输入区域
- * 目前有三种类型的输入，下一步，文本，按钮组
- */
 import styles from './ChatInteractionArea.module.scss';
 import ChatInputText from './ChatInputText.jsx';
 import ChatButtonGroup from './ChatButtonGroup.jsx';
@@ -9,7 +5,6 @@ import ChatInputButton from './ChatInputButton.jsx';
 import { useTranslation } from 'react-i18next';
 import { Button } from 'antd';
 
-import MainButton from 'Components/MainButton.jsx';
 import {
   INTERACTION_TYPE,
   INTERACTION_DISPLAY_TYPE,
@@ -17,8 +12,7 @@ import {
 import classNames from 'classnames';
 import { memo, useRef, useEffect } from 'react';
 import { useCallback } from 'react';
-import React, { useState } from 'react'; // 添加 useState
-import { Input } from 'antd-mobile';
+import React, { useState } from 'react';
 import { ConfigProvider } from 'antd';
 import askIcon from '@Assets/newchat/light/svg-ask-16.svg';
 
@@ -47,7 +41,7 @@ export const ChatInteractionArea = ({
   const displayType = INTERACTION_DISPLAY_MAP[type];
   const elemRef = useRef();
   const {t} = useTranslation();
-  const [isInputVisible, setInputVisible] = useState(false); // 添加状态
+  const [isInputVisible, setInputVisible] = useState(false);
 
   const onSendFunc = (type, val) => {
     if (disabled) {
@@ -97,7 +91,7 @@ export const ChatInteractionArea = ({
     });
   }, [onSizeChange]);
   const handleAskClick = () => {
-    setInputVisible(!isInputVisible); // 显示输入框
+    setInputVisible(!isInputVisible);
   };
 
   const onSendAsk = (type, val) => {
@@ -106,14 +100,12 @@ export const ChatInteractionArea = ({
   };
 
   useEffect(() => {
-    // 监听的函数
     const resize = new ResizeObserver((e) => {
       if (!Array.isArray(e) || !e.length) return;
       for (const ent of e) {
         resizeChange(ent);
       }
     });
-    // 传入监听对象
     resize.observe(elemRef?.current);
     // 及时销毁监听函数（重要!!!）
     const curr = elemRef?.current;

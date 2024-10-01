@@ -27,21 +27,20 @@
 }
 
 .controlWrapper {
-  display: inline-block; /* 使内容在一行 */
+  display: inline-block;
   width: calc(100% - 60px); /* 减去按钮的宽度和间距 */
 }
 
 
 .controlWrapper {
 .askButton {
-  width: 60px; /* 设置宽度 */
-  height: 60px; /* 设置高度 */
-  border-radius: 50%; /* 设置成圆形 */
-  // background-color: var(--color-1);/* 设置底色 */
+  width: 60px;
+  height: 60px;
+  border-radius: 50%;
 
-  position: absolute; /* 绝对定位 */
-  right: 10px; /* 靠右 */
-  bottom: 2px; /* 靠底 */
+  position: absolute;
+  right: 10px;
+  bottom: 2px;
   display: flex;
   flex-direction: row;
   align-items: center;
@@ -65,9 +64,9 @@
 .askButtonText {
   font-size: 12px;
   color: #fff;
-  white-space: nowrap; /* 防止文字换行 */
-  overflow: hidden; /* 隐藏超出部分 */
-  text-overflow: ellipsis; /* 使用省略号表示超出部分 */
+  white-space: nowrap;
+  overflow: hidden;
+  text-overflow: ellipsis;
 
 }
 
