@@ -23,6 +23,7 @@ ENV PIP_TRUSTED_HOST=mirrors.aliyun.com
 # 安装依赖
 COPY requirements.txt .
 RUN pip install -r requirements.txt
+RUN pip install gunicorn
 
 # 复制当前目录内容到容器的/app内
 COPY app.py app.py
