@@ -5,11 +5,7 @@
     display: flex;
     flex-flow: row wrap;
     justify-content: center;
-
-    .selectBtn {
-      margin-top: 10px;
-      margin-left: 10px;
-    }
+    gap: 10px;
   }
 }
 

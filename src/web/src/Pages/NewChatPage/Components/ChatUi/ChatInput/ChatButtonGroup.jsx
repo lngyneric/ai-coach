@@ -4,9 +4,6 @@ import { INTERACTION_OUTPUT_TYPE } from 'constants/courseConstants.js';
 import { memo } from "react";
 
 
-/**
- * 聊天按钮组控件
- */
 export const ChatButtonGroup = ({ type, props = [], onClick = (val) => {}, disabled = false }) => {
   const buttons = props.buttons;
 
@@ -18,7 +15,6 @@ export const ChatButtonGroup = ({ type, props = [], onClick = (val) => {}, disab
             return <MainButton
               key={i}
               onClick={() => onClick?.(INTERACTION_OUTPUT_TYPE.SELECT, e.value)}
-              style={{margin: '10px 0 0 10px'}}
               disabled={disabled}
             >{e.label}</MainButton>
           })
