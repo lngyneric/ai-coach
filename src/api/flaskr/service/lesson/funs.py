@@ -115,7 +115,7 @@ class AICourseDetailDTO:
             "course_id": self.course_id,
             "course_name": self.course_name,
             "course_desc": self.course_desc,
-            "course_price": self.course_price,
+            "course_price": str(self.course_price),
             "course_status": self.course_status,
             "course_feishu_id": self.course_feishu_id,
             "status": self.status,
