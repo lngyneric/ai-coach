@@ -8,11 +8,11 @@ export const getViewInfo = async (view_name) => {
     });
 }
 
-export const queryView = async (view_name, page, page_size, query) => {
+export const queryView = async (view_name, page, page_size, query,sort) => {
     return request({
         url: '/api/manager/query-view',
         method: 'post',
-        data: { view_name, page, page_size, query },
+        data: { view_name, page, page_size, query,sort },
     });
 }
 

@@ -20,6 +20,7 @@ const CommonListPage = ({viewName}) => {
   const [pageViewName,setPageViewName] = useState(viewName)
   const [createModelViewName,setCreateViewName] = useState("")
   const [createModelLoad,setCreateModelLoad] = useState(false)
+  const [sort,setSort] = useState([])
 
 
   useEffect(()=>{
@@ -80,6 +81,7 @@ const CommonListPage = ({viewName}) => {
       setSearchDefine(res.data.queryinput);
       setSearchParams({})
       setCurrentPage(1)
+      setSort([])
     });
   }, [pageViewName]);
   const [contactInfoList, setContactInfoList] = useState([]);
@@ -93,7 +95,8 @@ const CommonListPage = ({viewName}) => {
       ...defaultParams
     }
     console.log(params)
-    queryView(pageViewName,currentPage,pageSize,params)
+    console.log("sort",sort)
+    queryView(pageViewName,currentPage,pageSize,params,sort)
       .then((res) => {
         setTotal(res.data.total);
         setContactInfoList(res.data.items);
@@ -123,9 +126,22 @@ const CommonListPage = ({viewName}) => {
     console.log(params)
     exportQuery(pageViewName,params)
   }
+  const onSortChange = (sorter) => {
+    console.log(sorter)
+    if (sorter.order !== undefined){
+      // add to sort
+      const sorterAdd = {column:sorter.field,order: sorter.order}
+      const lastSort = sort.filter(item=>item.column !== sorter.field)
+      console.log("lastSort",lastSort)
+      setSort([...lastSort,sorterAdd])
+    }else {
+      // remove from sort
+      setSort(sort.filter(item => item.column !== sorter.field))
+    }
+  }
 
   useEffect(() => {
-  queryData()}, [pageSize,currentPage,searchParams]);
+  queryData()}, [pageSize,currentPage,searchParams,sort]);
   return (
     <Space direction="vertical" size="large" style={{ display: "flex" }}>
       <SearchForm onSearch={onSearch} onReset={onReset} inputs={searchDefine} operations = {formOperationItems} onClickOperation={onClickOperation} onExport={onExport}></SearchForm>
@@ -134,6 +150,7 @@ const CommonListPage = ({viewName}) => {
         dataColumns={colum}
         dataSource={contactInfoList}
         loading={loading}
+        onSortChange={onSortChange}
       ></CommonListTable>
       <Pagination pageSize={pageSize} onChange={onPaginationChange} current={currentPage} total={total} ></Pagination>
       <CommonCreateModel open={false} onCancel={()=>{}} onOk={()=>{}} viewName={createModelViewName} load={createModelLoad}></CommonCreateModel>

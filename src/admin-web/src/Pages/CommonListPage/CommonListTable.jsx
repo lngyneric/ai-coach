@@ -4,22 +4,23 @@ import { useState, useRef } from "react";
 
 import { useNavigate } from "react-router-dom";
 
-
-
-
 const CommonListTable = ({
   loading,
   dataSource,
   dataColumns,
   onTableChage,
-  operationItems
+  operationItems,
+  onSortChange // 新增的回调函数
 }) => {
   const navigate = useNavigate();
   /**
    * @description 表格 column
    * @type {*} */
   const columns = [
-    ...dataColumns,
+    ...dataColumns.map(column => ({
+      ...column,
+      sorter: true, // 添加排序功能
+    })),
     ...operationItems.map((item) => {
       return {
         title: item.label,
@@ -57,6 +58,15 @@ const CommonListTable = ({
     setTableOffsetTop(tableRef.current.offsetTop + 60);
   }, [tableOffsetTop]);
 
+  const handleTableChange = (pagination, filters, sorter) => {
+    if (onTableChage) {
+      onTableChage(pagination, filters, sorter);
+    }
+    if (onSortChange) {
+      onSortChange(sorter); // 调用排序变化的回调函数
+    }
+  };
+
   return (
     <Table
       ref={tableRef}
@@ -64,11 +74,12 @@ const CommonListTable = ({
       showSorterTooltip={false}
       columns={columns}
       dataSource={dataSource}
-      onChange={onTableChage}
+      onChange={handleTableChange} // 使用新的回调函数
       loading={loading}
       pagination={false}
       rowKey="id"
       scroll={{ x: 1300 }}
+      sortDirections={['ascend', 'descend']} // 支持多列排序
     ></Table>
   );
 };

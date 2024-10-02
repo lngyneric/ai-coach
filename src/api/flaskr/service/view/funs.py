@@ -19,12 +19,13 @@ def query_view(
     page: int = 1,
     page_size: int = 20,
     query=None,
+    sort=[],
 ):
     view = views.get(view_name, None)
     if view is None:
         raise VIEW_NOT_FOUND
     else:
-        return view.query(app, page, page_size, query)
+        return view.query(app, page, page_size, query, sort)
 
 
 def export_query(app: Flask, user_id: str, view_name: str, query=None):
