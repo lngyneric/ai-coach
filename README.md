@@ -29,4 +29,14 @@ cp .env.example .env
 
 # Contributors
 
+Code contributions should be checked with pre-commit hooks.
+
+1. install pre-commit
+```bash
+pip install pre-commit
+pre-commit install
+```
+
+
+
 To be updated.
