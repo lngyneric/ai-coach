@@ -1,9 +1,8 @@
-import time
 import traceback
 from typing import Generator
 from flask import Flask
 
-from flaskr.service.common.models import COURSE_NOT_FOUND
+from flaskr.service.common.models import COURSE_NOT_FOUND, LESSON_NOT_FOUND_IN_COURSE
 from flaskr.service.user.models import User
 from ...api.langfuse import langfuse_client as langfuse
 from ...service.lesson.const import (
@@ -12,7 +11,7 @@ from ...service.lesson.const import (
     UI_TYPE_PHONE,
     UI_TYPE_TO_PAY,
 )
-from ...service.lesson.models import AICourse, AILesson
+from ...service.lesson.models import AILesson
 from ...service.order.consts import (
     ATTEND_STATUS_BRANCH,
     ATTEND_STATUS_IN_PROGRESS,
@@ -56,18 +55,22 @@ def run_script_inner(
     with app.app_context():
         script_info = None
         try:
-            course_info = AICourse.query.filter(AICourse.course_id == course_id).first()
             user_info = User.query.filter(User.user_id == user_id).first()
-            if not course_info:
-                course_info = AICourse.query.first()
-                course_id = course_info.course_id
             if not lesson_id:
                 app.logger.info("lesson_id is None")
+                if not course_id:
+                    raise COURSE_NOT_FOUND
+                lesson_info = AILesson.query.filter(
+                    AILesson.lesson_id == lesson_id,
+                    AILesson.status == 1,
+                ).first()
+                if not lesson_info:
+                    raise LESSON_NOT_FOUND_IN_COURSE
+                course_id = lesson_info.course_id
                 buy_record = AICourseBuyRecord.query.filter_by(
                     user_id=user_id, course_id=course_id
                 ).first()
                 if not buy_record:
-
                     app.logger.info(
                         "user_id:{},course_id:{},lesson_id:{}".format(
                             user_id, course_id, lesson_id
@@ -77,27 +80,24 @@ def run_script_inner(
                 attend = get_current_lesson(app, lessons)
                 app.logger.info("{}".format(attend))
                 lesson_id = attend.lesson_id
-
             else:
-                # get attend info
+                lesson_info = AILesson.query.filter(
+                    AILesson.lesson_id == lesson_id,
+                    AILesson.status == 1,
+                ).first()
+                if not lesson_info:
+                    raise LESSON_NOT_FOUND_IN_COURSE
+                course_id = lesson_info.course_id
                 app.logger.info(
                     "user_id:{},course_id:{},lesson_id:{}".format(
                         user_id, course_id, lesson_id
                     )
                 )
-                # 查找lesson_id
-                lesson_info = AILesson.query.filter(
-                    AILesson.lesson_id == lesson_id,
-                    AILesson.status == 1,
-                    AILesson.course_id == course_id,
-                ).first()
                 if not lesson_info:
                     raise COURSE_NOT_FOUND
-
                 parent_no = lesson_info.lesson_no
                 if len(parent_no) >= 2:
                     parent_no = parent_no[:-2]
-
                 lessons = AILesson.query.filter(
                     AILesson.lesson_no.like(parent_no + "__"),
                     AILesson.status == 1,
@@ -123,26 +123,14 @@ def run_script_inner(
                 ).first()
 
                 if not attend_info:
-                    # # 没有课程记录
-                    # for i in "请购买课程":
-                    #     yield make_script_dto("text", i, None)
-                    #     time.sleep(0.01)
-                    # yield make_script_dto("text_end", "", None)
                     app.logger.info("found no attend_info")
-
                     lessons.sort(key=lambda x: x.lesson_no)
                     lesson_id = lessons[-1].lesson_id
-
                     attend_info = AICourseLessonAttend.query.filter(
                         AICourseLessonAttend.user_id == user_id,
                         AICourseLessonAttend.course_id == course_id,
                         AICourseLessonAttend.lesson_id == lesson_id,
                     ).first()
-                    if not attend_info:
-                        for i in "请购买课程":
-                            yield make_script_dto("text", i, None)
-                            time.sleep(0.01)
-                        yield make_script_dto("text_end", "", None)
 
                     attends = update_attend_lesson_info(app, attend_info.attend_id)
 

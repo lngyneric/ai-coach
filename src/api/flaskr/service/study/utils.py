@@ -5,6 +5,7 @@ from flask import Flask
 from flaskr.util.uuid import generate_id
 from langchain.prompts import PromptTemplate
 from ...service.lesson.const import (
+    ASK_MODE_DEFAULT,
     LESSON_TYPE_BRANCH_HIDDEN,
     SCRIPT_TYPE_SYSTEM,
 )
@@ -451,15 +452,23 @@ class FollowUpInfo:
     ask_history_count: int
     ask_limit_count: int
     model_args: dict
+    ask_mode: int
 
     def __init__(
-        self, ask_model, ask_prompt, ask_history_count, ask_limit_count, model_args
+        self,
+        ask_model,
+        ask_prompt,
+        ask_history_count,
+        ask_limit_count,
+        model_args,
+        ask_mode,
     ):
         self.ask_model = ask_model
         self.ask_prompt = ask_prompt
         self.ask_history_count = ask_history_count
         self.ask_limit_count = ask_limit_count
         self.model_args = model_args
+        self.ask_mode = ask_mode
 
     def __json__(self):
         return {
@@ -468,6 +477,7 @@ class FollowUpInfo:
             "ask_history_count": self.ask_history_count,
             "ask_limit_count": self.ask_limit_count,
             "model_args": self.model_args,
+            "ask_mode": self.ask_mode,
         }
 
 
@@ -490,101 +500,66 @@ def get_follow_up_model(
     return "ERNIE-4.0-8K"
 
 
-def get_follow_up_info(
-    app: Flask, attend: AICourseLessonAttend, script_info: AILessonScript
-) -> FollowUpInfo:
-    ask_model = None
-    ask_prompt = """# 现在学员在学习上述教学内容时，产生了一些疑问，你需要恰当的回答学员的追问。
-
-**你就是老师本人，不要打招呼，直接用第一人称回答！**
-
-如果学员的追问内容与当前章节教学内容有关，请优先结合当前章节中已经输出的内容进行回答。
-
-如果学员的追问内容与当前章节教学内容关系不大，但与该课程的其他章节有关，你可以简要回答并友好的告知学员稍安勿躁，后续xx章节有涉及学员追问问题的详细教学内容。
-
-如果学员的追问内容与课程教学内容无关，但与教学平台有关（平台使用问题；售卖、订单、退费等；账号、密码、登录等），请耐心的告知学员通过「哎师傅-AI学习社区」服务号找到我们进行相应的解决。
-
-如果学员的追问内容与课程教学内容无关，也与教学平台无关，请友好的回绝学员的追问，并请学员专注在该课程内容的学习上。
-
-
-学员的追问是：
-`{input}`
-"""
-    ask_history_count = None
-    ask_limit_count = None
-    model_args = {}
-
-    if script_info.ask_model and script_info.ask_model.strip():
-        ask_model = script_info.ask_model
-    if script_info.ask_prompt and script_info.ask_prompt.strip():
-        ask_prompt = script_info.ask_prompt
-    if script_info.ask_with_history != 0:
-        ask_history_count = script_info.ask_with_history
-    if script_info.ask_count_limit != 0:
-        ask_limit_count = script_info.ask_count_limit
-
-    if (
-        ask_model
-        and ask_prompt
-        and ask_history_count
-        and ask_limit_count
-        and model_args
-    ):
+def get_follow_up_info(app: Flask, script_info: AILessonScript) -> FollowUpInfo:
+    if script_info.ask_mode != ASK_MODE_DEFAULT:
         return FollowUpInfo(
-            ask_model, ask_prompt, ask_history_count, ask_limit_count, model_args
+            script_info.ask_model,
+            script_info.ask_prompt,
+            script_info.ask_with_history,
+            script_info.ask_count_limit,
+            {},
+            script_info.ask_mode,
         )
+    # todo add cache info
     ai_lesson = AILesson.query.filter(
         AILesson.lesson_id == script_info.lesson_id
     ).first()
-    if (
-        ai_lesson
-        and ai_lesson.ask_model
-        and ai_lesson.ask_model.strip()
-        and ask_model is None
-    ):
-        ask_model = ai_lesson.ask_model
-    if (
-        ai_lesson
-        and ai_lesson.ask_prompt
-        and ai_lesson.ask_prompt.strip()
-        and ask_prompt is None
-    ):
-        ask_prompt = ai_lesson.ask_prompt
-    if ai_lesson and ai_lesson.ask_with_history != 0 and ask_history_count is None:
-        ask_history_count = ai_lesson.ask_with_history
-    if ai_lesson and ai_lesson.ask_count_limit != 0 and ask_limit_count is None:
-        ask_limit_count = ai_lesson.ask_count_limit
-
-    if (
-        ask_model
-        and ask_prompt
-        and ask_history_count
-        and ask_limit_count
-        and model_args
-    ):
-        return FollowUpInfo(
-            ask_model, ask_prompt, ask_history_count, ask_limit_count, model_args
-        )
+    if ai_lesson.ask_mode == ASK_MODE_DEFAULT:
+        # to get parent lesson info
+        parent_lesson = AILesson.query.filter(
+            AILesson.course_id == ai_lesson.course_id,
+            AILesson.lesson_no == ai_lesson.lesson_no[:2],
+            AILesson.status == 1,
+        ).first()
+        if parent_lesson.ask_mode != ASK_MODE_DEFAULT:
+            ask_model = parent_lesson.ask_model
+            ask_prompt = parent_lesson.ask_prompt
+            ask_history_count = parent_lesson.ask_with_history
+            ask_limit_count = parent_lesson.ask_count_limit
+            model_args = {}
+            return FollowUpInfo(
+                ask_model,
+                ask_prompt,
+                ask_history_count,
+                ask_limit_count,
+                model_args,
+                parent_lesson.ask_mode,
+            )
+        else:
+            ask_model = ai_lesson.ask_model
+            ask_prompt = ai_lesson.ask_prompt
+            ask_history_count = ai_lesson.ask_with_history
+            ask_limit_count = ai_lesson.ask_count_limit
+            model_args = {}
+            return FollowUpInfo(
+                ask_model,
+                ask_prompt,
+                ask_history_count,
+                ask_limit_count,
+                model_args,
+                ai_lesson.ask_mode,
+            )
     ai_course = AICourse.query.filter(AICourse.course_id == ai_lesson.course_id).first()
-    if (
-        ai_course
-        and ai_course.ask_model
-        and ai_course.ask_model.strip()
-        and ask_model is None
-    ):
-        ask_model = ai_course.ask_model
-    if (
-        ai_course
-        and ai_course.ask_prompt
-        and ai_course.ask_prompt.strip()
-        and ask_prompt is None
-    ):
-        ask_prompt = ai_course.ask_prompt
-    if ai_course and ai_course.ask_with_history != 0 and ask_history_count is None:
-        ask_history_count = ai_course.ask_with_history
-    if ai_course and ai_course.ask_count_limit != 0 and ask_limit_count is None:
-        ask_limit_count = ai_course.ask_count_limit
-
+    ask_model = ai_course.ask_model
+    ask_prompt = ai_course.ask_prompt
+    ask_history_count = ai_course.ask_with_history
+    ask_limit_count = ai_course.ask_count_limit
+    model_args = {}
     return FollowUpInfo(
-        ask_model, ask_prompt, ask_history_count, ask_limit_count, model_args
+        ask_model,
+        ask_prompt,
+        ask_history_count,
+        ask_limit_count,
+        model_args,
+        ai_course.ask_mode,
     )

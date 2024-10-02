@@ -623,5 +623,6 @@ def update_lesson_ask_info(
         lesson.lesson_language = lesson_language
         lesson.lesson_name_multi_language = lesson_name_multi_language
         lesson.lesson_summary_multi_language = lesson_summary_multi_language
+        lesson.ask_mode = ASK_MODE_ENABLE
         db.session.commit()
         return True
