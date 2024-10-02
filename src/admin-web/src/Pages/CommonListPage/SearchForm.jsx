@@ -4,7 +4,7 @@ import { Space } from "antd";
 import { useForm } from "antd/es/form/Form";
 import { useNavigate } from "react-router-dom";
 
-const SearchForm = ({ onSearch, onReset, inputs, operations, onClickOperation }) => {
+const SearchForm = ({ onSearch, onReset, inputs, operations, onClickOperation,onExport}) => {
   const [form] = useForm();
   const navigate = useNavigate();
   const onClickReset = () => {
@@ -34,10 +34,14 @@ const SearchForm = ({ onSearch, onReset, inputs, operations, onClickOperation })
     return ret;
   }
 
+  const onClickExport = () => {
+    console.log(form.getFieldsValue())
+    onExport?.(form.getFieldsValue());
+  };
+
   const onClickBack = () => {
     navigate(-1);
   };
-
   return (
     <div className="search-form_container">
       <Form
@@ -62,6 +66,9 @@ const SearchForm = ({ onSearch, onReset, inputs, operations, onClickOperation })
                   {item.label}
                 </Button>
               ))}
+             <Button key="export" htmlType="button" onClick={onClickExport}>
+                导出
+              </Button>
               <Button htmlType="button" onClick={onClickBack}>
                 返回
               </Button>

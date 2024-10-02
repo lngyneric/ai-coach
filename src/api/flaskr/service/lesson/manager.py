@@ -85,7 +85,7 @@ AICourseView = ViewDef(
 AILessonScriptView = ViewDef(
     "lessonscriptview",
     [
-        TableColumnItem(AILessonScript.id, "ID"),
+        TableColumnItem(AILessonScript.script_id, "ID"),
         TableColumnItem(AILessonScript.script_name, "名称"),
         TableColumnItem(AILessonScript.script_type, "类型", items=SCRIPT_TYPE_VALUES),
         TableColumnItem(AILessonScript.script_model, "内容"),
@@ -109,4 +109,13 @@ AILessonScriptView = ViewDef(
         InputItem("updated", "更新时间", "like", INPUT_TYPE_TEXT),
     ],
     AILessonScript,
+    [
+        OperationItem(
+            "查看生成日志",
+            OperationType.GO_TO_LIST,
+            "logscriptview",
+            "logscriptview",
+            {"script_id": "script_id"},
+        ),
+    ],
 )
