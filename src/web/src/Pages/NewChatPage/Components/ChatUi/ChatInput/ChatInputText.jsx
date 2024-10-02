@@ -52,7 +52,7 @@ export const ChatInputText = ({ onClick, type, disabled = false,props={} }) => {
             type="text"
             value={input}
             onChange={(v) => setInput(v)}
-            placeholder= {  props?.content?.content || props?.content || t('chat.chatInputPlaceholder')}
+            placeholder= { props?.content || t('chat.chatInputPlaceholder')}
             className={styles.inputField}
             disabled={disabled}
             onKeyDown={(e) => {
