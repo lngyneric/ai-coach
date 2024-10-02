@@ -159,7 +159,9 @@ class ViewDef:
         self.view_type = view_type
         views[name] = self
 
-    def query(self, app: Flask, page: int = 1, page_size: int = 20, query=None):
+    def query(
+        self, app: Flask, page: int = 1, page_size: int = 20, query=None, sort=None
+    ):
         with app.app_context():
             app.logger.info(
                 "query: "
@@ -168,6 +170,8 @@ class ViewDef:
                 + str(page)  # noqa: W503
                 + " page_size: "  # noqa: W503
                 + str(page_size)  # noqa: W504 , W503
+                + " sort: "
+                + str(sort)
             )
             db_query = self.model.query
             if query:
@@ -189,14 +193,24 @@ class ViewDef:
                         db_query = db_query.filter(
                             getattr(self.model, key) == query.get(key)
                         )
+
             count = db_query.count()
             if count == 0:
                 return {}
-            datas = (
-                db_query.order_by(self.model.id.desc())
-                .offset((page - 1) * page_size)
-                .limit(page_size)
-            )
+
+            if sort and len(sort) > 0:
+                for sort_item in sort:
+                    if sort_item.get("order") == "ascend":
+                        db_query = db_query.order_by(
+                            getattr(self.model, sort_item.get("column")).asc()
+                        )
+                    else:
+                        db_query = db_query.order_by(
+                            getattr(self.model, sort_item.get("column")).desc()
+                        )
+            else:
+                db_query = db_query.order_by(self.model.id.desc())
+            datas = db_query.offset((page - 1) * page_size).limit(page_size)
             items = [
                 {
                     "id": data.id,
