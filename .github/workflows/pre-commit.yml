@@ -11,29 +11,26 @@ jobs:
     steps:
       - uses: actions/checkout@v3
         with:
-          fetch-depth: 0  # 获取完整历史记录，便于执行 git 操作
-
-      - name: 设置 Python 环境
+          fetch-depth: 0  # get full commit history to correctly detect changed files
+      - name: setup python environment
         uses: actions/setup-python@v4
         with:
           python-version: '3.11'
-
-      - name: 安装 pre-commit
+      - name: install pre-commit
         run: |
           pip install pre-commit
-
-      - name: 运行 pre-commit（自动修复）
+      - name: run pre-commit (auto fix)
         run: |
           pre-commit run
-
-      - name: 提交更改
+      - name: commit changes
+        if: ${{success()}}
         run: |
           git config --local user.name "github-actions[bot]"
           git config --local user.email "github-actions[bot]@users.noreply.github.com"
           git add .
-          git commit -m "chore: 自动格式化代码" || echo "No changes to commit"
+          git commit -m "chore: refactor code" || echo "No changes to commit"
 
-      - name: 推送更改
+      - name: push changes
         uses: ad-m/github-push-action@v0.6.0
         with:
           github_token: ${{ secrets.GITHUB_TOKEN }}
