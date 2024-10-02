@@ -1,4 +1,4 @@
-requests~=2.31.0
+requests~=2.32.0
 streamlit~=1.37.1
 streamlit-extras~=0.4.2
 streamlit-chatbox~=1.1.12
