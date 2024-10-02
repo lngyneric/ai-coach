@@ -33,7 +33,7 @@ const MainLayout = () => {
             marginRight: 42,
           }}
         >
-        哎！师傅 后台管理系统
+        AI 师傅后台管理系统
         </div>
         <Divider
           type="vertical"

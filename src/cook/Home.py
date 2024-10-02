@@ -8,7 +8,7 @@ st.set_page_config(
 )
 
 """
-# 哎！师傅：课程制作中心
+# AI 师傅：课程制作中心
 > 请收藏该网址 https://cook.ai-shifu.com/
 """
 
@@ -50,4 +50,3 @@ if st.button('前往章节剧本线性调试器（Chapter Debugger）', type='pr
 > 
 > 加缓存是为了在飞书没有更新的时候，老师可以更快速的调整不同的位置进行调试
 """
-
