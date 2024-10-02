@@ -1,3 +1,5 @@
+from flaskr.service.order.consts import ATTEND_STATUS_VALUES
+from flaskr.service.study.const import ROLE_VALUES
 from ...service.order.models import AICourseLessonAttend
 from ...service.view.models import (
     INPUT_TYPE_TEXT,
@@ -7,7 +9,6 @@ from ...service.view.models import (
     OperationItem,
     OperationType,
 )
-from ..lesson.const import SCRIPT_TYPES, UI_TYPES
 from .models import AICourseLessonAttendScript
 from ...service.user.models import User
 from ...service.lesson.models import AILesson
@@ -17,7 +18,9 @@ LogScriptView = ViewDef(
     [
         TableColumnItem(AICourseLessonAttendScript.attend_id, "ID"),
         TableColumnItem(AICourseLessonAttendScript.script_index, "序号"),
-        TableColumnItem(AICourseLessonAttendScript.script_role, "角色"),
+        TableColumnItem(
+            AICourseLessonAttendScript.script_role, "角色", items=ROLE_VALUES
+        ),
         TableColumnItem(AICourseLessonAttendScript.script_content, "内容"),
         TableColumnItem(
             AICourseLessonAttendScript.user_id,
@@ -31,17 +34,9 @@ LogScriptView = ViewDef(
         TableColumnItem(AICourseLessonAttendScript.updated, "更新时间"),
     ],
     [
-        InputItem("id", "ID", "like", INPUT_TYPE_TEXT),
-        InputItem("script_name", "名称", "like", INPUT_TYPE_TEXT),
         InputItem(
-            "script_type", "类型", "like", INPUT_TYPE_TEXT, input_options=SCRIPT_TYPES
+            "script_role", "角色", "like", INPUT_TYPE_TEXT, input_options=ROLE_VALUES
         ),
-        InputItem("status", "状态", "like", INPUT_TYPE_TEXT),
-        InputItem(
-            "script_ui_type", "UI类型", "like", INPUT_TYPE_TEXT, input_options=UI_TYPES
-        ),
-        InputItem("created", "创建时间", "like", INPUT_TYPE_TEXT),
-        InputItem("updated", "更新时间", "like", INPUT_TYPE_TEXT),
     ],
     AICourseLessonAttendScript,
 )
@@ -65,7 +60,7 @@ AttendLessonView = ViewDef(
             display="mobile",
             index_id="user_id",
         ),
-        TableColumnItem(AICourseLessonAttend.status, "状态"),
+        TableColumnItem(AICourseLessonAttend.status, "状态", items=ATTEND_STATUS_VALUES),
         TableColumnItem(AICourseLessonAttend.created, "创建时间"),
         TableColumnItem(AICourseLessonAttend.updated, "更新时间"),
     ],
@@ -73,7 +68,9 @@ AttendLessonView = ViewDef(
         InputItem("id", "ID", "like", INPUT_TYPE_TEXT),
         InputItem("lesson_id", "课程", "like", INPUT_TYPE_TEXT),
         InputItem("user_id", "用户", "like", INPUT_TYPE_TEXT),
-        InputItem("status", "状态", "like", INPUT_TYPE_TEXT),
+        InputItem(
+            "status", "状态", "like", INPUT_TYPE_TEXT, input_options=ATTEND_STATUS_VALUES
+        ),
         InputItem("created", "创建时间", "like", INPUT_TYPE_TEXT),
         InputItem("updated", "更新时间", "like", INPUT_TYPE_TEXT),
     ],
