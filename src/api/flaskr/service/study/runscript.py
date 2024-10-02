@@ -89,6 +89,7 @@ def run_script_inner(
                 lesson_info = AILesson.query.filter(
                     AILesson.lesson_id == lesson_id,
                     AILesson.status == 1,
+                    AILesson.course_id == course_id,
                 ).first()
                 if not lesson_info:
                     raise COURSE_NOT_FOUND
@@ -100,6 +101,7 @@ def run_script_inner(
                 lessons = AILesson.query.filter(
                     AILesson.lesson_no.like(parent_no + "__"),
                     AILesson.status == 1,
+                    AILesson.course_id == course_id,
                 ).all()
                 app.logger.info(
                     "study lesson no :{}".format(

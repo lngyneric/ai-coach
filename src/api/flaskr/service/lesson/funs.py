@@ -314,6 +314,7 @@ def update_lesson_info(
         parent_lesson = AILesson.query.filter(
             AILesson.course_id == course_id,
             AILesson.lesson_no == str(index).zfill(2),
+            AILesson.course_id == course_id,
             #    ,AILesson.lesson_feishu_id==table_id,
             func.char_length(AILesson.lesson_no) == 2,
         ).first()

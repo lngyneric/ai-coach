@@ -91,22 +91,18 @@ def get_lesson_tree_to_study(app: Flask, user_id: str, course_id: str) -> AICour
         lesson_dict = {}
         for lesson in lessons:
             attend_info = attend_infos_map.get(lesson.lesson_id, None)
-            # if not attend_info:
-            #     continue
-
             status = attend_info.status if attend_info else ATTEND_STATUS_LOCKED
             if status == ATTEND_STATUS_BRANCH:
                 status = ATTEND_STATUS_IN_PROGRESS
             status = ATTEND_STATUS_VALUES[status]
-
             lessonInfo = AILessonAttendDTO(
                 lesson.lesson_no, lesson.lesson_name, lesson.lesson_id, status, []
             )
             lesson_dict[lessonInfo.lesson_no] = lessonInfo
-            if len(lessonInfo.lesson_no) == 2:  # 假设2位数是根节点
+            if len(lessonInfo.lesson_no) == 2:
                 lessonInfos.append(lessonInfo)
             else:
-                # 获取父节点编号
+                # get parent lesson no
                 parent_no = lessonInfo.lesson_no[:-2]
                 if parent_no in lesson_dict:
                     lesson_dict[parent_no].children.append(lessonInfo)
