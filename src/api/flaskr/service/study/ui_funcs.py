@@ -108,6 +108,7 @@ def handle_input_branch(
             next_lesson = AILesson.query.filter(
                 AILesson.lesson_feishu_id == rule.get("lark_table_id", ""),
                 AILesson.status == 1,
+                AILesson.course_id == course_id,
                 func.length(AILesson.lesson_no) > 2,
             ).first()
             if next_lesson:

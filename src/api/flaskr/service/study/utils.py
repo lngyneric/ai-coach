@@ -65,7 +65,9 @@ def get_lesson_system(app: Flask, lesson_id: str) -> str:
     if len(parent_no) > 2:
         parent_no = parent_no[:2]
     if parent_no != lesson_no:
-        parent_lesson = AILesson.query.filter(AILesson.lesson_no == parent_no).first()
+        parent_lesson = AILesson.query.filter(
+            AILesson.lesson_no == parent_no, AILesson.course_id == lesson.course_id
+        ).first()
         if parent_lesson:
             lesson_ids.append(parent_lesson.lesson_id)
     app.logger.info("lesson_ids:{}".format(lesson_ids))
@@ -240,7 +242,8 @@ def get_script(app: Flask, attend_id: str, next: int = 0):
             # 第一节课
             app.logger.info("first lesson")
             parent_lesson = AILesson.query.filter(
-                AILesson.lesson_no == lesson.lesson_no[:-2]
+                AILesson.lesson_no == lesson.lesson_no[:-2],
+                AILesson.course_id == lesson.course_id,
             ).first()
             parent_attend = AICourseLessonAttend.query.filter(
                 AICourseLessonAttend.lesson_id == parent_lesson.lesson_id,
