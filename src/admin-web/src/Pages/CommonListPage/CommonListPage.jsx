@@ -1,10 +1,10 @@
-import {  Space, Modal } from "antd";
+import {  Space } from "antd";
 import SearchForm from "./SearchForm";
 import CommonListTable from "./CommonListTable";
 import { useEffect, useState } from "react";
 import CommonCreateModel from "./Modal/CommonCreateModel";
-import { useLocation,useSearchParams } from "react-router-dom";
-
+import { useLocation } from "react-router-dom";
+import { exportQuery } from "../../Api/manager";
 
 
 
@@ -84,9 +84,9 @@ const CommonListPage = ({viewName}) => {
   }, [pageViewName]);
   const [contactInfoList, setContactInfoList] = useState([]);
   /**
-   * @description 联系人数据
+   * @description query data
    */
-  const queryAllContacts = () => {
+  const queryData = () => {
     setLoading(true);
     const params = {
       ...searchParams,
@@ -115,12 +115,20 @@ const CommonListPage = ({viewName}) => {
     setCreateModelLoad(true)
   }
 
+  const onExport = (query) => {
+    const params = {
+      ...searchParams,
+      ...defaultParams
+    }
+    console.log(params)
+    exportQuery(pageViewName,params)
+  }
+
   useEffect(() => {
-    queryAllContacts();
-  }, [pageSize,currentPage,searchParams]);
+  queryData()}, [pageSize,currentPage,searchParams]);
   return (
     <Space direction="vertical" size="large" style={{ display: "flex" }}>
-      <SearchForm onSearch={onSearch} onReset={onReset} inputs={searchDefine} operations = {formOperationItems} onClickOperation={onClickOperation}></SearchForm>
+      <SearchForm onSearch={onSearch} onReset={onReset} inputs={searchDefine} operations = {formOperationItems} onClickOperation={onClickOperation} onExport={onExport}></SearchForm>
       <CommonListTable
         operationItems={operationItems}
         dataColumns={colum}

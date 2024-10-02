@@ -4,12 +4,12 @@ import Cookies from "js-cookie";
 import { message } from "antd";
 import store from "store";
 /**
- * 
- * @param {*} token 
- * @param {*} chatId 
- * @param {*} text 
- * @param {*} onMessage 
- * @returns 
+ *
+ * @param {*} token
+ * @param {*} chatId
+ * @param {*} text
+ * @param {*} onMessage
+ * @returns
  */
 export const SendMsg = (token,chatId, text, onMessage) => {
   Cookies.set("token", token);
@@ -20,7 +20,7 @@ export const SendMsg = (token,chatId, text, onMessage) => {
       msg: text,
       chat_id: chatId,
     }),
-    
+
   });
   source.onmessage = (event) => {
     try {
@@ -52,8 +52,8 @@ export const SendMsg = (token,chatId, text, onMessage) => {
 console.log(process.env.REACT_APP_BASEURL);
 
 /**
- * @description 创建 axios 实例 
- * @type {*} 
+ * @description 创建 axios 实例
+ * @type {*}
  * */
 const axiosrequest = axios.create({
   baseURL:process.env.REACT_APP_BASEURL,
@@ -61,6 +61,12 @@ const axiosrequest = axios.create({
   headers:{"Content-Type":"application/json"}
 });
 
+const downloadFileRequest = axios.create({
+  baseURL:process.env.REACT_APP_BASEURL,
+  withCredentials: true,
+  responseType: 'blob',
+  headers:{"Content-Type":"application/json"}
+});
 // 创建请求拦截器
 axiosrequest.interceptors.request.use(async(config)=>{
   config.headers.token = store.get("token");
@@ -70,6 +76,39 @@ axiosrequest.interceptors.request.use(async(config)=>{
 // 创建响应拦截器
 axiosrequest.interceptors.response.use(
   response => {
+    console.log('url',response.config.url)
+    console.log('response',response)
+    // download file if response is blob
+    console.log(response.headers)
+    // check the header Content-Disposition
+    if(response.headers['content-disposition']){
+      console.log(response.data.length)
+      const blob = new Blob([response.data], { type: response.headers['content-type'] });
+
+      // get filename from header
+      let filename = 'downloadfile';
+      const disposition = response.headers['content-disposition'];
+      if (disposition && disposition.indexOf('attachment') !== -1) {
+        const filenameRegex = /filename[^;=\n]*=((['"]).*?\2|[^;\n]*)/;
+        const matches = filenameRegex.exec(disposition);
+        if (matches != null && matches[1]) {
+          filename = decodeURIComponent(matches[1].replace(/['"]/g, ''));
+        }
+      }
+
+      //  create download href
+      const url = window.URL.createObjectURL(blob);
+      const link = document.createElement('a');
+      link.href = url;
+      link.setAttribute('download', filename);
+      document.body.appendChild(link);
+      link.click();
+
+      // clear
+      link.parentNode.removeChild(link);
+      window.URL.revokeObjectURL(url);
+      return;
+    }
     if(response.data.code !== 0){
       message.error({content:response.data.message});
       const apiError = new CustomEvent("apiError", {detail:response.data, bubbles:true,});
@@ -80,7 +119,7 @@ axiosrequest.interceptors.response.use(
   },error => {
     const apiError = new CustomEvent("apiError", {detail:error});
     document.dispatchEvent(apiError);
-    message.error("无法连接到服务器请检查网络设置");
+    message.error("api error");
     return Promise.reject(error);
   })
 
@@ -89,4 +128,4 @@ axiosrequest.interceptors.response.use(
 
 
 export default axiosrequest;
-
+export {downloadFileRequest};

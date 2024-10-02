@@ -28,6 +28,7 @@ crcmod==1.7
 cryptography==43.0.0
 distlib==0.3.8
 distro==1.9.0
+et-xmlfile==1.1.0
 filelock==3.15.4
 flasgger==0.9.7.1
 Flask==3.0.3
@@ -64,9 +65,11 @@ multidict==6.0.5
 nodeenv==1.9.1
 numpy==1.26.4
 openai==1.44.1
+openpyxl==3.1.5
 orjson==3.10.6
 oss2==2.18.6
 packaging==23.2
+pandas==2.2.3
 pillow==10.4.0
 pingpp==2.7.2
 platformdirs==4.2.2
@@ -80,6 +83,7 @@ pydantic_core==2.20.1
 PyJWT==2.8.0
 PyMySQL==1.1.1
 pytest==8.3.2
+python-dateutil==2.9.0.post0
 python-dotenv==1.0.1
 pytz==2024.1
 PyYAML==6.0.1
@@ -94,9 +98,11 @@ sympy==1.13.1
 tenacity==8.5.0
 tqdm==4.66.4
 typing_extensions==4.12.2
+tzdata==2024.2
 urllib3==2.2.2
 virtualenv==20.26.3
 waitress==3.0.0
 Werkzeug==3.0.3
 wrapt==1.16.0
+XlsxWriter==3.2.0
 yarl==1.9.4

@@ -1,6 +1,10 @@
 from enum import Enum
 from flask import Flask
 from flaskr.service.common.dtos import PageNationDTO
+import io
+from flask import send_file
+from datetime import datetime
+from openpyxl import Workbook
 
 INPUT_TYPE_TEXT = "text"
 INPUT_TYPE_DATE = "date"
@@ -267,6 +271,51 @@ class ViewDef:
             if property_value is None:
                 return {}
             return data
+
+    def export_query_to_excel(self, app: Flask, query=None):
+
+        with app.app_context():
+            app.logger.info("export_query_to_excel:" + str(query))
+            page = 1
+            page_size = 100
+            all_items = []
+
+            while True:
+                resp = self.query(app, page, page_size, query=query)
+                if resp.data is None:
+                    break
+                if len(resp.data) == 0:
+                    break
+                all_items.extend(resp.data)
+                page += 1
+
+            # create excel
+            wb = Workbook()
+            ws = wb.active
+            ws.title = "Sheet1"
+
+            # write excel header
+            if all_items:
+                headers = all_items[0].keys()
+                headers = list(headers)
+                app.logger.info("headers:" + str(headers))
+                ws.append(headers)
+
+            # write excel data
+            for item in all_items:
+                values = list(item.values())
+                ws.append(values)
+            # save excel to byte stream
+            output = io.BytesIO()
+            wb.save(output)
+            output.seek(0)  # reset stream position
+            return send_file(
+                path_or_file=output,
+                as_attachment=True,
+                download_name="export-"
+                + datetime.now().strftime("%Y-%m-%d-%H-%M-%S")
+                + ".xlsx",
+            )
 
     def get_view_def(self):
         return {
