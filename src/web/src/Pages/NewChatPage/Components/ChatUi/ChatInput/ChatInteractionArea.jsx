@@ -118,7 +118,15 @@ export const ChatInteractionArea = ({
       <div className={styles.controlContainer}>
         <div className={styles.controlWrapper}>
           {(!isInputVisible) && genRenderControl()} {/* Display input box based on state */}
-          {isInputVisible && <ChatInputText id="askInput" onClick={onSendAsk} type="text" props = {t('chat.askContent')}  visible={isInputVisible}/>}
+          {isInputVisible &&
+            <ChatInputText
+              id="askInput"
+              onClick={onSendAsk}
+              type="text"
+              props={{ content: t('chat.askContent') }}
+              visible={isInputVisible}
+            />
+          }
           <ConfigProvider
             theme={{
               components: {
