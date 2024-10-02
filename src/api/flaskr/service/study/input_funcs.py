@@ -458,7 +458,7 @@ def handle_input_ask(
     trace_args,
 ):
 
-    follow_up_info = get_follow_up_info(app, attend, script_info)
+    follow_up_info = get_follow_up_info(app, script_info)
     app.logger.info("follow_up_info:{}".format(follow_up_info.__json__()))
     history_scripts = (
         AICourseLessonAttendScript.query.filter(

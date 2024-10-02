@@ -19,9 +19,8 @@ from flaskr.service.study.const import (
 )
 from flaskr.service.study.models import AICourseAttendAsssotion
 from flaskr.service.user import send_sms_code_without_check
-from flaskr.service.lesson.models import AICourse, AILesson, AILessonScript
+from flaskr.service.lesson.models import AILesson, AILessonScript
 from flaskr.service.lesson.const import (
-    ASK_MODE_DEFAULT,
     ASK_MODE_ENABLE,
     UI_TYPE_BRANCH,
     UI_TYPE_BUTTON,
@@ -32,7 +31,7 @@ from flaskr.service.lesson.const import (
     UI_TYPE_TO_PAY,
 )
 from flaskr.service.order.models import AICourseLessonAttend
-from flaskr.service.study.utils import make_script_dto
+from flaskr.service.study.utils import get_follow_up_info, make_script_dto
 from flaskr.dao import db
 
 
@@ -235,19 +234,8 @@ def handle_ask_mode(
     trace,
     trace_args,
 ):
-    ask_mode = script_info.ask_mode
-    if ask_mode == ASK_MODE_DEFAULT:
-        lesson_info = AILesson.query.filter(
-            AILesson.lesson_id == script_info.lesson_id
-        ).first()
-        if lesson_info:
-            ask_mode = lesson_info.ask_mode
-        if ask_mode == ASK_MODE_DEFAULT:
-            course_info = AICourse.query.filter(
-                AICourse.course_id == attend.course_id
-            ).first()
-            if course_info:
-                ask_mode = course_info.ask_mode
+    follow_up_info = get_follow_up_info(app, script_info)
+    ask_mode = follow_up_info.ask_mode
     yield make_script_dto(
         "ask_mode",
         {"ask_mode": True if ask_mode == ASK_MODE_ENABLE else False},

@@ -1,4 +1,5 @@
 import json
+from flaskr.service.study.utils import get_follow_up_info
 from flaskr.util.uuid import generate_id
 from flask import Flask
 
@@ -31,7 +32,6 @@ from ...service.order.consts import (
 
 from .dtos import AICourseDTO, StudyRecordItemDTO, StudyRecordProgressDTO, StudyUIDTO
 from ...service.lesson.const import (
-    ASK_MODE_DEFAULT,
     ASK_MODE_ENABLE,
     LESSON_TYPE_BRANCH_HIDDEN,
     UI_TYPE_BRANCH,
@@ -135,6 +135,7 @@ def get_study_record(app: Flask, user_id: str, lesson_id: str) -> StudyRecordDTO
             AICourseLessonAttend.query.filter(
                 AICourseLessonAttend.user_id == user_id,
                 AICourseLessonAttend.lesson_id.in_(lesson_ids),
+                AICourseLessonAttend.course_id == lesson_info.course_id,
                 AICourseLessonAttend.status != ATTEND_STATUS_RESET,
             )
             .order_by(AICourseLessonAttend.id)
@@ -273,20 +274,8 @@ def get_study_record(app: Flask, user_id: str, lesson_id: str) -> StudyRecordDTO
                 ret.ui = StudyUIDTO(
                     "order", {"title": "买课！", "buttons": btn}, lesson_id
                 )
-        ask_mode = last_script.ask_mode
-        if ask_mode == ASK_MODE_DEFAULT:
-            lesson_info = AILesson.query.filter(
-                AILesson.lesson_id == last_script.lesson_id
-            ).first()
-            if lesson_info:
-                ask_mode = lesson_info.ask_mode
-            if ask_mode == ASK_MODE_DEFAULT:
-                course_info = AICourse.query.filter(
-                    AICourse.course_id == lesson_info.course_id
-                ).first()
-                if course_info:
-                    ask_mode = course_info.ask_mode
-        ret.ask_mode = True if ask_mode == ASK_MODE_ENABLE else False
+        follow_up_info = get_follow_up_info(app, last_script)
+        ret.ask_mode = True if follow_up_info.ask_mode == ASK_MODE_ENABLE else False
 
         return ret
 
