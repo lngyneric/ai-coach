@@ -11,7 +11,7 @@ from langchain_core.prompts import PromptTemplate
 from langchain_core.messages import HumanMessage, SystemMessage
 
 from init import *
-from models.chapter import get_follow_up_ask_prompt_template
+from models.chapters_follow_up_ask_prompt import get_follow_up_ask_prompt_template
 from models.script import *
 
 _ = load_dotenv(find_dotenv())
@@ -67,7 +67,7 @@ def streaming_for_follow_up_ask(chat_box, user_input, chat_history):
     chat_box.ai_say(Markdown('', in_expander=False))
 
     prompt = PromptTemplate.from_template(get_follow_up_ask_prompt_template(st.session_state.lark_table_id))
-    prompt = prompt.format(follow_up_ask=user_input)
+    prompt = prompt.format(input=user_input)
 
     llm_input = []
 

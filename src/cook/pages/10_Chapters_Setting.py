@@ -22,6 +22,7 @@ st.set_page_config(
 """
 st.caption('章节类型：401-体验课； 402-正式课； 405-隐藏分支课')
 
+STSS = st.session_state
 
 
 @st.dialog('➕ 添加 章节剧本文档')
@@ -83,7 +84,7 @@ def delete_chapter(df: DataFrame, chapter_id, base_url):
 
         submit_button = st.form_submit_button('确认删除', type='primary', use_container_width=True)
         if submit_button:
-            delete_chapter_from_api(table_id, base_url)
+            delete_chapter_from_api(table_id, STSS.course_id, chapter_id, base_url)
             st.rerun()
 
 
@@ -148,7 +149,8 @@ def display_chapter_management(base_url):
     selected_course = st.selectbox('Select Course:', (course for course in courses), key=f'select_course_{base_url}')
     if selected_course:
         
-        df_chapters_api = DataFrame([chapter.__dict__ for chapter in load_chapters_from_api(doc_id=selected_course.lark_app_token, base_url=base_url)])
+        chapters, STSS.course_id = load_chapters_from_api(doc_id=selected_course.lark_app_token, base_url=base_url)
+        df_chapters_api = DataFrame([chapter.__dict__ for chapter in chapters])
 
         if st.button('⬆️🔄 批量全部更新 🔄⬆️', type='primary', use_container_width=True, key=f'update_{base_url}'):
             for index, row in df_chapters_api.iterrows():
@@ -183,7 +185,7 @@ def display_chapter_management(base_url):
         df_chapters_hidden.set_index('id', inplace=True)
 
 
-        stdf_manage(df_chapters_trial, '体验章节配置', has_delete=False, base_url=base_url)
+        stdf_manage(df_chapters_trial, '体验章节配置', base_url=base_url)
         stdf_manage(df_chapters_norm, '正式章节配置', base_url=base_url)
         stdf_manage(df_chapters_hidden, '隐藏分支章节配置', base_url=base_url)
 
