@@ -1,12 +1,12 @@
-
 from langfuse import Langfuse
-from flask import Flask 
+from flask import Flask
+
 
 def init_langfuse(app: Flask):
-    global langfuse_client 
+    global langfuse_client
     app.logger.info("Initializing Langfuse client")
-    langfuse_client= Langfuse(
-    public_key= app.config["LANGFUSE_PUBLIC_KEY"],
-    secret_key= app.config["LANGFUSE_SECRET_KEY"],
-    host= app.config["LANGFUSE_HOST"]
+    langfuse_client = Langfuse(
+        public_key=app.config["LANGFUSE_PUBLIC_KEY"],
+        secret_key=app.config["LANGFUSE_SECRET_KEY"],
+        host=app.config["LANGFUSE_HOST"],
     )

@@ -2,18 +2,22 @@ from flask import Flask, request
 from flaskr.service.common.models import raise_param_error
 from flaskr.service.order.discount import use_discount_code
 from flaskr.route.common import make_common_response
-from flaskr.service.order import success_buy_record, generate_charge,query_buy_record,init_buy_record
-
+from flaskr.service.order import (
+    success_buy_record,
+    generate_charge,
+    query_buy_record,
+    init_buy_record,
+)
 
 
 def register_order_handler(app: Flask, path_prefix: str):
-     
-    @app.route(path_prefix+'/order-test', methods=['POST'])
+    @app.route(path_prefix + "/order-test", methods=["POST"])
     def order_test():
-        order_id = request.get_json().get('order_id', '')
-        
+        order_id = request.get_json().get("order_id", "")
+
         return make_common_response(success_buy_record(app, order_id))
-    @app.route(path_prefix+'/reqiure-to-pay', methods=['POST'])
+
+    @app.route(path_prefix + "/reqiure-to-pay", methods=["POST"])
     def reqiure_to_pay():
         """
         请求支付
@@ -50,12 +54,12 @@ def register_order_handler(app: Flask, path_prefix: str):
                                     $ref: "#/components/schemas/BuyRecordDTO"
 
         """
-        order_id = request.get_json().get('order_id', '')
-        channel = request.get_json().get('channel', '')
+        order_id = request.get_json().get("order_id", "")
+        channel = request.get_json().get("channel", "")
         client_ip = request.client_ip
         return make_common_response(generate_charge(app, order_id, channel, client_ip))
-    
-    @app.route(path_prefix+'/init-order', methods=['POST'])
+
+    @app.route(path_prefix + "/init-order", methods=["POST"])
     def init_order():
         """
         初始化订单
@@ -88,12 +92,13 @@ def register_order_handler(app: Flask, path_prefix: str):
                                     description: 返回信息
                                 data:
                                     $ref: "#/components/schemas/AICourseBuyRecordDTO"
-    
+
         """
         user_id = request.user.user_id
-        course_id  = request.get_json().get('course_id', '')
+        course_id = request.get_json().get("course_id", "")
         return make_common_response(init_buy_record(app, user_id, course_id))
-    @app.route(path_prefix+'/query-order', methods=['POST'])
+
+    @app.route(path_prefix + "/query-order", methods=["POST"])
     def query_order():
         """
         查询订单
@@ -126,12 +131,12 @@ def register_order_handler(app: Flask, path_prefix: str):
                                     description: 返回信息
                                 data:
                                     $ref: "#/components/schemas/AICourseBuyRecordDTO"
-    
-                        """
-        order_id = request.get_json().get('order_id', '')
+
+        """
+        order_id = request.get_json().get("order_id", "")
         return make_common_response(query_buy_record(app, order_id))
-    
-    @app.route(path_prefix+'/apply-discount', methods=['POST'])
+
+    @app.route(path_prefix + "/apply-discount", methods=["POST"])
     def apply_discount():
         """
         使用折扣码
@@ -166,17 +171,17 @@ def register_order_handler(app: Flask, path_prefix: str):
                                     description: 返回信息
                                 data:
                                     $ref: "#/components/schemas/AICourseBuyRecordDTO"
-    
+
         """
-        discount_code = request.get_json().get('discount_code', '')
+        discount_code = request.get_json().get("discount_code", "")
         if not discount_code:
-            raise_param_error('discount_code') 
-        order_id = request.get_json().get('order_id', '')
+            raise_param_error("discount_code")
+        order_id = request.get_json().get("order_id", "")
         if not order_id:
-            raise_param_error('order_id')
+            raise_param_error("order_id")
         user_id = request.user.user_id
-        return make_common_response(use_discount_code(app, user_id,discount_code, order_id))
-    
+        return make_common_response(
+            use_discount_code(app, user_id, discount_code, order_id)
+        )
+
     return app
-
-

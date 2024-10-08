@@ -1,1 +1,1 @@
-from .uuid import generate_id
+from .uuid import generate_id  # noqa: F401

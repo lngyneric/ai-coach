@@ -1,2 +1,2 @@
-from .models import Active, ActiveUserRecord
-from .funcs import *
+from .models import Active, ActiveUserRecord  # noqa
+from .funcs import *  # noqa
