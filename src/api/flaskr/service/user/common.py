@@ -7,7 +7,6 @@ import string
 import uuid
 from flask import Flask
 import jwt
-from flaskr.api.sendcloud import send_email
 
 from ...api.aliyun import send_sms_code_ali
 
@@ -226,14 +225,6 @@ def require_reset_pwd_code(app: Flask, login: str):
                 app.config["REDIS_KEY_PRRFIX_RESET_PWD"] + user.user_id,
                 code,
                 ex=app.config["RESET_PWD_CODE_EXPIRE_TIME"],
-            )
-            send_email(
-                app,
-                "AI-Shifu",
-                user.email,
-                user.email,
-                "重置密码",
-                "您的重置密码验证码为：" + str(code),
             )
             return True
         else:
