@@ -696,5 +696,5 @@ def get_course_info(app: Flask, course_id: str) -> AICourseDTO:
             course.course_price,
             course.course_feishu_id,
             course.course_status,
-            course.course_teacher_avatar,
+            course.course_teacher_avator,
         )
