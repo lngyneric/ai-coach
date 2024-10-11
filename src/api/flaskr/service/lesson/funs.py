@@ -1,5 +1,5 @@
 from flaskr.common.swagger import register_schema_to_swagger
-from flaskr.service.common.models import LESSON_NOT_FOUND
+from flaskr.service.common.models import COURSE_NOT_FOUND, LESSON_NOT_FOUND
 from .models import AICourse, AILesson, AILessonScript
 from .const import (
     ASK_MODE_DEFAULT,
@@ -625,5 +625,45 @@ def update_lesson_ask_info(
         lesson.lesson_name_multi_language = lesson_name_multi_language
         lesson.lesson_summary_multi_language = lesson_summary_multi_language
         lesson.ask_mode = ASK_MODE_ENABLE
+        db.session.commit()
+        return True
+
+
+def get_course_list(app: Flask) -> list[AICourseDTO]:
+    with app.app_context():
+        courses = AICourse.query.filter(AICourse.status == 1).all()
+        return [
+            AICourseDTO(
+                course.course_id,
+                course.course_name,
+                course.course_desc,
+                course.course_price,
+                course.course_status,
+                course.course_feishu_id,
+            )
+            for course in courses
+        ]
+
+
+def update_course_info(
+    app: Flask,
+    course_id: str,
+    course_name: str,
+    course_desc: str,
+    course_price: float,
+    course_status: int,
+    course_feishu_id: str,
+    course_teacher_avatar: str,
+):
+    with app.app_context():
+        course = AICourse.query.filter(AICourse.course_id == course_id).first()
+        if course is None:
+            raise COURSE_NOT_FOUND
+        course.course_name = course_name
+        course.course_desc = course_desc
+        course.course_price = course_price
+        course.course_status = course_status
+        course.course_feishu_id = course_feishu_id
+        course.course_teacher_avatar = course_teacher_avatar
         db.session.commit()
         return True
