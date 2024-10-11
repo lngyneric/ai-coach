@@ -682,3 +682,19 @@ def update_course_info(
         course.course_teacher_avatar = course_teacher_avatar
         db.session.commit()
         return True
+
+
+def get_course_info(app: Flask, course_id: str) -> AICourseDTO:
+    with app.app_context():
+        course = AICourse.query.filter(AICourse.course_id == course_id).first()
+        if course is None:
+            raise COURSE_NOT_FOUND
+        return AICourseDTO(
+            course.course_id,
+            course.course_name,
+            course.course_desc,
+            course.course_price,
+            course.course_feishu_id,
+            course.course_status,
+            course.course_teacher_avatar,
+        )

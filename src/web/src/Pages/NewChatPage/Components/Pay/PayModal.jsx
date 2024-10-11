@@ -22,6 +22,7 @@ import contactBzWechatImg from 'Assets/newchat/contact-bz-wechat.png';
 import payInfoBg from 'Assets/newchat/pay-info-bg.png';
 import PayModalFooter from './PayModalFooter.jsx';
 import PayChannelSwitch from './PayChannelSwitch.jsx';
+import { useSystemStore } from 'stores/useSystemStore.js';
 
 const DEFAULT_QRCODE = 'DEFAULT_QRCODE';
 const MAX_TIMEOUT = 1000 * 60 * 3;
@@ -118,8 +119,8 @@ export const PayModal = ({ open = false, onCancel, onOk }) => {
     setInterval(null);
     setCouponCode('');
     setDiscount('');
-
-    const { data: resp } = await initOrder();
+    const { course_id } = useSystemStore.getState();
+    const { data: resp } = await initOrder(course_id);
     setPrice(resp.value_to_pay);
     const orderId = resp.order_id;
     setOrderId(orderId);

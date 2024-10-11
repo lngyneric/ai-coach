@@ -1,6 +1,10 @@
 from flask import Flask, request
 from flaskr.service.common.models import raise_param_error
-from flaskr.service.lesson.funs import update_course_info, get_course_list
+from flaskr.service.lesson.funs import (
+    get_course_info,
+    update_course_info,
+    get_course_list,
+)
 from .common import bypass_token_validation, make_common_response
 
 
@@ -127,5 +131,42 @@ def register_course_handler(app: Flask, path_prefix: str) -> Flask:
                                         $ref: '#/components/schemas/AICourseDTO'
         """
         return make_common_response(get_course_list(app))
+
+    @app.route(path_prefix + "/get_course_info", methods=["GET"])
+    def get_course_info_api():
+        """
+
+        get course info api
+        ---
+        tags:
+        - course
+        parameters:
+            -   in: query
+                required: true
+                schema:
+                    properties:
+                        course_id:
+                            type: string
+                            description: 课程id
+        responses:
+            200:
+                description: 获取课程信息成功
+                content:
+                    application/json:
+                        schema:
+                            properties:
+                                code:
+                                    type: integer
+                                    description: 返回码
+                                message:
+                                    type: string
+                                    description: 返回信息
+                                data:
+                                    $ref: '#/components/schemas/AICourseDTO'
+        """
+        course_id = request.args.get("course_id")
+        if course_id is None:
+            raise_param_error("course_id is required")
+        return make_common_response(get_course_info(app, course_id))
 
     return app
