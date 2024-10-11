@@ -16,7 +16,7 @@ if (getBoolEnv('REACT_APP_ERUDA')) {
 const RouterView = () => useRoutes(routes);
 
 const App = () => {
-  const { updateChannel, channel, wechatCode, updateWechatCode } =
+  const { updateChannel, channel, wechatCode, updateWechatCode, updateCourseId } =
     useSystemStore();
 
 
@@ -32,15 +32,12 @@ const App = () => {
   const [language, setLanguage] = useState(initLang);
   const [loading, setLoading] = useState(true);
   const params = parseUrlParams();
-  console.debug('params', params);
+  console.log('params', params);
   const currChannel = params.channel || '';
 
   if (channel !== currChannel) {
-    console.log('init channel value', currChannel);
     updateChannel(currChannel);
   }
-
-
 
 
 
@@ -61,6 +58,13 @@ const App = () => {
     setLoading(false);
   }, [params.code, updateWechatCode, wechatCode])
 
+  useEffect(() => {
+    if (params.courseId) {
+      updateCourseId(params.courseId);
+    }
+  }, [params.courseId, updateCourseId]);
+
+  console.log('courseId', useSystemStore.getState().courseId);
   // 挂载 debugger
   useEffect(() => {
     window.ztDebug = {};

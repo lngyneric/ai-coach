@@ -3,6 +3,7 @@ import { getLessonTree } from 'Api/lesson.js';
 import { produce } from 'immer';
 import { LESSON_STATUS } from "constants/courseConstants.js";
 import { useTracking, EVENT_NAMES } from "common/hooks/useTracking.js";
+import { useSystemStore } from 'stores/useSystemStore.js';
 
 export const checkChapterCanLearning = ({ status }) => {
   return status === LESSON_STATUS.LEARNING || status === LESSON_STATUS.COMPLETED || status === LESSON_STATUS.PREPARE_LEARNING;
@@ -49,7 +50,7 @@ export const useLessonTree = () => {
   const [tree, setTree] = useState(null);
 
   const loadTreeInner = async () => {
-    const resp = await getLessonTree();
+    const resp = await getLessonTree(useSystemStore.getState().courseId);
     const treeData = resp.data;
     let lessonCount = 0;
     const catalogs = treeData.lessons.map(l => {

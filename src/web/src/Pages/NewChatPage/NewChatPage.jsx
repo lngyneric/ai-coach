@@ -43,7 +43,7 @@ const NewChatPage = (props) => {
     getChapterByLesson,
     onTryLessonSelect,
   } = useLessonTree();
-  const { cid } = useParams();
+  const [cid,setCid]=useState(null)
   const { lessonId, changeCurrLesson, chapterId, updateChapterId } =
     useCourseStore((state) => state);
   const [showUserSettings, setShowUserSettings] = useState(false);
@@ -97,7 +97,7 @@ const NewChatPage = (props) => {
 
     if (cid) {
       if (!checkChapterAvaiableStatic(nextTree, cid)) {
-        navigate('/newchat');
+        setCid(null);
       } else {
         const data = getCurrElementStatic(nextTree);
         if (data) {
@@ -111,31 +111,24 @@ const NewChatPage = (props) => {
       }
 
       if (data.catalog) {
-        navigate(`/newchat/${data.catalog.id}`);
+        setCid(data.catalog.id);
       }
     }
   }, [
     changeCurrLesson,
     checkChapterAvaiableStatic,
-    cid,
     getCurrElementStatic,
     lessonId,
     loadTree,
-    navigate,
     reloadTree,
     tree,
   ]);
 
   useEffect(() => {
-    console.log('cid: ', cid);
-    console.log('chapterId: ', chapterId);
-    console.log('cid === chapterId: ', cid === chapterId);
-    console.log('cid: ', cid);
-    console.log('chapterId: ', chapterId);
     if (cid === chapterId) {
       return;
     }else if (cid ){
-    updateChapterId(cid);
+      updateChapterId(cid);
     }
     checkUrl();
   }, [cid, chapterId, checkUrl]);
@@ -192,7 +185,7 @@ const NewChatPage = (props) => {
 
   const onGoChapter = async (id) => {
     await reloadTree();
-    navigate(`/newchat/${id}`);
+    setCid(id);
   };
 
   const onPurchased = useCallback(() => {
@@ -211,7 +204,7 @@ const NewChatPage = (props) => {
     changeCurrLesson(id);
     setTimeout(() => {
       if (chapter.id !== chapterId) {
-        navigate(`/newchat/${chapter.id}`);
+        setCid(chapter.id);
       }
     }, 0);
 
