@@ -22,16 +22,14 @@ export const checkChapterAvaiableStatic = (tree, chapterId) => {
   return catalog.status === LESSON_STATUS.LEARNING || catalog.status === LESSON_STATUS.COMPLETED || catalog.status === LESSON_STATUS.PREPARE_LEARNING;
 }
 
-const getCurrElementStatic = (tree) => {
+const getCurrElementStatic = async(tree) => {
   for (let catalog of tree.catalogs) {
     const lesson = catalog.lessons.find(v => v.selected === true);
-
     if (lesson) {
       return { catalog, lesson };
     }
   }
-
-  return null;
+  return {catalog:null,lesson:null}
 }
 
 export const initialSelectedChapter = (tree) => {
@@ -55,7 +53,7 @@ export const useLessonTree = () => {
   const loadTreeInner = async () => {
     const resp = await getLessonTree(useSystemStore.getState().courseId).catch(err => {
       checkLogin();
-      // throw err;
+      throw err;
     });
     const treeData = resp.data;
     let lessonCount = 0;
@@ -84,7 +82,6 @@ export const useLessonTree = () => {
       catalogs,
       lessonCount,
     }
-
     return newTree;
   }
 
@@ -125,11 +122,10 @@ export const useLessonTree = () => {
 
   // 用于重新加载课程树，但保持临时状态
   const reloadTree = async (chapterId = 0, lessonId = 0) => {
+    console.log(chapterId)
     const newTree = await loadTreeInner();
-    const { lesson } = getCurrElementStatic(tree);
-
+    const { lesson } = await getCurrElementStatic(tree);
     const selected = setSelectedStateStatic(newTree, chapterId, lessonId);
-
     if (!selected) {
       // 设置当前选中的元素
       newTree.catalogs.forEach(c => {
@@ -140,18 +136,16 @@ export const useLessonTree = () => {
         })
       });
     }
-
     // 设置 collapse 状态
-    newTree.catalogs.forEach(c => {
+    await newTree.catalogs.forEach(c => {
       const oldCatalog = tree.catalogs.find(oc => oc.id === c.id);
 
       if (oldCatalog) {
         c.collapse = oldCatalog.collapse;
       }
     });
-
     setTree(newTree);
-
+    console.log('newTree',newTree)
     return newTree;
   }
 
