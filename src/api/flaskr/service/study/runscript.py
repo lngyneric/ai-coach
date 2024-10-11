@@ -58,11 +58,20 @@ def run_script_inner(
             user_info = User.query.filter(User.user_id == user_id).first()
             if not lesson_id:
                 app.logger.info("lesson_id is None")
-                course_info = AICourse.query.filter(
-                    AICourse.status == 1,
-                ).first()
+                if course_id:
+                    course_info = AICourse.query.filter(
+                        AICourse.course_id == course_id,
+                        AICourse.status == 1,
+                    ).first()
+                else:
+                    course_info = AICourse.query.filter(
+                        AICourse.status == 1,
+                    ).first()
                 if not course_info:
                     raise COURSE_NOT_FOUND
+                yield make_script_dto(
+                    "teacher_avator", course_info.course_teacher_avator, ""
+                )
                 course_id = course_info.course_id
                 lessons = init_trial_lesson(app, user_id, course_id)
                 attend = get_current_lesson(app, lessons)
@@ -83,6 +92,15 @@ def run_script_inner(
                 )
                 if not lesson_info:
                     raise COURSE_NOT_FOUND
+                course_info = AICourse.query.filter(
+                    AICourse.course_id == course_id,
+                    AICourse.status == 1,
+                ).first()
+                if not course_info:
+                    raise COURSE_NOT_FOUND
+                yield make_script_dto(
+                    "teacher_avator", course_info.course_teacher_avator, ""
+                )
                 parent_no = lesson_info.lesson_no
                 if len(parent_no) >= 2:
                     parent_no = parent_no[:-2]

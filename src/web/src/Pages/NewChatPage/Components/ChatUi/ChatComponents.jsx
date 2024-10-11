@@ -40,7 +40,7 @@ const USER_ROLE = {
   STUDENT: '学生',
 };
 
-const robotAvatar = require('@Assets/newchat/sunner_icon.jpg');
+const robotAvatar = 'https://avtar.agiclass.cn/sunner.jpg';
 
 const createMessage = ({
   id = 0,
@@ -48,6 +48,7 @@ const createMessage = ({
   content,
   type = CHAT_MESSAGE_TYPE.TEXT,
   userInfo,
+  teach_avator,
 }) => {
   const mid = id || genUuid();
   if (type === CHAT_MESSAGE_TYPE.LESSON_SEPARATOR) {
@@ -60,7 +61,7 @@ const createMessage = ({
   }
   const position = role === USER_ROLE.STUDENT ? 'right' : 'left';
 
-  let avatar = robotAvatar;
+  let avatar = teach_avator ||  robotAvatar;
 
   if (role === USER_ROLE.STUDENT) {
     avatar = null;
@@ -76,7 +77,7 @@ const createMessage = ({
   };
 };
 
-const convertMessage = (serverMessage, userInfo) => {
+const convertMessage = (serverMessage, userInfo, teach_avator) => {
   if (serverMessage.script_type === CHAT_MESSAGE_TYPE.TEXT) {
     return createMessage({
       id: serverMessage.id,
@@ -84,6 +85,7 @@ const convertMessage = (serverMessage, userInfo) => {
       content: fixMarkdown(serverMessage.script_content),
       type: serverMessage.script_type,
       userInfo,
+      teach_avator,
     });
   } else if (serverMessage.script_type === CHAT_MESSAGE_TYPE.LESSON_SEPARATOR) {
     return createMessage({
@@ -92,6 +94,7 @@ const convertMessage = (serverMessage, userInfo) => {
       content: { lessonId: serverMessage.lesson_id },
       type: serverMessage.script_type,
       userInfo,
+      teach_avator,
     });
   }
 
@@ -153,18 +156,15 @@ export const ChatComponents = forwardRef(
     },
     ref
   ) => {
-    // console.log('ChatComponents chapterId: ', chapterId);
     const { trackEvent, trackTrailProgress } = useTracking();
     const chatId = useSystemStore().courseId;
     const [lessonId, setLessonId] = useState(null);
     const [inputDisabled, setInputDisabled] = useState(false);
     const [inputModal, setInputModal] = useState(null);
     const [_, setLessonEnd] = useState(false);
-    // 是否是再聊天框内进行登录
     const [_lastSendMsg, setLastSendMsg] = useState(null);
     const [loadedChapterId, setLoadedChapterId] = useState('');
     const [loadedData, setLoadedData] = useState(false);
-    // 是否在流式输出内容
     const [isStreaming, setIsStreaming] = useState(false);
     const [initRecords, setInitRecords] = useState([]);
 
@@ -247,12 +247,18 @@ export const ChatComponents = forwardRef(
         setLastSendMsg({ chatId, lessonId, val, type, scriptId });
         let lastMsg = null;
         let isEnd = false;
-
+        let teach_avator = null;
         runScript(chatId, lessonId, val, type, scriptId, (response) => {
           setLessonEnd((v) => {
             isEnd = v;
             return v;
           });
+
+
+
+          if (response.type === RESP_EVENT_TYPE.TEACHER_AVATOR) {
+            teach_avator = response.content;
+          }
 
           const scriptId = response.script_id;
           if (
@@ -288,6 +294,7 @@ export const ChatComponents = forwardRef(
                   role: USER_ROLE.TEACHER,
                   content: response.content,
                   userInfo,
+                  teach_avator: teach_avator,
                 });
                 appendMsg(lastMsg);
               }
@@ -448,6 +455,7 @@ export const ChatComponents = forwardRef(
 
       const resp = await getLessonStudyRecord(chapterId);
       const records = resp.data?.records || [];
+      const teach_avator = resp.data?.teach_avator || null;
       setInitRecords(records);
       const ui = resp.data?.ui || null;
 
@@ -461,7 +469,8 @@ export const ChatComponents = forwardRef(
                 id: i,
                 script_type: CHAT_MESSAGE_TYPE.TEXT,
               },
-              userInfo
+              userInfo,
+              teach_avator
             );
             appendMsg(newMessage);
           }

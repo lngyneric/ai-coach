@@ -16,7 +16,7 @@ if (getBoolEnv('REACT_APP_ERUDA')) {
 const RouterView = () => useRoutes(routes);
 
 const App = () => {
-  const { updateChannel, channel, wechatCode, updateWechatCode, updateCourseId } =
+  const { updateChannel, channel, wechatCode, updateWechatCode, courseId, updateCourseId } =
   useSystemStore();
 
 
@@ -26,6 +26,7 @@ const App = () => {
     initLang = userInfoStore.get().language;
   }
 
+  console.log('courseId', courseId);
   const [language, setLanguage] = useState(initLang);
   const [loading, setLoading] = useState(true);
   const params = parseUrlParams();
@@ -54,6 +55,7 @@ const App = () => {
 
   useEffect(() => {
     if (params.courseId) {
+      console.log('params.courseId', params.courseId);
       updateCourseId(params.courseId);
     }
   }, [params.courseId, updateCourseId]);

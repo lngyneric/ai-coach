@@ -110,6 +110,7 @@ def get_lesson_tree_to_study(app: Flask, user_id: str, course_id: str) -> AICour
         return AICourseDTO(
             course_id=course_id,
             course_name=course_info.course_name,
+            teach_avator=course_info.course_teacher_avator,
             lessons=lessonInfos,
         )
 
@@ -120,6 +121,10 @@ def get_lesson_tree_to_study(app: Flask, user_id: str, course_id: str) -> AICour
 def get_study_record(app: Flask, user_id: str, lesson_id: str) -> StudyRecordDTO:
     with app.app_context():
         lesson_info = AILesson.query.filter_by(lesson_id=lesson_id).first()
+        course_info = AICourse.query.filter_by(course_id=lesson_info.course_id).first()
+        if not course_info:
+            return None
+        teach_avator = course_info.course_teacher_avator
         lesson_ids = [lesson_id]
         if not lesson_info:
             return None
@@ -131,6 +136,7 @@ def get_study_record(app: Flask, user_id: str, lesson_id: str) -> StudyRecordDTO
             lesson_ids = [lesson.lesson_id for lesson in lesson_infos]
         app.logger.info("lesson_ids:{}".format(lesson_ids))
         print("lesson_ids:{}".format(lesson_ids))
+
         attend_infos = (
             AICourseLessonAttend.query.filter(
                 AICourseLessonAttend.user_id == user_id,
@@ -171,7 +177,7 @@ def get_study_record(app: Flask, user_id: str, lesson_id: str) -> StudyRecordDTO
             )
             for i in attend_scripts
         ]
-        ret = StudyRecordDTO(items)
+        ret = StudyRecordDTO(items, teach_avator=teach_avator)
         last_script_id = attend_scripts[-1].script_id
         last_script = AILessonScript.query.filter_by(script_id=last_script_id).first()
         app.logger.info(

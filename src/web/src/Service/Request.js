@@ -48,8 +48,6 @@ export const SendMsg = (token, chatId, text, onMessage) => {
 }
 
 
-console.log('api base url: ', process.env.REACT_APP_BASEURL);
-
 /**
  * @description 创建 axios 实例
  * @type {*}
@@ -63,7 +61,6 @@ const axiosrequest = axios.create({
 // 创建请求拦截器
 axiosrequest.interceptors.request.use(async(config)=>{
   config.headers.token = tokenStore.get();
-  console.log('request token: ', config.headers.token);
   return config;
 })
 
@@ -74,20 +71,6 @@ axiosrequest.interceptors.response.use(
       if (![1001].includes(response.data.code)) {
         message.error({content:response.data.message});
       }
-      // if (response.data.code === 1005) {
-      //   // register tmp user
-      //   axiosrequest.post('/api/user/require_tmp', { temp_id: generateTempId() })
-      //     .then(res => {
-      //       if (res.code === 0) {
-      //         message.success("新用户注册成功");
-      //         console.log('new tmp token: ', res.data.token);
-      //         tokenTool.set({ token: res.data.token, faked: true });
-      //       }
-      //     })
-      //     .catch(err => {
-      //       message.error("新用户注册请求失败");
-      //     });
-      // }
       const apiError = new CustomEvent("apiError", {detail:response.data, bubbles:true,});
       document.dispatchEvent(apiError);
       return Promise.reject(response.data);
@@ -101,8 +84,3 @@ axiosrequest.interceptors.response.use(
   })
 
 export default axiosrequest;
-
-// 生成临时ID的函数
-function generateTempId() {
-  return 'temp_' + Math.random().toString(36).substr(2, 9);
-}

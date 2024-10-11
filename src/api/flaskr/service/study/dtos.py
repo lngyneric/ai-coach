@@ -109,16 +109,22 @@ class AICourseDTO:
     lessons: list[AILessonAttendDTO]
 
     def __init__(
-        self, course_id: str, course_name: str, lessons: List[AILessonAttendDTO]
+        self,
+        course_id: str,
+        course_name: str,
+        teach_avator: str,
+        lessons: List[AILessonAttendDTO],
     ) -> None:
         self.course_id = course_id
         self.course_name = course_name
+        self.teach_avator = teach_avator
         self.lessons = lessons
 
     def __json__(self):
         return {
             "course_id": self.course_id,
             "course_name": self.course_name,
+            "teach_avator": self.teach_avator,
             "lessons": self.lessons,
         }
 
@@ -173,14 +179,21 @@ class StudyRecordDTO:
     records: List[StudyRecordItemDTO]
     ui: StudyUIDTO
     ask_mode: bool
+    teach_avator: str
 
-    def __init__(self, records, ui=None, ask_mode=True):
+    def __init__(self, records, ui=None, ask_mode=True, teach_avator=None):
         self.records = records
         self.ui = ui
         self.ask_mode = ask_mode
+        self.teach_avator = teach_avator
 
     def __json__(self):
-        return {"records": self.records, "ui": self.ui, "ask_mode": self.ask_mode}
+        return {
+            "records": self.records,
+            "ui": self.ui,
+            "ask_mode": self.ask_mode,
+            "teach_avator": self.teach_avator,
+        }
 
 
 @register_schema_to_swagger
