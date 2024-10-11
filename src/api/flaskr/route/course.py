@@ -132,7 +132,7 @@ def register_course_handler(app: Flask, path_prefix: str) -> Flask:
         """
         return make_common_response(get_course_list(app))
 
-    @app.route(path_prefix + "/get_course_info", methods=["GET"])
+    @app.route(path_prefix + "/get-course-info", methods=["GET"])
     def get_course_info_api():
         """
 
