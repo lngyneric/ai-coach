@@ -33,7 +33,7 @@ import MarkdownBubble from './ChatMessage/MarkdownBubble.jsx';
 import { useTracking, EVENT_NAMES } from 'common/hooks/useTracking.js';
 import PayModalM from '../Pay/PayModalM.jsx';
 import { smoothScroll } from 'Utils/smoothScroll.js';
-
+import { useSystemStore } from 'stores/useSystemStore.js';
 
 const USER_ROLE = {
   TEACHER: '老师',
@@ -155,7 +155,7 @@ export const ChatComponents = forwardRef(
   ) => {
     // console.log('ChatComponents chapterId: ', chapterId);
     const { trackEvent, trackTrailProgress } = useTracking();
-    const [chatId, setChatId] = useState('');
+    const chatId = useSystemStore().courseId;
     const [lessonId, setLessonId] = useState(null);
     const [inputDisabled, setInputDisabled] = useState(false);
     const [inputModal, setInputModal] = useState(null);

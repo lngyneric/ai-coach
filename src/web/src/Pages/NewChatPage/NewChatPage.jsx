@@ -60,7 +60,6 @@ const NewChatPage = (props) => {
     initOpen: mobileStyle ? false : true,
   });
 
-
   // 判断布局类型
   useEffect(() => {
     const onResize = () => {

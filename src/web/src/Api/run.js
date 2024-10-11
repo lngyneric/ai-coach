@@ -14,7 +14,6 @@ const runHandler = async (req, res) => {
 
   try {
     const response = await run({ lesson_id, input, input_type: "continue" });
-
     // 订阅流并发送消息
     response.on("data", (message) => {
       res.write(`data: ${JSON.stringify(message)}\n\n`);

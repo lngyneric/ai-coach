@@ -17,29 +17,23 @@ const RouterView = () => useRoutes(routes);
 
 const App = () => {
   const { updateChannel, channel, wechatCode, updateWechatCode, updateCourseId } =
-    useSystemStore();
+  useSystemStore();
 
 
   var initLang = useSystemStore().language;
 
   if (userInfoStore.get()) {
-
     initLang = userInfoStore.get().language;
   }
 
-
-  console.log('initLang', initLang);
   const [language, setLanguage] = useState(initLang);
   const [loading, setLoading] = useState(true);
   const params = parseUrlParams();
-  console.log('params', params);
   const currChannel = params.channel || '';
 
   if (channel !== currChannel) {
     updateChannel(currChannel);
   }
-
-
 
   useEffect(() => {
     if (inWechat()) {
@@ -64,7 +58,6 @@ const App = () => {
     }
   }, [params.courseId, updateCourseId]);
 
-  console.log('courseId', useSystemStore.getState().courseId);
   // 挂载 debugger
   useEffect(() => {
     window.ztDebug = {};
