@@ -26,17 +26,28 @@ class AICourseDTO:
         course_name,
         course_desc,
         course_price,
-        course_status,
         course_feishu_id,
         status,
+        course_teacher_avatar,
     ):
         self.course_id = course_id
         self.course_name = course_name
         self.course_desc = course_desc
         self.course_price = course_price
-        self.course_status = course_status
         self.course_feishu_id = course_feishu_id
         self.status = status
+        self.course_teacher_avatar = course_teacher_avatar
+
+    def __json__(self):
+        return {
+            "course_id": self.course_id,
+            "course_name": self.course_name,
+            "course_desc": self.course_desc,
+            "course_price": str(self.course_price),
+            "course_feishu_id": self.course_feishu_id,
+            "status": self.status,
+            "course_teacher_avatar": self.course_teacher_avatar,
+        }
 
 
 class AILessonDTO:
@@ -640,6 +651,7 @@ def get_course_list(app: Flask) -> list[AICourseDTO]:
                 course.course_price,
                 course.course_status,
                 course.course_feishu_id,
+                course.course_teacher_avator,
             )
             for course in courses
         ]
