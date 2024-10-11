@@ -14,7 +14,7 @@ import { useDisclosture } from 'common/hooks/useDisclosture.js';
 import PayModal from '../Pay/PayModal.jsx';
 import PayModalM from '../Pay/PayModalM.jsx';
 import { useTranslation } from 'react-i18next';
-
+import { useSystemStore } from 'stores/useSystemStore';
 export const SettingModal = ({
   open,
   onClose,
@@ -46,6 +46,8 @@ export const SettingModal = ({
     });
   };
   const avatar = userInfo?.avatar || userIcon;
+
+  const { showVip } = useSystemStore()
 
   const onLoginRowClick = useCallback(() => {
     if (!hasLogin) {
@@ -91,10 +93,11 @@ export const SettingModal = ({
             </div>
             <img className={styles.rowIcon} src={editIcon} alt="" />
           </div>
-          <div className={styles.settingRow} onClick={onMemberRowClick}>
+
+          {showVip && (<div className={styles.settingRow} onClick={onMemberRowClick}>
             <div>{t('navigation.memberSetting')}</div>
             <img className={styles.rowIcon} src={memberIcon} alt="" />
-          </div>
+          </div>)}
           {hasLogin && (
             <div className={styles.settingRow} onClick={onLogoutClick}>
               <div>{t('user.logout')}</div>

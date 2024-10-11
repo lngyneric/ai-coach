@@ -9,6 +9,7 @@ import i18n from './i18n.js';
 import { inWechat, wechatLogin } from 'constants/uiConstants.js';
 import { getBoolEnv } from 'Utils/envUtils.js';
 import { userInfoStore } from 'Service/storeUtil.js';
+import { getCourseInfo } from './Api/course.js';
 if (getBoolEnv('REACT_APP_ERUDA')) {
   import('eruda').then(eruda => eruda.default.init());
 }
@@ -16,7 +17,7 @@ if (getBoolEnv('REACT_APP_ERUDA')) {
 const RouterView = () => useRoutes(routes);
 
 const App = () => {
-  const { updateChannel, channel, wechatCode, updateWechatCode, courseId, updateCourseId } =
+  const { updateChannel, channel, wechatCode, updateWechatCode, courseId, updateCourseId, setShowVip } =
   useSystemStore();
 
 
@@ -55,10 +56,17 @@ const App = () => {
 
   useEffect(() => {
     if (params.courseId) {
-      console.log('params.courseId', params.courseId);
       updateCourseId(params.courseId);
     }
   }, [params.courseId, updateCourseId]);
+
+  useEffect(() => {
+    if (courseId) {
+      getCourseInfo(courseId).then((resp) => {
+        setShowVip(resp.data.course_price > 0);
+      });
+    }
+  }, [courseId, setShowVip]);
 
   // 挂载 debugger
   useEffect(() => {
