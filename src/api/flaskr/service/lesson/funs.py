@@ -671,6 +671,7 @@ def update_course_info(
 ):
     with app.app_context():
         course = AICourse.query.filter(AICourse.course_id == course_id).first()
+        app.logger.info("course_id" + course_id)
         if course is None:
             raise COURSE_NOT_FOUND
         course.course_name = course_name

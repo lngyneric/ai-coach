@@ -64,7 +64,6 @@ const NewChatPage = (props) => {
   useEffect(() => {
     const onResize = () => {
       const frameLayout = calcFrameLayout('#root');
-      console.log('frame layout: ', frameLayout);
       updateFrameLayout(frameLayout);
     };
     window.addEventListener('resize', onResize);
@@ -98,17 +97,19 @@ const NewChatPage = (props) => {
       if (!checkChapterAvaiableStatic(nextTree, cid)) {
         setCid(null);
       } else {
-        const data = getCurrElementStatic(nextTree);
+        const data = await getCurrElementStatic(nextTree);
         if (data) {
           changeCurrLesson(data.lesson.id);
         }
       }
     } else {
-      const data = getCurrElementStatic(nextTree);
+      const data = await getCurrElementStatic(nextTree);
       if (!data) {
         return;
       }
-
+      if (data) {
+        changeCurrLesson(data.lesson.id);
+      }
       if (data.catalog) {
         setCid(data.catalog.id);
       }
@@ -129,12 +130,10 @@ const NewChatPage = (props) => {
     }else if (cid ){
       updateChapterId(cid);
     }
-    checkUrl();
   }, [cid, chapterId, checkUrl]);
 
   useEffectOnce(() => {
     (async () => {
-      console.log('useEffectOnce, init and check login');
       await initAndCheckLogin();
       await checkUrl();
     })();
@@ -159,7 +158,6 @@ const NewChatPage = (props) => {
   }, [checkUrl]);
 
   useEffect(() => {
-    console.log('updateSelectedLesson: ', lessonId);
     updateSelectedLesson(lessonId);
   }, [lessonId]);
 
