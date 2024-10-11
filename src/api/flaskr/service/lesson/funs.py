@@ -19,6 +19,7 @@ from ...util.uuid import generate_id
 from sqlalchemy import func, text
 
 
+@register_schema_to_swagger
 class AICourseDTO:
     def __init__(
         self,
@@ -50,6 +51,7 @@ class AICourseDTO:
         }
 
 
+@register_schema_to_swagger
 class AILessonDTO:
     def __init__(
         self,
