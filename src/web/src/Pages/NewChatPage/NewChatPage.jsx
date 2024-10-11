@@ -87,7 +87,7 @@ const NewChatPage = (props) => {
   }, [checkLogin]);
 
   const checkUrl = useCallback(async () => {
-    let nextTree;
+    let nextTree = tree;
     if (!tree) {
       nextTree = await loadTree(cid, lessonId);
     } else {

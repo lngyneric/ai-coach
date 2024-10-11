@@ -107,12 +107,13 @@ def get_lesson_tree_to_study(app: Flask, user_id: str, course_id: str) -> AICour
                 if parent_no in lesson_dict:
                     lesson_dict[parent_no].children.append(lessonInfo)
         course_info = AICourse.query.filter(AICourse.course_id == course_id).first()
-        return AICourseDTO(
+        ret = AICourseDTO(
             course_id=course_id,
             course_name=course_info.course_name,
             teach_avator=course_info.course_teacher_avator,
             lessons=lessonInfos,
         )
+        return ret
 
 
 # 获取学习记录
