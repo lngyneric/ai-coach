@@ -52,20 +52,21 @@ def load_chapters_from_api(
     if response.status_code == 200:
         data = response.json()
         print(data)
-        coures_id = data["data"]["course_id"]
-        for item in data["data"]["lesson_list"]:
-            print(item)
-            chapters.append(
-                Chapter(
-                    id=item["lesson_no"],
-                    name=item["lesson_name"],
-                    lesson_id=item["lesson_id"],
-                    lark_table_id=item["feishu_id"],
-                    lark_view_id=cfg.DEF_LARK_VIEW_ID,
-                    rank=int(item["lesson_no"]),
-                    chapter_type=item["lesson_type"],
+        if data['data']:
+            coures_id = data["data"]["course_id"]
+            for item in data["data"]["lesson_list"]:
+                print(item)
+                chapters.append(
+                    Chapter(
+                        id=item["lesson_no"],
+                        name=item["lesson_name"],
+                        lesson_id=item["lesson_id"],
+                        lark_table_id=item["feishu_id"],
+                        lark_view_id=cfg.DEF_LARK_VIEW_ID,
+                        rank=int(item["lesson_no"]),
+                        chapter_type=item["lesson_type"],
+                    )
                 )
-            )
 
     else:
         print(f"Failed to retrieve data: {response.status_code}")
@@ -74,11 +75,11 @@ def load_chapters_from_api(
 
 
 def update_chapter_from_api(
-    table_id, view_id, title, index, lesson_type, base_url=cfg.API_URL
+    doc_id, table_id, view_id, title, index, lesson_type, base_url=cfg.API_URL
 ):
     url = f"{base_url}/lesson/update_lesson"
     params = {
-        "doc_id": cfg.LARK_APP_TOKEN,
+        "doc_id": doc_id,
         "table_id": table_id,
         "view_id": view_id,
         "title": title,

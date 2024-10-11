@@ -24,6 +24,12 @@ st.caption("章节类型：401-体验课； 402-正式课； 405-隐藏分支课
 
 STSS = st.session_state
 
+if "course_id" not in STSS:
+    STSS.course_id = {}
+
+if "selected_course" not in STSS:
+    STSS.selected_course = {}
+
 
 @st.dialog("➕ 添加 章节剧本文档")
 def add_chapter(max_index_now, base_url):
@@ -43,12 +49,13 @@ def add_chapter(max_index_now, base_url):
         )
         if submit_button:
             update_chapter_from_api(
-                params["lark_table_id"],
-                params["lark_view_id"],
-                params["name"],
-                params["id"],
-                params["chapter_type"],
-                base_url,
+                doc_id=STSS.selected_course[base_url].lark_app_token,
+                table_id=params["lark_table_id"],
+                view_id=params["lark_view_id"],
+                title=params["name"],
+                index=params["id"],
+                lesson_type=params["chapter_type"],
+                base_url=base_url,
             )
             st.rerun()
 
@@ -74,12 +81,13 @@ def edit_chapter(df: DataFrame, chapter_id, base_url):
         if submit_button:
             # df.loc[chapter_id] = params
             update_chapter_from_api(
-                params["lark_table_id"],
-                params["lark_view_id"],
-                params["name"],
-                params["chapter_id"],
-                params["chapter_type"],
-                base_url,
+                doc_id=STSS.selected_course[base_url].lark_app_token,
+                table_id=params["lark_table_id"],
+                view_id=params["lark_view_id"],
+                title=params["name"],
+                index=params["chapter_id"],
+                lesson_type=params["chapter_type"],
+                base_url=base_url,
             )
             st.rerun()
 
@@ -98,11 +106,11 @@ def delete_chapter(df: DataFrame, chapter_id, base_url):
             "确认删除", type="primary", use_container_width=True
         )
         if submit_button:
-            delete_chapter_from_api(table_id, STSS.course_id, chapter_id, base_url)
+            delete_chapter_from_api(table_id, STSS.course_id[base_url], chapter_id, base_url)
             st.rerun()
 
 
-@st.fragment
+# @st.fragment
 def stdf_manage(df, title, has_delete=True, base_url=cfg.API_URL):
     st.write(f"### {title}")
     event = st.dataframe(
@@ -133,6 +141,7 @@ def stdf_manage(df, title, has_delete=True, base_url=cfg.API_URL):
         with cols[0]:
             if st.button(f'⬆️ 更新 {selected_chapter["name"]}', use_container_width=True):
                 update_chapter_from_api(
+                    doc_id=STSS.selected_course[base_url].lark_app_token,
                     table_id=selected_chapter["lark_table_id"],
                     view_id=selected_chapter["lark_view_id"],
                     title=selected_chapter["name"],
@@ -165,15 +174,15 @@ def display_chapter_management(base_url):
             st.switch_page("pages/100_My_Account.py")
         st.stop()
 
-    selected_course = st.selectbox(
+    STSS.selected_course[base_url] = st.selectbox(
         "Select Course:",
         (course for course in courses),
         key=f"select_course_{base_url}",
     )
-    if selected_course:
+    if STSS.selected_course[base_url]:
 
-        chapters, STSS.course_id = load_chapters_from_api(
-            doc_id=selected_course.lark_app_token, base_url=base_url
+        chapters, STSS.course_id[base_url] = load_chapters_from_api(
+            doc_id=STSS.selected_course[base_url].lark_app_token, base_url=base_url
         )
         df_chapters_api = DataFrame([chapter.__dict__ for chapter in chapters])
 
@@ -185,6 +194,7 @@ def display_chapter_management(base_url):
         ):
             for index, row in df_chapters_api.iterrows():
                 update_chapter_from_api(
+                    doc_id=STSS.selected_course[base_url].lark_app_token,
                     table_id=row["lark_table_id"],
                     view_id=row["lark_view_id"],
                     title=row["name"],
