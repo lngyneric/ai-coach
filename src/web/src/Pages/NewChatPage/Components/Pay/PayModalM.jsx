@@ -27,6 +27,7 @@ import { useCallback } from 'react';
 import { SettingInputM } from 'Components/m/SettingInputM.jsx';
 import PayModalFooter from './PayModalFooter.jsx';
 import contactBzWechatImg from 'Assets/newchat/contact-bz-wechat.png';
+import { useSystemStore } from 'stores/useSystemStore.js';
 
 const CompletedSection = memo(() => {
   return (
@@ -71,7 +72,8 @@ export const PayModalM = ({ open = false, onCancel, onOk }) => {
 
   useEffect(() => {
     (async () => {
-      const { data: resp } = await initOrder();
+      const { course_id } = useSystemStore.getState();
+      const { data: resp } = await initOrder(course_id);
       setPrice(resp.value_to_pay);
       const orderId = resp.order_id;
       setOrderId(orderId);

@@ -24,3 +24,4 @@ repos:
     hooks:
     -   id: eslint
         args: [--ext, .js,.jsx,.ts,.tsx]
+        types: [javascript, jsx, ts, tsx]  # 移除 typescript 标签

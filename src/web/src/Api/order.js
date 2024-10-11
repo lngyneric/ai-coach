@@ -9,11 +9,11 @@ export const testPurchaseOrder = ({ orderId }) => {
 }
 
 // 创建订单
-export const initOrder = () => {
+export const initOrder = (course_id) => {
   return request({
     url: '/api/order/init-order',
     method: 'post',
-    data: { course_id: process.env.REACT_APP_COURSE_ID }
+    data: { course_id }
   });
 }
 
@@ -46,4 +46,3 @@ export const applyDiscountCode = ({ orderId, code }) => {
     }
   });
 }
-
