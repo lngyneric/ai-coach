@@ -53,7 +53,7 @@ export const useLessonTree = () => {
   const loadTreeInner = async () => {
     const resp = await getLessonTree(useSystemStore.getState().courseId).catch(err => {
       checkLogin();
-      throw err;
+      // throw err;
     });
     const treeData = resp.data;
     let lessonCount = 0;
@@ -122,7 +122,6 @@ export const useLessonTree = () => {
 
   // 用于重新加载课程树，但保持临时状态
   const reloadTree = async (chapterId = 0, lessonId = 0) => {
-    console.log(chapterId)
     const newTree = await loadTreeInner();
     const { lesson } = await getCurrElementStatic(tree);
     const selected = setSelectedStateStatic(newTree, chapterId, lessonId);
@@ -145,7 +144,6 @@ export const useLessonTree = () => {
       }
     });
     setTree(newTree);
-    console.log('newTree',newTree)
     return newTree;
   }
 
@@ -156,7 +154,10 @@ export const useLessonTree = () => {
     if (!selected) {
       initialSelectedChapter(newTree);
     }
+
+    console.log('newTree',newTree)
     setTree(newTree);
+    console.log('reloadTree3')
 
     return newTree;
   }
