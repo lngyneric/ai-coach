@@ -108,6 +108,7 @@ const convertMessage = (serverMessage, userInfo, teach_avator) => {
 };
 
 const convertEventInputModal = ({ type, content }) => {
+
   if (type === RESP_EVENT_TYPE.PHONE || type === RESP_EVENT_TYPE.CHECKCODE) {
     return {
       type,
