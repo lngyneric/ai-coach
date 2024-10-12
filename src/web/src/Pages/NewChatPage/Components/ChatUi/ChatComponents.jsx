@@ -104,6 +104,10 @@ const convertMessage = (serverMessage, userInfo, teach_avator) => {
 
 const convertEventInputModal = ({ type, content }) => {
 
+<<<<<<< HEAD
+=======
+  console.log('convertEventInputModal',type)
+>>>>>>> 7e05c0a (feat: login ui support)
   if (type === RESP_EVENT_TYPE.PHONE || type === RESP_EVENT_TYPE.CHECKCODE) {
     return {
       type,
@@ -125,6 +129,10 @@ const convertEventInputModal = ({ type, content }) => {
         return INTERACTION_TYPE.ORDER;
       }
       if (type === RESP_EVENT_TYPE.REQUIRE_LOGIN) {
+<<<<<<< HEAD
+=======
+        console.log(' getBtnType require login');
+>>>>>>> 7e05c0a (feat: login ui support)
         return INTERACTION_TYPE.REQUIRE_LOGIN;
       }
 
