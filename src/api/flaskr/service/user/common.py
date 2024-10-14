@@ -369,6 +369,7 @@ def verify_sms_code(app: Flask, user_id, phone: str, chekcode: str) -> UserToken
             db.session.add(user_info)
         if user_info.user_state == USER_STATE_UNTEGISTERED:
             app.logger.info("user_state is unregistered")
+            user_info.mobile = phone
             user_info.user_state = USER_STATE_REGISTERED
         user_id = user_info.user_id
         token = generate_token(app, user_id=user_id)
