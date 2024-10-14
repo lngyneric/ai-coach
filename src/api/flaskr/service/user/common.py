@@ -385,6 +385,7 @@ def verify_sms_code(app: Flask, user_id, phone: str, chekcode: str) -> UserToken
                     or user_info.user_open_id == ""
                 )
             ):
+
                 user_info.user_open_id = origin_user.user_open_id
         if user_info is None:
             user_id = str(uuid.uuid4()).replace("-", "")
