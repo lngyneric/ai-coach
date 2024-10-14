@@ -8,8 +8,14 @@ import uuid
 from flask import Flask
 import jwt
 
+from flaskr.service.order.consts import ATTEND_STATUS_RESET
+from flaskr.service.profile.funcs import (
+    get_user_profile_labels,
+    update_user_profile_with_lable,
+)
+from sqlalchemy import text
 from ...api.aliyun import send_sms_code_ali
-
+from flaskr.service.order.models import AICourseLessonAttend
 from ..common.dtos import (
     USER_STATE_REGISTERED,
     USER_STATE_UNTEGISTERED,
@@ -320,6 +326,44 @@ def verify_sms_code_without_phone(app: Flask, user_id: str, checkcode) -> UserTo
         return ret
 
 
+def migrate_user_study_record(app: Flask, from_user_id: str, to_user_id: str):
+    app.logger.info(
+        "migrate_user_study_record from_user_id:"
+        + from_user_id
+        + " to_user_id:"
+        + to_user_id
+    )
+    from_attends = AICourseLessonAttend.query.filter(
+        AICourseLessonAttend.user_id == from_user_id,
+        AICourseLessonAttend.status != ATTEND_STATUS_RESET,
+    ).all()
+    to_attends = AICourseLessonAttend.query.filter(
+        AICourseLessonAttend.user_id == to_user_id,
+        AICourseLessonAttend.status != ATTEND_STATUS_RESET,
+    ).all()
+    for from_attend in from_attends:
+        to_attend = [
+            to_attend
+            for to_attend in to_attends
+            if to_attend.lesson_id == from_attend.lesson_id
+        ]
+        if len(to_attend) > 0:
+            continue
+        else:
+            app.logger.info(
+                "migrate_user_study_record from_attend.lesson_id:"
+                + from_attend.lesson_id
+            )
+            from_attend.user_id = to_user_id
+            db.session.execute(
+                text(
+                    "update ai_course_lesson_attendscript set user_id = '%s' where attend_id = '%s'"
+                    % (to_user_id, from_attend.attend_id)
+                )
+            )
+            db.session.flush()
+
+
 # 验证短信验证码
 def verify_sms_code(app: Flask, user_id, phone: str, chekcode: str) -> UserToken:
     User = get_model(app)
@@ -343,7 +387,11 @@ def verify_sms_code(app: Flask, user_id, phone: str, chekcode: str) -> UserToken
                 .first()
             )
         elif user_id != user_info.user_id:
+            app.logger.info("user_id != user_info.user_id,copy profile")
+            new_profiles = get_user_profile_labels(app, user_id)
+            update_user_profile_with_lable(app, user_info.user_id, new_profiles)
             origin_user = User.query.filter(User.user_id == user_id).first()
+            migrate_user_study_record(app, origin_user.user_id, user_info.user_id)
             if (
                 origin_user
                 and origin_user.user_open_id != user_info.user_open_id  # noqa W503
@@ -352,6 +400,7 @@ def verify_sms_code(app: Flask, user_id, phone: str, chekcode: str) -> UserToken
                     or user_info.user_open_id == ""
                 )
             ):
+
                 user_info.user_open_id = origin_user.user_open_id
 
         if user_info is None:

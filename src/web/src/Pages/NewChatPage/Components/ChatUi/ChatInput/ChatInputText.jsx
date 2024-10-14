@@ -58,7 +58,7 @@ export const ChatInputText = ({ onClick, type, disabled = false,props={} }) => {
               }
               setInput(newValue);
             }}
-            placeholder={props?.content || t('chat.chatInputPlaceholder')}
+            placeholder={props?.content?.content || t('chat.chatInputPlaceholder')}
             className={styles.inputField}
             disabled={disabled}
             onKeyDown={(e) => {

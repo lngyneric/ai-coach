@@ -262,6 +262,12 @@ def run_script_inner(
                                             "next_chapter", attend_update.__json__(), ""
                                         )
                         if script_info:
+                            if (
+                                script_info.script_ui_type
+                                in [UI_TYPE_PHONE, UI_TYPE_CHECKCODE, UI_TYPE_LOGIN]
+                            ) and user_info.user_state != 0:
+                                next = 1
+                                continue
                             response = handle_output(
                                 app,
                                 user_id,

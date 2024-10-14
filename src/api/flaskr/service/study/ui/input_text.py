@@ -16,4 +16,6 @@ def handle_input_text(
     trace,
     trace_args,
 ):
-    yield make_script_dto("input", script_info.script_ui_content, script_info.script_id)
+    yield make_script_dto(
+        "input", {"content": script_info.script_ui_content}, script_info.script_id
+    )
