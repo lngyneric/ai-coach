@@ -29,7 +29,6 @@ export const useUserStore = create(
         const res = await registerTmp({ temp_id: genUuid() });
         const token = res.data.token;
         tokenTool.set({ token, faked: true });
-
         set(() => ({
           hasLogin: false,
           userInfo: null,
@@ -37,18 +36,19 @@ export const useUserStore = create(
         return
       }
 
+
       if (userInfoStore.get()) {
         set(() => ({
           userInfo: userInfoStore.get(),
         }));
       }
-
       try {
         const res = await getUserInfo();
-        const userInfo = res.data;
 
-        tokenTool.set({ token: tokenTool.get().token, faked: false });
-        userInfoStore.set(userInfo);
+        console.log('checkLogin',res)
+        const userInfo = res.data;
+        await tokenTool.set({ token: tokenTool.get().token, faked: false });
+        await userInfoStore.set(userInfo);
         if (userInfo.mobile) {
           set(() => ({
             hasLogin: true,
@@ -67,7 +67,6 @@ export const useUserStore = create(
           const res = await registerTmp({ temp_id: genUuid() });
           const token = res.data.token;
           tokenTool.set({ token, faked: true });
-
           set(() => ({
             hasLogin: false,
             userInfo: null,

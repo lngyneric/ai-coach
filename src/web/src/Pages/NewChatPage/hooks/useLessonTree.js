@@ -51,10 +51,14 @@ export const useLessonTree = () => {
   const [tree, setTree] = useState(null);
   const { checkLogin } = useUserStore();
   const loadTreeInner = async () => {
-    const resp = await getLessonTree(useSystemStore.getState().courseId).catch(err => {
-      checkLogin();
-      // throw err;
-    });
+    let resp;
+    try {
+      resp = await getLessonTree(useSystemStore.getState().courseId);
+    } catch (err) {
+      await checkLogin();
+      resp = await getLessonTree(useSystemStore.getState().courseId);
+    }
+
     const treeData = resp.data;
     let lessonCount = 0;
     const catalogs = treeData.lessons.map(l => {
@@ -150,14 +154,10 @@ export const useLessonTree = () => {
   const loadTree = async (chapterId = 0, lessonId = 0) => {
     const newTree = await loadTreeInner();
     const selected = setSelectedStateStatic(newTree, chapterId, lessonId);
-
     if (!selected) {
       initialSelectedChapter(newTree);
     }
-
-    console.log('newTree',newTree)
     setTree(newTree);
-    console.log('reloadTree3')
 
     return newTree;
   }

@@ -60,7 +60,7 @@ const axiosrequest = axios.create({
 
 // 创建请求拦截器
 axiosrequest.interceptors.request.use(async(config)=>{
-  config.headers.token = tokenStore.get();
+  config.headers.token = tokenTool.get().token;
   return config;
 })
 
