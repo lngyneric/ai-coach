@@ -159,7 +159,6 @@ def get_user_profile_labels(app: Flask, user_id: str):
     result = []
     if user_info:
         for key in PROFILES_LABLES:
-            print(key)
             if PROFILES_LABLES[key].get("mapping"):
                 item = {
                     "key": key,
@@ -218,6 +217,9 @@ def update_user_profile_with_lable(app: Flask, user_id: str, profiles: list):
     if user_info:
         user_profiles = UserProfile.query.filter_by(user_id=user_id).all()
         for profile in profiles:
+            app.logger.info(
+                "update user profile:{}-{}".format(profile["key"], profile["value"])
+            )
             user_profile_to_update = [
                 p for p in user_profiles if p.profile_key == profile["key"]
             ]
@@ -226,7 +228,6 @@ def update_user_profile_with_lable(app: Flask, user_id: str, profiles: list):
             )
             profile_lable = PROFILES_LABLES.get(profile["key"], None)
             profile_value = profile["value"]
-
             if profile_lable:
                 if profile_lable.get("items_mapping"):
                     for k, v in profile_lable["items_mapping"].items():
@@ -234,6 +235,8 @@ def update_user_profile_with_lable(app: Flask, user_id: str, profiles: list):
                             profile_value = k
                 if profile_lable.get("mapping"):
                     setattr(user_info, profile_lable["mapping"], profile_value)
+            else:
+                app.logger.info("profile_lable not found:{}".format(profile["key"]))
             if user_profile:
                 user_profile.profile_value = profile_value
         db.session.flush()

@@ -218,7 +218,9 @@ def get_study_record(app: Flask, user_id: str, lesson_id: str) -> StudyRecordDTO
             last_script.script_ui_type == UI_TYPE_INPUT
             and last_attend_script.script_role == ROLE_TEACHER  # noqa W503
         ):
-            ret.ui = StudyUIDTO("input", last_script.script_ui_content, lesson_id)
+            ret.ui = StudyUIDTO(
+                "input", {"content": last_script.script_ui_content}, lesson_id
+            )
         elif last_script.script_ui_type == UI_TYPE_BUTTON:
             btn = [
                 {
@@ -262,7 +264,7 @@ def get_study_record(app: Flask, user_id: str, lesson_id: str) -> StudyRecordDTO
             )
         elif last_script.script_ui_type == UI_TYPE_PHONE:
             ret.ui = StudyUIDTO(
-                INPUT_TYPE_PHONE, last_script.script_ui_content, lesson_id
+                INPUT_TYPE_PHONE, {"content": last_script.script_ui_content}, lesson_id
             )
         elif last_script.script_ui_type == UI_TYPE_CHECKCODE:
             expires = get_sms_code_info(app, user_id, False)
