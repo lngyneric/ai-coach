@@ -82,3 +82,20 @@ def handle_ui(
     span = trace.span(name="ui_script")
     span.end()
     db.session.flush()
+
+
+def generate_ui(
+    app: Flask,
+    user_id: str,
+    attend: AICourseLessonAttend,
+    script_info: AILessonScript,
+    input: str,
+    trace: Trace,
+    trace_args,
+):
+    if script_info.script_ui_type in UI_HANDLE_MAP:
+        yield from UI_HANDLE_MAP[script_info.script_ui_type](
+            app, user_id, attend, script_info, input, trace, trace_args
+        )
+    else:
+        raise AppException("script type not found")

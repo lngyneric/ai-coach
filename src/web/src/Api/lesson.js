@@ -2,7 +2,7 @@ import request from "../Service/Request";
 export const getLessonTree = async (courseId) => {
   return request({
     url: `/api/study/get_lesson_tree?course_id=${courseId}`,
-    method: "get",
+    method: "GET",
   });
 }
 
