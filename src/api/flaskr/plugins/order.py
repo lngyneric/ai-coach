@@ -8,7 +8,7 @@ from flaskr.service.order.consts import (
     DISCOUNT_APPLY_TYPE_VALUES,
 )
 from flaskr.service.order.models import AICourseBuyRecord, DiscountRecord, Discount
-from flaskr.service.view.models import (
+from .view.models import (
     INPUT_TYPE_TEXT,
     INPUT_TYPE_NUMBER,
     INPUT_TYPE_DATETIME,

@@ -1,7 +1,7 @@
 from flaskr.service.order.consts import ATTEND_STATUS_VALUES
 from flaskr.service.study.const import ROLE_VALUES
-from ...service.order.models import AICourseLessonAttend
-from ...service.view.models import (
+from flaskr.service.order.models import AICourseLessonAttend
+from .view.models import (
     INPUT_TYPE_TEXT,
     InputItem,
     TableColumnItem,
@@ -9,9 +9,9 @@ from ...service.view.models import (
     OperationItem,
     OperationType,
 )
-from .models import AICourseLessonAttendScript
-from ...service.user.models import User
-from ...service.lesson.models import AILesson
+from flaskr.service.study.models import AICourseLessonAttendScript
+from flaskr.service.user.models import User
+from flaskr.service.lesson.models import AILesson
 
 LogScriptView = ViewDef(
     "logscriptview",

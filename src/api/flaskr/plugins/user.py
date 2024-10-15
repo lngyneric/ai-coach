@@ -1,5 +1,5 @@
-from .models import User
-from ..view.models import (
+from flaskr.service.user.models import User
+from .view.models import (
     INPUT_TYPE_TEXT,
     ViewDef,
     TableColumnItem,
