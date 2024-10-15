@@ -1,4 +1,4 @@
-from flaskr.service.view.models import (
+from .view.models import (
     INPUT_TYPE_TEXT,
     InputItem,
     TableColumnItem,
@@ -7,8 +7,8 @@ from flaskr.service.view.models import (
     OperationType,
 )
 
-from .models import AICourse, AILesson, AILessonScript
-from .const import (
+from flaskr.service.lesson.models import AICourse, AILesson, AILessonScript
+from flaskr.service.lesson.const import (
     LESSON_STATUS,
     LESSON_TYPE_VALUES,
     LESSON_TYPES,

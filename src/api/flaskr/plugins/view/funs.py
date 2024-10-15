@@ -1,6 +1,6 @@
 from flask import Flask
 from .models import views
-from ..common.models import VIEW_NOT_FOUND
+from flaskr.service.common.models import VIEW_NOT_FOUND
 
 
 def get_view(app: Flask, user_id: str, view_name: str):

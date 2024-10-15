@@ -1,11 +1,11 @@
-from flaskr.service.view.models import (
+from .view.models import (
     INPUT_TYPE_TEXT,
     InputItem,
     TableColumnItem,
     ViewDef,
 )
 
-from .models import FeedBack
+from flaskr.service.feedback.models import FeedBack
 
 FeedbackView = ViewDef(
     "feedback",

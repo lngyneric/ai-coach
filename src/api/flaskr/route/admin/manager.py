@@ -1,7 +1,7 @@
 from flask import Flask, request
 from flaskr.route.common import make_common_response
 from flaskr.service.common.models import raise_param_error
-from ...service.view.funs import export_query, query_view, get_view
+from flaskr.plugins.view.funs import export_query, query_view, get_view
 
 
 def register_data_manager_route(app: Flask, path_prefix):

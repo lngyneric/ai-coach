@@ -52,6 +52,8 @@ def create_app() -> Flask:
 
     load_plugins_from_dir(app, "flaskr/service/study/input")
     load_plugins_from_dir(app, "flaskr/service/study/ui")
+    load_plugins_from_dir(app, "flaskr/plugins")
+
     # register route
     from flaskr.route import register_route
 
