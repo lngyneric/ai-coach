@@ -4,15 +4,12 @@ from flask import Flask
 from flaskr.service.common.models import AppException
 from flaskr.service.lesson.models import AILessonScript
 from flaskr.service.order.models import AICourseLessonAttend
-from flaskr.service.profile.funcs import (
-    get_user_profile_labels,
-    update_user_profile_with_lable,
-)
 from flaskr.service.study.const import INPUT_TYPE_CHECKCODE, ROLE_TEACHER
 from flaskr.service.study.input_funcs import BreakException
 from flaskr.service.study.plugin import register_input_handler
 from flaskr.service.study.utils import generation_attend, make_script_dto
 from flaskr.service.user.common import verify_sms_code_without_phone
+from flaskr.service.study.const import ROLE_STUDENT
 from flaskr.dao import db
 
 
@@ -27,15 +24,11 @@ def handle_input_checkcode(
     trace_args,
 ):
     try:
-        origin_user_id = user_id
+        log_script = generation_attend(app, attend, script_info)
+        log_script.script_content = input
+        log_script.script_role = ROLE_STUDENT  # type: ignore
+        db.session.add(log_script)
         ret = verify_sms_code_without_phone(app, user_id, input)
-        verify_user_id = ret.userInfo.user_id
-        if origin_user_id != verify_user_id:
-            app.logger.info(
-                f"origin_user_id:{origin_user_id},verify_user_id:{verify_user_id} copy profile"
-            )
-            new_profiles = get_user_profile_labels(app, origin_user_id)
-            update_user_profile_with_lable(app, verify_user_id, new_profiles)
         yield make_script_dto(
             "profile_update",
             {"key": "phone", "value": ret.userInfo.mobile},
