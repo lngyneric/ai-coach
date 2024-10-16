@@ -76,7 +76,8 @@
     "copyText": "复制",
     "copySuccess": "已复制到剪切板",
     "askContent": "对刚学的内容有什么问题？",
-    "ask": "追问"
+    "ask": "追问",
+    "loginSuccess": "已经登录成功了"
   },
   "lesson": {
     "reset": {
