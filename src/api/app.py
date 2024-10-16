@@ -46,7 +46,6 @@ def create_app() -> Flask:
     from flaskr import api
 
     api.init_langfuse(app)
-
     # load plugins
     from flaskr.util.plugin import load_plugins_from_dir
 
