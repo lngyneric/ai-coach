@@ -37,7 +37,7 @@ class User(db.Model):
     )
     user_state = Column(Integer, nullable=True, default=0, comment="User_state")
     user_sex = Column(Integer, nullable=True, default=0, comment="user sex")
-    user_birth = Column(Date, nullable=True, default="1984-1-1", comment="user birth")
+    user_birth = Column(Date, nullable=True, default="2003-1-1", comment="user birth")
     user_avatar = Column(String(255), nullable=True, default="", comment="user avatar")
     user_open_id = Column(
         String(255), nullable=True, index=True, default="", comment="user open id"
