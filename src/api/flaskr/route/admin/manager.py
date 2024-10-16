@@ -32,7 +32,6 @@ def register_data_manager_route(app: Flask, path_prefix):
         if view_name is None:
             raise_param_error("view_name")
         query = request.get_json().get("query", {})
-
         return export_query(app, user_id, view_name, query)
 
     return app
