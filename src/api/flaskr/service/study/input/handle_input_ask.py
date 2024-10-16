@@ -10,6 +10,7 @@ from flaskr.service.study.utils import (
     get_follow_up_info,
     get_lesson_system,
     make_script_dto,
+    get_fmt_prompt,
 )
 from flaskr.dao import db
 from flaskr.service.study.input_funcs import (
@@ -77,9 +78,15 @@ def handle_input_ask(
             system_message = system_message + f"学员: {script.script_content}\n"
         elif script.script_role == ROLE_TEACHER:
             system_message = system_message + f"老师: {script.script_content}\n"
+    system_message = get_fmt_prompt(app, user_id, system_message)
     messages.append({"role": "system", "content": system_message})
     messages.append(
-        {"role": "user", "content": follow_up_info.ask_prompt.format(input=input)}
+        {
+            "role": "user",
+            "content": get_fmt_prompt(
+                app, user_id, profile_tmplate=follow_up_info.ask_prompt, input=input
+            ),
+        }
     )
     # get follow up model
     follow_up_model = follow_up_info.ask_model
