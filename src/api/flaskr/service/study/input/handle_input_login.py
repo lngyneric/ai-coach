@@ -4,7 +4,7 @@ from flaskr.service.study.input_funcs import BreakException
 from flaskr.service.user.models import User
 from flaskr.service.lesson.models import AILessonScript
 from flaskr.service.order.models import AICourseLessonAttend
-from flaskr.service.study.const import INPUT_TYPE_LOGIN
+from flaskr.service.study.const import INPUT_TYPE_LOGIN, ROLE_STUDENT
 from flaskr.service.study.plugin import register_input_handler
 from flaskr.service.study.utils import generation_attend, make_script_dto
 from flaskr.dao import db
