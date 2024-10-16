@@ -36,10 +36,15 @@ import PayModalM from '../Pay/PayModalM.jsx';
 import { smoothScroll } from 'Utils/smoothScroll.js';
 import { useSystemStore } from 'stores/useSystemStore.js';
 
+import {useTranslation} from 'react-i18next';
+
 const USER_ROLE = {
   TEACHER: '老师',
   STUDENT: '学生',
 };
+
+
+
 
 const robotAvatar = 'https://avtar.agiclass.cn/sunner.jpg';
 
@@ -161,6 +166,7 @@ export const ChatComponents = forwardRef(
     },
     ref
   ) => {
+    const { t } = useTranslation();
     const { trackEvent, trackTrailProgress } = useTracking();
     const chatId = useSystemStore().courseId;
     const [lessonId, setLessonId] = useState(null);
@@ -715,9 +721,9 @@ export const ChatComponents = forwardRef(
 
       console.log('onLogin');
       await refreshUserInfo();
-      handleSend(INTERACTION_OUTPUT_TYPE.LOGIN, '已经登录成功登录了');
+      handleSend(INTERACTION_OUTPUT_TYPE.LOGIN, t('chat.loginSuccess'));
 
-    }, [handleSend, refreshUserInfo]);
+    }, [handleSend, refreshUserInfo,t]);
 
     return (
       <div

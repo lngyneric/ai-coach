@@ -76,7 +76,8 @@
     "copyText": "Copy",
     "copySuccess": "Copied to clipboard",
     "askContent": "Any questions about what you just learned?",
-    "ask": "Ask"
+    "ask": "Ask",
+    "loginSuccess": "Login successfully"
   },
   "lesson": {
     "reset": {
