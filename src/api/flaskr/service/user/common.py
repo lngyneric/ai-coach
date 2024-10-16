@@ -364,10 +364,9 @@ def migrate_user_study_record(app: Flask, from_user_id: str, to_user_id: str):
             db.session.flush()
 
 
-# 验证短信验证码
+# verify sms code
 def verify_sms_code(app: Flask, user_id, phone: str, chekcode: str) -> UserToken:
     User = get_model(app)
-    app.logger.info("phone:" + phone + " chekcode:" + chekcode + " user_id:" + user_id)
     check_save = redis.get(app.config["REDIS_KEY_PRRFIX_PHONE_CODE"] + phone)
     if check_save is None and chekcode != FIX_CHECK_CODE:
         raise SMS_SEND_EXPIRED
@@ -375,19 +374,16 @@ def verify_sms_code(app: Flask, user_id, phone: str, chekcode: str) -> UserToken
     if chekcode != check_save_str and chekcode != FIX_CHECK_CODE:
         raise SMS_CHECK_ERROR
     else:
-        app.logger.info("query by phone:" + phone)
         user_info = (
             User.query.filter(User.mobile == phone).order_by(User.id.asc()).first()
         )
         if not user_info:
-            # app.logger.info("user_info is None,query user_id:" + user_id)
             user_info = (
                 User.query.filter(User.user_id == user_id)
                 .order_by(User.id.asc())
                 .first()
             )
         elif user_id != user_info.user_id:
-            app.logger.info("user_id != user_info.user_id,copy profile")
             new_profiles = get_user_profile_labels(app, user_id)
             update_user_profile_with_lable(app, user_info.user_id, new_profiles)
             origin_user = User.query.filter(User.user_id == user_id).first()
@@ -400,11 +396,8 @@ def verify_sms_code(app: Flask, user_id, phone: str, chekcode: str) -> UserToken
                     or user_info.user_open_id == ""
                 )
             ):
-
                 user_info.user_open_id = origin_user.user_open_id
-
         if user_info is None:
-            app.logger.info("user_info is None,create new user")
             user_id = str(uuid.uuid4()).replace("-", "")
             user_info = User(
                 user_id=user_id, username="", name="", email="", mobile=phone
