@@ -35,7 +35,7 @@ ERROR_CODE = {
     "SMS_SEND_EXPIRED": 1013,
     "SMS_CHECK_ERROR": 1014,
     "UNKNOWN_ERROR": 9999,
-    # 订单相关
+    # order error
     "ORDER_NOT_FOUND": 3001,
     "ORDER_ALREADY_EXISTS": 3002,
     "ORDER_STATUS_ERROR": 3003,
@@ -44,7 +44,7 @@ ERROR_CODE = {
     "ORDER_PAY_EXPIRED": 3006,
     "ORDER_PAY_NOT_FOUND": 3007,
     "ORDER_HAS_PAID": 3008,
-    # 优惠码相关
+    # discount error
     "DISCOUNT_NOT_FOUND": 3101,
     "DISCOUNT_ALREADY_USED": 3102,
     "DISCOUNT_LIMIT": 3103,
@@ -53,18 +53,18 @@ ERROR_CODE = {
     "ORDER_DISCOUNT_ALREADY_USED": 3106,
     "DISCOUNT_LIMIT_EXCEEDED": 3107,
     "DISCOUNT_ALREADY_EXPIRED": 3108,
-    #  课程相关
+    # course error
     "COURSE_NOT_FOUND": 4001,
     "LESSON_CANNOT_BE_RESET": 4002,
     "LESSON_NOT_FOUND": 4003,
     "LESSON_NOT_FOUND_IN_COURSE": 4004,
-    # 支付相关
+    # pay error
     "PAY_CHANNEL_NOT_SUPPORT": 5001,
-    # 文件上传相关
+    # file error
     "FILE_UPLOAD_ERROR": 6001,
     "FILE_TYPE_NOT_SUPPORT": 6002,
     "FILE_SIZE_EXCEED": 6003,
-    # 参数错误
+    # params error
     "PARAMS_ERROR": 2001,
     # admin error
     "VIEW_NOT_FOUND": 7001,
@@ -86,7 +86,7 @@ ERROR_MESSAGE = {
     "SMS_SEND_FREQUENTLY": "短信发送过于频繁",
     "SMS_SEND_EXPIRED": "短信验证码过期",
     "SMS_CHECK_ERROR": "短信验证码错误",
-    # 订单相关
+    # order error
     "ORDER_NOT_FOUND": "没有找到订单",
     "ORDER_ALREADY_EXISTS": "订单已经存在",
     "ORDER_STATUS_ERROR": "订单状态错误",
@@ -95,7 +95,7 @@ ERROR_MESSAGE = {
     "ORDER_PAY_EXPIRED": "订单支付过期",
     "ORDER_PAY_NOT_FOUND": "没有找到支付订单",
     "ORDER_HAS_PAID": "订单已经支付",
-    # 优惠码相关
+    # discount error
     "DISCOUNT_NOT_FOUND": "没有找到优惠码",
     "DISCOUNT_ALREADY_USED": "优惠码已经使用",
     "DISCOUNT_LIMIT": "优惠码数量限制",
@@ -104,20 +104,20 @@ ERROR_MESSAGE = {
     "ORDER_DISCOUNT_ALREADY_USED": "订单已使用优惠码",
     "DISCOUNT_LIMIT_EXCEEDED": "优惠码使用次数已达到上限",
     "DISCOUNT_ALREADY_EXPIRED": "优惠码已过期",
-    # 课程相关
+    # course error
     "COURSE_NOT_FOUND": "没有找到课程",
     "LESSON_CANNOT_BE_RESET": "课程不能重置",
     "LESSON_NOT_FOUND": "没有找到课程",
     "LESSON_NOT_FOUND_IN_COURSE": "没有找到课程",
-    # 支付相关
+    # pay error
     "PAY_CHANNEL_NOT_SUPPORT": "不支持的支付渠道",
-    # 文件上传相关
+    # file error
     "FILE_UPLOAD_ERROR": "文件上传失败",
     "FILE_TYPE_NOT_SUPPORT": "不支持的文件类型",
     "FILE_SIZE_EXCEED": "文件大小超过限制",
     # admin error
     "VIEW_NOT_FOUND": "没有找到视图",
-    # 参数错误
+    # params error
     "PARAMS_ERROR": "参数错误:{param_message}",
 }
 

@@ -402,11 +402,14 @@ def reset_user_study_info_by_lesson(app: Flask, user_id: str, lesson_id: str):
             app.logger.info("lesson_info not found")
             return False
         lesson_no = lesson_info.lesson_no
+        course_id = lesson_info.course_id
         if len(lesson_no) > 2:
             raise LESSON_CANNOT_BE_RESET
         # query the lesson tree
         lessons = AILesson.query.filter(
-            AILesson.lesson_no.like(lesson_no + "%"), AILesson.status == 1
+            AILesson.lesson_no.like(lesson_no + "%"),
+            AILesson.status == 1,
+            AILesson.course_id == course_id,
         ).all()
         # lessons = [lesson_info] + lessons
         lesson_ids = [lesson.lesson_id for lesson in lessons]
@@ -418,6 +421,7 @@ def reset_user_study_info_by_lesson(app: Flask, user_id: str, lesson_id: str):
             AICourseLessonAttend.user_id == user_id,
             AICourseLessonAttend.lesson_id.in_(lesson_ids),
             AICourseLessonAttend.status != ATTEND_STATUS_RESET,
+            AICourseLessonAttend.course_id == course_id,
         ).all()
         # reset the attend info
         for attend_info in attend_infos:
