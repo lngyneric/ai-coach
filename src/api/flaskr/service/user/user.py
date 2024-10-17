@@ -7,7 +7,7 @@ import uuid
 from flask import Flask
 
 from ...common.config import get_config
-from ..common.models import FILE_TYPE_NOT_SUPPORT
+from ..common.models import raise_error
 
 from .utils import generate_token
 from ...service.common.dtos import USER_STATE_UNTEGISTERED, UserInfo, UserToken
@@ -159,7 +159,7 @@ def get_content_type(filename):
         return "image/png"
     elif extension == "gif":
         return "image/gif"
-    raise FILE_TYPE_NOT_SUPPORT
+    raise_error("FILE.FILE_TYPE_NOT_SUPPORT")
 
 
 def upload_user_avatar(app: Flask, user_id: str, avatar) -> str:

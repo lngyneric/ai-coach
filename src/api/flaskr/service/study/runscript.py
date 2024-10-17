@@ -2,7 +2,7 @@ import traceback
 from typing import Generator
 from flask import Flask
 
-from flaskr.service.common.models import COURSE_NOT_FOUND, LESSON_NOT_FOUND_IN_COURSE
+from flaskr.service.common.models import raise_error
 from flaskr.service.user.models import User
 from ...api.langfuse import langfuse_client as langfuse
 from ...service.lesson.const import (
@@ -17,7 +17,7 @@ from ...service.order.consts import (
     ATTEND_STATUS_BRANCH,
     ATTEND_STATUS_IN_PROGRESS,
     ATTEND_STATUS_NOT_STARTED,
-    ATTEND_STATUS_VALUES,
+    get_attend_status_values,
     BUY_STATUS_SUCCESS,
 )
 from ...service.order.funs import (
@@ -55,6 +55,7 @@ def run_script_inner(
     with app.app_context():
         script_info = None
         try:
+            attend_status_values = get_attend_status_values()
             user_info = User.query.filter(User.user_id == user_id).first()
             if not lesson_id:
                 app.logger.info("lesson_id is None")
@@ -68,7 +69,7 @@ def run_script_inner(
                         AICourse.status == 1,
                     ).first()
                 if not course_info:
-                    raise COURSE_NOT_FOUND
+                    raise_error("LESSON.COURSE_NOT_FOUND")
                 yield make_script_dto(
                     "teacher_avator", course_info.course_teacher_avator, ""
                 )
@@ -83,7 +84,7 @@ def run_script_inner(
                     AILesson.status == 1,
                 ).first()
                 if not lesson_info:
-                    raise LESSON_NOT_FOUND_IN_COURSE
+                    raise_error("LESSON.LESSON_NOT_FOUND_IN_COURSE")
                 course_id = lesson_info.course_id
                 app.logger.info(
                     "user_id:{},course_id:{},lesson_id:{}".format(
@@ -91,13 +92,13 @@ def run_script_inner(
                     )
                 )
                 if not lesson_info:
-                    raise COURSE_NOT_FOUND
+                    raise_error("LESSON.LESSON_NOT_FOUND_IN_COURSE")
                 course_info = AICourse.query.filter(
                     AICourse.course_id == course_id,
                     AICourse.status == 1,
                 ).first()
                 if not course_info:
-                    raise COURSE_NOT_FOUND
+                    raise_error("LESSON.COURSE_NOT_FOUND")
                 yield make_script_dto(
                     "teacher_avator", course_info.course_teacher_avator, ""
                 )
@@ -139,8 +140,6 @@ def run_script_inner(
                     ).first()
 
                     attends = update_attend_lesson_info(app, attend_info.attend_id)
-
-                    app.logger.info("===========update_attend_lesson_info")
                     for attend_update in attends:
                         if len(attend_update.lesson_no) > 2:
                             yield make_script_dto(
@@ -152,7 +151,7 @@ def run_script_inner(
                             )
                             if (
                                 attend_update.status
-                                == ATTEND_STATUS_VALUES[ATTEND_STATUS_NOT_STARTED]
+                                == attend_status_values[ATTEND_STATUS_NOT_STARTED]
                             ):
                                 yield make_script_dto(
                                     "next_chapter", attend_update.__json__(), ""
@@ -194,7 +193,7 @@ def run_script_inner(
                         )
                         if (
                             attend_update.status
-                            == ATTEND_STATUS_VALUES[ATTEND_STATUS_NOT_STARTED]
+                            == attend_status_values[ATTEND_STATUS_NOT_STARTED]
                         ):
                             yield make_script_dto(
                                 "next_chapter", attend_update.__json__(), ""
@@ -254,7 +253,7 @@ def run_script_inner(
                                     )
                                     if (
                                         attend_update.status
-                                        == ATTEND_STATUS_VALUES[
+                                        == attend_status_values[
                                             ATTEND_STATUS_NOT_STARTED
                                         ]
                                     ):
@@ -333,7 +332,7 @@ def run_script_inner(
                                 )
                                 if (
                                     attend_update.status
-                                    == ATTEND_STATUS_VALUES[ATTEND_STATUS_NOT_STARTED]
+                                    == attend_status_values[ATTEND_STATUS_NOT_STARTED]
                                 ):
                                     yield make_script_dto(
                                         "next_chapter", attend_update.__json__(), ""
@@ -367,7 +366,7 @@ def run_script_inner(
                         )
                         if (
                             attend_update.status
-                            == ATTEND_STATUS_VALUES[ATTEND_STATUS_NOT_STARTED]
+                            == attend_status_values[ATTEND_STATUS_NOT_STARTED]
                         ):
                             yield make_script_dto(
                                 "next_chapter", attend_update.__json__(), ""

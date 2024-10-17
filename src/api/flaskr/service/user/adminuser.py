@@ -3,7 +3,7 @@ import uuid
 from flask import Flask
 
 from ..common.dtos import UserInfo, UserToken
-from ..common.models import USER_ALREADY_EXISTS
+from ..common.models import raise_error
 from .models import AdminUser as User
 from .utils import generate_token
 from ...dao import db
@@ -19,7 +19,7 @@ def create_new_user(
             | (User.mobile == mobile)
         ).first()
         if user:
-            raise USER_ALREADY_EXISTS
+            raise_error("USER.USER_ALREADY_EXISTS")
         user_id = str(uuid.uuid4()).replace("-", "")
         password_hash = hashlib.md5((user_id + raw_password).encode()).hexdigest()
         new_user = User(

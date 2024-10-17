@@ -39,6 +39,11 @@ def create_app() -> Flask:
     # init models and migrate
     Migrate(app, dao.db)
 
+    # init i18n
+    from flaskr.i18n import load_translations
+
+    load_translations(app)
+
     # init redis
     dao.init_redis(app)
 

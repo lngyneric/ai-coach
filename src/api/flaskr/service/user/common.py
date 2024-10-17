@@ -22,17 +22,7 @@ from ..common.dtos import (
     UserInfo,
     UserToken,
 )
-from ..common.models import (
-    OLD_PASSWORD_ERROR,
-    RESET_PWD_CODE_ERROR,
-    RESET_PWD_CODE_EXPIRED,
-    SMS_CHECK_ERROR,
-    SMS_SEND_EXPIRED,
-    USER_NOT_FOUND,
-    USER_PASSWORD_ERROR,
-    USER_TOKEN_EXPIRED,
-    USER_NOT_LOGIN,
-)
+from ..common.models import raise_error
 from .utils import generate_token, get_user_language, get_user_openid
 from ...dao import redis_client as redis, db
 from .models import User as CommonUser, AdminUser as AdminUser
@@ -75,16 +65,16 @@ def verify_user(app: Flask, login: str, raw_password: str) -> UserToken:
                     token=token,
                 )
             else:
-                raise USER_PASSWORD_ERROR
+                raise_error("USER.USER_PASSWORD_ERROR")
         else:
-            raise USER_NOT_FOUND
+            raise_error("USER.USER_NOT_FOUND")
 
 
 def validate_user(app: Flask, token: str) -> UserInfo:
     User = get_model(app)
     with app.app_context():
         if token is None:
-            raise USER_NOT_LOGIN
+            raise_error("USER.USER_NOT_LOGIN")
         try:
             if app.config.get("ENVERIMENT", "prod") == "dev":
                 user_id = token
@@ -111,7 +101,7 @@ def validate_user(app: Flask, token: str) -> UserInfo:
             redis_token = redis.get(app.config["REDIS_KEY_PRRFIX_USER"] + user_id)
             if redis_token is None:
                 app.logger.info("redis_token is None")
-                raise USER_TOKEN_EXPIRED
+                raise_error("USER.USER_TOKEN_EXPIRED")
             app.logger.info(
                 "redis_token_key:" + str(app.config["REDIS_KEY_PRRFIX_USER"] + user_id)
             )
@@ -134,13 +124,13 @@ def validate_user(app: Flask, token: str) -> UserInfo:
                         language=get_user_language(user),
                     )
                 else:
-                    raise USER_TOKEN_EXPIRED
+                    raise_error("USER.USER_TOKEN_EXPIRED")
             else:
-                raise USER_TOKEN_EXPIRED
+                raise_error("USER.USER_TOKEN_EXPIRED")
         except (jwt.exceptions.ExpiredSignatureError):
-            raise USER_TOKEN_EXPIRED
+            raise_error("USER.USER_TOKEN_EXPIRED")
         except (jwt.exceptions.DecodeError):
-            raise USER_NOT_FOUND
+            raise_error("USER.USER_NOT_FOUND")
 
 
 def update_user_info(
@@ -168,7 +158,7 @@ def update_user_info(
                 language=get_user_language(user),
             )
         else:
-            raise USER_NOT_FOUND
+            raise_error("USER.USER_NOT_FOUND")
 
 
 def change_user_passwd(app: Flask, user: UserInfo, oldpwd, newpwd) -> UserInfo:
@@ -194,9 +184,9 @@ def change_user_passwd(app: Flask, user: UserInfo, oldpwd, newpwd) -> UserInfo:
                     language=get_user_language(user),
                 )
             else:
-                raise OLD_PASSWORD_ERROR
+                raise_error("USER.OLD_PASSWORD_ERROR")
         else:
-            raise USER_NOT_FOUND
+            raise_error("USER.USER_NOT_FOUND")
 
 
 def get_user_info(app: Flask, user_id: str) -> UserInfo:
@@ -216,7 +206,7 @@ def get_user_info(app: Flask, user_id: str) -> UserInfo:
                 language=get_user_language(user),
             )
         else:
-            raise USER_NOT_FOUND
+            raise_error("USER.USER_NOT_FOUND")
 
 
 def require_reset_pwd_code(app: Flask, login: str):
@@ -234,7 +224,7 @@ def require_reset_pwd_code(app: Flask, login: str):
             )
             return True
         else:
-            raise USER_NOT_FOUND
+            raise_error("USER.USER_NOT_FOUND")
 
 
 def reset_pwd(app: Flask, login: str, code: int, newpwd: str):
@@ -248,7 +238,7 @@ def reset_pwd(app: Flask, login: str, code: int, newpwd: str):
                 app.config["REDIS_KEY_PRRFIX_RESET_PWD"] + user.user_id
             )
             if redis_code is None:
-                raise RESET_PWD_CODE_EXPIRED
+                raise_error("USER.RESET_PWD_CODE_EXPIRED")
             set_code = int(str(redis_code, encoding="utf-8"))
             app.logger.info("code:" + str(code) + " set_code:" + str(set_code))
             if str(set_code) == str(code):
@@ -260,9 +250,9 @@ def reset_pwd(app: Flask, login: str, code: int, newpwd: str):
                 app.logger.info("update password")
                 return True
             else:
-                raise RESET_PWD_CODE_ERROR
+                raise_error("USER.RESET_PWD_CODE_ERROR")
         else:
-            raise USER_NOT_FOUND
+            raise_error("USER.USER_NOT_FOUND")
 
 
 def get_sms_code_info(app: Flask, user_id: str, resend: bool):
@@ -369,10 +359,10 @@ def verify_sms_code(app: Flask, user_id, phone: str, chekcode: str) -> UserToken
     User = get_model(app)
     check_save = redis.get(app.config["REDIS_KEY_PRRFIX_PHONE_CODE"] + phone)
     if check_save is None and chekcode != FIX_CHECK_CODE:
-        raise SMS_SEND_EXPIRED
+        raise_error("USER.SMS_SEND_EXPIRED")
     check_save_str = str(check_save, encoding="utf-8") if check_save else ""
     if chekcode != check_save_str and chekcode != FIX_CHECK_CODE:
-        raise SMS_CHECK_ERROR
+        raise_error("USER.SMS_CHECK_ERROR")
     else:
         user_info = (
             User.query.filter(User.mobile == phone).order_by(User.id.asc()).first()

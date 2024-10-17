@@ -26,7 +26,7 @@ from ...service.order.consts import (
     ATTEND_STATUS_COMPLETED,
     ATTEND_STATUS_IN_PROGRESS,
     ATTEND_STATUS_RESET,
-    ATTEND_STATUS_VALUES,
+    get_attend_status_values,
     BUY_STATUS_SUCCESS,
 )
 
@@ -56,12 +56,13 @@ from ...service.order.models import (
     AICourseBuyRecord,
     AICourseLessonAttend,
 )
-from ...service.common.models import LESSON_CANNOT_BE_RESET
+from ...service.common.models import raise_error
 from .models import AICourseLessonAttendScript, AICourseAttendAsssotion
 
 
 def get_lesson_tree_to_study(app: Flask, user_id: str, course_id: str) -> AICourseDTO:
     with app.app_context():
+        attend_status_values = get_attend_status_values()
         course_info = AICourse.query.filter(AICourse.course_id == course_id).first()
         if not course_info:
             course_info = AICourse.query.first()
@@ -94,7 +95,7 @@ def get_lesson_tree_to_study(app: Flask, user_id: str, course_id: str) -> AICour
             status = attend_info.status if attend_info else ATTEND_STATUS_LOCKED
             if status == ATTEND_STATUS_BRANCH:
                 status = ATTEND_STATUS_IN_PROGRESS
-            status = ATTEND_STATUS_VALUES[status]
+            status = attend_status_values[status]
             lessonInfo = AILessonAttendDTO(
                 lesson.lesson_no, lesson.lesson_name, lesson.lesson_id, status, []
             )
@@ -304,6 +305,7 @@ def get_lesson_study_progress(
     app: Flask, user_id: str, lesson_id: str
 ) -> StudyRecordProgressDTO:
     with app.app_context():
+        attend_status_values = get_attend_status_values()
         lesson_info = AILesson.query.filter_by(lesson_id=lesson_id).first()
         if not lesson_info:
             return None
@@ -346,7 +348,7 @@ def get_lesson_study_progress(
             lesson_id,
             lesson_name,
             lesson_no,
-            ATTEND_STATUS_VALUES[attend_info.status],
+            attend_status_values[attend_info.status],
             script_index,
             script_name,
             is_branch,
@@ -404,7 +406,7 @@ def reset_user_study_info_by_lesson(app: Flask, user_id: str, lesson_id: str):
         lesson_no = lesson_info.lesson_no
         course_id = lesson_info.course_id
         if len(lesson_no) > 2:
-            raise LESSON_CANNOT_BE_RESET
+            raise_error("LESSON.LESSON_CANNOT_BE_RESET")
         # query the lesson tree
         lessons = AILesson.query.filter(
             AILesson.lesson_no.like(lesson_no + "%"),

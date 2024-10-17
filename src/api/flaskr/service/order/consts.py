@@ -1,10 +1,9 @@
-from enum import Enum
+from flaskr.i18n import _
 
 BUY_STATUS_INIT = 501
 BUY_STATUS_SUCCESS = 502
 BUY_STATUS_REFUND = 503
 BUY_STATUS_TO_BE_PAID = 504
-
 
 ATTEND_STATUS_NOT_STARTED = 601
 ATTEND_STATUS_IN_PROGRESS = 602
@@ -40,16 +39,18 @@ ATTEND_STATUS_TYPES = {
     "重置": ATTEND_STATUS_RESET,
 }
 
-ATTEND_STATUS_VALUES = {
-    ATTEND_STATUS_NOT_STARTED: "可学习",
-    ATTEND_STATUS_IN_PROGRESS: "正在学",
-    ATTEND_STATUS_COMPLETED: "已完成",
-    ATTEND_STATUS_REFUND: "退款",
-    ATTEND_STATUS_LOCKED: "未解锁",
-    ATTEND_STATUS_UNAVAILABE: "不可用",
-    ATTEND_STATUS_BRANCH: "分支",
-    ATTEND_STATUS_RESET: "己重置",
-}
+
+def get_attend_status_values():
+    return {
+        ATTEND_STATUS_NOT_STARTED: _("ORDER.ATTEND_STATUS_NOT_STARTED"),
+        ATTEND_STATUS_IN_PROGRESS: _("ORDER.ATTEND_STATUS_IN_PROGRESS"),
+        ATTEND_STATUS_COMPLETED: _("ORDER.ATTEND_STATUS_COMPLETED"),
+        ATTEND_STATUS_REFUND: _("ORDER.ATTEND_STATUS_REFUND"),
+        ATTEND_STATUS_LOCKED: _("ORDER.ATTEND_STATUS_LOCKED"),
+        ATTEND_STATUS_UNAVAILABE: _("ORDER.ATTEND_STATUS_UNAVAILABE"),
+        ATTEND_STATUS_BRANCH: _("ORDER.ATTEND_STATUS_BRANCH"),
+        ATTEND_STATUS_RESET: _("ORDER.ATTEND_STATUS_RESET"),
+    }
 
 
 DISCOUNT_TYPE_FIXED = 701
@@ -94,78 +95,3 @@ DISCOUNT_STATUS_VALUES = {
     DISCOUNT_STATUS_USED: "已使用",
     DISCOUNT_STATUS_TIMEOUT: "已过期",
 }
-
-
-class DiscountStatus(Enum):
-    INACTIVE = 901
-    ACTIVE = 902
-    USED = 903
-    TIMEOUT = 904
-
-    def __str__(self):
-        return self.name
-
-    def __int__(self):
-        return self.value
-
-    def __get_str__(self):
-        return DISCOUNT_STATUS_VALUES[self.value]
-
-    def __get_int__(self):
-        return DISCOUNT_STATUS_TYPES[self.name]
-
-
-class DiscountType(Enum):
-    FIXED = 701
-    PERCENT = 702
-
-    def __str__(self):
-        return self.name
-
-    def __int__(self):
-        return self.value
-
-    def __get_str__(self):
-        return DISCOUNT_TYPE_VALUES[self.value]
-
-    def __get_int__(self):
-        return DISCOUNT_TYPE_TYPES[self.name]
-
-
-class DiscountApplyType(Enum):
-    ALL = 801
-    SPECIFIC = 802
-
-    def __str__(self):
-        return self.name
-
-    def __int__(self):
-        return self.value
-
-    def __get_str__(self):
-        return DISCOUNT_APPLY_TYPE_VALUES[self.value]
-
-    def __get_int__(self):
-        return DISCOUNT_APPLY_TYPE_TYPES[self.name]
-
-
-class AttendStatus(Enum):
-    NOT_STARTED = 601
-    IN_PROGRESS = 602
-    COMPLETED = 603
-    REFUND = 604
-    LOCKED = 605
-    UNAVAILABE = 606
-    BRANCH = 607
-
-    def __str__(self):
-        return self.name
-
-    def __int__(self):
-        return self.value
-
-    def __get_str__(self):
-        return ATTEND_STATUS_VALUES[self.value]
-
-    def __get_int__(self):
-        return ATTEND_STATUS_TYPES[self.name]

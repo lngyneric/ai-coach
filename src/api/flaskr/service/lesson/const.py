@@ -68,8 +68,8 @@ LESSON_TYPES = {
 }
 
 LESSON_STATUS = {1: "有效", 0: "无效"}
-
 SCRIPT_STATUS = {1: "有效", 0: "无效"}
+
 LESSON_TYPE_VALUES = {
     LESSON_TYPE_TRIAL: "试用课",
     LESSON_TYPE_NORMAL: "正式课",

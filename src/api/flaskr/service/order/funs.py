@@ -22,10 +22,7 @@ from .models import AICourseBuyRecord, PingxxOrder
 from flask import Flask
 from ...dao import db, redis_client
 from ..common.models import (
-    COURSE_NOT_FOUND,
-    ORDER_HAS_PAID,
-    ORDER_NOT_FOUND,
-    PAY_CHANNEL_NOT_SUPPORT,
+    raise_error,
 )
 from ..lesson.models import AICourse, AILesson
 from .models import AICourseLessonAttend
@@ -153,7 +150,7 @@ def init_buy_record(app: Flask, user_id: str, course_id: str):
         course_info = AICourse.query.filter(AICourse.course_id == course_id).first()
         if not course_info:
             app.logger.error("course:{} not found".format(course_id))
-            raise COURSE_NOT_FOUND
+            raise_error("LESSON.COURSE_NOT_FOUND")
         origin_record = (
             AICourseBuyRecord.query.filter(
                 AICourseBuyRecord.user_id == user_id,
@@ -241,16 +238,16 @@ def generate_charge(
             AICourseBuyRecord.record_id == record_id
         ).first()
         if not buy_record:
-            raise ORDER_NOT_FOUND
+            raise_error("ORDER.ORDER_NOT_FOUND")
         course = AICourse.query.filter(
             AICourse.course_id == buy_record.course_id
         ).first()
         if not course:
-            raise COURSE_NOT_FOUND
+            raise_error("COURSE.COURSE_NOT_FOUND")
         app.logger.info("buy record found:{}".format(buy_record))
         if buy_record.status == BUY_STATUS_SUCCESS:
             app.logger.error("buy record:{} status is not init".format(record_id))
-            raise ORDER_HAS_PAID
+            raise_error("ORDER.ORDER_HAS_PAID")
         amount = int(buy_record.pay_value * 100)
         product_id = course.course_id
         subject = course.course_name
@@ -316,7 +313,7 @@ def generate_charge(
             )
         else:
             app.logger.error("channel:{} not support".format(channel))
-            raise PAY_CHANNEL_NOT_SUPPORT
+            raise_error("PAY.PAY_CHANNEL_NOT_SUPPORT")
         app.logger.info("charge created:{}".format(charge))
         buy_record.status = BUY_STATUS_TO_BE_PAID
         pingxxOrder = PingxxOrder()
@@ -589,7 +586,7 @@ def query_buy_record(app: Flask, record_id: str) -> AICourseBuyRecordDTO:
                 buy_record.discount_value,
                 item,
             )
-        raise ORDER_NOT_FOUND
+        raise_error("ORDER.ORDER_NOT_FOUND")
 
 
 def fix_attend_info(app: Flask, user_id: str, course_id: str):

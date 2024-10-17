@@ -1,5 +1,5 @@
 from flaskr.common.swagger import register_schema_to_swagger
-from flaskr.service.common.models import COURSE_NOT_FOUND, LESSON_NOT_FOUND
+from flaskr.service.common.models import raise_error
 from .models import AICourse, AILesson, AILessonScript
 from .const import (
     ASK_MODE_DEFAULT,
@@ -628,7 +628,7 @@ def update_lesson_ask_info(
     with app.app_context():
         lesson = AILesson.query.filter(AILesson.lesson_id == lesson_id).first()
         if lesson is None:
-            raise LESSON_NOT_FOUND
+            raise_error("LESSON.LESSON_NOT_FOUND")
         lesson.lesson_ask_count_limit = lesson_ask_count_limit
         lesson.ask_model = lesson_ask_model
         lesson.ask_prompt = lesson_ask_prompt
@@ -673,7 +673,7 @@ def update_course_info(
         course = AICourse.query.filter(AICourse.course_id == course_id).first()
         app.logger.info("course_id" + course_id)
         if course is None:
-            raise COURSE_NOT_FOUND
+            raise_error("LESSON.COURSE_NOT_FOUND")
         course.course_name = course_name
         course.course_desc = course_desc
         course.course_price = course_price
@@ -688,7 +688,7 @@ def get_course_info(app: Flask, course_id: str) -> AICourseDTO:
     with app.app_context():
         course = AICourse.query.filter(AICourse.course_id == course_id).first()
         if course is None:
-            raise COURSE_NOT_FOUND
+            raise_error("LESSON.COURSE_NOT_FOUND")
         return AICourseDTO(
             course.course_id,
             course.course_name,

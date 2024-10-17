@@ -25,14 +25,7 @@ from .consts import (
 )
 from flask import Flask
 from ...util import generate_id
-from ..common import (
-    ORDER_NOT_FOUND,
-    DISCOUNT_NOT_FOUND,
-    DISCOUNT_ALREADY_USED,
-    ORDER_DISCOUNT_ALREADY_USED,
-    DISCOUNT_LIMIT_EXCEEDED,
-    DISCOUNT_ALREADY_EXPIRED,
-)
+from ..common import raise_error
 
 
 # 生成折扣码
@@ -112,13 +105,13 @@ def use_discount_code(app: Flask, user_id, discount_code, order_id):
             AICourseBuyRecord.record_id == order_id
         ).first()
         if not buy_record:
-            return ORDER_NOT_FOUND
+            raise_error("ORDER.ORDER_NOT_FOUND")
         order_discount = DiscountRecord.query.filter(
             DiscountRecord.order_id == order_id,
             DiscountRecord.status == DISCOUNT_STATUS_USED,
         ).first()
         if order_discount:
-            raise ORDER_DISCOUNT_ALREADY_USED
+            raise_error("ORDER.ORDER_DISCOUNT_ALREADY_USED")
         if order_discount:
             return order_discount
         discountRecord = DiscountRecord.query.filter(
@@ -134,13 +127,13 @@ def use_discount_code(app: Flask, user_id, discount_code, order_id):
                 Discount.discount_code == discount_code
             ).first()
             if not discount:
-                raise DISCOUNT_NOT_FOUND
+                raise_error("DISCOUNT.DISCOUNT_NOT_FOUND")
             discount_end = bj_time.localize(discount.discount_end)
             app.logger.info("discount_end: %s", discount_end)
             if discount_end < now:
-                raise DISCOUNT_ALREADY_EXPIRED
+                raise_error("DISCOUNT.DISCOUNT_ALREADY_EXPIRED")
             if discount.discount_used + 1 > discount.discount_count:
-                raise DISCOUNT_LIMIT_EXCEEDED
+                raise_error("DISCOUNT.DISCOUNT_LIMIT_EXCEEDED")
 
             discountRecord = DiscountRecord()
             discountRecord.record_id = generate_id(app)
@@ -158,9 +151,9 @@ def use_discount_code(app: Flask, user_id, discount_code, order_id):
             ).first()
 
         if not discount:
-            return DISCOUNT_NOT_FOUND
+            raise_error("DISCOUNT.DISCOUNT_NOT_FOUND")
         if discountRecord.status != DISCOUNT_STATUS_ACTIVE:
-            raise DISCOUNT_ALREADY_USED
+            raise_error("DISCOUNT.DISCOUNT_ALREADY_USED")
 
         discountRecord.status = DISCOUNT_STATUS_USED
         discountRecord.updated = now

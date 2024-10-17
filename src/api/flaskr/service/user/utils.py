@@ -5,7 +5,7 @@ import base64
 import string
 import random
 
-from ..common.models import CHECK_CODE_ERROR, CHECK_CODE_EXPIRED
+from ..common.models import raise_error
 from ...dao import redis_client as redis
 from captcha.image import ImageCaptcha
 from ...api.aliyun import send_sms_code_ali
@@ -72,11 +72,11 @@ def send_sms_code(app: Flask, phone: str, chekcode: str):
     with app.app_context():
         check_save = redis.get(app.config["REDIS_KEY_PRRFIX_CAPTCHA"] + phone)
         if check_save is None:
-            raise CHECK_CODE_EXPIRED
+            raise_error("USER.CHECK_CODE_EXPIRED")
         check_save_str = str(check_save, encoding="utf-8")
         app.logger.info("check_save_str:" + check_save_str + " chekcode:" + chekcode)
         if chekcode.lower() != check_save_str.lower():
-            raise CHECK_CODE_ERROR
+            raise_error("USER.CHECK_CODE_ERROR")
         else:
             characters = string.digits
             # Generate a random string of length 4

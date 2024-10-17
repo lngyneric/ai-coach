@@ -1,0 +1,2 @@
+UNKNOWN_ERROR = "未知错误"
+PARAMS_ERROR = "参数错误"

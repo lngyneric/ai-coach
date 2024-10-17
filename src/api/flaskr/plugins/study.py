@@ -1,4 +1,3 @@
-from flaskr.service.order.consts import ATTEND_STATUS_VALUES
 from flaskr.service.study.const import ROLE_VALUES
 from flaskr.service.order.models import AICourseLessonAttend
 from .view.models import (
@@ -60,7 +59,7 @@ AttendLessonView = ViewDef(
             display="mobile",
             index_id="user_id",
         ),
-        TableColumnItem(AICourseLessonAttend.status, "状态", items=ATTEND_STATUS_VALUES),
+        # TableColumnItem(AICourseLessonAttend.status, "状态", items=get_attend_status_values()),
         TableColumnItem(AICourseLessonAttend.created, "创建时间"),
         TableColumnItem(AICourseLessonAttend.updated, "更新时间"),
     ],
@@ -68,9 +67,9 @@ AttendLessonView = ViewDef(
         InputItem("id", "ID", "like", INPUT_TYPE_TEXT),
         InputItem("lesson_id", "课程", "like", INPUT_TYPE_TEXT),
         InputItem("user_id", "用户", "like", INPUT_TYPE_TEXT),
-        InputItem(
-            "status", "状态", "like", INPUT_TYPE_TEXT, input_options=ATTEND_STATUS_VALUES
-        ),
+        # InputItem(
+        # "status", "状态", "like", INPUT_TYPE_TEXT, input_options=get_attend_status_values()
+        # ),
         InputItem("created", "创建时间", "like", INPUT_TYPE_TEXT),
         InputItem("updated", "更新时间", "like", INPUT_TYPE_TEXT),
     ],
