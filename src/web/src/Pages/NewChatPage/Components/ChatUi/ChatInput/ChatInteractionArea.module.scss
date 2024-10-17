@@ -6,10 +6,14 @@
   padding-top: 10px;
   transition: opacity 0.8s ease;
   opacity: 1;
-  background: rgba(255, 255, 255, 0.8);
-  backdrop-filter: blur(15px);
+  // background: rgba(255, 255, 255, 0.8);
+  background: rgba(248, 251, 252, 0.8);
+  backdrop-filter: blur(10px);
   &.disabled {
-    opacity: 0.3;
+    opacity: 1;
+    // background: #c0c0c0;
+    // color: #999;
+    cursor: not-allowed;
   }
 
   .tipText {
