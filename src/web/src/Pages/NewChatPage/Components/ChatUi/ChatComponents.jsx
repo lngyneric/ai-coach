@@ -15,7 +15,7 @@ import { AppContext } from 'Components/AppContext.js';
 import styles from './ChatComponents.module.scss';
 import { useCourseStore } from 'stores/useCourseStore.js';
 import {
-  LESSON_STATUS,
+  LESSON_STATUS_VALUE,
   INTERACTION_TYPE,
   INTERACTION_OUTPUT_TYPE,
   RESP_EVENT_TYPE,
@@ -244,9 +244,10 @@ export const ChatComponents = forwardRef(
           id: content.lesson_id,
           name: content.lesson_name,
           status: content.status,
+          status_value:content.status_value
         });
 
-        if (content.status === LESSON_STATUS.PREPARE_LEARNING && !isEnd) {
+        if (content.status_value === LESSON_STATUS_VALUE.PREPARE_LEARNING && !isEnd) {
           nextStepFunc({
             chatId,
             lessonId: content.lesson_id,
@@ -255,7 +256,7 @@ export const ChatComponents = forwardRef(
           });
         }
 
-        if (content.status === LESSON_STATUS.LEARNING && !isEnd) {
+        if (content.status_value === LESSON_STATUS_VALUE.LEARNING && !isEnd) {
           setLessonId(content.lesson_id);
           changeCurrLesson(content.lesson_id);
         }
@@ -351,14 +352,14 @@ export const ChatComponents = forwardRef(
             } else if (response.type === RESP_EVENT_TYPE.LESSON_UPDATE) {
               lessonUpdateResp(response, isEnd, nextStep);
             } else if (response.type === RESP_EVENT_TYPE.CHAPTER_UPDATE) {
-              const { status, lesson_id: chapterId } = response.content;
-              chapterUpdate?.({ id: chapterId, status });
-              if (status === LESSON_STATUS.COMPLETED) {
+              const { status,status_value, lesson_id: chapterId } = response.content;
+              chapterUpdate?.({ id: chapterId, status,status_value });
+              if (status_value === LESSON_STATUS_VALUE.COMPLETED) {
                 isEnd = true;
                 setLessonEnd(true);
                 setTyping(false);
               }
-              if (status === LESSON_STATUS.PREPARE_LEARNING) {
+              if (status_value === LESSON_STATUS_VALUE.PREPARE_LEARNING) {
                 setInputModal({
                   type: INTERACTION_TYPE.NEXT_CHAPTER,
                   props: {

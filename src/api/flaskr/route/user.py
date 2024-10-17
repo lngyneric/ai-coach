@@ -23,6 +23,7 @@ from ..service.user import (
 from ..service.feedback.funs import submit_feedback
 from .common import make_common_response, bypass_token_validation, by_pass_login_func
 from flaskr.dao import db
+from flaskr.i18n import set_language
 
 
 def register_user_handler(app: Flask, path_prefix: str) -> Flask:
@@ -125,6 +126,7 @@ def register_user_handler(app: Flask, path_prefix: str) -> Flask:
         if not token and request.endpoint in by_pass_login_func:
             return
         user = validate_user(app, token)
+        set_language(user.language)
         request.user = user
 
     @app.route(path_prefix + "/info", methods=["GET"])

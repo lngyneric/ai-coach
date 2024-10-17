@@ -1,13 +1,13 @@
 import { useState } from "react";
 import { getLessonTree } from 'Api/lesson.js';
 import { produce } from 'immer';
-import { LESSON_STATUS } from "constants/courseConstants.js";
+import { LESSON_STATUS_VALUE} from "constants/courseConstants.js";
 import { useTracking, EVENT_NAMES } from "common/hooks/useTracking.js";
 import { useSystemStore } from 'stores/useSystemStore.js';
 import { useUserStore } from 'stores/useUserStore.js';
 
 export const checkChapterCanLearning = ({ status }) => {
-  return status === LESSON_STATUS.LEARNING || status === LESSON_STATUS.COMPLETED || status === LESSON_STATUS.PREPARE_LEARNING;
+  return status === LESSON_STATUS_VALUE.LEARNING || status === LESSON_STATUS_VALUE.COMPLETED || status === LESSON_STATUS_VALUE.PREPARE_LEARNING;
 }
 
 export const checkChapterAvaiableStatic = (tree, chapterId) => {
@@ -19,7 +19,7 @@ export const checkChapterAvaiableStatic = (tree, chapterId) => {
     return false;
   }
 
-  return catalog.status === LESSON_STATUS.LEARNING || catalog.status === LESSON_STATUS.COMPLETED || catalog.status === LESSON_STATUS.PREPARE_LEARNING;
+  return catalog.status_value === LESSON_STATUS_VALUE.LEARNING || catalog.status_value === LESSON_STATUS_VALUE.COMPLETED || catalog.status_value === LESSON_STATUS_VALUE.PREPARE_LEARNING;
 }
 
 const getCurrElementStatic = async(tree) => {
@@ -33,14 +33,14 @@ const getCurrElementStatic = async(tree) => {
 }
 
 export const initialSelectedChapter = (tree) => {
-  let catalog = tree.catalogs.find(v => v.status === LESSON_STATUS.LEARNING);
+  let catalog = tree.catalogs.find(v => v.status_value === LESSON_STATUS_VALUE.LEARNING);
   if (catalog) {
-    const lesson = catalog.lessons.find(v => v.status === LESSON_STATUS.LEARNING || v.status === LESSON_STATUS.PREPARE_LEARNING);
+    const lesson = catalog.lessons.find(v => v.status_value === LESSON_STATUS_VALUE.LEARNING || v.status_value === LESSON_STATUS_VALUE.PREPARE_LEARNING);
     lesson && (lesson.selected = true);
   } else {
-    catalog = tree.catalogs.find(v => v.status === LESSON_STATUS.PREPARE_LEARNING);
+    catalog = tree.catalogs.find(v => v.status_value === LESSON_STATUS_VALUE.PREPARE_LEARNING);
     if (catalog) {
-      const lesson = catalog.lessons.find(v => v.status === LESSON_STATUS.LEARNING || v.status === LESSON_STATUS.PREPARE_LEARNING);
+      const lesson = catalog.lessons.find(v => v.status_value === LESSON_STATUS_VALUE.LEARNING || v.status_value === LESSON_STATUS_VALUE.PREPARE_LEARNING);
       lesson && (lesson.selected = true);
     }
   }
@@ -68,6 +68,7 @@ export const useLessonTree = () => {
           id: c.lesson_id,
           name: c.lesson_name,
           status: c.status,
+          status_value:c.status_value,
           canLearning: checkChapterCanLearning(c),
         }
       });
@@ -76,6 +77,7 @@ export const useLessonTree = () => {
         id: l.lesson_id,
         name: l.lesson_name,
         status: l.status,
+        status_value:l.status_value,
         lessons,
         collapse: false,
       };
@@ -110,7 +112,7 @@ export const useLessonTree = () => {
     }
 
     if (!lesson) {
-      lesson = chapter.lessons.find(v => v.status === LESSON_STATUS.LEARNING || v.status === LESSON_STATUS.PREPARE_LEARNING);
+      lesson = chapter.lessons.find(v => v.status_value === LESSON_STATUS_VALUE.LEARNING || v.status === LESSON_STATUS_VALUE.PREPARE_LEARNING);
     }
 
     if (!lesson) {
@@ -246,7 +248,7 @@ export const useLessonTree = () => {
     });
   }
 
-  const updateChapterStatus = (id, { status }) => {
+  const updateChapterStatus = (id, { status,status_value }) => {
     setTree(old => {
       if (!old) {
         return
@@ -258,6 +260,7 @@ export const useLessonTree = () => {
           draft.catalogs[idx] = {
             ...draft.catalogs[idx],
             status,
+            status_value
           }
         }
       });

@@ -81,16 +81,23 @@ class AILessonAttendDTO:
     lesson_id: str
     status: str
     children: List[AICourseLessonAttendDTO]
-    status: str
+    status_value: int
 
     def __init__(
-        self, lesson_no: str, lesson_name: str, lesson_id: str, status, children=None
+        self,
+        lesson_no: str,
+        lesson_name: str,
+        lesson_id: str,
+        status,
+        status_value,
+        children=None,
     ) -> None:
         self.lesson_no = lesson_no
         self.lesson_name = lesson_name
         self.lesson_id = lesson_id
         self.children = children
         self.status = status
+        self.status_value = status_value
 
     def __json__(self):
         return {
@@ -98,6 +105,7 @@ class AILessonAttendDTO:
             "lesson_name": self.lesson_name,
             "lesson_id": self.lesson_id,
             "status": self.status,
+            "status_value": self.status_value,
             "children": self.children,
         }
 

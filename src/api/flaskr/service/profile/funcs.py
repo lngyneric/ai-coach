@@ -4,6 +4,7 @@ from flask import Flask
 from .models import UserProfile
 from ...dao import db
 from ..user.models import User
+from ...i18n import _
 
 
 class UserProfileDTO:
@@ -22,47 +23,56 @@ class UserProfileDTO:
         }
 
 
-PROFILES_LABLES = {
-    "nickname": {"label": "昵称", "mapping": "name"},
-    "user_background": {"label": "用户背景"},
-    "sex": {
-        "label": "性别",
-        "mapping": "user_sex",
-        "items": ["保密", "男性", "女性"],
-        "items_mapping": {0: "保密", 1: "男性", 2: "女性"},
-    },
-    "birth": {"label": "生日", "mapping": "user_birth", "type": "date"},
-    "avatar": {"label": "头像", "mapping": "user_avatar", "type": "image"},
-    "industry": {"label": "行业"},
-    "occupation": {
-        "label": "职业",
-    },
-    "language": {
-        "label": "语言",
-        "items": ["中文", "English"],
-        "mapping": "user_language",
-        "items_mapping": {"zh_CN": "中文", "en": "English"},
-    },
-    "ai_tools": {
-        "label": "编程工具",
-        "items": ["GitHub Copilot", "通义灵码"],
-        "items_mapping": {
-            "GitHub_Copilot": "GitHub Copilot",
-            "通义灵码": "通义灵码",
-            "Cursor": "Cursor",
+def get_profile_labels():
+
+    return {
+        "nickname": {"label": _("PROFILE.NICKNAME"), "mapping": "name"},
+        "user_background": {"label": _("PROFILE.USER_BACKGROUND")},
+        "sex": {
+            "label": _("PROFILE.SEX"),
+            "mapping": "user_sex",
+            "items": ["保密", "男性", "女性"],
+            "items_mapping": {0: "保密", 1: "男性", 2: "女性"},
         },
-    },
-    "style": {"label": "授课风格", "items": ["幽默风趣", "严肃专业", "鼓励温暖"]},
-    "programming": {"label": "编程熟悉程度", "items": ["完全没接触过", "学过但还无法编写程序", "会1门及以上语言"]},
-    "user_os": {
-        "label": "用户操作系统",
-        "items": [
-            "Windows",
-            "MacOS",
-        ],
-        "items_mapping": {"win": "Windows", "mac": "MacOS"},
-    },
-}
+        "birth": {"label": _("PROFILE.BIRTH"), "mapping": "user_birth", "type": "date"},
+        "avatar": {
+            "label": _("PROFILE.AVATAR"),
+            "mapping": "user_avatar",
+            "type": "image",
+        },
+        "industry": {"label": _("PROFILE.INDUSTRY")},
+        "occupation": {
+            "label": _("PROFILE.OCCUPATION"),
+        },
+        "language": {
+            "label": _("PROFILE.LANGUAGE"),
+            "items": ["中文", "English"],
+            "mapping": "user_language",
+            "items_mapping": {"zh_CN": "中文", "en": "English"},
+        },
+        "ai_tools": {
+            "label": _("PROFILE.AI_TOOLS"),
+            "items": ["GitHub Copilot", "通义灵码"],
+            "items_mapping": {
+                "GitHub_Copilot": "GitHub Copilot",
+                "通义灵码": "通义灵码",
+                "Cursor": "Cursor",
+            },
+        },
+        "style": {"label": _("PROFILE.STYLE"), "items": ["幽默风趣", "严肃专业", "鼓励温暖"]},
+        "programming": {
+            "label": _("PROFILE.PROGRAMMING"),
+            "items": ["完全没接触过", "学过但还无法编写程序", "会1门及以上语言"],
+        },
+        "user_os": {
+            "label": _("PROFILE.USER_OS"),
+            "items": [
+                "Windows",
+                "MacOS",
+            ],
+            "items_mapping": {"win": "Windows", "mac": "MacOS"},
+        },
+    }
 
 
 def get_user_profile_by_user_id(
@@ -84,6 +94,7 @@ def get_user_profile_by_user_id(
 def save_user_profile(
     user_id: str, profile_key: str, profile_value: str, profile_type: int
 ):
+    PROFILES_LABLES = get_profile_labels()
     user_profile = UserProfile.query.filter_by(
         user_id=user_id, profile_key=profile_key
     ).first()
@@ -117,6 +128,7 @@ def save_user_profile(
 
 
 def save_user_profiles(app: Flask, user_id: str, profiles: dict):
+    PROFILES_LABLES = get_profile_labels()
     app.logger.info("save user profiles:{}".format(profiles))
     user_info = User.query.filter(User.user_id == user_id).first()
     for key, value in profiles.items():
@@ -156,6 +168,7 @@ def get_user_profiles(app: Flask, user_id: str, keys: list = None) -> dict:
 def get_user_profile_labels(app: Flask, user_id: str):
     user_profiles = UserProfile.query.filter_by(user_id=user_id).all()
     user_info = User.query.filter(User.user_id == user_id).first()
+    PROFILES_LABLES = get_profile_labels()
     result = []
     if user_info:
         for key in PROFILES_LABLES:
@@ -213,6 +226,7 @@ def get_user_profile_labels(app: Flask, user_id: str):
 
 
 def update_user_profile_with_lable(app: Flask, user_id: str, profiles: list):
+    PROFILES_LABLES = get_profile_labels()
     user_info = User.query.filter(User.user_id == user_id).first()
     if user_info:
         user_profiles = UserProfile.query.filter_by(user_id=user_id).all()

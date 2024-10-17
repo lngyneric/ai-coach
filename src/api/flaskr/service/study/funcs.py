@@ -95,9 +95,14 @@ def get_lesson_tree_to_study(app: Flask, user_id: str, course_id: str) -> AICour
             status = attend_info.status if attend_info else ATTEND_STATUS_LOCKED
             if status == ATTEND_STATUS_BRANCH:
                 status = ATTEND_STATUS_IN_PROGRESS
-            status = attend_status_values[status]
+            status_str = attend_status_values[status]
             lessonInfo = AILessonAttendDTO(
-                lesson.lesson_no, lesson.lesson_name, lesson.lesson_id, status, []
+                lesson.lesson_no,
+                lesson.lesson_name,
+                lesson.lesson_id,
+                status_str,
+                status,
+                [],
             )
             lesson_dict[lessonInfo.lesson_no] = lessonInfo
             if len(lessonInfo.lesson_no) == 2:

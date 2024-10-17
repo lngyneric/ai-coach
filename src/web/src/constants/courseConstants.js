@@ -4,14 +4,24 @@ export const LESSON_STATUS = {
   LOCKED: '未解锁',
   LEARNING: '正在学',
   COMPLETED: '已完成',
-}
+};
 
+export const LESSON_STATUS_VALUE = {
+  PREPARE_LEARNING: 601,
+  LEARNING: 602,
+  COMPLETED: 603,
+  REFUND: 604,
+  LOCKED: 605,
+  UNAVAILABE: 606,
+  BRANCH: 607,
+  RESET: 608,
+};
 // 交互组件的展示类型
 export const INTERACTION_DISPLAY_TYPE = {
   BUTTON: 'button', // 下一步
   TEXT: 'text', // 文本
   BUTTONS: 'buttons', // 按钮组
-}
+};
 
 // 交互组件的功能类型
 export const INTERACTION_TYPE = {
@@ -24,7 +34,7 @@ export const INTERACTION_TYPE = {
   ORDER: 'order', // 购买课程
   ASK: 'ask', // 追问
   REQUIRE_LOGIN: 'require_login', // 需要登录
-}
+};
 
 // 交互组件的输出类型
 export const INTERACTION_OUTPUT_TYPE = {
@@ -39,7 +49,7 @@ export const INTERACTION_OUTPUT_TYPE = {
   ASK: 'ask', // 追问
   REQUIRE_LOGIN: 'require_login', // 需要登录
   LOGIN: 'login', // 登录
-}
+};
 
 // sse 返回的事件类型
 export const RESP_EVENT_TYPE = {
@@ -58,10 +68,10 @@ export const RESP_EVENT_TYPE = {
   ASK_MODE: 'ask_mode', // 追问模式
   TEACHER_AVATOR: 'teacher_avator', //
   REQUIRE_LOGIN: 'require_login', // need to login
-}
+};
 
 // chat message 类型
-export const CHAT_MESSAGE_TYPE ={
+export const CHAT_MESSAGE_TYPE = {
   TEXT: 'text',
   LESSON_SEPARATOR: 'lessonSeparator',
-}
+};

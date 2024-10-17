@@ -174,8 +174,8 @@ const NewChatPage = (props) => {
   );
 
   const onChapterUpdate = useCallback(
-    ({ id, status }) => {
-      updateChapterStatus(id, { status });
+    ({ id, status ,status_value}) => {
+      updateChapterStatus(id, { status,status_value });
     },
     [updateChapterStatus]
   );

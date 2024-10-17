@@ -1,14 +1,17 @@
-from flask import Flask, request, has_request_context
+from flask import Flask, has_request_context
 import os
 import importlib.util
 from collections import defaultdict
-
+import threading
 
 # init translations
 _translations = defaultdict(lambda: defaultdict(dict))
 
 
 _lang_equals = {"Zh_cn": "zh"}
+
+
+_thread_local = threading.local()
 
 
 def load_translations(app: Flask):
@@ -45,10 +48,15 @@ def load_translations(app: Flask):
 
 
 def _(text):
-    if has_request_context() and hasattr(request, "user") and request.user.language:
-        return _translations.get(request.user.language, {}).get(text, text)
-    else:
-        return _translations.get("en", {}).get(text, text)
+    print("has_request_context", has_request_context())
+    language = "en"
+    if hasattr(_thread_local, "language"):
+        language = _thread_local.language
+    return _translations.get(language, {}).get(text, text)
+
+
+def set_language(language):
+    _thread_local.language = language
 
 
 __all__ = ["_"]
