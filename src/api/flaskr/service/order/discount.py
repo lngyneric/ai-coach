@@ -28,7 +28,7 @@ from ...util import generate_id
 from ..common import raise_error
 
 
-# 生成折扣码
+# generate discount code
 def generate_discount_strcode(app: Flask):
     with app.app_context():
         characters = string.ascii_uppercase + string.digits
@@ -68,9 +68,7 @@ def generate_discount_code(
         return discount.discount_id
 
 
-# 用折扣码规则生成折扣码
-
-
+# generate discount code by rule
 def generate_discount_code_by_rule(app: Flask, discount_id):
     with app.app_context():
         discount_info = Discount.query.filter(
@@ -93,14 +91,11 @@ def generate_discount_code_by_rule(app: Flask, discount_id):
         db.session.commit()
 
 
-# 使用折扣码
+# use discount code
 def use_discount_code(app: Flask, user_id, discount_code, order_id):
     with app.app_context():
-        # 创建时区信息
         bj_time = pytz.timezone("Asia/Shanghai")
-        # 转换 record.created（一个浮点数时间戳）到北京时间
         now = datetime.fromtimestamp(datetime.now().timestamp(), bj_time)
-        app.logger.info("now: %s", now)
         buy_record = AICourseBuyRecord.query.filter(
             AICourseBuyRecord.record_id == order_id
         ).first()
@@ -121,15 +116,12 @@ def use_discount_code(app: Flask, user_id, discount_code, order_id):
         discount = None
         if not discountRecord:
             # query fixcode
-            app.logger.info("query fixcode")
-
             discount = Discount.query.filter(
                 Discount.discount_code == discount_code
             ).first()
             if not discount:
                 raise_error("DISCOUNT.DISCOUNT_NOT_FOUND")
             discount_end = bj_time.localize(discount.discount_end)
-            app.logger.info("discount_end: %s", discount_end)
             if discount_end < now:
                 raise_error("DISCOUNT.DISCOUNT_ALREADY_EXPIRED")
             if discount.discount_used + 1 > discount.discount_count:

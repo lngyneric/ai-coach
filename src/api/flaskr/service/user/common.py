@@ -100,11 +100,7 @@ def validate_user(app: Flask, token: str) -> UserInfo:
             app.logger.info("user_id:" + user_id)
             redis_token = redis.get(app.config["REDIS_KEY_PRRFIX_USER"] + user_id)
             if redis_token is None:
-                app.logger.info("redis_token is None")
                 raise_error("USER.USER_TOKEN_EXPIRED")
-            app.logger.info(
-                "redis_token_key:" + str(app.config["REDIS_KEY_PRRFIX_USER"] + user_id)
-            )
             set_token = str(
                 redis.get(app.config["REDIS_KEY_PRRFIX_USER"] + user_id),
                 encoding="utf-8",
@@ -400,7 +396,6 @@ def verify_sms_code(app: Flask, user_id, phone: str, chekcode: str) -> UserToken
             user_info.mobile = phone
             db.session.add(user_info)
         if user_info.user_state == USER_STATE_UNTEGISTERED:
-            app.logger.info("user_state is unregistered")
             user_info.mobile = phone
             user_info.user_state = USER_STATE_REGISTERED
         user_id = user_info.user_id

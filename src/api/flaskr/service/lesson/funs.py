@@ -519,10 +519,6 @@ def update_lesson_info(
         return
 
 
-# 运行课程脚本
-# 1. 从数据库中获取脚本
-# 2. 从数据库中获取脚本的内容
-# 3. 从数据库中获取脚本的模型
 def run_lesson_script(app: Flask, lesson_id: str, script_id: str):
     with app.app_context():
         script = AILessonScript.query.filter_by(script_id=script_id).first()
@@ -531,7 +527,6 @@ def run_lesson_script(app: Flask, lesson_id: str, script_id: str):
         return script
 
 
-# 得到课程列表
 def get_lessons(app: Flask, feshu_doc_id) -> AICourseDetailDTO:
     with app.app_context():
         course = AICourse.query.filter(
@@ -671,7 +666,6 @@ def update_course_info(
 ):
     with app.app_context():
         course = AICourse.query.filter(AICourse.course_id == course_id).first()
-        app.logger.info("course_id" + course_id)
         if course is None:
             raise_error("LESSON.COURSE_NOT_FOUND")
         course.course_name = course_name

@@ -141,8 +141,6 @@ def get_study_record(app: Flask, user_id: str, lesson_id: str) -> StudyRecordDTO
                 AILesson.status == 1,
             ).all()
             lesson_ids = [lesson.lesson_id for lesson in lesson_infos]
-        app.logger.info("lesson_ids:{}".format(lesson_ids))
-        print("lesson_ids:{}".format(lesson_ids))
 
         attend_infos = (
             AICourseLessonAttend.query.filter(
@@ -157,7 +155,6 @@ def get_study_record(app: Flask, user_id: str, lesson_id: str) -> StudyRecordDTO
         if not attend_infos:
             return None
         attend_ids = [attend_info.attend_id for attend_info in attend_infos]
-        app.logger.info("attend_ids:{}".format(attend_ids))
         attend_scripts = (
             AICourseLessonAttendScript.query.filter(
                 AICourseLessonAttendScript.attend_id.in_(attend_ids)
@@ -165,7 +162,6 @@ def get_study_record(app: Flask, user_id: str, lesson_id: str) -> StudyRecordDTO
             .order_by(AICourseLessonAttendScript.id.asc())
             .all()
         )
-        app.logger.info("attend_scripts:{}".format(len(attend_scripts)))
         index = len(attend_scripts) - 1
         if len(attend_scripts) == 0:
             return StudyRecordDTO([])
@@ -187,30 +183,19 @@ def get_study_record(app: Flask, user_id: str, lesson_id: str) -> StudyRecordDTO
         ret = StudyRecordDTO(items, teach_avator=teach_avator)
         last_script_id = attend_scripts[-1].script_id
         last_script = AILessonScript.query.filter_by(script_id=last_script_id).first()
-        app.logger.info(
-            "last_script: id:{},type:{},ui_type:{}".format(
-                last_script.script_id,
-                last_script.script_type,
-                last_script.script_ui_type,
-            )
-        )
         last_lesson_id = last_script.lesson_id
         last_attends = [i for i in attend_infos if i.lesson_id == last_lesson_id]
         if len(last_attends) == 0:
-            app.logger.info("last_attends is empty")
-            app.logger.info("last_lesson_id:{}".format(last_lesson_id))
             last_attend = AICourseLessonAttend.query.filter(
                 AICourseLessonAttend.user_id == user_id,
                 AICourseLessonAttend.lesson_id == last_lesson_id,
             ).first()
             if last_attend is None:
-                app.logger.info("last_attend is None")
-                # return ret
+                pass
         else:
             last_attend = last_attends[-1]
         last_attend_script = attend_scripts[-1]
         if last_attend.status == ATTEND_STATUS_COMPLETED:
-            app.logger.info("last_attend is completed")
             btn = [
                 {
                     "label": last_script.script_ui_content,
@@ -377,8 +362,7 @@ def get_script_info(app: Flask, user_id: str, script_id: str) -> ScriptInfoDTO:
         )
 
 
-# 重置用户信息
-# 重置用户学习信息
+# reset user study info
 def reset_user_study_info(app: Flask, user_id: str):
     with app.app_context():
         db.session.execute(
@@ -401,7 +385,7 @@ def reset_user_study_info(app: Flask, user_id: str):
         return True
 
 
-# 按章节重置用户学习信息
+# reset user study info by lesson
 def reset_user_study_info_by_lesson(app: Flask, user_id: str, lesson_id: str):
     with app.app_context():
         lesson_info = AILesson.query.filter(AILesson.lesson_id == lesson_id).first()

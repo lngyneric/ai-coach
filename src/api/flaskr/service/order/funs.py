@@ -123,7 +123,6 @@ def send_order_feishu(app: Flask, record_id: str):
     order_info = query_buy_record(app, record_id)
     urser_info = User.query.filter(User.user_id == order_info.user_id).first()
     if not urser_info:
-        app.logger.error("user:{} not found".format(order_info.user_id))
         return
     title = "购买课程通知"
     msgs = []
@@ -134,9 +133,7 @@ def send_order_feishu(app: Flask, record_id: str):
     user_convertion = UserConversion.query.filter(
         UserConversion.user_id == order_info.user_id
     ).first()
-
     channel = ""
-
     if user_convertion:
         channel = user_convertion.conversion_source
     msgs.append("用户渠道:{}".format(channel))
@@ -149,7 +146,6 @@ def init_buy_record(app: Flask, user_id: str, course_id: str):
     with app.app_context():
         course_info = AICourse.query.filter(AICourse.course_id == course_id).first()
         if not course_info:
-            app.logger.error("course:{} not found".format(course_id))
             raise_error("LESSON.COURSE_NOT_FOUND")
         origin_record = (
             AICourseBuyRecord.query.filter(
@@ -160,7 +156,6 @@ def init_buy_record(app: Flask, user_id: str, course_id: str):
             .first()
         )
         if origin_record:
-            app.logger.info("buy record found:{}".format(origin_record))
             return query_buy_record(app, origin_record.record_id)
 
         order_id = str(get_uuid(app))
@@ -203,7 +198,7 @@ def init_buy_record(app: Flask, user_id: str, course_id: str):
 
 @register_schema_to_swagger
 class BuyRecordDTO:
-    order_id: str  # 订单id
+    order_id: str
     user_id: str  # 用户id
     price: str  # 价格
     channel: str  # 支付渠道
@@ -431,7 +426,6 @@ def success_buy_record_from_pingxx(app: Flask, charge_id: str, body: dict):
 
 def success_buy_record(app: Flask, record_id: str):
     with app.app_context():
-        # todo: 事务处理 & 并发锁
         app.logger.info('success buy record:"{}"'.format(record_id))
         buy_record = AICourseBuyRecord.query.filter(
             AICourseBuyRecord.record_id == record_id
@@ -591,7 +585,6 @@ def query_buy_record(app: Flask, record_id: str) -> AICourseBuyRecordDTO:
 
 def fix_attend_info(app: Flask, user_id: str, course_id: str):
     with app.app_context():
-        # todo: 事务处理 & 并发锁
         app.logger.info(
             "fix attend info for user:{} course:{}".format(user_id, course_id)
         )
