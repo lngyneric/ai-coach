@@ -57,7 +57,14 @@
   },
   "settings": {
     "home": "Home",
-    "settingTite": "Profile"
+    "settingTite": "Profile",
+    "basicInfo": "Basic Info",
+    "nickname": "Nickname",
+    "nicknamePlaceholder": "Please enter your nickname",
+    "sex": "Sex",
+    "sexPlaceholder": "Please select sex",
+    "birth": "Birth",
+    "birthPlaceholder": "Please select your birthday"
   },
   "feedback": {
     "feedbackTitle": "Feedback",

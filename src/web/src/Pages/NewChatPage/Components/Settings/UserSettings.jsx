@@ -18,6 +18,7 @@ import BirthdaySettingModal from './BirthdaySettingModal.jsx';
 import { SEX, SEX_NAMES } from 'constants/userConstants.js';
 import DynamicSettingItem from './DynamicSettingItem.jsx';
 import { useUserStore } from 'stores/useUserStore.js';
+import { useTranslation } from 'react-i18next';
 
 const fixed_keys = ['nickname', 'avatar', 'sex', 'birth'];
 
@@ -25,6 +26,8 @@ export const UserSettings = ({ onHomeClick, className, onClose }) => {
   const { refreshUserInfo } = useUserStore((state) => ({
     refreshUserInfo: state.refreshUserInfo
   }));
+
+  const { t } = useTranslation();
 
   const [sexSettingModalOpen, setSexSettingModalOpen] = useState(false);
   const [birthModalOpen, setBirthModalOpen] = useState(false);
@@ -151,25 +154,25 @@ export const UserSettings = ({ onHomeClick, className, onClose }) => {
         <div className={styles.settingBody}>
           <div className={styles.centerWrapper}>
             <ChangeAvatar image={avatar} onChange={onChangeAvatarChanged} />
-            <div className={styles.basicInfoTitle}>基础信息</div>
+            <div className={styles.basicInfoTitle}>{t("settings.basicInfo")}</div>
             <SettingInputElement
-              title="昵称"
-              placeholder="请输入姓名"
+              title={t("settings.nickname")}
+              placeholder={t("settings.nicknamePlaceholder")}
               onChange={onNickNameChanged}
               className={styles.inputUnit}
               value={nickName}
               maxLength={10}
             />
             <SettingSelectElement
-              title="性别"
-              placeholder="请选择性别"
+              title={t("settings.sex")}
+              placeholder={t("settings.sexPlaceholder")}
               value={sex}
               className={styles.inputUnit}
               onClick={onSexSelectClick}
             />
             <SettingSelectElement
-              title="生日"
-              placeholder="请选择生日"
+              title={t("settings.birth")}
+              placeholder={t("settings.birthPlaceholder")}
               className={styles.inputUnit}
               onClick={onBirthClick}
               value={birth}

@@ -57,7 +57,17 @@
   },
   "settings": {
     "home": "主页",
-    "settingTite": "个人信息"
+    "settingTite": "个人信息",
+    "basicInfo": "基础信息",
+    "nickname": "昵称",
+    "nicknamePlaceholder": "请输入昵称",
+    "sex": "性别",
+    "sexPlaceholder": "请选择性别",
+    "birth": "生日",
+    "birthPlaceholder": "请选择生日"
+
+
+
   },
   "feedback": {
     "feedbackTitle": "反馈",
