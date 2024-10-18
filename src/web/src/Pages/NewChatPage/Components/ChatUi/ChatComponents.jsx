@@ -719,8 +719,6 @@ export const ChatComponents = forwardRef(
     }, []);
 
     const onLogin = useCallback(async () => {
-
-      console.log('onLogin');
       await refreshUserInfo();
       handleSend(INTERACTION_OUTPUT_TYPE.LOGIN, t('chat.loginSuccess'));
 

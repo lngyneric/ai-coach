@@ -14,6 +14,7 @@ def load_translations(app: Flask):
     translations_dir = os.path.join(os.path.dirname(__file__))
     for lang in os.listdir(translations_dir):
         lang_dir = os.path.join(translations_dir, lang)
+        app.logger.info(f"load_translations lang: {lang}")
         if os.path.isdir(lang_dir):
             for module_name in os.listdir(lang_dir):
                 module_path = os.path.join(lang_dir, module_name)
@@ -34,10 +35,10 @@ def load_translations(app: Flask):
 
 
 def _(text):
-    language = "en"
+    language = "en-US"
     if hasattr(_thread_local, "language"):
         language = _thread_local.language
-    return _translations.get(language, {}).get(text, text)
+    return _translations.get(language, _translations.get("en-US", {})).get(text, text)
 
 
 def set_language(language):

@@ -73,7 +73,6 @@ export const PayModalM = ({ open = false, onCancel, onOk }) => {
   useEffect(() => {
     (async () => {
 
-      console.log('init order  course id ',courseId)
       const { data: resp } = await initOrder(courseId);
       setPrice(resp.value_to_pay);
       const orderId = resp.order_id;

@@ -4,7 +4,9 @@
     "expandCollapse": "Expand/Collapse",
     "waitingForCompletion": "Coming Soon",
     "companyName": "Beijing Chanchan Shanmu Technology Co., Ltd.",
-    "companyAddress": "Room 163, 19th Floor, Donghuang Building, Wangjing, Chaoyang District, Beijing"
+    "companyAddress": "Room 163, 19th Floor, Donghuang Building, Wangjing, Chaoyang District, Beijing",
+    "ok": "OK",
+    "settings": "Settings"
   },
   "user": {
     "loginMainButton": "Login/Register",
@@ -28,7 +30,12 @@
     "msgResendCode": "Resend",
     "msgToInputPwd": "Enter the password",
     "msgCheckCode": "Image verification code",
-    "msgToCheckAgreement": "Please check to agree to the terms "
+    "msgToCheckAgreement": "Please check to agree to the terms ",
+    "sex": {
+      "male": "Male",
+      "female": "Female",
+      "secret": "Secret"
+    }
   },
   "pay": {
     "payModalTitle": "Purchase",

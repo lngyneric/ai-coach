@@ -1,8 +1,7 @@
 import { useEffect } from "react"
 
 export const Tu = () => {
-  useEffect(() => { 
-    console.log('Tu');
+  useEffect(() => {
   }, []);
   return (<div>Tu</div>)
 }

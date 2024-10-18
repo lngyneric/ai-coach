@@ -30,7 +30,7 @@ bucket = oss2.Bucket(auth, endpoint, "pillow-avtar")
 
 
 def generate_temp_user(
-    app: Flask, temp_id: str, user_source="web", wx_code=None
+    app: Flask, temp_id: str, user_source="web", wx_code=None, language="en-US"
 ) -> UserToken:
     with app.app_context():
         convert_user = UserConversion.query.filter(
@@ -74,6 +74,7 @@ def generate_temp_user(
                 conversion_status=0,
             )
             new_user = User(user_id=user_id, user_state=USER_STATE_UNTEGISTERED)
+            new_user.user_language = language
             new_user.user_open_id = wx_openid
             db.session.add(new_convert_user)
             db.session.add(new_user)

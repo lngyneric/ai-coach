@@ -89,14 +89,14 @@ export const resetPassword = (username, new_password, code) => {
  * https://agiclass.feishu.cn/docx/WyXhdgeVzoKVqDx1D4wc0eMknmg
  */
 export const registerTmp = ({ temp_id }) => {
-  const { channel: source, wechatCode: wxcode } = useSystemStore.getState();
+  const { channel: source, wechatCode: wxcode,language } = useSystemStore.getState();
   console.log(`registerTmp source: ${source}, wxcode: ${wxcode}, temp_id: ${temp_id}`);
 
   return request(
     {
       url: '/api/user/require_tmp',
       method: 'post',
-      data: { temp_id, source, wxcode }
+      data: { temp_id, source, wxcode,language }
     }
   );
 }

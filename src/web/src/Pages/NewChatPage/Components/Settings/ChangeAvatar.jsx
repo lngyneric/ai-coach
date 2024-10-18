@@ -20,7 +20,6 @@ export const ChangeAvatar = ({
   const [uploadImage, setUploadedImage] = useState(null);
 
   useEffect(() => {
-    console.log('setImg', image);
     setImg(image);
   }, [image])
   const onAvatarClick = () => {

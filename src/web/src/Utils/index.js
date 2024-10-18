@@ -1,4 +1,4 @@
- 
+
 const token = process.env.REACT_APP_TOKEN;
 const apiUrl = `https://test-api-sifu.agiclass.cn/api/study/run?token=${token}`;
 
@@ -13,15 +13,14 @@ export const Run = (data, options, oldCOntent = '') => {
       'Content-Type': 'application/json',
     },
     methods: 'POST',
-    payload: JSON.stringify(data), 
+    payload: JSON.stringify(data),
   })
- 
+
 
   evtSource.onopen = function () {}
 
   evtSource.onmessage = async function (e) {
      const data = JSON.parse(e?.data||"{}")
-    console.log("data",data)
     xtextContent+=data?.content
     options?.onMessage({
       message:xtextContent,
@@ -37,10 +36,9 @@ export const Run = (data, options, oldCOntent = '') => {
   }
 
   evtSource.onerror = async function () {
-    console.log("error")
   }
 
-   
+
   evtSource.stream()
 
   const close = () => {

@@ -7,7 +7,7 @@ export const useCourseStore = create(
     lessonId: null,
     changeCurrLesson: (lessonId) => set(() => ({ lessonId })),
     chapterId: '',
-    updateChapterId: (chapterId) => set(() => { console.log('updateChapterId:'); return { chapterId }; }),
+    updateChapterId: (chapterId) => set(() => ({ chapterId })),
     purchased: false,
     changePurchased: (purchased) => set(() => ({ purchased })),
     // 用于重置章节

@@ -80,7 +80,6 @@ const NavDrawer = ({
   const footerRef = useRef(null);
 
   const onHeaderCloseClick = () => {
-    console.log('onHeaderCloseClick');
   };
 
   const onHeaderToggleClick = ({ isCollapse }) => {

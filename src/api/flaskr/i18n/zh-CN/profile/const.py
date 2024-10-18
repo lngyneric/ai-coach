@@ -10,3 +10,7 @@ AI_TOOLS = "编程工具"
 USER_OS = "用户操作系统"
 STYLE = "授课风格"
 PROGRAMMING = "编程能力"
+
+SEX_MALE = "男性"
+SEX_FEMALE = "女性"
+SEX_SECRET = "保密"

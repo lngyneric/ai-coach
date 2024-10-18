@@ -20,20 +20,12 @@ export const runScript = (course_id, lesson_id, input, input_type, script_id, on
     }
   };
   source.onerror = (event) => {
-    console.log("连接错误");
-    console.log(event);
-    // this.searchBoll = true;
   };
   source.onclose = (event) => {
-    console.log("会话完成断开连接");
-    // this.searchBoll = true;
-    console.log(event);
   };
   source.onopen = (event) => {
-    console.log("连接成功");
   };
   source.close = () => {
-    console.log("主动断开连接");
   };
   source.stream();
   return source;

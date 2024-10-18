@@ -184,6 +184,9 @@ def register_user_handler(app: Flask, path_prefix: str) -> Flask:
                         wxcode:
                             type: string
                             description: 微信code
+                        language:
+                            type: string
+                            description: 语言
         responses:
             200:
                 description: 临时用户登录成功
@@ -207,12 +210,13 @@ def register_user_handler(app: Flask, path_prefix: str) -> Flask:
         tmp_id = request.get_json().get("temp_id", None)
         source = request.get_json().get("source", "web")
         wx_code = request.get_json().get("wxcode", None)
+        language = request.get_json().get("language", "en-US")
         app.logger.info(
             f"require_tmp tmp_id: {tmp_id}, source: {source}, wx_code: {wx_code}"
         )
         if not tmp_id:
             raise_param_error("temp_id")
-        user_token = generate_temp_user(app, tmp_id, source, wx_code)
+        user_token = generate_temp_user(app, tmp_id, source, wx_code, language)
         resp = make_response(make_common_response(user_token))
         return resp
 

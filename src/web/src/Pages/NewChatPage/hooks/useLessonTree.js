@@ -166,7 +166,6 @@ export const useLessonTree = () => {
 
   const updateSelectedLesson = async (lessonId, forceExpand = false) => {
     setTree(old => {
-      console.log('old', old);
       if (!old) {
         return
       }

@@ -25,23 +25,18 @@ export const SendMsg = (token, chatId, text, onMessage) => {
     try {
 
       var response =JSON.parse (event.data)
-      console.log("response", response,new Date());
       if (onMessage) {
         onMessage(response);
       }
     } catch (e) {
-      console.log("error", e);
     }
   };
   source.onerror = (event) => {
-    console.log("连接错误");
     console.log(event);
     // this.searchBoll = true;
   };
   source.onclose = (event) => {
-    console.log("会话完成断开连接");
     // this.searchBoll = true;
-    console.log(event);
   };
   source.stream();
   return source;

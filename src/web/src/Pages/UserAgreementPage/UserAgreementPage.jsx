@@ -2,17 +2,26 @@ import styles from './UserAgreementPage.module.scss';
 import ReactMarkdown from 'react-markdown';
 import zhCNAggreement from './Contents/zh_CN_aggreement.md';
 import enAggreement from './Contents/en_aggreement.md';
-import { useTranslation } from 'react-i18next';
-
+import { useSystemStore } from 'stores/useSystemStore.js';
+import { useEffect } from 'react';
+import { userInfoStore } from 'Service/storeUtil.js';
 const aggreements = {
-  "zh_CN": zhCNAggreement,
-  "en": enAggreement,
+  "zh-CN": zhCNAggreement,
+  "en-US": enAggreement,
 }
 
 export const UserAgreementPage = () => {
-  const { i18n } = useTranslation();
-  console.log(i18n.language)
-  const markdown =  aggreements[i18n.language] || aggreements["en"];
+
+
+
+  const { language, updateLanguage } = useSystemStore();
+  useEffect(() => {
+    const userInfo = userInfoStore.get();
+    if (userInfo) {
+      updateLanguage(userInfo.language);
+    }
+  }, [updateLanguage]);
+  const markdown =  aggreements[language];
   return <div className={styles.UserAgreementPage}>
     <ReactMarkdown
       children={markdown}

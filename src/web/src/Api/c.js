@@ -2,7 +2,6 @@ import { SSE } from "sse.js";
 import request from "../Service/Request";
 
 const token = process.env.REACT_APP_TOKEN
-console.log('token',token)
 const url = (process.env.REACT_APP_BASEURL || "") + "/api/study/run";
 
 export const RunScript = (course_id,lesson_id,input,input_type,onMessage) => {
@@ -26,21 +25,12 @@ export const RunScript = (course_id,lesson_id,input,input_type,onMessage) => {
     }
   };
   source.onerror = (event) => {
-    console.log("连接错误");
-    console.log(event);
-    // this.searchBoll = true;
   };
   source.onclose = (event) => {
-    console.log("会话完成断开连接");
-    // this.searchBoll = true;
-    console.log(event);
   };
   source.onopen = (event) => {
-    console.log("连接成功");
-    console.log(event);
   };
   source.close = () => {
-    console.log("主动断开连接");
   };
   source.stream();
   return source;

@@ -4,7 +4,9 @@
     "expandCollapse": "展开/折叠",
     "waitingForCompletion": "敬请期待",
     "companyName": "北京潺潺山木科技有限公司",
-    "companyAddress": "北京朝阳区望京东煌大厦19层163室"
+    "companyAddress": "北京朝阳区望京东煌大厦19层163室",
+    "settings": "设置",
+    "ok": "确定"
   },
   "user": {
     "loginMainButton": "登录/注册",
@@ -28,7 +30,12 @@
     "msgResendCode": "重新发送",
     "msgToInputPwd": "请输入密码",
     "msgCheckCode": "图形验证码",
-    "msgToCheckAgreement": "请勾选同意协议"
+    "msgToCheckAgreement": "请勾选同意协议",
+    "sex": {
+      "male": "男性",
+      "female": "女性",
+      "secret": "保密"
+    }
   },
   "pay": {
     "payModalTitle": "购买",
@@ -65,9 +72,6 @@
     "sexPlaceholder": "请选择性别",
     "birth": "生日",
     "birthPlaceholder": "请选择生日"
-
-
-
   },
   "feedback": {
     "feedbackTitle": "反馈",

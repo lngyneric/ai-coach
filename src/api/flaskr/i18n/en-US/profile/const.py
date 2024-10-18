@@ -10,3 +10,7 @@ AI_TOOLS = "AI Tools"
 USER_OS = "User OS"
 STYLE = "Style"
 PROGRAMMING = "Programming"
+
+SEX_MALE = "Male"
+SEX_FEMALE = "Female"
+SEX_SECRET = "Secret"

@@ -13,7 +13,6 @@ export const GetAllChatsList = async (chat_title) => {
   });
 };
 export const GetChatDetail = async (chatId) => {
-  console.log(chatId);
   return request({
     url: "/api/chat/chat-detail?chat_id=" + chatId,
     method: "get",

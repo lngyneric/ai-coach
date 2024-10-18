@@ -69,7 +69,6 @@ export const UserSettings = ({ onHomeClick, className, onClose }) => {
     });
     await updateUserProfile(data);
     await refreshUserInfo();
-
     onClose();
   }, [avatar, birth, dynFormData, nickName, onClose, refreshUserInfo, sex]);
 

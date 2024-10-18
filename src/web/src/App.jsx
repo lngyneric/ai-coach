@@ -17,18 +17,21 @@ if (getBoolEnv('REACT_APP_ERUDA')) {
 const RouterView = () => useRoutes(routes);
 
 const App = () => {
-  const { updateChannel, channel, wechatCode, updateWechatCode, courseId, updateCourseId, setShowVip } =
-  useSystemStore();
+  const { updateChannel, channel, wechatCode, updateWechatCode, courseId, updateCourseId, setShowVip, updateLanguage } =
+    useSystemStore();
+  // get browser language
+  const browserLanguage = navigator.language || navigator.languages[0];
+  const [language, setLanguage] = useState(browserLanguage);
 
+  useEffect(() => {
+    const userInfo = userInfoStore.get();
+    if (userInfo) {
+      setLanguage(userInfo.language);
+    } else {
+      updateLanguage(browserLanguage);
+    }
+  }, [browserLanguage, updateLanguage]);
 
-  var initLang = useSystemStore().language;
-
-  if (userInfoStore.get()) {
-    initLang = userInfoStore.get().language;
-  }
-
-  console.log('courseId', courseId);
-  const [language, setLanguage] = useState(initLang);
   const [loading, setLoading] = useState(true);
   const params = parseUrlParams();
   const currChannel = params.channel || '';
@@ -45,24 +48,24 @@ const App = () => {
         wechatLogin({
           appId: process.env.REACT_APP_APP_ID,
         });
-        return
+        return;
       }
       if (currCode !== wechatCode) {
         updateWechatCode(currCode);
       }
     }
     setLoading(false);
-  }, [params.code, updateWechatCode, wechatCode])
+  }, [params.code, updateWechatCode, wechatCode]);
 
   useEffect(() => {
-    let id = courseId
+    let id = courseId;
     if (params.courseId) {
       updateCourseId(params.courseId);
-      id = params.courseId
+      id = params.courseId;
     }
-      getCourseInfo(id).then((resp) => {
-        setShowVip(resp.data.course_price > 0);
-      });
+    getCourseInfo(id).then((resp) => {
+      setShowVip(resp.data.course_price > 0);
+    });
   }, []);
 
   // 挂载 debugger
@@ -75,6 +78,7 @@ const App = () => {
 
   useEffect(() => {
     i18n.changeLanguage(language);
+    updateLanguage(language);
   }, [language]);
 
   return (

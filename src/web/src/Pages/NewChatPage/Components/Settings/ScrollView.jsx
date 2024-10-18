@@ -17,7 +17,6 @@ export const ScrollView = () => {
 
   const onRequestAnimationFrame = (callback) => {
     const now = Date.now();
-    console.log('onRequestAnimationFrame', isScroll, now - lastTime, duration);
     if (!isScroll || now - lastTime < duration) {
       requestAnimationFrame(onRequestAnimationFrame);
       return

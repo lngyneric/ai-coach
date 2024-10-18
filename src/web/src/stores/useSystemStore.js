@@ -9,5 +9,6 @@ export const useSystemStore = create((set) => ({
   updateCourseId: (courseId) => set({ courseId }),
   updateChannel: (channel) => set({ channel }),
   updateWechatCode: (wechatCode) => set({ wechatCode }),
+  updateLanguage: (language) => set({ language }),
   setShowVip: (showVip) => set({ showVip }),
 }));

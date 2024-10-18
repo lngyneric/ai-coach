@@ -31,8 +31,16 @@ def get_profile_labels():
         "sex": {
             "label": _("PROFILE.SEX"),
             "mapping": "user_sex",
-            "items": ["保密", "男性", "女性"],
-            "items_mapping": {0: "保密", 1: "男性", 2: "女性"},
+            "items": [
+                _("PROFILE.SEX_MALE"),
+                _("PROFILE.SEX_FEMALE"),
+                _("PROFILE.SEX_SECRET"),
+            ],
+            "items_mapping": {
+                0: _("PROFILE.SEX_SECRET"),
+                1: _("PROFILE.SEX_MALE"),
+                2: _("PROFILE.SEX_FEMALE"),
+            },
         },
         "birth": {"label": _("PROFILE.BIRTH"), "mapping": "user_birth", "type": "date"},
         "avatar": {
@@ -48,7 +56,7 @@ def get_profile_labels():
             "label": _("PROFILE.LANGUAGE"),
             "items": ["中文", "English"],
             "mapping": "user_language",
-            "items_mapping": {"zh_CN": "中文", "en": "English"},
+            "items_mapping": {"zh-CN": "中文", "en-US": "English"},
         },
         "ai_tools": {
             "label": _("PROFILE.AI_TOOLS"),
@@ -247,7 +255,8 @@ def update_user_profile_with_lable(app: Flask, user_id: str, profiles: list):
                     for k, v in profile_lable["items_mapping"].items():
                         if v == profile_value:
                             profile_value = k
-                if profile_lable.get("mapping"):
+                # DONOT update user info
+                if profile_lable.get("mapping") and profile_value:
                     setattr(user_info, profile_lable["mapping"], profile_value)
             else:
                 app.logger.info("profile_lable not found:{}".format(profile["key"]))

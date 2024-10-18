@@ -361,7 +361,10 @@ def verify_sms_code(app: Flask, user_id, phone: str, chekcode: str) -> UserToken
         raise_error("USER.SMS_CHECK_ERROR")
     else:
         user_info = (
-            User.query.filter(User.mobile == phone).order_by(User.id.asc()).first()
+            User.query.filter(User.mobile == phone)
+            .order_by(User.user_state.desc())
+            .order_by(User.id.asc())
+            .first()
         )
         if not user_info:
             user_info = (

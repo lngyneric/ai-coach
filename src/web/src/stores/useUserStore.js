@@ -44,8 +44,6 @@ export const useUserStore = create(
       }
       try {
         const res = await getUserInfo();
-
-        console.log('checkLogin',res)
         const userInfo = res.data;
         await tokenTool.set({ token: tokenTool.get().token, faked: false });
         await userInfoStore.set(userInfo);
@@ -108,6 +106,7 @@ export const useUserStore = create(
           ...res.data
         }
       }))
+      await userInfoStore.set(res.data)
       i18n.changeLanguage(res.data.language);
 
     }

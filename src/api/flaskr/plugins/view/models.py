@@ -147,13 +147,9 @@ class ViewDef:
 
         for item in self.queryinput:
             if item.input_options is not None:
-                print(
-                    "item input_options:" + str(item.input_options.__class__.__name__)
-                )
                 if isinstance(item.input_options, dict):
                     input_options = {v: k for k, v in item.input_options.items()}
                     item.input_options = input_options
-                    print("input_options:" + str(item.input_options))
         self.operation_items = operation_items
         self.form_operations = form_operations
         self.view_type = view_type

@@ -58,7 +58,6 @@ const ChatApp = ({ catalogId }) => {
   }, [token, currentMessage]);
 
   useEffect(() => {
-    console.log('useEffect.catalogId', catalogId);
     if (!catalogId) {
       return
     }
@@ -76,7 +75,7 @@ const ChatApp = ({ catalogId }) => {
       })
 
       setMessages(nextMessages);
-    })();  
+    })();
   }, [catalogId]);
 
   const handleInputChange = (e) => {
@@ -106,7 +105,6 @@ const ChatApp = ({ catalogId }) => {
               content: data?.message,
             }]
           )
-          console.log("data",data)
         },
         onEnd:(data)=>{
           setMessages([...messages,newMessage,{
@@ -114,7 +112,7 @@ const ChatApp = ({ catalogId }) => {
             role: "ai",
             content: data?.message,
           }])
- 
+
         }
       });
     }

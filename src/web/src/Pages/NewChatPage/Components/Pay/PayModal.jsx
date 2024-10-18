@@ -119,7 +119,6 @@ export const PayModal = ({ open = false, onCancel, onOk }) => {
     setInterval(null);
     setCouponCode('');
     setDiscount('');
-    console.log('init order course id ',courseId)
     const { data: resp } = await initOrder(courseId);
     setPrice(resp.value_to_pay);
     const orderId = resp.order_id;
