@@ -13,8 +13,8 @@ export const SettingBaseModal = ({
   onOk,
   onClose,
   defaultWidth = '360px',
-  title = '设置',
-  header = (t) => <div className={styles.header}>{t('common.settings')}</div>,
+  title,
+  header = (t, title) => <div className={styles.header}>{title}</div>,
 }) => {
   const { t } = useTranslation();
   const { mobileStyle } = useContext(AppContext);
@@ -29,7 +29,7 @@ export const SettingBaseModal = ({
           style={{ width: calModalWidth({ inMobile: mobileStyle, width: defaultWidth }) }}
           className={styles.modalWrapper}
         >
-          {header(t)}
+          {header(t, title || t('common.settings'))}
           {children}
           <div className={styles.btnWrapper}>
             <MainButton width="100%" onClick={onOk}>
