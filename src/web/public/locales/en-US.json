@@ -68,10 +68,14 @@
     "basicInfo": "Basic Info",
     "nickname": "Nickname",
     "nicknamePlaceholder": "Please enter your nickname",
-    "sex": "Sex",
-    "sexPlaceholder": "Please select sex",
-    "birth": "Birth",
-    "birthPlaceholder": "Please select your birthday"
+    "sex": "Gender",
+    "sexPlaceholder": "Please select your gender",
+    "birth": "Birthday",
+    "birthPlaceholder": "Please select your birthday",
+    "dialogTitle": {
+      "selectSex": "Select Gender",
+      "selectBirthday": "Select Birthday"
+    }
   },
   "feedback": {
     "feedbackTitle": "Feedback",

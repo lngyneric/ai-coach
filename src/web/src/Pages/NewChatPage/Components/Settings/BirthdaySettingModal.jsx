@@ -3,12 +3,14 @@ import styles from './BirthdaySettingModal.module.scss';
 import SettingBaseModal from './SettingBaseModal.jsx';
 import { DatePickerView } from 'antd-mobile';
 import { useState, memo } from 'react';
+import { useTranslation } from 'react-i18next';
 
 export const BirthdaySettingModal = ({
   open,
   onClose,
   onOk = ({ birthday }) => {},
 }) => {
+  const { t } = useTranslation();
   const [value, setValue] = useState(new Date());
   const onOkClick = () => {
     onOk({ birthday: value });
@@ -28,6 +30,7 @@ export const BirthdaySettingModal = ({
       onClose={onClose}
       onOk={onOkClick}
       closeOnMaskClick={true}
+      title={t('settings.dialogTitle.selectBirthday')}
     >
       <DatePickerView
         defaultValue={new Date('2000-01-01')}

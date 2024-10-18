@@ -63,6 +63,7 @@ export const SexSettingModal = ({
       open={open}
       onClose={onClose}
       onOk={onOkClick}
+      title={t('settings.dialogTitle.selectSex')}
     >
       <div className={styles.sexWrapper}>
         <div
