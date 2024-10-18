@@ -256,8 +256,9 @@ def update_user_profile_with_lable(app: Flask, user_id: str, profiles: list):
                         if v == profile_value:
                             profile_value = k
                 # DONOT update user info
-                if profile_lable.get("mapping") and profile_value:
-                    setattr(user_info, profile_lable["mapping"], profile_value)
+                # if profile_lable.get("mapping") and profile_value:
+                #     app.logger.info("update user info: {} - {}".format(profile, profile_value))
+                #     setattr(user_info, profile_lable["mapping"], profile_value)
             else:
                 app.logger.info("profile_lable not found:{}".format(profile["key"]))
             if user_profile:
