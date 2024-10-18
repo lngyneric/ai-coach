@@ -1,1 +1,1 @@
-PAY_CHANNEL_NOT_SUPPORT = "Unsupported payment channel"
+PAY_CHANNEL_NOT_SUPPORT = "Unsupported Payment Channel"

@@ -1,1 +1,1 @@
-VIEW_NOT_FOUND = "View not found"
+VIEW_NOT_FOUND = "View Not Found"
