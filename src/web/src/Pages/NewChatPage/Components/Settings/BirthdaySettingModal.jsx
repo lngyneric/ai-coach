@@ -30,7 +30,7 @@ export const BirthdaySettingModal = ({
       closeOnMaskClick={true}
     >
       <DatePickerView
-        defaultValue={now}
+        defaultValue={new Date('2000-01-01')}
         onChange={_onChange}
         min={min}
         mouseWheel={true}
