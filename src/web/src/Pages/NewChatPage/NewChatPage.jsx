@@ -23,13 +23,15 @@ import { useDisclosture } from 'common/hooks/useDisclosture.js';
 import { updateWxcode } from 'Api/user.js';
 
 import FeedbackModal from './Components/FeedbackModal/FeedbackModal.jsx';
+import { useTranslation } from 'react-i18next';
 
 // 课程学习主页面
 const NewChatPage = (props) => {
   const { frameLayout, updateFrameLayout } = useUiLayoutStore((state) => state);
   const [loginModalOpen, setLoginModalOpen] = useState(false);
   const [initialized, setInitialized] = useState(false);
-  const { hasLogin, userInfo, checkLogin } = useUserStore((state) => state);
+  const { hasLogin, userInfo, checkLogin ,refreshUserInfo} = useUserStore((state) => state);
+  const [language, setLanguage] = useState(userInfo?.language || 'en-US');
   const {
     tree,
     loadTree,
@@ -49,6 +51,7 @@ const NewChatPage = (props) => {
   const [showUserSettings, setShowUserSettings] = useState(false);
   const navigate = useNavigate();
   const { open: feedbackModalOpen, onOpen: onFeedbackModalOpen, onClose: onFeedbackModalClose } = useDisclosture();
+  const { i18n } = useTranslation();
 
   const mobileStyle = frameLayout === FRAME_LAYOUT_MOBILE;
 
@@ -225,6 +228,16 @@ const NewChatPage = (props) => {
   const onFeedbackClick = useCallback(() => {
     onFeedbackModalOpen();
   }, [onFeedbackModalOpen]);
+
+  useEffect(() => {
+      loadData();
+
+  }, [language]);
+
+
+  useEffect(() => {
+    setLanguage(i18n.language);
+  }, [i18n.language]);
 
   return (
     <div className={classNames(styles.newChatPage)}>
