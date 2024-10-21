@@ -203,6 +203,7 @@ export const UserSettings = ({ onHomeClick, className, onClose }) => {
         open={birthModalOpen}
         onOk={onBirthdaySettingModalOk}
         onClose={onBirthdaySettingModalClose}
+        currentBirthday={birth ? new Date(birth) : undefined}
       />
       <SexSettingModal
         open={sexSettingModalOpen}

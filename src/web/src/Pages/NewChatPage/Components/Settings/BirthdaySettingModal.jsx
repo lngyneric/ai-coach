@@ -9,9 +9,10 @@ export const BirthdaySettingModal = ({
   open,
   onClose,
   onOk = ({ birthday }) => {},
+  currentBirthday,
 }) => {
   const { t } = useTranslation();
-  const [value, setValue] = useState(new Date());
+  const [value, setValue] = useState(currentBirthday || new Date('2000-01-01'));
   const onOkClick = () => {
     onOk({ birthday: value });
   };
@@ -33,7 +34,7 @@ export const BirthdaySettingModal = ({
       title={t('settings.dialogTitle.selectBirthday')}
     >
       <DatePickerView
-        defaultValue={new Date('2000-01-01')}
+        value={value}
         onChange={_onChange}
         min={min}
         mouseWheel={true}
