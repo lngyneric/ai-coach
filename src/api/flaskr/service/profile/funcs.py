@@ -5,6 +5,7 @@ from .models import UserProfile
 from ...dao import db
 from ..user.models import User
 from ...i18n import _
+import datetime
 
 
 class UserProfileDTO:
@@ -26,7 +27,7 @@ class UserProfileDTO:
 def get_profile_labels():
 
     return {
-        "nickname": {"label": _("PROFILE.NICKNAME"), "mapping": "name"},
+        "nickname": {"label": _("PROFILE.NICKNAME"), "mapping": "name", "default": ""},
         "user_background": {"label": _("PROFILE.USER_BACKGROUND")},
         "sex": {
             "label": _("PROFILE.SEX"),
@@ -41,8 +42,14 @@ def get_profile_labels():
                 1: _("PROFILE.SEX_MALE"),
                 2: _("PROFILE.SEX_FEMALE"),
             },
+            "default": 0,
         },
-        "birth": {"label": _("PROFILE.BIRTH"), "mapping": "user_birth", "type": "date"},
+        "birth": {
+            "label": _("PROFILE.BIRTH"),
+            "mapping": "user_birth",
+            "type": "date",
+            "default": datetime.date(2003, 1, 1),
+        },
         "avatar": {
             "label": _("PROFILE.AVATAR"),
             "mapping": "user_avatar",
@@ -57,6 +64,7 @@ def get_profile_labels():
             "items": ["中文", "English"],
             "mapping": "user_language",
             "items_mapping": {"zh-CN": "中文", "en-US": "English"},
+            "default": "zh-CN",
         },
         "ai_tools": {
             "label": _("PROFILE.AI_TOOLS"),
@@ -255,13 +263,20 @@ def update_user_profile_with_lable(app: Flask, user_id: str, profiles: list):
                     for k, v in profile_lable["items_mapping"].items():
                         if v == profile_value:
                             profile_value = k
-                # DONOT update user info
-                # if profile_lable.get("mapping") and profile_value:
-                #     app.logger.info("update user info: {} - {}".format(profile, profile_value))
-                #     setattr(user_info, profile_lable["mapping"], profile_value)
+                default_value = profile_lable.get("default", None)
+                app.logger.info(
+                    "default_value:{}, profile_value:{}".format(
+                        default_value, profile_value
+                    )
+                )
+                if profile_lable.get("mapping") and (profile_value != default_value):
+                    app.logger.info(
+                        "update user info: {} - {}".format(profile, profile_value)
+                    )
+                    setattr(user_info, profile_lable["mapping"], profile_value)
             else:
                 app.logger.info("profile_lable not found:{}".format(profile["key"]))
-            if user_profile:
+            if user_profile and (profile_value != default_value):
                 user_profile.profile_value = profile_value
         db.session.flush()
         return True
