@@ -28,8 +28,12 @@ class RequestFormatter(logging.Formatter):
 
     def format(self, record):
         try:
+            request_id = getattr(thread_local, "request_id", "No_Request_ID")
+            if request_id == "No_Request_ID":
+                thread_local.request_id = uuid.uuid4().hex
+                request_id = thread_local.request_id
             record.url = getattr(thread_local, "url", "No_URL")
-            record.request_id = getattr(thread_local, "request_id", "No_Request_ID")
+            record.request_id = request_id
             record.client_ip = getattr(thread_local, "client_ip", "No_Client_IP")
         except RuntimeError:
             record.url = "No_URL"

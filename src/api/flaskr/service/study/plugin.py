@@ -12,7 +12,11 @@ INPUT_HANDLE_MAP = {}
 
 def register_input_handler(input_type: str):
     def decorator(func):
-        print(f"register_input_handler {input_type} ==> {func.__name__}")
+        from flask import current_app
+
+        current_app.logger.info(
+            f"register_input_handler {input_type} ==> {func.__name__}"
+        )
         INPUT_HANDLE_MAP[input_type] = func
         return func
 
@@ -24,7 +28,11 @@ UI_HANDLE_MAP = {}
 
 def register_ui_handler(ui_type):
     def decorator(func):
-        print(f"register_ui_geration_handler {ui_type} ==> {func.__name__}")
+        from flask import current_app
+
+        current_app.logger.info(
+            f"register_ui_geration_handler {ui_type} ==> {func.__name__}"
+        )
         UI_HANDLE_MAP[ui_type] = func
         return func
 
