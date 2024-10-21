@@ -45,7 +45,10 @@ class RequestFormatter(logging.Formatter):
 def init_log(app: Flask) -> Flask:
     @app.before_request
     def setup_logging():
-        thread_local.request_id = uuid.uuid4().hex
+
+        # request_id = getattr(thread_local, "X-Request-ID", uuid.uuid4().hex)
+        request_id = request.headers.get("X-Request-ID", uuid.uuid4().hex)
+        thread_local.request_id = request_id
         thread_local.url = request.path
         # try to get user ip from X-Forwarded-For header
         if "X-Forwarded-For" in request.headers:

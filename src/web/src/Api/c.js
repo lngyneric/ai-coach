@@ -1,13 +1,15 @@
 import { SSE } from "sse.js";
 import request from "../Service/Request";
+import uuid from "uuid";
 
 const token = process.env.REACT_APP_TOKEN
 const url = (process.env.REACT_APP_BASEURL || "") + "/api/study/run";
 
 export const RunScript = (course_id,lesson_id,input,input_type,onMessage) => {
 
+  var request_id = uuid.uuid4().hex
   var source = new SSE(url + "?token=" + token, {
-    headers: { "Content-Type": "application/json" },
+    headers: { "Content-Type": "application/json", "X-Request-ID": request_id },
     payload: JSON.stringify({
         course_id,lesson_id,input,input_type
     }),

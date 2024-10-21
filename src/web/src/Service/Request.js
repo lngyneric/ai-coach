@@ -1,8 +1,8 @@
 import { SSE } from "sse.js";
 import axios from "axios";
 import { message } from "antd";
-import { tokenStore, tokenTool } from "./storeUtil.js";
-
+import { tokenTool } from "./storeUtil.js";
+import { v4 } from "uuid";
 /**
  *
  * @param {*} token
@@ -56,6 +56,7 @@ const axiosrequest = axios.create({
 // 创建请求拦截器
 axiosrequest.interceptors.request.use(async(config)=>{
   config.headers.token = tokenTool.get().token;
+  config.headers["X-Request-ID"] = v4().replace(/-/g, '');
   return config;
 })
 
