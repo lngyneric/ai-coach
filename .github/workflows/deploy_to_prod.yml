@@ -2,7 +2,7 @@ name: deploy-to-prod-env
 
 on:
   push:
-    branches: ["master"] # Trigger only on push to the master branch
+    branches: ["main"] # Trigger only on push to the master branch
 
 jobs:
   build-and-sync:
