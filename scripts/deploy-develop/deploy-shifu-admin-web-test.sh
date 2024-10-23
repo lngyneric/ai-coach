@@ -19,7 +19,7 @@ script_dir="$(cd "$(dirname "${BASH_SOURCE[0]}")" && pwd)"
 nvm use v20.14.0
 
 # Change to the project directory
-cd /item/ai-shifu/src/admin-web/
+cd src/admin-web/
 
 
 
@@ -30,8 +30,7 @@ if [ -n "$(git status --porcelain)" ]; then
 fi
 
 # Reset any changes and pull the latest code forcefully
-git fetch --all
-git reset --hard origin/develop
+
 
 
 
@@ -65,13 +64,13 @@ if ! command -v pnpm &> /dev/null; then
 fi
 
 # Install dependencies with pnpm
-pnpm install
+CI=false  pnpm install
 
 # Build the project with pnpm
-pnpm run build
+CI=false pnpm run build
 
 # Sync build files to the specified directory
-rsync -av --delete /item/ai-shifu/src/admin-web/build/ /opt/1panel/apps/openresty/openresty/www/sites/backend-test.pillowai.cn/index
+rsync -av --delete  build/ /opt/1panel/apps/openresty/openresty/www/sites/backend-test.pillowai.cn/index
 
 
 
@@ -79,3 +78,5 @@ rsync -av --delete /item/ai-shifu/src/admin-web/build/ /opt/1panel/apps/openrest
 sh $script_dir/send_feishu.sh "admin-web 部署成功" "部署成功！"
 
 echo "Deployment completed successfully."
+cd ..
+cd ..
