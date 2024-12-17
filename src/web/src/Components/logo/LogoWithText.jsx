@@ -28,11 +28,13 @@ export const LogoWithText = ({ direction, size = 64, color = 'blue' }) => {
         ...commonStyles,
       }}
     >
-      {isRow ? (
-        <img src={logoRow} alt="logo" style={{ ...commonStyles }} />
-      ) : (
-        <img src={logoColumn} alt="logo" style={{ ...commonStyles }} />
-      )}
+      <a href="https://ai-shifu.com">
+        {isRow ? (
+          <img src={logoRow} alt="logo" style={{ ...commonStyles }} />
+        ) : (
+          <img src={logoColumn} alt="logo" style={{ ...commonStyles }} />
+        )}
+      </a>
     </div>
   );
 };
