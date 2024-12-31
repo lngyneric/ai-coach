@@ -7,7 +7,7 @@ from flaskr.service.study.input_funcs import (
     BreakException,
     check_text_with_llm_response,
 )
-from flaskr.service.lesson.models import AILessonScript
+from flaskr.service.lesson.models import AILessonScript, AILesson
 from flaskr.service.order.models import AICourseLessonAttend
 from flaskr.service.study.const import INPUT_TYPE_TEXT, ROLE_STUDENT, ROLE_TEACHER
 from flaskr.service.study.plugin import register_input_handler
@@ -25,6 +25,7 @@ from flaskr.dao import db
 def handle_input_text(
     app: Flask,
     user_id: str,
+    lesson: AILesson,
     attend: AICourseLessonAttend,
     script_info: AILessonScript,
     input: str,
@@ -43,7 +44,7 @@ def handle_input_text(
     db.session.add(log_script)
     span = trace.span(name="user_input", input=input)
     res = check_text_with_llm_response(
-        app, user_id, log_script, input, span, script_info, attend
+        app, user_id, log_script, input, span, lesson, script_info, attend
     )
     try:
         first_value = next(res)
@@ -62,6 +63,12 @@ def handle_input_text(
         json=True,
         stream=True,
         message=prompt,
+        generation_name="user_input_"
+        + lesson.lesson_no
+        + "_"
+        + str(script_info.script_index)
+        + "_"
+        + script_info.script_name,
         **model_setting.model_args,
     )
     response_text = ""
