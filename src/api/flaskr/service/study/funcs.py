@@ -351,6 +351,7 @@ def get_study_record(app: Flask, user_id: str, lesson_id: str) -> StudyRecordDTO
                 i.script_id,
                 i.lesson_id if i.lesson_id in lesson_ids else lesson_id,
                 i.log_id,
+                i.interaction_type,
                 ui=json.loads(i.script_ui_conf) if i.script_ui_conf else None,
             )
             for i in attend_scripts
@@ -459,7 +460,6 @@ def get_script_info(app: Flask, user_id: str, script_id: str) -> ScriptInfoDTO:
         lesson = AILesson.query.filter_by(lesson_id=script_info.lesson_id).first()
         if not lesson:
             return None
-
         return ScriptInfoDTO(
             script_info.script_index,
             script_info.script_name,
@@ -509,5 +509,23 @@ def reset_user_study_info_by_lesson(app: Flask, user_id: str, lesson_id: str):
             if lesson.lesson_no == lesson_no + "01":
                 attend_info.status = ATTEND_STATUS_IN_PROGRESS
             db.session.add(attend_info)
+        db.session.commit()
+        return True
+
+
+@extensible
+def set_script_content_operation(
+    app: Flask, user_id: str, log_id: str, interaction_type: int
+):
+    with app.app_context():
+        script_info = AICourseLessonAttendScript.query.filter(
+            AICourseLessonAttendScript.log_id == log_id,
+            AICourseLessonAttendScript.user_id == user_id,
+        ).first()
+        if not script_info:
+            return None
+        # update the script_info
+        script_info.interaction_type = interaction_type
+        db.session.merge(script_info)
         db.session.commit()
         return True
