@@ -387,7 +387,9 @@ export const ChatComponents = forwardRef(
               setTyping(false);
               if (lastMsg) {
                 lastMsg.isComplete = true;
-                lastMsg.logid = response.log_id;
+                if (response.log_id) {
+                  lastMsg.logid = response.log_id;
+                }
                 updateMsg(lastMsg.id, lastMsg);
               }
               lastMsgRef.current = null;
@@ -801,8 +803,6 @@ export const ChatComponents = forwardRef(
         if (content === undefined) {
           return <></>;
         }
-        console.log(msg);
-
         if (type === CHAT_MESSAGE_TYPE.TEXT) {
           return (
             <div>
