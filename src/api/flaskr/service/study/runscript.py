@@ -55,6 +55,7 @@ def run_script_inner(
     input_type: str = None,
     script_id: str = None,
     log_id: str = None,
+    preview_mode: bool = False,
 ) -> Generator[str, None, None]:
     with app.app_context():
         script_info = None
@@ -89,9 +90,14 @@ def run_script_inner(
                 if not lesson_info:
                     raise_error("LESSON.LESSON_NOT_FOUND_IN_COURSE")
             else:
-                lesson_info = AILesson.query.filter(
-                    AILesson.lesson_id == lesson_id,
-                ).first()
+                lesson_info = (
+                    AILesson.query.filter(
+                        AILesson.lesson_id == lesson_id,
+                        AILesson.status == 1,
+                    )
+                    .order_by(AILesson.id.desc())
+                    .first()
+                )
                 if not lesson_info:
                     raise_error("LESSON.LESSON_NOT_FOUND_IN_COURSE")
                 course_id = lesson_info.course_id
@@ -102,10 +108,14 @@ def run_script_inner(
                 )
                 if not lesson_info:
                     raise_error("LESSON.LESSON_NOT_FOUND_IN_COURSE")
-                course_info = AICourse.query.filter(
-                    AICourse.course_id == course_id,
-                    AICourse.status == 1,
-                ).first()
+                course_info = (
+                    AICourse.query.filter(
+                        AICourse.course_id == course_id,
+                        AICourse.status == 1,
+                    )
+                    .order_by(AICourse.id.desc())
+                    .first()
+                )
                 if not course_info:
                     raise_error("LESSON.COURSE_NOT_FOUND")
                 # return the teacher avator
@@ -438,6 +448,7 @@ def run_script(
     input_type: str = None,
     script_id: str = None,
     log_id: str = None,
+    preview_mode: bool = False,
 ) -> Generator[ScriptDTO, None, None]:
     timeout = 5 * 60
     blocking_timeout = 1
@@ -448,7 +459,15 @@ def run_script(
     if lock.acquire(blocking=True):
         try:
             yield from run_script_inner(
-                app, user_id, course_id, lesson_id, input, input_type, script_id, log_id
+                app,
+                user_id,
+                course_id,
+                lesson_id,
+                input,
+                input_type,
+                script_id,
+                log_id,
+                preview_mode,
             )
         except Exception as e:
             app.logger.error("run_script error")

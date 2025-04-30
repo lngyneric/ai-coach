@@ -38,7 +38,7 @@ def handle_input_continue_branch(
     )
     branch_info = json.loads(script_info.script_other_conf)
     branch_key = branch_info.get("var_name", "")
-    profile = get_user_profiles(app, user_info.user_id, [branch_key])
+    profile = get_user_profiles(app, user_info.user_id, attend.course_id, [branch_key])
     branch_value = profile.get(branch_key, "")
     jump_rule = branch_info.get("jump_rule", [])
 
@@ -55,12 +55,20 @@ def handle_input_continue_branch(
                 attend_info = AICourseLessonAttend.query.filter(
                     AICourseLessonAttend.attend_id == attend.attend_id
                 ).first()
-                next_lesson = AILesson.query.filter(
-                    AILesson.lesson_feishu_id == rule.get("lark_table_id", ""),
-                    AILesson.status == 1,
-                    AILesson.course_id == attend.course_id,
-                    func.length(AILesson.lesson_no) > 2,
-                ).first()
+                next_lesson = None
+                if rule.get("lark_table_id", "") != "":
+                    next_lesson = AILesson.query.filter(
+                        AILesson.lesson_feishu_id == rule.get("lark_table_id", ""),
+                        AILesson.status == 1,
+                        AILesson.course_id == attend.course_id,
+                        func.length(AILesson.lesson_no) > 2,
+                    ).first()
+                if rule.get("goto_id", "") != "":
+                    next_lesson = AILesson.query.filter(
+                        AILesson.lesson_id == rule.get("goto_id", ""),
+                        AILesson.status == 1,
+                        AILesson.course_id == attend.course_id,
+                    ).first()
                 if next_lesson:
                     next_attend = AICourseLessonAttend.query.filter(
                         AICourseLessonAttend.user_id == user_info.user_id,

@@ -1,5 +1,5 @@
 from ...common.swagger import register_schema_to_swagger
-
+import math
 
 USER_STATE_UNTEGISTERED = 0
 USER_STATE_REGISTERED = 1
@@ -22,9 +22,10 @@ class UserInfo:
     name: str
     email: str
     mobile: str
-    model: str
     user_state: str
     language: str
+    user_avatar: str
+    has_password: bool
 
     def __init__(
         self,
@@ -33,20 +34,22 @@ class UserInfo:
         name,
         email,
         mobile,
-        model,
         user_state,
         wx_openid,
         language,
+        has_password,
+        user_avatar=None,
     ):
         self.user_id = user_id
         self.username = username
         self.name = name
         self.email = email
         self.mobile = mobile
-        self.model = model
         self.user_state = USE_STATE_VALUES[user_state]
         self.wx_openid = wx_openid
         self.language = language
+        self.user_avatar = user_avatar
+        self.has_password = has_password
 
     def __json__(self):
         return {
@@ -58,6 +61,8 @@ class UserInfo:
             "state": self.user_state,
             "openid": self.wx_openid,
             "language": self.language,
+            "avatar": self.user_avatar,
+            "has_password": self.has_password,
         }
 
     def __html__(self):
@@ -86,7 +91,7 @@ class PageNationDTO:
         self.page = page
         self.page_size = page_size
         self.total = total
-        self.page_count = total // page_size + 1
+        self.page_count = math.ceil(total / page_size)
         self.data = data
 
     def __json__(self):

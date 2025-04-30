@@ -7,6 +7,7 @@ import random
 import smtplib
 from email.mime.text import MIMEText
 from email.mime.multipart import MIMEMultipart
+from flaskr.i18n import _
 
 from ..common.models import raise_error
 from ...dao import redis_client as redis
@@ -47,7 +48,7 @@ def generate_token(app: Flask, user_id: str) -> str:
 
 # generate image captcha
 # author: yfge
-def generation_img_chk(app: Flask, mobile: str):
+def generation_img_chk(app: Flask, identifying_account: str):
     with app.app_context():
         image_captcha = ImageCaptcha()
         characters = string.ascii_uppercase + string.digits
@@ -57,13 +58,18 @@ def generation_img_chk(app: Flask, mobile: str):
         # Save the image to a BytesIO object
         buffered = BytesIO()
         captcha_image.save(buffered, format="PNG")
-        app.logger.info("mobile:" + mobile + " random_string:" + random_string)
+        app.logger.info(
+            "identifying_account:"
+            + identifying_account
+            + " random_string:"
+            + random_string
+        )
         # Encode the image to base64
         img_base64 = "data:image/png;base64," + base64.b64encode(
             buffered.getvalue()
         ).decode("utf-8")
         redis.set(
-            app.config["REDIS_KEY_PRRFIX_CAPTCHA"] + mobile,
+            app.config["REDIS_KEY_PRRFIX_CAPTCHA"] + identifying_account,
             random_string,
             ex=app.config["CAPTCHA_CODE_EXPIRE_TIME"],
         )
@@ -71,38 +77,123 @@ def generation_img_chk(app: Flask, mobile: str):
 
 
 # send sms code
-def send_sms_code(app: Flask, phone: str, chekcode: str):
+def send_sms_code(app: Flask, phone: str, ip: str = None):
     with app.app_context():
-        check_save = redis.get(app.config["REDIS_KEY_PRRFIX_CAPTCHA"] + phone)
-        if check_save is None:
-            raise_error("USER.CHECK_CODE_EXPIRED")
-        check_save_str = str(check_save, encoding="utf-8")
-        app.logger.info("check_save_str:" + check_save_str + " chekcode:" + chekcode)
-        if chekcode.lower() != check_save_str.lower():
-            raise_error("USER.CHECK_CODE_ERROR")
-        else:
-            characters = string.digits
-            # Generate a random string of length 4
-            random_string = "".join(random.choices(characters, k=4))
-            # 发送短信验证码
-            redis.set(
-                app.config["REDIS_KEY_PRRFIX_PHONE_CODE"] + phone,
-                random_string,
-                ex=app.config["PHONE_CODE_EXPIRE_TIME"],
-            )
-            send_sms_code_ali(app, phone, random_string)
-            return {"expire_in": app.config["PHONE_CODE_EXPIRE_TIME"]}
+        # Check IP ban status
+        if ip:
+            ip_ban_key = app.config["REDIS_KEY_PRRFIX_IP_BAN"] + ip
+            if redis.get(ip_ban_key):
+                # Development, debugging and use
+                # redis.delete(ip_ban_key)
+                raise_error("USER.IP_BANNED")
+
+            # Check IP sending frequency
+            ip_limit_key = app.config["REDIS_KEY_PRRFIX_IP_LIMIT"] + ip
+            ip_send_count = redis.get(ip_limit_key)
+
+            if ip_send_count:
+                ip_send_count = int(ip_send_count)
+                if ip_send_count >= int(app.config["IP_SMS_LIMIT_COUNT"]):
+                    # Ban the IP
+                    redis.set(ip_ban_key, 1, ex=int(app.config["IP_BAN_TIME"]))
+                    raise_error("USER.IP_BANNED")
+                else:
+                    redis.incr(ip_limit_key)
+            else:
+                redis.set(ip_limit_key, 1, ex=int(app.config["IP_SMS_LIMIT_TIME"]))
+
+        # Check phone sending frequency limit
+        phone_limit_key = app.config["REDIS_KEY_PRRFIX_PHONE_LIMIT"] + phone
+        last_send_time = redis.get(phone_limit_key)
+
+        if last_send_time:
+            last_send_time = int(last_send_time)
+            current_time = int(time.time())
+            time_diff = current_time - last_send_time
+
+            interval = int(app.config["SMS_CODE_INTERVAL"])
+            if time_diff < interval:
+                remaining_time = interval - time_diff
+                raise_error("USER.SMS_SEND_TOO_FREQUENT")
+
+        characters = string.digits
+        # Generate a random string of length 4
+        random_string = "".join(random.choices(characters, k=4))
+        # 发送短信验证码
+        redis.set(
+            app.config["REDIS_KEY_PRRFIX_PHONE_CODE"] + phone,
+            random_string,
+            ex=app.config["PHONE_CODE_EXPIRE_TIME"],
+        )
+
+        # Record the sending time
+        redis.set(
+            phone_limit_key, int(time.time()), ex=int(app.config["SMS_CODE_INTERVAL"])
+        )
+
+        send_sms_code_ali(app, phone, random_string)
+        return {"expire_in": app.config["PHONE_CODE_EXPIRE_TIME"]}
 
 
-def send_email_code(app: Flask, email: str, code: str, checkcode: str):
+def send_email_code(app: Flask, email: str, ip: str = None):
     with app.app_context():
+        # Check IP ban status
+        if ip:
+            ip_ban_key = app.config["REDIS_KEY_PRRFIX_IP_BAN"] + ip
+            if redis.get(ip_ban_key):
+                # Development, debugging and use
+                # redis.delete(ip_ban_key)
+                raise_error("USER.IP_BANNED")
+
+            # Check IP sending frequency
+            ip_limit_key = app.config["REDIS_KEY_PRRFIX_IP_LIMIT"] + ip
+            ip_send_count = redis.get(ip_limit_key)
+
+            if ip_send_count:
+                ip_send_count = int(ip_send_count)
+                if ip_send_count >= int(app.config["IP_MAIL_LIMIT_COUNT"]):
+                    # Ban the IP
+                    redis.set(ip_ban_key, 1, ex=int(app.config["IP_BAN_TIME"]))
+                    raise_error("USER.IP_BANNED")
+                else:
+                    redis.incr(ip_limit_key)
+            else:
+                redis.set(ip_limit_key, 1, ex=int(app.config["IP_MAIL_LIMIT_TIME"]))
+
+        # Check the transmission frequency limit
+        email_limit_key = app.config["REDIS_KEY_PRRFIX_MAIL_LIMIT"] + email
+        last_send_time = redis.get(email_limit_key)
+
+        if last_send_time:
+            last_send_time = int(last_send_time)
+            current_time = int(time.time())
+            time_diff = current_time - last_send_time
+
+            interval = int(app.config["MAIL_CODE_INTERVAL"])
+            if time_diff < interval:
+                remaining_time = interval - time_diff
+                raise_error("USER.EMAIL_SEND_TOO_FREQUENT")
+
         # Create the email content
         msg = MIMEMultipart()
         msg["From"] = app.config["SMTP_SENDER"]
         msg["To"] = email
-        msg["Subject"] = "AI-Shifu:Your Verification Code"
+        msg["Subject"] = _("EMAIL_VERIFICATION_SUBJECT")
+        characters = string.digits
+        random_string = "".join(random.choices(characters, k=4))
+        # to set redis
+        redis.set(
+            app.config["REDIS_KEY_PRRFIX_MAIL_CODE"] + email,
+            random_string,
+            ex=app.config["MAIL_CODE_EXPIRE_TIME"],
+        )
 
-        body = f"Your verification code is: {code}"
+        # Record the sending time of this time
+        redis.set(
+            email_limit_key, int(time.time()), ex=int(app.config["MAIL_CODE_INTERVAL"])
+        )
+
+        body = f"Your verification code is: {random_string}"
         msg.attach(MIMEText(body, "plain"))
 
         try:
@@ -119,3 +210,4 @@ def send_email_code(app: Flask, email: str, code: str, checkcode: str):
         except Exception as e:
             app.logger.error(f"Failed to send verification code to {email}: {str(e)}")
             raise_error("USER.EMAIL_SEND_FAILED")
+        return {"expire_in": app.config["MAIL_CODE_EXPIRE_TIME"]}

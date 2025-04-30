@@ -14,7 +14,6 @@ import { useUserStore } from 'stores/useUserStore';
 import { useShallow } from 'zustand/react/shallow';
 import { selectDefaultLanguage } from 'constants/userConstants';
 import { useCourseStore } from 'stores/useCourseStore';
-import { CourseInfo, UserInfo } from './types';
 import { EnvStoreState, SystemStoreState, CourseStoreState, UserStoreState } from './types/store';
 
 const initializeEnvData = async (): Promise<void> => {
@@ -81,7 +80,7 @@ const RouterView = () => useRoutes(routes);
 
 const App = () => {
   const [envDataInitialized, setEnvDataInitialized] = useState<boolean>(false);
-
+  const [checkWxcode, setCheckWxcode] = useState<boolean>(false);
   useEffect(() => {
     const initialize = async (): Promise<void> => {
       await initializeEnvData();
@@ -97,6 +96,7 @@ const App = () => {
     updateWechatCode,
     setShowVip,
     updateLanguage,
+    updatePrivewMode,
   } = useSystemStore() as SystemStoreState;
 
   const browserLanguage = selectDefaultLanguage(
@@ -147,7 +147,10 @@ const App = () => {
       }
       if (currCode !== wechatCode) {
         updateWechatCode(currCode);
+        setCheckWxcode(true);
       }
+    } else {
+      setCheckWxcode(true);
     }
     setLoading(false);
   }, [
@@ -158,6 +161,8 @@ const App = () => {
     enableWxcode,
   ]);
 
+
+
   useEffect(() => {
     const fetchCourseInfo = async () => {
       if (!envDataInitialized) return;
@@ -167,6 +172,11 @@ const App = () => {
     };
     fetchCourseInfo();
   }, [envDataInitialized, updateCourseId, courseId, params.courseId]);
+  useEffect(() => {
+    if (params.previewMode) {
+      updatePrivewMode(params.previewMode === 'true');
+    }
+  }, [params.previewMode, updatePrivewMode]);
 
   useEffect(() => {
     const fetchCourseInfo = async () => {
@@ -215,13 +225,14 @@ const App = () => {
 
   useEffect(() => {
     if (!envDataInitialized) return;
+    if (!checkWxcode) return;
     const checkLogin = async () => {
       setLoading(true);
       await (useUserStore.getState() as UserStoreState).checkLogin();
       setLoading(false);
     };
     checkLogin();
-  }, [envDataInitialized]);
+  }, [envDataInitialized, checkWxcode]);
 
   return (
     <ConfigProvider locale={{ locale: language }}>
