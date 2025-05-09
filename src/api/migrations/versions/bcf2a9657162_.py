@@ -1,7 +1,7 @@
 """empty message
 
 Revision ID: bcf2a9657162
-Revises: b7b8d3df0452
+Revises: b6cbcf622c0a
 Create Date: 2025-04-29 12:52:04.880611
 
 """
@@ -16,7 +16,7 @@ from sqlalchemy.dialects import mysql
 # a descriptive comment and modifies its properties. Additionally, it performs a data
 # cleaning operation on the active_user_record table, updating statuses from 0 to 4101.
 revision = "bcf2a9657162"
-down_revision = "b7b8d3df0452"
+down_revision = "b6cbcf622c0a"
 branch_labels = None
 depends_on = None
 
