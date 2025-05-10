@@ -3,6 +3,17 @@ import { getSiteHost } from "@/config/runtime-config";
 import { fail } from '@/hooks/use-toast';
 import { getToken } from "@/local/local";
 import { v4 as uuidv4 } from 'uuid';
+import React from 'react';
+import ReactDOM from 'react-dom/client';
+import {
+    AlertDialog,
+    AlertDialogAction,
+    AlertDialogContent,
+    AlertDialogDescription,
+    AlertDialogFooter,
+    AlertDialogHeader,
+    AlertDialogTitle,
+} from "@/components/ui/alert-dialog";
 
 export type RequestConfig = RequestInit & { params?: any; data?: any };
 
@@ -121,6 +132,10 @@ export class Request {
         }
         if (location.pathname != '/login' && (res.code == 1001 || res.code == 1005 || res.code == 1004)) {
             window.location.href = '/login';
+        }
+        if (location.pathname.startsWith('/scenario/') && res.code == 9002) {
+          // todo It should be changed to i18n
+          fail('您当前没有权限访问此内容，请联系管理员获取权限');
         }
         if (res.code == 0) {
           return res.data;

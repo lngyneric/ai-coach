@@ -108,7 +108,8 @@ const ScriptEditor = ({ id }: { id: string }) => {
         blockUIProperties,
         blockUITypes,
         currentNode,
-        isLoading
+        isLoading,
+        currentScenario
     } = useScenario();
     const [menuPosition, setMenuPosition] = useState<{
         blockId?: string;
@@ -171,13 +172,15 @@ const ScriptEditor = ({ id }: { id: string }) => {
         setMenuPosition({ blockId: "", visible: false });
     }
 
-    const onAddBlock = (index: number, type: BlockType) => {
-        actions.addBlock(index, type)
+    const onAddBlock = (index: number, type: BlockType, scenario_id: string) => {
+        actions.addBlock(index, type, scenario_id)
     }
 
     useEffect(() => {
         actions.loadModels();
-        actions.loadChapters(id);
+        if (id) {
+            actions.loadChapters(id);
+        }
     }, [id]);
 
     return (
@@ -229,7 +232,7 @@ const ScriptEditor = ({ id }: { id: string }) => {
                                                 newBlocks.splice(dragIndex, 1);
                                                 newBlocks.splice(hoverIndex, 0, dragBlock);
                                                 actions.setBlocks(newBlocks);
-                                                actions.autoSaveBlocks(currentNode!.id, newBlocks, blockContentTypes, blockContentProperties, blockUITypes, blockUIProperties)
+                                                actions.autoSaveBlocks(currentNode!.id, newBlocks, blockContentTypes, blockContentProperties, blockUITypes, blockUIProperties, currentScenario?.id || '')
                                             }}
                                         >
                                             <div id={block.properties.block_id} className="relative flex flex-col gap-2 ">
@@ -245,7 +248,7 @@ const ScriptEditor = ({ id }: { id: string }) => {
                                                 </div>
                                                 <RenderBlockUI block={block} />
                                                 <div>
-                                                    <AddBlock onAdd={onAddBlock.bind(null, index + 1)} />
+                                                    <AddBlock onAdd={onAddBlock.bind(null, index + 1, "ai", id)} />
                                                 </div>
                                             </div>
                                         </DraggableBlock>
@@ -254,7 +257,7 @@ const ScriptEditor = ({ id }: { id: string }) => {
                                 {
                                     ((currentNode?.depth || 0) > 0 && blocks.length === 0) && (
                                         <div className='flex flex-row items-center justify-start h-6 pl-8'>
-                                            <AddBlock onAdd={onAddBlock.bind(null, 0)} />
+                                            <AddBlock onAdd={onAddBlock.bind(null, 0, "ai", id)} />
                                         </div>
                                     )
                                 }

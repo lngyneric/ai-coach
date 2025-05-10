@@ -23,7 +23,7 @@ const Header = () => {
     const publish = async () => {
         // TODO: publish
         // actions.publishScenario();
-        await actions.saveBlocks();
+        await actions.saveBlocks(currentScenario?.id || '');
         alert.showAlert({
             confirmText: '确认',
             cancelText: '取消',

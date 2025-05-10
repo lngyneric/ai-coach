@@ -37,7 +37,7 @@ const ViewBlockMap = {
 }
 
 export const BlockUI = ({ id, type, properties, mode = 'edit' }) => {
-    const { actions, currentNode, blocks, blockContentTypes, blockUITypes, blockUIProperties, blockContentProperties } = useScenario();
+    const { actions, currentNode, blocks, blockContentTypes, blockUITypes, blockUIProperties, blockContentProperties, currentScenario } = useScenario();
     const [error, setError] = useState('');
     const onPropertiesChange = async (properties) => {
         await actions.setBlockUIPropertiesById(id, properties)
@@ -54,10 +54,9 @@ export const BlockUI = ({ id, type, properties, mode = 'edit' }) => {
         if (err) {
             setError(err);
             return;
-
         }
         if (currentNode) {
-            actions.autoSaveBlocks(currentNode.id, blocks, blockContentTypes, blockContentProperties, blockUITypes, p)
+            actions.autoSaveBlocks(currentNode.id, blocks, blockContentTypes, blockContentProperties, blockUITypes, p, currentScenario?.id || '')
         }
     }
     useEffect(() => {

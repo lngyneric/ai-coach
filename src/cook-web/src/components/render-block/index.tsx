@@ -14,7 +14,7 @@ const BlockMap = {
 }
 
 export const RenderBlockContent = ({ id, type, properties }) => {
-    const { actions, blocks, blockContentTypes, blockContentState, currentNode, blockUITypes, blockContentProperties, blockUIProperties } = useScenario();
+    const { actions, blocks, blockContentTypes, blockContentState, currentNode, blockUITypes, blockContentProperties, blockUIProperties, currentScenario } = useScenario();
     const [error, setError] = useState('')
     const [showDeleteDialog, setShowDeleteDialog] = useState(false)
 
@@ -37,7 +37,7 @@ export const RenderBlockContent = ({ id, type, properties }) => {
             return;
         }
         if (currentNode) {
-            actions.autoSaveBlocks(currentNode.id, blocks, blockContentTypes, p, blockUITypes, blockUIProperties)
+            actions.autoSaveBlocks(currentNode.id, blocks, blockContentTypes, p, blockUITypes, blockUIProperties, currentScenario?.id || '')
         }
     }
 
@@ -61,14 +61,15 @@ export const RenderBlockContent = ({ id, type, properties }) => {
             return;
         }
         setIsEdit(false)
-        await actions.saveBlocks();
+        await actions.saveBlocks(currentScenario?.id || '');
     }
     const onRemove = async () => {
         setShowDeleteDialog(true)
     }
 
     const handleConfirmDelete = async () => {
-        await actions.removeBlock(id);
+        if (!currentNode?.id) return;
+        await actions.removeBlock(id, currentScenario?.id || '');
         setShowDeleteDialog(false)
     }
 

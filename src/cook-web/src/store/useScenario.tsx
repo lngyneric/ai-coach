@@ -133,11 +133,13 @@ export const ScenarioProvider: React.FC<{ children: ReactNode }> = ({ children }
                 }
                 if (outline.depth == 0) {
                     await api.deleteChapter({
-                        chapter_id: outline.id
+                        chapter_id: outline.id,
+                        scenario_id: currentScenario?.id || ''
                     })
                 } else if (outline.depth == 1) {
                     await api.deleteUnit({
-                        unit_id: outline.id
+                        unit_id: outline.id,
+                        scenario_id: currentScenario?.id || ''
                     })
                 }
             } else {
@@ -153,7 +155,8 @@ export const ScenarioProvider: React.FC<{ children: ReactNode }> = ({ children }
                     return;
                 }
                 await api.deleteChapter({
-                    chapter_id: outline.id
+                    chapter_id: outline.id,
+                    scenario_id: currentScenario?.id || ''
                 })
             }
             setLastSaveTime(new Date());
@@ -188,7 +191,7 @@ export const ScenarioProvider: React.FC<{ children: ReactNode }> = ({ children }
                         ...list[0].children[0],
                         depth: 1,
                     });
-                    await loadBlocks(list[0].children[0].id);
+                    await loadBlocks(list[0].children[0].id, scenarioId);
                 }
             }
             setChapters(list);
@@ -261,11 +264,11 @@ export const ScenarioProvider: React.FC<{ children: ReactNode }> = ({ children }
         return list;
     }
 
-    const loadBlocks = async (outlineId: string) => {
+    const loadBlocks = async (outlineId: string, scenarioId: string) => {
         try {
             setIsLoading(true);
             setError(null);
-            const blocksData = await api.getBlocks({ outline_id: outlineId });
+            const blocksData = await api.getBlocks({ outline_id: outlineId, scenario_id: scenarioId });
             const list = blocksData.filter(p => p.type == 'block') as Block[];
             setBlocks(list);
             initBlockContentTypes(list);
@@ -281,20 +284,20 @@ export const ScenarioProvider: React.FC<{ children: ReactNode }> = ({ children }
             setIsLoading(false);
         }
     }
-    const saveBlocks = async () => {
+    const saveBlocks = async (scenario_id: string) => {
         if (isLoading) {
             return;
         }
         const list = buildBlockList(blocks);
         try {
             setError(null);
-            await api.saveBlocks({ outline_id: currentNode!.id, blocks: list });
+            await api.saveBlocks({ outline_id: currentNode!.id, blocks: list, scenario_id: scenario_id });
         } catch (error) {
             console.error(error);
             setError("Failed to save blocks");
         }
     }
-    const addBlock = async (index: number, blockType: string = 'ai') => {
+    const addBlock = async (index: number, blockType: string = 'ai', scenario_id: string) => {
         setIsSaving(true);
         setError(null);
         try {
@@ -315,7 +318,8 @@ export const ScenarioProvider: React.FC<{ children: ReactNode }> = ({ children }
                     "block_ui": buttonUI
                 },
                 "block_index": index,
-                "outline_id": currentNode!.id
+                "outline_id": currentNode!.id,
+                "scenario_id": scenario_id,
             });
 
             blocks.splice(index, 0, block);
@@ -383,7 +387,7 @@ export const ScenarioProvider: React.FC<{ children: ReactNode }> = ({ children }
         setFocusId(id);
     }
 
-    const saveCurrentBlocks = useCallback(async (outline: string, blocks: Block[], blockContentTypes: Record<string, any>, blockContentProperties: Record<string, any>, blockUITypes: Record<string, any>, blockUIProperties: Record<string, any>) => {
+    const saveCurrentBlocks = useCallback(async (outline: string, blocks: Block[], blockContentTypes: Record<string, any>, blockContentProperties: Record<string, any>, blockUITypes: Record<string, any>, blockUIProperties: Record<string, any>, scenario_id: string) => {
         if (isLoading) {
             return;
         }
@@ -392,7 +396,7 @@ export const ScenarioProvider: React.FC<{ children: ReactNode }> = ({ children }
         try {
             setError(null);
             const blockList = buildBlockListWithAllInfo(blocks, blockContentTypes, blockContentProperties, blockUITypes, blockUIProperties);
-            await api.saveBlocks({ outline_id: outline, blocks: blockList });
+            await api.saveBlocks({ outline_id: outline, blocks: blockList, scenario_id: scenario_id });
             setIsSaving(false);
             setLastSaveTime(new Date());
         } catch (error: any) {
@@ -404,9 +408,9 @@ export const ScenarioProvider: React.FC<{ children: ReactNode }> = ({ children }
         }
     }, []);
 
-    const autoSaveBlocks = useCallback(debounce(saveCurrentBlocks, 3000), []) as (outline: string, blocks: Block[], blockContentTypes: Record<string, any>, blockContentProperties: Record<string, any>, blockUITypes: Record<string, any>, blockUIProperties: Record<string, any>) => Promise<void>
-
-
+    const autoSaveBlocks = useCallback((outline: string, blocks: Block[], blockContentTypes: Record<string, any>, blockContentProperties: Record<string, any>, blockUITypes: Record<string, any>, blockUIProperties: Record<string, any>, scenario_id: string): Promise<void> => {
+        return debounce(saveCurrentBlocks, 3000)(outline, blocks, blockContentTypes, blockContentProperties, blockUITypes, blockUIProperties, scenario_id) || Promise.resolve();
+    }, [saveCurrentBlocks]);
 
     const addSiblingOutline = async (item: Outline, name = '') => {
         const id = 'new_chapter'
@@ -464,7 +468,8 @@ export const ScenarioProvider: React.FC<{ children: ReactNode }> = ({ children }
                     "chapter_id": data.id,
                     "chapter_index": index,
                     "chapter_description": data.name,
-                    "chapter_name": data.name
+                    "chapter_name": data.name,
+                    "scenario_id": currentScenario?.id
                 })
 
                 const currentChapter = chapters.find(chapter => chapter.id === data.id);
@@ -522,6 +527,7 @@ export const ScenarioProvider: React.FC<{ children: ReactNode }> = ({ children }
                     "unit_index": index,
                     "unit_description": data.name,
                     "unit_name": data.name,
+                    "scenario_id": currentScenario?.id
                 })
                 replaceOutline(data.id, {
                     id: data.id,
@@ -704,7 +710,7 @@ export const ScenarioProvider: React.FC<{ children: ReactNode }> = ({ children }
     const removeBlock = async (id: string) => {
         const list = blocks.filter((block) => block.properties.block_id !== id);
         setBlocks(list);
-        autoSaveBlocks(currentNode!.id, list, blockContentTypes, blockContentProperties, blockUITypes, blockUIProperties);
+        autoSaveBlocks(currentNode!.id, list, blockContentTypes, blockContentProperties, blockUITypes, blockUIProperties, currentScenario?.id || '');
     }
     const loadModels = async () => {
         const list = await api.getModelList({});
