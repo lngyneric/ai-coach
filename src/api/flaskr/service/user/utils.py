@@ -39,8 +39,8 @@ def generate_token(app: Flask, user_id: str) -> str:
             algorithm="HS256",
         )
         redis.set(
-            app.config["REDIS_KEY_PREFIX_USER"] + user_id,
-            token,
+            app.config["REDIS_KEY_PREFIX_USER"] + token,
+            user_id,
             ex=app.config["TOKEN_EXPIRE_TIME"],
         )
         return token

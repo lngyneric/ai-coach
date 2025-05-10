@@ -77,7 +77,7 @@ def verify_user(app: Flask, login: str, raw_password: str) -> UserToken:
 def validate_user(app: Flask, token: str) -> UserInfo:
     User = get_model(app)
     with app.app_context():
-        if token is None:
+        if not token:
             raise_error("USER.USER_NOT_LOGIN")
         try:
             if app.config.get("ENVERIMENT", "prod") == "dev":
@@ -104,14 +104,14 @@ def validate_user(app: Flask, token: str) -> UserInfo:
                 app.logger.info("user_id:" + user_id)
 
             app.logger.info("user_id:" + user_id)
-            redis_token = redis.get(app.config["REDIS_KEY_PREFIX_USER"] + user_id)
-            if redis_token is None:
+            redis_user_id = redis.get(app.config["REDIS_KEY_PREFIX_USER"] + token)
+            if redis_user_id is None:
                 raise_error("USER.USER_TOKEN_EXPIRED")
-            set_token = str(
-                redis.get(app.config["REDIS_KEY_PREFIX_USER"] + user_id),
+            set_user_id = str(
+                redis_user_id,
                 encoding="utf-8",
             )
-            if set_token == token:
+            if set_user_id == user_id:
                 user = User.query.filter_by(user_id=user_id).first()
                 if user:
                     return UserInfo(
