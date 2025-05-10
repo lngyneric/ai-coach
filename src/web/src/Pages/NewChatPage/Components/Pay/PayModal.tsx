@@ -337,7 +337,7 @@ export const PayModal = ({
                     </MainButton>
                   </div>
                 )}
-                <PayModalFooter />
+                <PayModalFooter className={styles.payModalFooter} />
               </div>
             )}
           </div>
