@@ -242,6 +242,9 @@ def init_buy_record(app: Flask, user_id: str, course_id: str, active_id: str = N
             buy_record.record_id = order_id
             buy_record.discount_value = decimal.Decimal(0.00)
             buy_record.pay_value = course_info.course_price
+        else:
+            buy_record = origin_record
+            order_id = origin_record.record_id
 
         active_records = query_and_join_active(
             app, course_id, user_id, order_id, active_id
