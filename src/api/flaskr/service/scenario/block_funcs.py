@@ -368,25 +368,36 @@ def delete_block_list(app, user_id: str, outline_id: str, block_list: list[dict]
 
 def get_block_by_id(app, block_id: str):
     with app.app_context():
-        block = AILessonScript.query.filter(
-            AILessonScript.script_id == block_id,
-            AILessonScript.status == 1,
-        ).first()
+        block = (
+            AILessonScript.query.filter(
+                AILessonScript.script_id == block_id,
+            )
+            .order_by(AILessonScript.id.desc())
+            .first()
+        )
         return block
 
 
 def get_system_block_by_outline_id(app, outline_id: str):
     with app.app_context():
-        block = AILessonScript.query.filter(
-            AILessonScript.lesson_id == outline_id,
-            AILessonScript.status == 1,
-            AILessonScript.script_type == SCRIPT_TYPE_SYSTEM,
-        ).first()
+        block = (
+            AILessonScript.query.filter(
+                AILessonScript.lesson_id == outline_id,
+                AILessonScript.status.in_([STATUS_PUBLISH, STATUS_DRAFT]),
+                AILessonScript.script_type == SCRIPT_TYPE_SYSTEM,
+            )
+            .order_by(AILessonScript.id.desc())
+            .first()
+        )
         if not block:
-            outline = AILesson.query.filter(
-                AILesson.lesson_id == outline_id,
-                AILesson.status == 1,
-            ).first()
+            outline = (
+                AILesson.query.filter(
+                    AILesson.lesson_id == outline_id,
+                    AILesson.status.in_([STATUS_PUBLISH, STATUS_DRAFT]),
+                )
+                .order_by(AILesson.id.desc())
+                .first()
+            )
             if not outline:
                 raise_error("SCENARIO.OUTLINE_NOT_FOUND")
         return block
