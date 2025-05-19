@@ -6,6 +6,7 @@ import type { Profile } from '@/components/profiles/type'
 import { useShifu } from '@/store'
 
 type ProfileInjectProps = {
+  value?: string
   onSelect: (profile: Profile) => void
 }
 const ProfileInject: React.FC<ProfileInjectProps> = ({
