@@ -33,6 +33,10 @@ export const ChatInputText = ({ onClick, initialValue, onInputChange, type, disa
   const { t } = useTranslation();
   const [input, setInput] = useState(initialValue || '');
   const [messageApi, contextHolder] = message.useMessage();
+
+  useEffect(() => {
+    setInput(initialValue || '');
+  }, [initialValue]);
   const [isComposing, setIsComposing] = useState(false);
   const textareaRef = useRef<HTMLTextAreaElement>(null);
   const placeholder = props?.content?.content || t('chat.chatInputPlaceholder');
