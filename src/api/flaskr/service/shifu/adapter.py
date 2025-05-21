@@ -13,6 +13,7 @@ from flaskr.service.shifu.dtos import (
     OutlineEditDto,
     GotoDtoItem,
     GotoSettings,
+    EmptyDto,
 )
 from sqlalchemy import func
 
@@ -25,11 +26,11 @@ from flaskr.service.lesson.const import (
     UI_TYPE_LOGIN,
     UI_TYPE_PHONE,
     UI_TYPE_CHECKCODE,
-    UI_TYPE_CONTINUED,
     UI_TYPE_SELECTION,
     UI_TYPE_TO_PAY,
     UI_TYPE_BRANCH,
     UI_TYPE_INPUT,
+    UI_TYPE_EMPTY,
 )
 
 from flaskr.service.profile.dtos import (
@@ -86,6 +87,8 @@ def convert_dict_to_block_dto(block_dict: dict) -> BlockDto:
             block_info.block_ui = OptionDto(**ui.get("properties"))
         elif type == "textinput":
             block_info.block_ui = TextInputDto(**ui.get("properties"))
+        elif type == "empty":
+            block_info.block_ui = EmptyDto()
         else:
             raise_error("SHIFU.INVALID_BLOCK_UI_TYPE")
 
@@ -273,10 +276,12 @@ def update_block_model(
                 block_dto.block_ui.prompt,
                 block_dto.block_ui.input_placeholder,
             )
+        elif isinstance(block_dto.block_ui, EmptyDto):
+            block_model.script_ui_type = UI_TYPE_EMPTY
         else:
             raise_error("SHIFU.INVALID_BLOCK_UI_TYPE")
     else:
-        block_model.script_ui_type = UI_TYPE_CONTINUED
+        block_model.script_ui_type = UI_TYPE_EMPTY
     return None
 
 
@@ -401,8 +406,8 @@ def generate_block_dto(block: AILessonScript, profile_items: list[ProfileItem]):
             button_key=block.script_ui_content,
             goto_settings=GotoSettings(items=items, profile_key=profile_key),
         )
-    elif block.script_ui_type == UI_TYPE_CONTINUED:
-        ret.block_ui = None
+    elif block.script_ui_type == UI_TYPE_EMPTY:
+        ret.block_ui = EmptyDto()
     elif block.script_ui_type == UI_TYPE_TO_PAY:
         ret.block_ui = PaymentDto(block.script_ui_content, block.script_ui_content)
     elif block.script_ui_type == UI_TYPE_SELECTION:
@@ -419,4 +424,6 @@ def generate_block_dto(block: AILessonScript, profile_items: list[ProfileItem]):
         app.logger.info(f"items: {items}")
         app.logger.info(f"block.script_ui_content: {block.script_ui_content}")
         ret.block_ui = OptionDto(profile_key, profile_key, profile_key, items)
+    elif block.script_ui_type == UI_TYPE_EMPTY:
+        ret.block_ui = EmptyDto()
     return ret
