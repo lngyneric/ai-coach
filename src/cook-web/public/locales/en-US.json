@@ -275,7 +275,11 @@
     "preview": "Preview",
     "preview-settings": "Preview Settings",
     "start-preview": "Start Preview",
-    "variable-appear": "Variable Appear"
+    "variable-appear": "Variable Appear",
+    "title": "Preview",
+    "view": "View",
+    "close": "Close",
+    "link": "Preview Link"
   },
   "profiles": {
     "add": "Add",
