@@ -68,7 +68,8 @@ const ImageUploader: React.FC<ImageUploaderProps> = ({ value, onChange }) => {
         throw new Error(t('file-uploader.upload-failed'))
       }
 
-      setImageUrl(res.data)
+      const markDownContent = `![${file.name}](${res.data})`
+      setImageUrl(markDownContent)
       setFileName(file.name)
       const img = new Image()
       img.src = res.data
