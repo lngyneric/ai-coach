@@ -89,7 +89,7 @@ export const BlockUI = ({ id, type, properties, mode = 'edit' }) => {
     )
 }
 
-export const RenderBlockUI = ({ block, mode = 'edit' }) => {
+export const RenderBlockUI = ({ block, mode = 'edit', onExpandChange }: { block: any, mode?: string, onExpandChange?: (expanded: boolean) => void }) => {
     const {
         actions,
         blockUITypes,
@@ -100,6 +100,12 @@ export const RenderBlockUI = ({ block, mode = 'edit' }) => {
     const [pendingType, setPendingType] = useState('')
     const { t } = useTranslation();
     const UITypes = useUITypes()
+
+    const handleExpandChange = (newExpand: boolean) => {
+        setExpand(newExpand)
+        onExpandChange?.(newExpand)
+    }
+
     const onUITypeChange = (id: string, type: string) => {
         if (type === blockUITypes[block.properties.block_id]) {
             return;
@@ -109,7 +115,7 @@ export const RenderBlockUI = ({ block, mode = 'edit' }) => {
     }
 
     const handleConfirmChange = () => {
-        setExpand(true);
+        handleExpandChange(true);
         const opt = UITypes.find(p => p.type === pendingType);
         actions.setBlockUITypesById(block.properties.block_id, pendingType)
         actions.setBlockUIPropertiesById(block.properties.block_id, opt?.properties || {}, true)
@@ -119,7 +125,7 @@ export const RenderBlockUI = ({ block, mode = 'edit' }) => {
     return (
         <>
             <div className='bg-[#F8F8F8] rounded-md p-2 space-y-1'>
-                <div className='flex flex-row items-center justify-between py-1 cursor-pointer' onClick={() => setExpand(!expand)}>
+                <div className='flex flex-row items-center justify-between py-1 cursor-pointer' onClick={() => handleExpandChange(!expand)}>
                     <div className='flex flex-row items-center space-x-1'>
                         <span>
                             {t('render-ui.user-operation')}
@@ -142,7 +148,7 @@ export const RenderBlockUI = ({ block, mode = 'edit' }) => {
                         </Select>
                     </div>
 
-                    <div className='flex flex-row items-center space-x-1 cursor-pointer' onClick={() => setExpand(!expand)}>
+                    <div className='flex flex-row items-center space-x-1 cursor-pointer' onClick={() => handleExpandChange(!expand)}>
                         <ChevronDown className={cn(
                             "h-5 w-5 transition-transform duration-200 ease-in-out",
                             expand ? 'rotate-180' : ''
