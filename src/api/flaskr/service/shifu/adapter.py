@@ -195,7 +195,7 @@ def markdown_2_html(content):
 
 # update block model
 def update_block_model(
-    block_model: AILessonScript, block_dto: BlockDto
+    block_model: AILessonScript, block_dto: BlockDto, new_block: bool = False
 ) -> BlockUpdateResultDto:
     block_model.script_name = block_dto.block_name
     block_model.script_desc = block_dto.block_desc
@@ -242,7 +242,9 @@ def update_block_model(
                 block_model.script_temprature = block_dto.block_content.temprature
         else:
             return BlockUpdateResultDto(None, _("SHIFU.INVALID_BLOCK_CONTENT_TYPE"))
-        if not block_model.script_prompt or not block_model.script_prompt.strip():
+        if not new_block and (
+            not block_model.script_prompt or not block_model.script_prompt.strip()
+        ):
             return BlockUpdateResultDto(None, _("SHIFU.PROMPT_REQUIRED"))
 
     if block_dto.block_ui:
