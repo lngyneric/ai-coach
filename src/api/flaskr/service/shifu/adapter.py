@@ -355,8 +355,17 @@ def update_block_model(
                 block_model.script_ui_content = block_dto.block_ui.input_name
             if block_dto.block_ui.input_placeholder:
                 block_model.script_ui_content = block_dto.block_ui.input_placeholder
-            if block_dto.block_ui.prompt:
-                block_model.script_check_prompt = block_dto.block_ui.prompt.prompt
+            if (
+                not block_dto.block_ui.prompt
+                or not block_dto.block_ui.prompt.prompt
+                or not block_dto.block_ui.prompt.prompt.strip()
+            ):
+                return BlockUpdateResultDto(None, _("SHIFU.TEXT_INPUT_PROMPT_REQUIRED"))
+            if "json" not in block_dto.block_ui.prompt.prompt.strip().lower():
+                return BlockUpdateResultDto(
+                    None, _("SHIFU.TEXT_INPUT_PROMPT_JSON_REQUIRED")
+                )
+            block_model.script_check_prompt = block_dto.block_ui.prompt.prompt
             if block_dto.block_ui.prompt.model:
                 block_model.script_model = block_dto.block_ui.prompt.model
 
