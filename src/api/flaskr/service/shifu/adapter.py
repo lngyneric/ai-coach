@@ -242,6 +242,9 @@ def update_block_model(
                 block_model.script_temprature = block_dto.block_content.temprature
         else:
             return BlockUpdateResultDto(None, _("SHIFU.INVALID_BLOCK_CONTENT_TYPE"))
+        if not block_model.script_prompt or not block_model.script_prompt.strip():
+            return BlockUpdateResultDto(None, _("SHIFU.PROMPT_REQUIRED"))
+
     if block_dto.block_ui:
         if isinstance(block_dto.block_ui, LoginDto):
             error_message = check_button_dto(block_dto.block_ui)
