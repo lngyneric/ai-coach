@@ -95,7 +95,15 @@ def handle_input_text(
     db.session.add(log_script)
     span = trace.span(name="user_input", input=input)
     res = check_text_with_llm_response(
-        app, user_info.user_id, log_script, input, span, lesson, script_info, attend
+        app,
+        user_info.user_id,
+        log_script,
+        input,
+        span,
+        lesson,
+        script_info,
+        attend,
+        prompt,
     )
     try:
         first_value = next(res)
