@@ -211,6 +211,13 @@ export const ShifuProvider: React.FC<{ children: ReactNode }> = ({
     }
   }
 
+  const loadProfileItemDefinations = async (shifuId: string) => {
+    const list = await api.getProfileItemDefinitions({
+      parent_id: shifuId,
+      type: 'all'
+    })
+    setProfileItemDefinations(list)
+  }
   const loadChapters = async (shifuId: string) => {
     try {
       setIsLoading(true)
@@ -683,6 +690,7 @@ export const ShifuProvider: React.FC<{ children: ReactNode }> = ({
       setIsSaving(false)
       setIsLoading(false)
     }
+  }
 
   const createSiblingUnit = async (data: Outline) => {
     try {
@@ -715,24 +723,6 @@ export const ShifuProvider: React.FC<{ children: ReactNode }> = ({
       setIsLoading(false)
     }
   }
-    const updateChapterOrder = async (chapter_ids: string[]) => {
-        setIsSaving(true);
-        setError(null);
-        try {
-            await api.updateChapterOrder({
-                "move_to_parent_id": "",
-                "move_chapter_id": currentNode?.id,
-                "chapter_ids": chapter_ids,
-                "shifu_id": currentShifu?.shifu_id
-            });
-            setLastSaveTime(new Date());
-        } catch (error) {
-            console.error(error);
-            setError("Failed to update chapter order");
-        } finally {
-            setIsSaving(false);
-        }
-    }
 
   const updateOutlineStatus = (
     id: string,
@@ -788,13 +778,7 @@ export const ShifuProvider: React.FC<{ children: ReactNode }> = ({
     })
   }
 
-  const loadProfileItemDefinations = async (shifuId: string) => {
-    const list = await api.getProfileItemDefinitions({
-      parent_id: shifuId,
-      type: 'all'
-    })
-    setProfileItemDefinations(list)
-  }
+
   const setBlockContentPropertiesById = (
     id: string,
     properties: AIBlockProperties | SolidContentBlockProperties,
