@@ -86,8 +86,9 @@ const AIModelDialog = ({ blockId, open, onOpenChange }) => {
                 setUserPrompt(contentProp.content);
             } else if (block.properties.block_content.type == 'ai') {
                 const contentProp = blockContentProperties[blockId];
+                console.log(contentProp);
                 setUserPrompt(contentProp.prompt);
-                setProfiles(contentProp.profiles);
+                setProfiles(contentProp.variables || []);
                 setModels([{
                     model: contentProp.model,
                     temperature: contentProp.temperature

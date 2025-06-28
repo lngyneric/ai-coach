@@ -117,7 +117,7 @@ def check_button_dto(button_dto: ButtonDto):
     pass
 
 
-def html_2_markdown(content):
+def html_2_markdown(content, variables_in_prompt):
     def video_repl(match):
         url = match.group("url")
         title = match.group("title")
@@ -130,6 +130,8 @@ def html_2_markdown(content):
     def profile_repl(match):
         var = match.group("var")
         var = var.strip("{}")
+        if var not in variables_in_prompt:
+            variables_in_prompt.append(var)
         return f"{{{var}}}"
 
     def image_repl(match):
@@ -157,7 +159,7 @@ def html_2_markdown(content):
     return content
 
 
-def markdown_2_html(content):
+def markdown_2_html(content, variables_in_prompt):
     import re
 
     def iframe_repl(match):
@@ -167,6 +169,8 @@ def markdown_2_html(content):
 
     def profile_repl(match):
         var = match.group("var")
+        if var not in variables_in_prompt:
+            variables_in_prompt.append(var)
         return f'<span data-tag="profile">{{{var}}}</span>'
 
     def image_repl(match):
@@ -212,13 +216,19 @@ def update_block_model(
     block_model.script_prompt = ""
     block_model.script_profile = ""
     block_model.script_ui_content = ""
+    variables_in_prompt = []
     if block_dto.block_content:
         if isinstance(block_dto.block_content, AIDto):
             block_model.script_type = SCRIPT_TYPE_PROMPT
-            block_model.script_prompt = html_2_markdown(block_dto.block_content.prompt)
+
+            block_model.script_prompt = html_2_markdown(
+                block_dto.block_content.prompt, variables_in_prompt
+            )
             if block_dto.block_content.variables:
                 block_model.script_profile = (
-                    "[" + "][".join(block_dto.block_content.variables) + "]"
+                    "["
+                    + "][".join(block_dto.block_content.variables + variables_in_prompt)
+                    + "]"
                 )
             if block_dto.block_content.model and block_dto.block_content.model != "":
                 block_model.script_model = block_dto.block_content.model
@@ -229,19 +239,25 @@ def update_block_model(
                 block_model.script_temperature = block_dto.block_content.temperature
         elif isinstance(block_dto.block_content, SolidContentDto):
             block_model.script_type = SCRIPT_TYPE_FIX
-            block_model.script_prompt = html_2_markdown(block_dto.block_content.prompt)
+            block_model.script_prompt = html_2_markdown(
+                block_dto.block_content.prompt, variables_in_prompt
+            )
             if block_dto.block_content.variables:
                 block_model.script_profile = (
-                    "[" + "][".join(block_dto.block_content.variables) + "]"
+                    "["
+                    + "][".join(block_dto.block_content.variables + variables_in_prompt)
+                    + "]"
                 )
         elif isinstance(block_dto.block_content, SystemPromptDto):
             block_model.script_type = SCRIPT_TYPE_SYSTEM
             block_model.script_prompt = html_2_markdown(
-                block_dto.block_content.system_prompt
+                block_dto.block_content.system_prompt, variables_in_prompt
             )
             if block_dto.block_content.variables:
                 block_model.script_profile = (
-                    "[" + "][".join(block_dto.block_content.variables) + "]"
+                    "["
+                    + "][".join(block_dto.block_content.variables + variables_in_prompt)
+                    + "]"
                 )
             if block_dto.block_content.model and block_dto.block_content.model != "":
                 block_model.script_model = block_dto.block_content.model
@@ -420,16 +436,17 @@ def generate_block_dto(block: AILessonScript, profile_items: list[ProfileItem]):
         block_index=block.script_index,
     )
 
+    variables_in_prompt = []
     if block.script_type == SCRIPT_TYPE_FIX:
         ret.block_content = SolidContentDto(
-            prompt=markdown_2_html(block.script_prompt),
-            variables=get_profiles(block.script_profile),
+            prompt=markdown_2_html(block.script_prompt, variables_in_prompt),
+            variables=get_profiles(block.script_profile) + variables_in_prompt,
         )
         ret.block_type = "solid"
     elif block.script_type == SCRIPT_TYPE_PROMPT:
         ret.block_content = AIDto(
-            prompt=markdown_2_html(block.script_prompt),
-            variables=get_profiles(block.script_profile),
+            prompt=markdown_2_html(block.script_prompt, variables_in_prompt),
+            variables=get_profiles(block.script_profile) + variables_in_prompt,
             model=block.script_model,
             temperature=block.script_temperature,
             other_conf=block.script_other_conf,
@@ -437,8 +454,8 @@ def generate_block_dto(block: AILessonScript, profile_items: list[ProfileItem]):
         ret.block_type = "ai"
     elif block.script_type == SCRIPT_TYPE_SYSTEM:
         ret.block_content = SystemPromptDto(
-            prompt=markdown_2_html(block.script_prompt),
-            variables=get_profiles(block.script_profile),
+            prompt=markdown_2_html(block.script_prompt, variables_in_prompt),
+            variables=get_profiles(block.script_profile) + variables_in_prompt,
             model=block.script_model,
             temperature=block.script_temperature,
             other_conf=block.script_other_conf,
@@ -450,7 +467,7 @@ def generate_block_dto(block: AILessonScript, profile_items: list[ProfileItem]):
 
         prompt = AIDto(
             prompt=block.script_check_prompt,
-            variables=get_profiles(block.script_ui_profile),
+            variables=get_profiles(block.script_ui_profile) + variables_in_prompt,
             model=block.script_model,
             temperature=block.script_temperature,
             other_conf=block.script_other_conf,

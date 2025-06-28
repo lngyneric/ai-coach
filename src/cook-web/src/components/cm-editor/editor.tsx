@@ -26,7 +26,7 @@ type EditorProps = {
   content?: string
   isEdit?: boolean
   variables?: string[]
-  onChange?: (value: string, isEdit: boolean) => void
+  onChange?: (value: string, variables: string[], isEdit: boolean) => void
   onBlur?: () => void
 }
 
@@ -103,6 +103,8 @@ const Editor: React.FC<EditorProps> = ({
           changes: { from: selectContentInfo.from, insert: textToInsert }
         })
       } else {
+        const newVariableList = [...variableList, profile.profile_key]
+        setVariableList(Array.from(new Set(newVariableList)))
         insertText(textToInsert)
       }
       setDialogOpen(false)
@@ -234,7 +236,7 @@ const Editor: React.FC<EditorProps> = ({
               theme='light'
               minHeight='2rem'
               onChange={(value: string) => {
-                onChange?.(value, isEdit || false)
+                onChange?.(value, variableList, isEdit || false)
               }}
               onBlur={onBlur}
             />
