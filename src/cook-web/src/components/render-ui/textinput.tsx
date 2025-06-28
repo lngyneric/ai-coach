@@ -14,7 +14,7 @@ interface TextInputProps {
     prompt: {
       properties: {
         prompt: string
-        profiles: string[]
+        variables: string[]
         model: string
         temperature: string
         other_conf: string
@@ -96,7 +96,7 @@ function TextInput (props: TextInputProps) {
         ...tempProperties.prompt,
         properties: {
           ...tempProperties.prompt.properties,
-          profiles: value
+          variables: value
         }
       },
       profile_ids: value
@@ -148,7 +148,7 @@ function TextInput (props: TextInputProps) {
               content={tempProperties.prompt.properties.prompt}
               onChange={onValueChange}
               isEdit={true}
-              profiles={tempProperties.prompt.properties.profiles}
+              variables={tempProperties.prompt.properties.variables}
             />
           </div>
         </div>

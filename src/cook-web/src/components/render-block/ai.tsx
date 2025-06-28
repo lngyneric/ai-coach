@@ -5,7 +5,7 @@ import CMEditor from '@/components/cm-editor';
 
 interface AIBlockProps {
     prompt: string;
-    profiles: string[];
+    variables: string[];
     model: string;
     temperature: string;
     other_conf: string;
@@ -24,7 +24,7 @@ export default function AI(props: AIBlock) {
     return (
         <CMEditor
             content={props.properties.prompt}
-            profiles={props.properties.profiles}
+            variables={props.properties.variables}
             isEdit={props.isEdit}
             onBlur={props.onBlur}
             onChange={(value, isEdit) => {

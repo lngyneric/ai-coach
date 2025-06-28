@@ -231,7 +231,7 @@ const ProfileSelect: React.FC<ProfileSelectProps> = ({
         {t('profiles.add-new-variable')}
       </Button>
       <ProfileSave
-        parentId={currentShifu?.shifu_id}
+        parentId={currentShifu?.bid}
         open={saveOpen}
         onOpenChange={setSaveOpen}
         value={editingProfile}

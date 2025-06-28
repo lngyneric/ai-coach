@@ -87,7 +87,7 @@ export const BlockUI = memo(function BlockUI({ id, type, properties, onChanged }
         }
         actions.setBlockUIPropertiesById(id, properties);
         if (currentNode) {
-            actions.autoSaveBlocks(currentNode.id, blocks, blockContentTypes, blockContentProperties, blockUITypes, p, currentShifu?.shifu_id || '')
+            actions.autoSaveBlocks(currentNode.id, blocks, blockContentTypes, blockContentProperties, blockUITypes, p, currentShifu?.bid || '')
         }
     }
 
@@ -166,7 +166,7 @@ export const RenderBlockUI = memo(function RenderBlockUI({ block, onExpandChange
                 blockContentProperties,
                 newUITypes,
                 newUIProps,
-                currentShifu?.shifu_id || ''
+                currentShifu?.bid || ''
             )
         }
     }
