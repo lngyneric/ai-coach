@@ -342,7 +342,7 @@ export const useUITypes = () => {
             "prompt": {
                 "properties": {
                     "prompt": "",
-                    "profiles": [
+                    "variables": [
                     ],
                     "model": "",
                     "temperature": "0.40",
@@ -352,7 +352,8 @@ export const useUITypes = () => {
             },
             "input_name": "",
             "input_key": "",
-            "input_placeholder": ""
+            "input_placeholder": "",
+            "profile_ids": []
         },
         validate: (properties): string => {
             if (!properties.input_placeholder) {
