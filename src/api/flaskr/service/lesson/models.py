@@ -371,13 +371,15 @@ class AILessonScript(db.Model):
         Integer, nullable=False, default=5, comment="Ask count limit"
     )
     ask_model = Column(
-        String(255), nullable=False, default=ASK_MODE_DEFAULT, comment="Ask count model"
+        String(255), nullable=False, default="", comment="Ask count model"
     )
     ask_prompt = Column(Text, nullable=False, default="", comment="Ask count history")
     ask_with_history = Column(
         Integer, nullable=False, default=3, comment="Ask with history Count"
     )
-    ask_mode = Column(Integer, nullable=False, default=0, comment="Ask mode")
+    ask_mode = Column(
+        Integer, nullable=False, default=ASK_MODE_DEFAULT, comment="Ask mode"
+    )
     script_ui_profile_id = Column(
         String(36),
         nullable=False,
