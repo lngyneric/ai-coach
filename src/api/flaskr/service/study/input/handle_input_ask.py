@@ -15,6 +15,8 @@ from flaskr.service.study.utils import (
     make_script_dto,
     get_fmt_prompt,
 )
+from flaskr.service.profile.funcs import get_user_profiles
+from flaskr.service.llm.funcs import format_script_prompt
 from flaskr.dao import db
 from flaskr.service.study.input_funcs import (
     BreakException,
@@ -69,7 +71,14 @@ def handle_input_ask(
     system_prompt = get_lesson_system(
         app, script_info.lesson_id
     )  # Get shifu system prompt
-    system_message = system_prompt if system_prompt else ""
+
+    # Obtain user configuration information to replace system variables
+    user_profiles = get_user_profiles(app, user_info.user_id, attend.course_id)
+
+    # Format the system prompt and replace the variables within it
+    system_message = (
+        format_script_prompt(system_prompt, user_profiles) if system_prompt else ""
+    )
 
     # Format shifu Q&A prompt, insert system prompt
     system_message = lesson.ask_prompt.format(shifu_system_message=system_message)
@@ -130,7 +139,6 @@ def handle_input_ask(
             "content": input,
         }
     )
-
     app.logger.info(f"messages: {messages}")
 
     # Get model for follow-up Q&A

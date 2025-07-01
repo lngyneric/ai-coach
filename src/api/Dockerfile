@@ -42,6 +42,7 @@ COPY --from=base /usr/local/bin/gunicorn /usr/local/bin/gunicorn
 COPY app.py app.py
 COPY flaskr flaskr
 COPY migrations migrations
+COPY prompts prompts
 # declare service running on port 5800
 EXPOSE 5800
 # start flask service
