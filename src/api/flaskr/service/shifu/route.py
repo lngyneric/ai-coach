@@ -30,7 +30,7 @@ from .block_funcs import (
 from flaskr.route.common import make_common_response
 from flaskr.framework.plugin.inject import inject
 from flaskr.service.common.models import raise_param_error, raise_error
-from ..lesson.models import LESSON_TYPE_TRIAL
+from .const import UNIT_TYPE_TRIAL
 from functools import wraps
 from enum import Enum
 
@@ -545,7 +545,7 @@ def register_shifu_routes(app: Flask, path_prefix="/api/shifu"):
         parent_bid = request.get_json().get("parent_bid")
         name = request.get_json().get("name")
         description = request.get_json().get("description", "")
-        type = request.get_json().get("type", LESSON_TYPE_TRIAL)
+        outline_type = request.get_json().get("type", UNIT_TYPE_TRIAL)
         index = request.get_json().get("index", None)
         system_prompt = request.get_json().get("system_prompt", None)
         is_hidden = request.get_json().get("is_hidden", False)
@@ -558,7 +558,7 @@ def register_shifu_routes(app: Flask, path_prefix="/api/shifu"):
                 name,
                 description,
                 index,
-                type,
+                outline_type,
                 system_prompt,
                 is_hidden,
             )
@@ -622,7 +622,7 @@ def register_shifu_routes(app: Flask, path_prefix="/api/shifu"):
         index = request.get_json().get("index")
         system_prompt = request.get_json().get("system_prompt", None)
         is_hidden = request.get_json().get("is_hidden", False)
-        type = request.get_json().get("type", LESSON_TYPE_TRIAL)
+        unit_type = request.get_json().get("type", UNIT_TYPE_TRIAL)
         return make_common_response(
             modify_unit(
                 app,
@@ -633,7 +633,7 @@ def register_shifu_routes(app: Flask, path_prefix="/api/shifu"):
                 index,
                 system_prompt,
                 is_hidden,
-                type,
+                unit_type,
             )
         )
 
