@@ -271,8 +271,8 @@ def get_fmt_prompt(
     profiles = get_user_profiles(app, user_id, course_id)
     propmpt_keys = list(profiles.keys())
     if input:
-        profiles["input"] = input
-        propmpt_keys.append("input")
+        profiles["sys_user_input"] = input
+        propmpt_keys.append("sys_user_input")
     app.logger.info(propmpt_keys)
     app.logger.info(profiles)
     prompt_template_lc = PromptTemplate.from_template(profile_tmplate)

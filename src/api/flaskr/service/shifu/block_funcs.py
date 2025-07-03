@@ -211,6 +211,11 @@ def save_block_list_internal(
                     )
                     app.logger.info(f"new block : {block_model.script_id}")
                     _fetch_profile_info_for_block_dto(app, block_dto)
+                    if (
+                        block_dto.profile_info is not None
+                        and block_dto.profile_info.parent_id == ""
+                    ):
+                        db.session.expunge(block_dto.profile_info)
                     update_block_result = update_block_model(block_model, block_dto)
                     profile = None
                     if update_block_result.error_message:
@@ -276,6 +281,11 @@ def save_block_list_internal(
                     new_block = block_model.clone()
                     old_check_str = block_model.get_str_to_check()
                     _fetch_profile_info_for_block_dto(app, block_dto)
+                    if (
+                        block_dto.profile_info is not None
+                        and block_dto.profile_info.parent_id == ""
+                    ):
+                        db.session.expunge(block_dto.profile_info)
                     update_block_result = update_block_model(new_block, block_dto)
                     profile = None
                     if update_block_result.error_message:
@@ -352,6 +362,7 @@ def save_block_list_internal(
             if block.script_id not in save_block_ids:
                 app.logger.info("delete block : {}".format(block.script_id))
                 mark_block_to_delete(block, user_id, time)
+
         db.session.commit()
         return SaveBlockListResultDto(
             [
