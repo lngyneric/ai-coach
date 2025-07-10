@@ -37,6 +37,7 @@ from ...service.order.consts import BUY_STATUS_SUCCESS
 from flaskr.service.user.models import User
 from flaskr.framework import extensible
 from ...service.lesson.const import STATUS_PUBLISH, STATUS_DRAFT
+from flaskr.i18n import get_current_language
 
 
 def get_current_lesson(
@@ -897,3 +898,25 @@ def check_script_is_last_script(
         ):
             return True
     return False
+
+
+def get_script_ui_label(app, text):
+    if isinstance(text, dict):
+        label = text.get(get_current_language(), "")
+        if label and label != "":
+            return label
+        for k, v in text.items():
+            if v and v != "":
+                return v
+    if text.startswith("{"):
+        try:
+            json_obj = json.loads(text)
+            label = json_obj.get(get_current_language(), "")
+            if label and label != "":
+                return label
+            for k, v in json_obj.items():
+                if v and v != "":
+                    return v
+        except Exception:
+            return text
+    return text

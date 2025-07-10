@@ -10,6 +10,7 @@ import Goto from './goto'
 // import GotoView from './view/goto'
 import TextInput from './textinput'
 // import TextInputView from './view/textinput'
+import {RenderBlockContent} from '../render-block/index'
 import { useShifu } from '@/store';
 import { Select, SelectContent, SelectGroup, SelectItem, SelectTrigger, SelectValue } from '../ui/select'
 import { ChevronDown } from 'lucide-react'
@@ -20,93 +21,94 @@ import { useTranslation } from 'react-i18next';
 import { memo } from 'react'
 import Empty from './empty'
 import _ from 'lodash'
+import { BlockDTO, UIBlockDTO } from '@/types/shifu';
+import i18n from '@/i18n';
 const componentMap = {
+    content: RenderBlockContent,
+    input: TextInput,
     button: Button,
-    option: Option,
+    options: Option,
     goto: Goto,
     phone: SingleInput,
     code: SingleInput,
+    option: Option,
     textinput: TextInput,
     login: (props) => <Button {...props} mode="login" />,
     payment: (props) => <Button {...props} mode="payment" />,
     empty: Empty,
 }
 
-// const ViewBlockMap = {
-//     button: ButtonView,
-//     option: OptionView,
-//     goto: GotoView,
-//     phone: InputView,
-//     code: InputView,
-//     textinput: TextInputView,
-// }
-
-const BlockUIPropsEqual = (prevProps: any, nextProps: any) => {
-    if (! _.isEqual(prevProps.id, nextProps.id) || prevProps.type !== nextProps.type) {
+const BlockUIPropsEqual = (prevProps: UIBlockDTO, nextProps: UIBlockDTO) => {
+    if (!_.isEqual(prevProps.id, nextProps.id) || prevProps.data.type !== nextProps.data.type) {
         return false
     }
-    const prevKeys = Object.keys(prevProps.properties || {})
-    const nextKeys = Object.keys(nextProps.properties || {})
-    if (prevKeys.length !== nextKeys.length) {
+    if (!_.isEqual(prevProps.data.properties, nextProps.data.properties)) {
         return false
     }
-    if (!_.isEqual(prevProps.properties, nextProps.properties)) {
+    if (!_.isEqual(prevProps.data.variable_bids, nextProps.data.variable_bids)) {
+        return false
+    }
+    if (!_.isEqual(prevProps.data.resource_bids, nextProps.data.resource_bids)) {
         return false
     }
     return true
 }
-export const BlockUI = memo(function BlockUI({ id, type, properties, onChanged }: {
-    id: any,
-    type: any,
-    properties: any,
-    mode?: string,
-    onChanged?: (changed: boolean) => void
-}){
-    const { actions, currentNode, blocks, blockContentTypes, blockUITypes, blockUIProperties, blockContentProperties, currentShifu } = useShifu();
+export const BlockUI = memo(function BlockUI(p: UIBlockDTO) {
+    const { id, data, onChanged } = p
+    const { actions, currentNode, blocks, blockTypes, blockProperties, currentShifu } = useShifu();
     const [error, setError] = useState('');
     const UITypes = useUITypes()
-
     const handleChanged = (changed: boolean) => {
         onChanged?.(changed);
     }
 
     const onPropertiesChange = async (properties) => {
         const p = {
-            ...blockUIProperties,
+            ...blockProperties,
             [id]: {
-                ...blockUIProperties[id],
+                ...blockProperties[id],
                 ...properties
             }
         }
-        const ut = UITypes.find(p => p.type === type)
+        const ut = UITypes.find(p => p.type === data.type)
         setError('');
         const err = ut?.validate?.(properties)
         if (err) {
             setError(err);
             return;
         }
-        actions.setBlockUIPropertiesById(id, properties);
+        await actions.updateBlockProperties(id, properties);
+
+        const newBlocks = blocks.map(b => b.bid === id ? { ...b, properties: properties } : b)
+        const newBlockTypes = {
+            ...blockTypes,
+            [id]: data.type
+        }
         if (currentNode) {
-            actions.autoSaveBlocks(currentNode.id, blocks, blockContentTypes, blockContentProperties, blockUITypes, p, currentShifu?.bid || '')
+            actions.autoSaveBlocks(currentNode.bid, newBlocks, newBlockTypes, p, currentShifu?.bid || '')
         }
     }
 
     useEffect(() => {
         setError('');
-    }, [type]);
+    }, [data.type]);
 
-    const Ele = componentMap[type]
+    const Ele = componentMap[data.type]
     if (!Ele) {
         return null
     }
-
     return (
         <>
             <Ele
-                id={id}
-                properties={properties}
-                onChange={onPropertiesChange}
-                onChanged={handleChanged}
+                {...{
+                    id: id,
+                    data: data,
+                    onPropertiesChange: onPropertiesChange,
+                    onChanged: handleChanged,
+                    onEditChange: () => { },
+                    isEdit: false,
+                    isChanged: false
+                }}
             />
             {
                 error && (
@@ -117,64 +119,62 @@ export const BlockUI = memo(function BlockUI({ id, type, properties, onChanged }
     )
 }, BlockUIPropsEqual)
 
-export const RenderBlockUI = memo(function RenderBlockUI({ block, onExpandChange }: { block: any, mode?: string, onExpandChange?: (expanded: boolean) => void }) {
+export const RenderBlockUI = memo(function RenderBlockUI({ block, onExpandChange,expanded }: { block: BlockDTO, onExpandChange?: (expanded: boolean) => void,expanded?: boolean }) {
     const {
         actions,
-        blockUITypes,
-        blockUIProperties,
         currentNode,
+        blockProperties,
+        blockTypes,
         blocks,
-        blockContentTypes,
-        blockContentProperties,
         currentShifu,
     } = useShifu();
-    const [expand, setExpand] = useState(false)
+
+    if (expanded === undefined) {
+        expanded = block.type === 'content' ? true : false
+    }
+    const [expand, setExpand] = useState(expanded)
     const [showConfirmDialog, setShowConfirmDialog] = useState(false)
     const [pendingType, setPendingType] = useState('')
     const [isChanged, setIsChanged] = useState(false)
     const { t } = useTranslation();
     const UITypes = useUITypes()
-
     const handleExpandChange = (newExpand: boolean) => {
         setExpand(newExpand)
         onExpandChange?.(newExpand)
     }
 
-    const handleTypeChange = (type: string) => {
+    const handleTypeChange = async (type: string) => {
         handleExpandChange(true);
         const opt = UITypes.find(p => p.type === type);
-
-        actions.setBlockUITypesById(block.properties.block_id, type)
-        actions.setBlockUIPropertiesById(block.properties.block_id, opt?.properties || {}, true)
-
-        const newUITypes = {
-            ...blockUITypes,
-            [block.properties.block_id]: type,
+        const p = {
+            ...blockProperties,
+            [block.bid]: {
+                ...blockProperties[block.bid],
+                type: type,
+                properties: opt?.properties || {}
+            }
         }
-        const newUIProps = {
-            ...blockUIProperties,
-            [block.properties.block_id]: opt?.properties || {},
-        }
-
+        await actions.updateBlockProperties(block.bid,{
+            bid: block.bid,
+            type: type,
+            variable_bids: [],
+            result_variable_bid: "",
+            properties: opt?.properties || {}
+        })
         setIsChanged(false);
 
-        if (['login', 'payment', 'empty'].includes(type) && currentNode) {
-            actions.autoSaveBlocks(
-                currentNode.id,
-                blocks,
-                blockContentTypes,
-                blockContentProperties,
-                newUITypes,
-                newUIProps,
-                currentShifu?.bid || ''
-            )
+        const newBlocks = blocks.map(b => b.bid === block.bid ? { ...b, type: type, properties: opt?.properties || {} } : b)
+        const newBlockTypes = {
+            ...blockTypes,
+            [block.bid]: type
+        }
+        if (currentNode) {
+            await actions.autoSaveBlocks(currentNode.bid, newBlocks, newBlockTypes, p, currentShifu?.bid || '')
         }
     }
 
     const onUITypeChange = (id: string, type: string) => {
-        if (type === blockUITypes[block.properties.block_id]) {
-            return;
-        }
+        const isChanged = type !== blockTypes[block.bid]
         if (isChanged) {
             setPendingType(type);
             setShowConfirmDialog(true);
@@ -194,6 +194,14 @@ export const RenderBlockUI = memo(function RenderBlockUI({ block, onExpandChange
         }
     }
 
+    const onPropertiesChange = (properties) => {
+        console.log('onPropertiesChange', properties)
+    }
+
+    const handleBlockEditChange = (isEdit: boolean) => {
+        setExpand(isEdit);
+    }
+
     return (
         <>
             <div className='bg-[#F8F8F8] rounded-md p-2 space-y-1'>
@@ -202,7 +210,7 @@ export const RenderBlockUI = memo(function RenderBlockUI({ block, onExpandChange
                         <span className='w-[70px]'>
                             {t('render-ui.user-operation')}
                         </span>
-                        <Select value={blockUITypes[block.properties.block_id]} onValueChange={onUITypeChange.bind(null, block.properties.block_id)}>
+                        <Select value={blockProperties[block.bid].type} onValueChange={onUITypeChange.bind(null, block.bid)}>
                             <SelectTrigger className="h-8 w-[120px]">
                                 <SelectValue placeholder={t('render-ui.select-placeholder')} />
                             </SelectTrigger>
@@ -235,12 +243,16 @@ export const RenderBlockUI = memo(function RenderBlockUI({ block, onExpandChange
                     expand ? 'block' : 'hidden'
                 )}>
                     {
-                        blockUIProperties[block.properties.block_id] && (
+                        blockProperties[block.bid] && (
                             <BlockUI
-                                id={block.properties.block_id}
-                                type={blockUITypes[block.properties.block_id]}
-                                properties={blockUIProperties[block.properties.block_id]}
+                                id={block.bid}
+                                data={block}
                                 onChanged={handleBlockChanged}
+                                onPropertiesChange={onPropertiesChange}
+                                isEdit={expand}
+                                isChanged={isChanged}
+                                onEditChange={handleBlockEditChange}
+
                             />
                         )
                     }
@@ -264,7 +276,7 @@ export const RenderBlockUI = memo(function RenderBlockUI({ block, onExpandChange
         </>
     )
 }, (prevProps, nextProps) => {
-    return prevProps.block.properties.block_id === nextProps.block.properties.block_id && prevProps.onExpandChange === nextProps.onExpandChange
+    return prevProps.block.bid === nextProps.block.bid && prevProps.onExpandChange === nextProps.onExpandChange
 })
 RenderBlockUI.displayName = 'RenderBlockUI'
 
@@ -273,159 +285,127 @@ export default RenderBlockUI
 export const useUITypes = () => {
     const { t } = useTranslation();
     return [
-    {
-        type: 'button',
-        name: t('render-ui.button'),
-        properties: {
-            "button_name": "",
-            "button_key": t('render-ui.button-button-key')
-        }
-    },
-    {
-        type: 'option',
-        name: t('render-ui.option'),
-        properties: {
-            "profile_id": "",
-            "buttons": [
-                {
-                    "properties": {
-                        "button_name": t('render-ui.button-name'),
-                        "button_key": t('render-ui.button-key')
-                    },
-                    "type": "button"
-                }
-            ]
-        },
-        validate: (properties): string => {
-            // if (!properties.option_name) {
-            //     return t('render-ui.option-name-empty')
-            // }
-            if (properties.buttons.length === 0) {
-                return t('render-ui.option-buttons-empty')
-            }
-            for (let i = 0; i < properties.buttons.length; i++) {
-                const item = properties.buttons[i];
-                if (!item.properties.button_key || item.properties.button_name == "") {
-                    return t('render-ui.option-button-empty')
-                }
-            }
-            return ""
-        }
-    },
-    {
-        type: 'goto',
-        name: t('render-ui.goto'),
-        properties: {
-            "goto_settings": {
-                "items": [
-                    {
-                        "value": t('render-ui.goto-value'),
-                        "type": "outline",
-                        "goto_id": "tblDUfFbHGnM4LQl"
-                    },
-                    {
-                        "value": t('render-ui.goto-value'),
-                        "type": "outline",
-                        "goto_id": "tbl9gl38im3rd1HB"
+        {
+            type: 'button',
+            name: t('render-ui.button'),
+            properties: {
+                "label": {
+                    "lang": {
+                        "zh-CN": t('render-ui.button-name'),
+                        "en-US": t('render-ui.button-name')
                     }
-                ],
-                "profile_key": "ai_tools"
-            },
-            "button_name": t('render-ui.goto-button-name'),
-            "button_key": t('render-ui.goto-button-key')
-        }
-    },
-    {
-        type: 'textinput',
-        name: t('render-ui.textinput'),
-        properties: {
-            "prompt": {
-                "properties": {
-                    "prompt": "",
-                    "variables": [
-                    ],
-                    "model": "",
-                    "temperature": "0.40",
-                    "other_conf": ""
                 },
-                "type": "ai"
+            }
+        },
+        {
+            type: 'options',
+            name: t('render-ui.option'),
+            properties: {
+                "options": [
+                    {
+                        "label": {
+                            "lang": {
+                                "zh-CN": t('render-ui.button-name'),
+                                "en-US": t('render-ui.button-name')
+                            }
+                        },
+                        "value": t('render-ui.button-key')
+                    }
+                ]
             },
-            "input_name": "",
-            "input_key": "",
-            "input_placeholder": "",
-            "profile_ids": []
+            validate: (data): string => {
+                if (data.properties.options.length === 0) {
+                    return t('render-ui.option-buttons-empty')
+                }
+                for (let i = 0; i < data.properties.options.length; i++) {
+                    const item = data.properties.options[i];
+                    if (!item.value || item.label.lang[i18n.language] == "") {
+                        return t('render-ui.option-button-empty')
+                    }
+                }
+                return ""
+            }
         },
-        validate: (properties): string => {
-            if (!properties.input_placeholder) {
-                return t('render-ui.textinput-placeholder-empty')
+        {
+            type: 'goto',
+            name: t('render-ui.goto'),
+            properties: {
+                conditions: [
+                    {
+                      "value": "",
+                      "destination_type": "",
+                      "destination_bid": ""
+                    }
+                  ]
             }
-            if (!properties?.prompt?.properties?.prompt) {
-                return t('render-ui.textinput-prompt-empty')
-            }
-            if (typeof properties?.prompt?.properties?.temperature == 'undefined') {
-                return t('render-ui.textinput-temperature-empty')
-            }
-            return ""
-        }
+        },
+        {
+            type: 'input',
+            name: t('render-ui.textinput'),
 
-    },
-    {
-        type: 'empty',
-        name: t('render-ui.none'),
-        properties: {},
-    },
-    /**commit temp  for current version
-    {
-        type: 'phone',
-        name: '手机号',
-        properties: {
-            "input_name": "",
-            "input_key": "",
-            "input_placeholder": ""
+            properties: {
+                placeholder: {
+                    lang: {
+                      'zh-CN': '',
+                      'en-US': ''
+                    }
+                },
+                prompt: '',
+                result_variable_bids: [],
+                llm: '',
+                llm_temperature: '0.40'
+            },
+            validate: (data): string => {
+                const p = data.properties
+
+                if (!p.placeholder.lang[i18n.language]) {
+                    return t('render-ui.textinput-placeholder-empty')
+                }
+                if (!p?.prompt) {
+                    return t('render-ui.textinput-prompt-empty')
+                }
+                if (typeof p?.llm_temperature == 'undefined') {
+                    return t('render-ui.textinput-temperature-empty')
+                }
+                return ""
+            }
+
         },
-        validate: (properties): string => {
-            if (!properties.input_placeholder) {
-                return "提示不能为空"
+        {
+            type: 'login',
+            name: t('render-ui.login'),
+            properties: {
+                lang: {
+                    "zh-CN": "",
+                    "en-US": ""
+                }
             }
-            if (!properties.input_key) {
-                return "名称不能为空"
-            }
-            return "";
-        }
-    },
-    {
-        type: 'code',
-        name: '手机验证码',
-        properties: {
-            "input_name": "",
-            "input_key": "",
-            "input_placeholder": ""
         },
-        validate: (properties): string => {
-            if (!properties.input_placeholder) {
-                return "提示不能为空"
+        {
+            type: 'payment',
+            name: t('render-ui.payment'),
+            properties: {
+               lang: {
+                "zh-CN": "",
+                "en-US": ""
+               }
             }
-            if (!properties.input_key) {
-                return "名称不能为空"
+        },
+        {
+            type: 'content',
+            name: t('render-ui.content'),
+            properties: {
+                "content": "",
+                "llm": "",
+                "llm_temperature": 0.40,
+                "llm_enabled": true
+            },
+            validate: (data): string => {
+                if (!data.properties.content) {
+                    return t('render-ui.content-empty')
+                }
+                return ""
             }
-            return "";
         }
-    }, **/
-    {
-        type: 'login',
-        name: t('render-ui.login'),
-        properties: {
-            "button_name": "",
-            "button_key": ""
-        }
-    },
-    {
-        type: 'payment',
-        name: t('render-ui.payment'),
-        properties: {
-            "button_name": "",
-            "button_key": ""
-        }
-    },
     ]
 }

@@ -347,11 +347,15 @@
     "button-button-key": "Button Key",
     "button-key": "Button Key",
     "button-name": "Button Name",
+
+    "break": "Break",
     "cancel": "Cancel",
     "collapse": "Collapse",
     "confirm": "Confirm",
     "confirm-change": "Confirm Change",
     "confirm-change-description": "Your operation will cause the current content to be lost, whether to confirm?",
+    "content": "Content",
+    "content-empty": "Content Empty",
     "expand": "Expand",
     "goto": "Goto",
     "goto-button-key": "Goto Key",
@@ -370,7 +374,7 @@
     "textinput-placeholder-empty": "Text Input Placeholder Empty",
     "textinput-prompt-empty": "Text Input Prompt Empty",
     "textinput-temperature-empty": "Text Input Temperature Empty",
-    "user-operation": "User Operation"
+    "user-operation": "Type"
   },
   "shifu": {
     "debug": "Debug",
