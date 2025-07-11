@@ -27,6 +27,8 @@ class UserInfo:
     language: str
     user_avatar: str
     has_password: bool
+    is_admin: bool
+    is_creator: bool
 
     def __init__(
         self,
@@ -40,6 +42,8 @@ class UserInfo:
         language,
         has_password,
         user_avatar=None,
+        is_admin=False,
+        is_creator=False,
     ):
         self.user_id = user_id
         self.username = username
@@ -51,6 +55,8 @@ class UserInfo:
         self.language = language
         self.user_avatar = user_avatar
         self.has_password = has_password
+        self.is_admin = is_admin
+        self.is_creator = is_creator
 
     def __json__(self):
         return {
@@ -64,6 +70,8 @@ class UserInfo:
             "language": self.language,
             "avatar": self.user_avatar,
             "has_password": self.has_password,
+            "is_admin": self.is_admin,
+            "is_creator": self.is_creator,
         }
 
     def __html__(self):
