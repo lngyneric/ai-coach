@@ -543,10 +543,31 @@ def get_study_record(
             ret.ui = []
             return ret
 
+        app.logger.info("last_script.script_type:{}".format(last_script.script_type))
+        app.logger.info(
+            "last_script.script_ui_type:{}".format(last_script.script_ui_type)
+        )
+        app.logger.info(
+            "last_script.script_type != SCRIPT_TYPE_ACTION:{}".format(
+                last_script.script_type != SCRIPT_TYPE_ACTION
+            )
+        )
+        app.logger.info(
+            "last_script.script_ui_type == UI_TYPE_CONTENT:{}".format(
+                last_script.script_ui_type == UI_TYPE_CONTENT
+            )
+        )
         if (
             last_script.script_type != SCRIPT_TYPE_ACTION
             or last_script.script_ui_type == UI_TYPE_CONTENT
         ):
+            app.logger.info("get next script")
+            app.logger.info(
+                "last_script.script_ui_type:{}".format(last_script.script_ui_type)
+            )
+            app.logger.info(
+                "last_script.script_index:{}".format(last_script.script_index)
+            )
             last_script = (
                 AILessonScript.query.filter(
                     AILessonScript.lesson_id == last_script.lesson_id,
@@ -586,7 +607,10 @@ def get_study_record(
         app.logger.info(
             "attend_scripts[-1].script_id:{}".format(attend_scripts[-1].script_id)
         )
-        if attend_scripts[-1].script_id == last_script.script_id:
+        if (
+            attend_scripts[-1].script_id == last_script.script_id
+            and last_script.script_ui_type == UI_TYPE_CONTENT
+        ):
             app.logger.info("handle_input_continue")
             ret.ui = handle_input_continue(
                 app, user_info, last_attend, None, "", MockClient(), {}
