@@ -24,9 +24,9 @@ def handle_require_login(
     trace_args,
 ) -> ScriptDTO:
     title = script_info.script_ui_content
+    title = get_script_ui_label(app, title)
     if not title:
         title = _("COMMON.LOGIN")
-    title = get_script_ui_label(app, title)
     btn = [
         {
             "label": title,
