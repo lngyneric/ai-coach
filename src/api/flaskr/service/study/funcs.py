@@ -39,6 +39,8 @@ from .plugin import handle_ui
 from flaskr.api.langfuse import MockClient
 from flaskr.util.uuid import generate_id
 from flaskr.service.user.models import User
+from flaskr.service.lesson.const import UI_TYPE_CONTENT, SCRIPT_TYPE_ACTION
+from flaskr.service.study.ui.input_continue import handle_input_continue
 
 
 def _get_lesson_tree_to_study_common(
@@ -457,7 +459,6 @@ def get_study_record(
         ai_course_status = [STATUS_PUBLISH]
         if preview_mode:
             ai_course_status.append(STATUS_DRAFT)
-
         lesson_info = (
             AILesson.query.filter(
                 AILesson.lesson_id == lesson_id,
@@ -530,7 +531,7 @@ def get_study_record(
         user_info = User.query.filter_by(user_id=user_id).first()
         ret = StudyRecordDTO(items, teacher_avatar=teacher_avatar)
         last_script_id = attend_scripts[-1].script_id
-        last_script = (
+        last_script: AILessonScript = (
             AILessonScript.query.filter(
                 AILessonScript.script_id == last_script_id,
                 AILessonScript.status.in_(ai_course_status),
@@ -538,6 +539,23 @@ def get_study_record(
             .order_by(AILessonScript.id.desc())
             .first()
         )
+        if last_script is None:
+            ret.ui = []
+            return ret
+
+        if (
+            last_script.script_type != SCRIPT_TYPE_ACTION
+            or last_script.script_ui_type != UI_TYPE_CONTENT
+        ):
+            last_script = (
+                AILessonScript.query.filter(
+                    AILessonScript.lesson_id == last_script.lesson_id,
+                    AILessonScript.script_index == last_script.script_index + 1,
+                    AILessonScript.status.in_(ai_course_status),
+                )
+                .order_by(AILessonScript.id.desc())
+                .first()
+            )
         if last_script is None:
             ret.ui = []
             return ret
@@ -559,10 +577,20 @@ def get_study_record(
         else:
             last_attend = last_attends[-1]
         uis = handle_ui(app, user_info, last_attend, last_script, "", MockClient(), {})
-        app.logger.info("uis:{}".format(uis))
+        app.logger.info(
+            "uis:{}".format(json.dumps([i.__json__() for i in uis], ensure_ascii=False))
+        )
         if len(uis) > 0:
             ret.ui = uis[0]
-
+        app.logger.info("last_script.script_id:{}".format(last_script.script_id))
+        app.logger.info(
+            "attend_scripts[-1].script_id:{}".format(attend_scripts[-1].script_id)
+        )
+        if attend_scripts[-1].script_id == last_script.script_id:
+            app.logger.info("handle_input_continue")
+            ret.ui = handle_input_continue(
+                app, user_info, last_attend, None, "", MockClient(), {}
+            )
         if len(uis) > 1:
             ret.ask_mode = uis[1].script_content.get("ask_mode", False)
             ret.ask_ui = uis[1]
