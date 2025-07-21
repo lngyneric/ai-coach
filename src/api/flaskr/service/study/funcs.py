@@ -39,7 +39,7 @@ from .plugin import handle_ui
 from flaskr.api.langfuse import MockClient
 from flaskr.util.uuid import generate_id
 from flaskr.service.user.models import User
-from flaskr.service.lesson.const import UI_TYPE_CONTENT, SCRIPT_TYPE_ACTION
+from flaskr.service.lesson.const import UI_TYPE_CONTENT
 from flaskr.service.study.ui.input_continue import handle_input_continue
 
 
@@ -543,31 +543,7 @@ def get_study_record(
             ret.ui = []
             return ret
 
-        app.logger.info("last_script.script_type:{}".format(last_script.script_type))
-        app.logger.info(
-            "last_script.script_ui_type:{}".format(last_script.script_ui_type)
-        )
-        app.logger.info(
-            "last_script.script_type != SCRIPT_TYPE_ACTION:{}".format(
-                last_script.script_type != SCRIPT_TYPE_ACTION
-            )
-        )
-        app.logger.info(
-            "last_script.script_ui_type == UI_TYPE_CONTENT:{}".format(
-                last_script.script_ui_type == UI_TYPE_CONTENT
-            )
-        )
-        if (
-            last_script.script_type != SCRIPT_TYPE_ACTION
-            or last_script.script_ui_type == UI_TYPE_CONTENT
-        ):
-            app.logger.info("get next script")
-            app.logger.info(
-                "last_script.script_ui_type:{}".format(last_script.script_ui_type)
-            )
-            app.logger.info(
-                "last_script.script_index:{}".format(last_script.script_index)
-            )
+        if last_script.script_ui_type == UI_TYPE_CONTENT:
             last_script = (
                 AILessonScript.query.filter(
                     AILessonScript.lesson_id == last_script.lesson_id,
