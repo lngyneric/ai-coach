@@ -545,7 +545,7 @@ def get_study_record(
 
         if (
             last_script.script_type != SCRIPT_TYPE_ACTION
-            or last_script.script_ui_type != UI_TYPE_CONTENT
+            or last_script.script_ui_type == UI_TYPE_CONTENT
         ):
             last_script = (
                 AILessonScript.query.filter(
