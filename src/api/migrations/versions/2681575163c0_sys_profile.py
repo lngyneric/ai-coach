@@ -53,8 +53,8 @@ def upgrade():
     for row in results:
         profile_prompt = row[1]
         profile_raw_prompt = row[2]
-        new_profile_prompt = profile_prompt if profile_prompt else None
-        new_profile_raw_prompt = profile_raw_prompt if profile_raw_prompt else None
+        new_profile_prompt = profile_prompt if profile_prompt else ""
+        new_profile_raw_prompt = profile_raw_prompt if profile_raw_prompt else ""
         # Replace variable names in multiple formats: {old}, (old), and {{"old": "xxx"}}
         if new_profile_prompt:
             for old, pattern_dict in patterns.items():

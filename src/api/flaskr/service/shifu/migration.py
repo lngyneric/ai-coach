@@ -40,7 +40,7 @@ def migrate_shifu_draft_to_shifu_draft_v2(app, shifu_bid: str):
         app.logger.info(
             f"migrate shifu draft to shifu draft v2, shifu_bid: {shifu_bid}"
         )
-
+        print("migrate shifu draft to shifu draft v2, shifu_bid: ", shifu_bid)
         plugin_manager.is_enabled = False
         # migrate to draft shifu
         db.session.begin()
@@ -191,6 +191,9 @@ def migrate_shifu_draft_to_shifu_draft_v2(app, shifu_bid: str):
         for node in outline_tree_v1:
             migrate_outline(node, history_item)
         __save_shifu_history(app, user_id, shifu_bid, history_item)
+        db.session.commit()
+        db.session.begin()
+        print("migrate shifu info to shifu published v2, shifu_bid: ", shifu_bid)
 
         # migrate to publish shifu
         online_course = (
@@ -390,3 +393,15 @@ def migrate_shifu_draft_to_shifu_draft_v2(app, shifu_bid: str):
         db.session.add(shifu_log_published_struct)
         db.session.commit()
         plugin_manager.is_enabled = True
+
+        # 刷新数据库连接，避免连接超时
+        try:
+            db.session.close()
+            db.engine.dispose()
+            app.logger.info(
+                f"Database connection refreshed after migrating shifu_bid: {shifu_bid}"
+            )
+        except Exception as e:
+            app.logger.warning(
+                f"Warning: Error refreshing database connection for shifu_bid {shifu_bid}: {str(e)}"
+            )
