@@ -389,6 +389,7 @@ export const useUITypes = () => {
             value: t('render-ui.button-key'),
           },
         ],
+        result_variable_bid: '',
       },
       validate: (data): string => {
         if (data.properties.options.length === 0) {
