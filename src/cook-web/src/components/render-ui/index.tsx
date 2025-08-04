@@ -451,9 +451,11 @@ export const useUITypes = () => {
       type: 'login',
       name: t('render-ui.login'),
       properties: {
-        lang: {
-          'zh-CN': '',
-          'en-US': '',
+        label: {
+          lang: {
+            'zh-CN': '',
+            'en-US': '',
+          },
         },
       },
     },
@@ -461,9 +463,11 @@ export const useUITypes = () => {
       type: 'payment',
       name: t('render-ui.payment'),
       properties: {
-        lang: {
-          'zh-CN': '',
-          'en-US': '',
+        label: {
+          lang: {
+            'zh-CN': '',
+            'en-US': '',
+          },
         },
       },
     },
