@@ -612,7 +612,7 @@ class RunScriptContext:
                 self._can_continue = False
                 return
         run_script_info: RunScriptInfo = self._get_run_script_info(self._current_attend)
-        if self._run_type == RunType.INPUT:
+        if run_script_info and self._run_type == RunType.INPUT:
             res = handle_block_input(
                 app=app,
                 user_info=self._user_info,
@@ -636,7 +636,7 @@ class RunScriptContext:
             self._input_type = "continue"
             self._run_type = RunType.OUTPUT
             db.session.flush()
-        else:
+        elif run_script_info:
             continue_check = check_block_continue(
                 app=app,
                 user_info=self._user_info,
