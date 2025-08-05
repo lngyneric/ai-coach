@@ -5,6 +5,8 @@ from sqlalchemy import (
     TIMESTAMP,
     Text,
     Numeric,
+    SmallInteger,
+    DateTime,
 )
 from sqlalchemy.dialects.mysql import BIGINT
 from sqlalchemy.sql import func
@@ -285,4 +287,47 @@ class DiscountRecord(db.Model):
         default=func.now(),
         onupdate=func.now(),
         comment="Update time",
+    )
+
+
+class BannerInfo(db.Model):
+    __tablename__ = "order_banner_info"
+    id = Column(BIGINT, primary_key=True, autoincrement=True, comment="Unique ID")
+    banner_id = Column(
+        String(36), nullable=False, default="", index=True, comment="Banner ID"
+    )
+    course_id = Column(
+        String(36), nullable=False, default="", index=True, comment="Course ID"
+    )
+    show_banner = Column(Integer, nullable=False, default=0, comment="Show banner")
+    show_lesson_banner = Column(
+        Integer, nullable=False, default=0, comment="Show lesson banner"
+    )
+    deleted = Column(
+        SmallInteger,
+        nullable=False,
+        default=0,
+        comment="Deletion flag: 0=active, 1=deleted",
+    )
+    created_at = Column(
+        DateTime, nullable=False, default=func.now(), comment="Creation timestamp"
+    )
+    created_user_bid = Column(
+        String(32),
+        nullable=False,
+        default="",
+        comment="Creator user business identifier",
+    )
+    updated_at = Column(
+        DateTime,
+        nullable=False,
+        default=func.now(),
+        comment="Last update timestamp",
+        onupdate=func.now(),
+    )
+    updated_user_bid = Column(
+        String(32),
+        nullable=False,
+        default="",
+        comment="Last updater user business identifier",
     )
