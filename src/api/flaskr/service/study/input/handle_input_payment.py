@@ -2,6 +2,8 @@ from flask import Flask
 from flaskr.service.study.plugin import (
     register_shifu_input_handler,
 )
+from flaskr.service.order.funs import query_raw_buy_record
+from flaskr.service.order.consts import BUY_STATUS_SUCCESS
 from flaskr.framework.plugin.plugin_manager import extensible_generic
 from flaskr.service.user.models import User
 from flaskr.service.shifu.shifu_struct_manager import ShifuOutlineItemDto
@@ -10,9 +12,9 @@ from langfuse.client import StatefulTraceClient
 from typing import Generator
 
 
-@register_shifu_input_handler("start")
 @extensible_generic
-def _handle_input_start(
+@register_shifu_input_handler("payment")
+def _handle_input_payment(
     app: Flask,
     user_info: User,
     attend_id: str,
@@ -23,5 +25,8 @@ def _handle_input_start(
     trace: StatefulTraceClient,
     is_preview: bool = False,
 ) -> Generator[str, None, None]:
-
+    shifu_bid = outline_item_info.shifu_bid
+    order = query_raw_buy_record(app, user_info.user_id, shifu_bid)
+    if order and order.status == BUY_STATUS_SUCCESS:
+        return
     return None

@@ -1,26 +1,32 @@
 from flask import Flask
 
-from flaskr.service.lesson.models import AILessonScript
-from flaskr.service.order.models import AICourseLessonAttend
 from flaskr.service.study.const import INPUT_TYPE_CONTINUE
 from flaskr.service.study.dtos import ScriptDTO
 from flaskr.service.user.models import User
 from flaskr.i18n import _
 from flaskr.service.study.utils import get_script_ui_label
+from flaskr.service.shifu.shifu_struct_manager import ShifuOutlineItemDto
+from flaskr.service.shifu.adapter import BlockDTO
+from langfuse.client import StatefulTraceClient
+from flaskr.service.shifu.dtos import ButtonDTO
 
 
 def make_continue_ui(
     app: Flask,
     user_info: User,
-    attend: AICourseLessonAttend,
-    script_info: AILessonScript,
-    input: str,
-    trace,
-    trace_args,
+    attend_id: str,
+    outline_item_info: ShifuOutlineItemDto,
+    block_dto: BlockDTO,
+    trace_args: dict,
+    trace: StatefulTraceClient,
+    is_preview: bool = False,
 ) -> ScriptDTO:
-    msg = script_info.script_ui_content
-    display = bool(msg)  # Set display based on whether msg has content
-    msg = get_script_ui_label(app, msg)
+    button = block_dto.block_content
+    msg = ""
+    if isinstance(button, ButtonDTO):
+        msg = get_script_ui_label(app, button.label)
+
+    display = bool(msg)
     if not msg:
         msg = _("COMMON.CONTINUE")
     btn = [
@@ -35,6 +41,6 @@ def make_continue_ui(
     return ScriptDTO(
         "buttons",
         {"buttons": btn},
-        script_info.lesson_id,
-        script_info.script_id,
+        outline_item_info.bid,
+        outline_item_info.bid,
     )

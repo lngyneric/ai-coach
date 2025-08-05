@@ -40,8 +40,8 @@ import json
 from flaskr.service.common import raise_error
 from flaskr.util import generate_id
 import re
-from .models import ShifuDraftBlock
-from .const import (
+from .models import ShifuDraftBlock, ShifuPublishedBlock
+from .consts import (
     BLOCK_TYPE_VALUES,
     BLOCK_TYPE_VALUES_REVERSE,
     BLOCK_TYPE_CONTENT,
@@ -53,6 +53,8 @@ from .const import (
     BLOCK_TYPE_PAYMENT,
     BLOCK_TYPE_BREAK,
 )
+
+from typing import Union
 
 
 # convert outline dict to outline edit dto
@@ -748,10 +750,25 @@ def update_block_dto_to_model_internal(
     )
     block_model.variable_bids = ",".join(block_dto.variable_bids)
     block_model.resource_bids = ",".join(block_dto.resource_bids)
+    if block_dto.type == BLOCK_TYPE_CONTENT:
+        content: ContentDTO = block_dto.block_content
+        from flask import current_app as app
+
+        app.logger.info(f"content: {content.content}")
+        content.content = html_2_markdown(content.content, [])
+        app.logger.info(f"content: {content.content}")
+        block_model.content = json.dumps(content.__json__(), ensure_ascii=False)
+    if block_dto.type == BLOCK_TYPE_INPUT:
+        content: InputDTO = block_dto.block_content
+        content.prompt = html_2_markdown(content.prompt, [])
+        block_model.content = json.dumps(content.__json__(), ensure_ascii=False)
+
     return BlockUpdateResultDto(None, None)
 
 
-def generate_block_dto_from_model_internal(block_model: ShifuDraftBlock) -> BlockDTO:
+def generate_block_dto_from_model_internal(
+    block_model: Union[ShifuDraftBlock, ShifuPublishedBlock], convert_html: bool = False
+) -> BlockDTO:
     type = BLOCK_TYPE_VALUES_REVERSE.get(block_model.type, None)
     if type is None:
         raise_error(f"Invalid block type: {block_model.type}")
@@ -765,4 +782,13 @@ def generate_block_dto_from_model_internal(block_model: ShifuDraftBlock) -> Bloc
             block_model.resource_bids.split(",") if block_model.resource_bids else []
         ),
     )
+    if convert_html:
+        if block_dto.type == BLOCK_TYPE_CONTENT:
+            content: ContentDTO = block_dto.block_content
+            content.content = markdown_2_html(content.content, [])
+            block_dto.block_content = content
+        if block_dto.type == BLOCK_TYPE_INPUT:
+            content: InputDTO = block_dto.block_content
+            content.prompt = markdown_2_html(content.prompt, [])
+            block_dto.block_content = content
     return block_dto
