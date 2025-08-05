@@ -417,7 +417,7 @@ class RunScriptContext:
                 else:
                     status = ATTEND_STATUS_IN_PROGRESS
                 current_attend = self._get_current_attend(update.outline_item_info)
-                current_attend.status = status
+                current_attend.status = ATTEND_STATUS_IN_PROGRESS
                 current_attend.script_index = 0
                 db.session.flush()
 
