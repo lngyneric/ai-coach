@@ -16,8 +16,8 @@ import {
   DialogContent,
   DialogHeader,
   DialogTitle,
-} from '@/components/ui/dialog';
-import { RadioGroup, RadioGroupItem } from '@/components/ui/radio-group';
+} from '@/components/ui/Dialog';
+import { RadioGroup, RadioGroupItem } from '@/components/ui/RadioGroup';
 
 import {
   PAY_CHANNEL_WECHAT_JSAPI,
@@ -34,7 +34,7 @@ import {
 } from '@/c-api/order';
 import { useWechat } from '@/c-common/hooks/useWechat';
 
-import { toast } from '@/hooks/use-toast';
+import { toast } from '@/hooks/useToast';
 
 import { inWechat } from '@/c-constants/uiConstants';
 import { useDisclosure } from '@/c-common/hooks/useDisclosure';

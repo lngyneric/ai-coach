@@ -1,6 +1,6 @@
 'use client';
-import ZH_CN_Agreement from './Contents/zh_CN_agreement.mdx';
-import EN_Agreement from './Contents/en_agreement.mdx';
+import ZH_CN_Agreement from '@/components/legals/ZhCnAgreement.mdx';
+import EN_Agreement from '@/components/legals/EnAgreement.mdx';
 
 import i18n from '@/i18n';
 

@@ -13,16 +13,16 @@ import {
 } from '@heroicons/react/24/solid';
 import api from '@/api';
 import { Shifu } from '@/types/shifu';
-import { Tabs, TabsList, TabsTrigger, TabsContent } from '@/components/ui/tabs';
-import { Button } from '@/components/ui/button';
-import { Card, CardContent } from '@/components/ui/card';
+import { Tabs, TabsList, TabsTrigger, TabsContent } from '@/components/ui/Tabs';
+import { Button } from '@/components/ui/Button';
+import { Card, CardContent } from '@/components/ui/Card';
 import { CreateShifuDialog } from '@/components/create-shifu-dialog';
-import { useToast } from '@/hooks/use-toast';
+import { useToast } from '@/hooks/useToast';
 import { useRouter } from 'next/navigation';
 import Loading from '@/components/loading';
 import { useTranslation } from 'react-i18next';
 import { ErrorWithCode } from '@/lib/request';
-import ErrorDisplay from '@/components/error-display';
+import ErrorDisplay from '@/components/ErrorDisplay';
 import { useUserStore } from '@/c-store/useUserStore';
 interface ShifuCardProps {
   id: string;
