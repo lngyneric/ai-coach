@@ -14,7 +14,7 @@ import {
   ListCollapse,
 } from 'lucide-react';
 import { useShifu } from '@/store';
-import { useUserStore } from '@/c-store';
+import { useUserStore } from '@/store';
 import OutlineTree from '@/components/outline-tree';
 import '@mdxeditor/editor/style.css';
 import Header from '../header';
