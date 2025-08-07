@@ -9,7 +9,7 @@ from langfuse.model import ModelUsage
 from openai.types.chat import ChatCompletionStreamOptionsParam
 from openai.types.shared_params import ResponseFormatJSONObject
 from flask import current_app
-from .dify import dify_chat_message
+from .dify import DifyChunkChatCompletionResponse, dify_chat_message
 from flaskr.common.config import get_config
 from flaskr.service.common.models import raise_error_with_args
 from ..ark.sign import request
@@ -554,10 +554,12 @@ def chat_llm(
                 None,
             )
     elif model in DIFY_MODELS:
-        response = dify_chat_message(app, messages[-1]["content"], user_id)
+        response: Generator[DifyChunkChatCompletionResponse, None, None] = (
+            dify_chat_message(app, messages[-1]["content"], user_id)
+        )
         for res in response:
             if start_completion_time is None:
-                start_completion_time = res.result.completion_start_time
+                start_completion_time = datetime.now()
             if res.event == "message":
                 response_text += res.answer
                 yield LLMStreamResponse(
