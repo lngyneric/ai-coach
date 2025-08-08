@@ -18,7 +18,11 @@ COPY ecosystem.config.js ./
 # copy project source code
 COPY . .
 
-RUN pnpm install
+# Configure git to use HTTPS instead of SSH for GitHub
+RUN git config --global url."https://github.com/".insteadOf "git@github.com:"
+
+# Clean lock file to avoid SSH URL issues and reinstall
+RUN rm -f pnpm-lock.yaml && pnpm install
 
 # build project
 RUN pnpm run build
