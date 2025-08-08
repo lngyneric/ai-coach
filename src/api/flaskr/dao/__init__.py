@@ -119,7 +119,10 @@ def run_with_redis(app, key, timeout: int, func, args):
             try:
                 return func(*args)
             finally:
-                lock.release()
+                try:
+                    lock.release()
+                except Exception:
+                    pass
         else:
             app.logger.info("run_with_redis get lock failed {}".format(key))
             return None

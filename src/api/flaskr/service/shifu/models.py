@@ -1,3 +1,12 @@
+"""
+Shifu models
+
+This module contains models for shifu.
+
+Author: yfge
+Date: 2025-08-07
+"""
+
 from sqlalchemy import (
     Column,
     String,
@@ -22,6 +31,10 @@ class ResourceType:
 
 
 class FavoriteScenario(db.Model):
+    """
+    Favorite scenario
+    """
+
     __tablename__ = "scenario_favorite"
     id = Column(BIGINT, primary_key=True, autoincrement=True)
     scenario_id = Column(
@@ -42,6 +55,10 @@ class FavoriteScenario(db.Model):
 
 
 class ScenarioResource(db.Model):
+    """
+    Scenario resource
+    """
+
     __tablename__ = "scenario_resource"
     id = Column(BIGINT, primary_key=True, autoincrement=True)
     resource_resource_id = Column(
@@ -64,6 +81,10 @@ class ScenarioResource(db.Model):
 
 
 class AiCourseAuth(db.Model):
+    """
+    Ai course auth
+    """
+
     __tablename__ = "ai_course_auth"
     id = Column(BIGINT, primary_key=True, autoincrement=True)
     course_auth_id = Column(
@@ -92,6 +113,10 @@ class AiCourseAuth(db.Model):
 
 # draft shifu's model
 class ShifuDraftShifu(db.Model):
+    """
+    Shifu draft shifu
+    """
+
     __tablename__ = "shifu_draft_shifus"
     id = Column(BIGINT, primary_key=True, autoincrement=True)
     shifu_bid = Column(

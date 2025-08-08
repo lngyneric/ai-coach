@@ -1,16 +1,14 @@
-from flask import Flask
-from typing import Generic, TypeVar, List
-from pydantic import BaseModel
-from .models import ShifuLogDraftStruct
-from flaskr.dao import db
-from flaskr.util import generate_id
-import queue
-from datetime import datetime
-
 """
-save shifu history to database
+Shifu history manager
 
-format
+This module contains functions for managing shifu history.
+
+Author: yfge
+Date: 2025-08-07
+
+tree structure:
+
+format:
 {
     "bid": "bid",
     "id": "id",
@@ -38,29 +36,69 @@ format
 
 """
 
+from flask import Flask
+from typing import Generic, TypeVar, List
+from pydantic import BaseModel
+from .models import ShifuLogDraftStruct
+from flaskr.dao import db
+from flaskr.util import generate_id
+import queue
+from datetime import datetime
+
 T = TypeVar("T", bound="HistoryItem")
 
 
 class HistoryItem(BaseModel, Generic[T]):
+    """
+    History item
+    will be saved to database as json
+    """
+
     bid: str
     id: int
     type: str
     children: List["HistoryItem"] = []
 
     def to_json(self):
+        """
+        to json
+        """
         return self.model_dump_json()
 
     @classmethod
     def from_json(cls, json: str):
+        """
+        from json to history item
+        """
         return cls.model_validate_json(json)
 
 
 class HistoryInfo(BaseModel):
+    """
+    History info
+    will be saved to database as json
+    format:
+    {
+        "bid": "bid",
+        "id": "id",
+    }
+    bid: business id (outline_bid, block_bid, shifu_bid)
+    id: id
+    """
+
     bid: str
     id: int
 
 
 def get_shifu_history(app, shifu_bid: str) -> HistoryItem:
+    """
+    Get shifu history
+    Args:
+        app: Flask application instance
+        shifu_bid: Shifu bid
+    Returns:
+        HistoryItem: History item
+    """
     with app.app_context():
         shifu_history = (
             ShifuLogDraftStruct.query.filter_by(
@@ -78,6 +116,16 @@ def get_shifu_history(app, shifu_bid: str) -> HistoryItem:
 def __save_shifu_history(
     app: Flask, user_id: str, shifu_bid: str, history: HistoryItem
 ):
+    """
+    Save shifu history
+    Args:
+        app: Flask application instance
+        user_id: User ID
+        shifu_bid: Shifu bid
+        history: History item
+    Returns:
+        None
+    """
     now = datetime.now()
     shifu_history = ShifuLogDraftStruct(
         struct_bid=generate_id(app),
@@ -93,6 +141,16 @@ def __save_shifu_history(
 
 
 def save_shifu_history(app: Flask, user_id: str, shifu_bid: str, id: int):
+    """
+    Save shifu history
+    Args:
+        app: Flask application instance
+        user_id: User ID
+        shifu_bid: Shifu bid
+        id: Shifu id
+    Returns:
+        None
+    """
     history = get_shifu_history(app, shifu_bid)
     history.id = id
     __save_shifu_history(app, user_id, shifu_bid, history)
@@ -105,6 +163,15 @@ def save_blocks_history(
     outline_bid: str,
     block_infos: List[HistoryInfo],
 ):
+    """
+    Save blocks history
+    Args:
+        app: Flask application instance
+        user_id: User ID
+        shifu_bid: Shifu bid
+        outline_bid: Outline bid
+        block_infos: Block infos
+    """
     history = get_shifu_history(app, shifu_bid)
     q = queue.Queue()
     q.put(history)
@@ -133,6 +200,21 @@ def __save_new_item_history(
     type: str,
     index: int = 0,
 ):
+    """
+    Save new item history
+    internal function
+    Args:
+        app: Flask application instance
+        user_id: User ID
+        shifu_bid: Shifu bid
+        item_bid: Item bid
+        id: Item id
+        parent_bid: Parent bid
+        type: Item type
+        index: Item index
+    Returns:
+        None
+    """
     history = get_shifu_history(app, shifu_bid)
     if not parent_bid or parent_bid == "":
         if not history.children:
@@ -159,6 +241,17 @@ def __save_new_item_history(
 
 
 def __delete_item_history(app: Flask, user_id: str, shifu_bid: str, item_bid: str):
+    """
+    Delete item history
+    internal function
+    Args:
+        app: Flask application instance
+        user_id: User ID
+        shifu_bid: Shifu bid
+        item_bid: Item bid
+    Returns:
+        None
+    """
     history = get_shifu_history(app, shifu_bid)
     q = queue.Queue()
     q.put(history)
@@ -183,6 +276,17 @@ def save_new_outline_history(
     parent_bid: str,
     index: int = 0,
 ):
+    """
+    Save new outline history
+    Args:
+        app: Flask application instance
+        user_id: User ID
+        shifu_bid: Shifu bid
+        outline_bid: Outline bid
+        id: Outline id
+        parent_bid: Parent bid
+        index: Outline index
+    """
     __save_new_item_history(
         app, user_id, shifu_bid, outline_bid, id, parent_bid, "outline", index
     )
@@ -197,6 +301,19 @@ def save_new_block_history(
     parent_bid: str,
     index: int = 0,
 ):
+    """
+    Save new block history
+    Args:
+        app: Flask application instance
+        user_id: User ID
+        shifu_bid: Shifu bid
+        block_bid: Block bid
+        id: Block id
+        parent_bid: Parent bid
+        index: Block index
+    Returns:
+        None
+    """
     __save_new_item_history(
         app, user_id, shifu_bid, block_bid, id, parent_bid, "block", index
     )
@@ -205,6 +322,17 @@ def save_new_block_history(
 def save_outline_history(
     app: Flask, user_id: str, shifu_bid: str, outline_bid: str, id: int
 ):
+    """
+    Save outline history
+    Args:
+        app: Flask application instance
+        user_id: User ID
+        shifu_bid: Shifu bid
+        outline_bid: Outline bid
+        id: Outline id
+    Returns:
+        None
+    """
     history = get_shifu_history(app, shifu_bid)
     q = queue.Queue()
     q.put(history)
@@ -219,16 +347,46 @@ def save_outline_history(
 
 
 def delete_outline_history(app: Flask, user_id: str, shifu_bid: str, outline_bid: str):
+    """
+    Delete outline history
+    Args:
+        app: Flask application instance
+        user_id: User ID
+        shifu_bid: Shifu bid
+        outline_bid: Outline bid
+    Returns:
+        None
+    """
     __delete_item_history(app, user_id, shifu_bid, outline_bid)
 
 
 def delete_block_history(app: Flask, user_id: str, shifu_bid: str, block_bid: str):
+    """
+    Delete block history
+    Args:
+        app: Flask application instance
+        user_id: User ID
+        shifu_bid: Shifu bid
+        block_bid: Block bid
+    Returns:
+        None
+    """
     __delete_item_history(app, user_id, shifu_bid, block_bid)
 
 
 def save_outline_tree_history(
     app: Flask, user_id: str, shifu_bid: str, outline_tree: List[HistoryItem]
 ):
+    """
+    Save outline tree history
+    Args:
+        app: Flask application instance
+        user_id: User ID
+        shifu_bid: Shifu bid
+        outline_tree: Outline tree
+    Returns:
+        None
+    """
     history = get_shifu_history(app, shifu_bid)
     q = queue.Queue()
     q.put(history)

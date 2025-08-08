@@ -1,6 +1,5 @@
 from .common import register_common_handler
 from .user import register_user_handler
-from .lesson import register_lesson_handler
 from .course import register_course_handler
 from .study import register_study_handler
 from .dicts import register_dict_handler
@@ -15,7 +14,6 @@ def register_route(app):
     prefix = app.config.get("PATH_PREFIX", "")
     app = register_common_handler(app)
     app = register_user_handler(app, prefix + "/user")
-    app = register_lesson_handler(app, prefix + "/lesson")
     app = register_course_handler(app, prefix + "/course")
     app = register_study_handler(app, prefix + "/study")
     app = register_dict_handler(app, prefix + "/dict")

@@ -1,12 +1,19 @@
+"""
+Shifu migration
+
+This module contains functions for migrating shifu.
+
+
+Author: yfge
+Date: 2025-08-07
+"""
+
 from flaskr.service.lesson.models import AICourse
 from flaskr.service.lesson.const import STATUS_DRAFT, STATUS_PUBLISH
-from flaskr.service.shifu.outline_funcs import (
+from flaskr.service.shifu.utils import (
     get_original_outline_tree,
-    OutlineTreeNode,
-)
-from flaskr.service.shifu.block_funcs import (
     get_existing_blocks,
-    generate_block_dto_from_model,
+    OutlineTreeNode,
 )
 from flaskr.framework.plugin.plugin_manager import plugin_manager
 from flaskr.service.shifu.models import (
@@ -27,8 +34,14 @@ from flaskr.service.lesson.const import (
     LESSON_TYPE_BRANCH_HIDDEN,
 )
 from flaskr.service.shifu.shifu_history_manager import HistoryItem
-from flaskr.service.profile.profile_manage import get_profile_item_definition_list
-from flaskr.service.shifu.adapter import BlockDTO, update_block_dto_to_model_internal
+from flaskr.service.profile.profile_manage import (
+    get_profile_item_definition_list,
+)
+from flaskr.service.shifu.adapter import (
+    BlockDTO,
+    update_block_dto_to_model_internal,
+    generate_block_dto_from_model,
+)
 from flaskr.service.shifu.shifu_history_manager import __save_shifu_history
 from flaskr.service.lesson.const import SCRIPT_TYPE_SYSTEM
 from flaskr.service.lesson.models import AILessonScript
@@ -36,6 +49,13 @@ from flaskr.service.shifu.utils import parse_shifu_res_bid
 
 
 def migrate_shifu_draft_to_shifu_draft_v2(app, shifu_bid: str):
+    """
+    Migrate a shifu draft to a shifu draft v2.
+
+    Args:
+        app: Flask application instance
+        shifu_bid: The ID of the shifu to migrate
+    """
     with app.app_context():
         app.logger.info(
             f"migrate shifu draft to shifu draft v2, shifu_bid: {shifu_bid}"

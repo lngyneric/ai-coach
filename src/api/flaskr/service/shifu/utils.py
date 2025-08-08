@@ -1,27 +1,29 @@
+"""
+Shifu utils
+
+This module contains utility functions for shifu.
+
+Author: yfge
+Date: 2025-08-07
+"""
+
 from flaskr.service.lesson.models import AILesson, AILessonScript
 from flaskr.service.lesson.const import (
     STATUS_PUBLISH,
     STATUS_DRAFT,
     SCRIPT_TYPE_SYSTEM,
-    STATUS_HISTORY,
     STATUS_TO_DELETE,
 )
 from flaskr.service.resource.models import Resource
 from flask import Flask
 from flaskr.dao import db
-from datetime import datetime
-import queue
 
 
-def check_scenario_can_publish(app, scenario_id: str):
-    pass
-
-
-# outline tree node
-# @author: yfge
-# @date: 2025-04-23
-# this is used for the outline tree in the scenario outline page in the cook-web
 class OutlineTreeNode:
+    """
+    Outline tree node
+    """
+
     outline: AILesson
     children: list["OutlineTreeNode"]
     outline_id: str
@@ -29,6 +31,9 @@ class OutlineTreeNode:
     parent_node: "OutlineTreeNode"
 
     def __init__(self, outline: AILesson):
+        """
+        Init outline tree node
+        """
         self.outline = outline
         self.children = []
         if outline:
@@ -40,10 +45,16 @@ class OutlineTreeNode:
         self.parent_node = None
 
     def add_child(self, child: "OutlineTreeNode"):
+        """
+        Add a child to the outline tree node
+        """
         self.children.append(child)
         child.parent_node = self
 
     def remove_child(self, child: "OutlineTreeNode"):
+        """
+        Remove a child from the outline tree node
+        """
         child.parent_node = None
         self.children.remove(child)
 
@@ -57,11 +68,15 @@ class OutlineTreeNode:
             )
 
 
-# get the existing outlines for cook
-# @author: yfge
-# @date: 2025-04-14
 def get_existing_outlines(app: Flask, shifu_id: str, parent_id: str = None):
-    # with no context, so we need to use the fun n other module
+    """
+    Get the existing outlines for a shifu.
+    deprecated:  only for migration
+    Args:
+        app: Flask application instance
+        shifu_id: The ID of the shifu
+        parent_id: The ID of the parent outline
+    """
     subquery = (
         db.session.query(db.func.max(AILesson.id))
         .filter(
@@ -83,11 +98,16 @@ def get_existing_outlines(app: Flask, shifu_id: str, parent_id: str = None):
     return sorted(outlines, key=lambda x: (len(x.lesson_no), x.lesson_no))
 
 
-# get the existing outlines for cook for publish
-# @author: yfge
-# @date: 2025-04-14
 def get_existing_outlines_for_publish(app: Flask, shifu_id: str):
-    # with no context, so we need to use the fun in other module
+    """
+    Get the existing outlines for a shifu for publish.
+    deprecated:  only for migration
+    Args:
+        app: Flask application instance
+        shifu_id: The ID of the shifu
+    Returns:
+        list[AILesson]: The existing outlines for a shifu for publish
+    """
     subquery = (
         db.session.query(db.func.max(AILesson.id))
         .filter(
@@ -107,11 +127,18 @@ def get_existing_outlines_for_publish(app: Flask, shifu_id: str):
     return outlines
 
 
-# get the existing blocks for cook
-# @author: yfge
-# @date: 2025-04-14
-def get_existing_blocks(app: Flask, outline_ids: list[str]):
-    # get the existing blocks (publish and draft)
+def get_existing_blocks(app: Flask, outline_ids: list[str]) -> list[AILessonScript]:
+    """
+    Get the existing blocks (publish and draft)
+    deprecated:  only for migration
+
+    Args:
+        app: Flask application instance
+        outline_ids: The IDs of the outlines
+
+    Returns:
+        list[AILessonScript]: The existing blocks (publish and draft)
+    """
     subquery = (
         db.session.query(db.func.max(AILessonScript.id))
         .filter(
@@ -130,11 +157,20 @@ def get_existing_blocks(app: Flask, outline_ids: list[str]):
     return blocks
 
 
-# get the existing blocks for cook for publish
-# @author: yfge
-# @date: 2025-04-14
-def get_existing_blocks_for_publish(app: Flask, outline_ids: list[str]):
-    # get the existing blocks (publish and draft)
+def get_existing_blocks_for_publish(
+    app: Flask, outline_ids: list[str]
+) -> list[AILessonScript]:
+    """
+    Get the existing blocks (publish and draft) for publish
+    deprecated:  only for migration
+
+    Args:
+        app: Flask application instance
+        outline_ids: The IDs of the outlines
+
+    Returns:
+        list[AILessonScript]: The existing blocks (publish and draft) for publish
+    """
     subquery = (
         db.session.query(db.func.max(AILessonScript.id))
         .filter(
@@ -153,82 +189,18 @@ def get_existing_blocks_for_publish(app: Flask, outline_ids: list[str]):
     return blocks
 
 
-# change the outline status to history
-# @author: yfge
-# @date: 2025-04-14
-def change_outline_status_to_history(
-    outline_info: AILesson, user_id: str, time: datetime
-):
-    from flask import current_app as app
-
-    app.logger.info(
-        f"change_outline_status_to_history: {outline_info.id} {outline_info.status}"
-    )
-    if outline_info.status != STATUS_PUBLISH:
-        # if the outline is not publish, then we need to change the status to history
-        outline_info.status = STATUS_HISTORY
-        outline_info.updated_user_id = user_id
-        outline_info.updated = time
-
-
-# mark the outline to delete
-# @author: yfge
-# @date: 2025-05-27
-def mark_outline_to_delete(outline_info: AILesson, user_id: str, time: datetime):
-    from flask import current_app as app
-
-    app.logger.info(f"mark_outline_to_delete: {outline_info.id} {outline_info.status}")
-    if outline_info.status == STATUS_PUBLISH:
-        delete_outline = outline_info.clone()
-        delete_outline.status = STATUS_TO_DELETE
-        delete_outline.updated_user_id = user_id
-        delete_outline.updated = time
-        db.session.add(delete_outline)
-    else:
-        outline_info.status = STATUS_TO_DELETE
-        outline_info.updated_user_id = user_id
-        outline_info.updated = time
-
-
-# change the block status to history
-# @author: yfge
-# @date: 2025-04-14
-def change_block_status_to_history(
-    block_info: AILessonScript, user_id: str, time: datetime
-):
-    from flask import current_app as app
-
-    app.logger.info(
-        f"change_block_status_to_history: {block_info.id} {block_info.status}"
-    )
-
-    if block_info.status != STATUS_PUBLISH:
-        # if the block is not publish, then we need to change the status to history
-        block_info.status = STATUS_HISTORY
-        block_info.updated_user_id = user_id
-        block_info.updated = time
-
-
-# mark the block to delete
-# @author: yfge
-# @date: 2025-05-27
-def mark_block_to_delete(block_info: AILessonScript, user_id: str, time: datetime):
-    from flask import current_app as app
-
-    app.logger.info(f"mark_block_to_delete: {block_info.id} {block_info.status}")
-    if block_info.status == STATUS_PUBLISH:
-        delete_block = block_info.clone()
-        delete_block.status = STATUS_TO_DELETE
-        delete_block.updated_user_id = user_id
-        delete_block.updated = time
-        db.session.add(delete_block)
-    else:
-        block_info.status = STATUS_TO_DELETE
-        block_info.updated_user_id = user_id
-        block_info.updated = time
-
-
 def get_original_outline_tree(app: Flask, shifu_id: str) -> list["OutlineTreeNode"]:
+    """
+    Get the original outline tree for a shifu.
+    deprecated:  only for migration
+
+    Args:
+        app: Flask application instance
+        shifu_id: The ID of the shifu
+
+    Returns:
+        list[OutlineTreeNode]: The original outline tree for a shifu
+    """
     outlines = get_existing_outlines(app, shifu_id)
     sorted_outlines = sorted(outlines, key=lambda x: (len(x.lesson_no), x.lesson_no))
     outline_tree = []
@@ -257,30 +229,16 @@ def get_original_outline_tree(app: Flask, shifu_id: str) -> list["OutlineTreeNod
     return outline_tree
 
 
-def reorder_outline_tree_and_save(
-    app: Flask, tree: "OutlineTreeNode", user_id: str, time: datetime
-):
-    reorder_queue = queue.Queue()
-    reorder_queue.put(tree)
-    while not reorder_queue.empty():
-        node = reorder_queue.get()
-        new_lesson_no = node.get_new_lesson_no()
-        app.logger.info(f"reorder outline: {node.lesson_no}=>{new_lesson_no}")
-        if new_lesson_no != node.lesson_no:
-            change_outline_status_to_history(node.outline, user_id, time)
-            app.logger.info(f"reorder unit:{node.lesson_no}=>{new_lesson_no}")
-            new_outline = node.outline.clone()
-            new_outline.lesson_no = new_lesson_no
-            new_outline.updated_user_id = user_id
-            new_outline.updated = time
-            new_outline.status = STATUS_DRAFT
-            node.outline = new_outline
-            db.session.add(new_outline)
-        for child in node.children:
-            reorder_queue.put(child)
-
-
 def get_shifu_res_url(res_bid: str):
+    """
+    Get the URL of a resource.
+
+    Args:
+        res_bid: The ID of the resource
+
+    Returns:
+        str: The URL of the resource
+    """
     res = Resource.query.filter_by(resource_id=res_bid).first()
     if res:
         return res.url
@@ -288,6 +246,15 @@ def get_shifu_res_url(res_bid: str):
 
 
 def get_shifu_res_url_dict(res_bids: list[str]) -> dict[str, str]:
+    """
+    Get the URL of a resource.
+
+    Args:
+        res_bids: The IDs of the resources
+
+    Returns:
+        dict[str, str]: The URL of the resource
+    """
     res_url_map = {}
     res = Resource.query.filter(Resource.resource_id.in_(res_bids)).all()
     for r in res:
@@ -296,6 +263,15 @@ def get_shifu_res_url_dict(res_bids: list[str]) -> dict[str, str]:
 
 
 def parse_shifu_res_bid(res_url: str):
+    """
+    Parse the resource ID from a URL.
+
+    Args:
+        res_url: The URL of the resource
+
+    Returns:
+        str: The resource ID
+    """
     if res_url:
         return res_url.split("/")[-1]
     return ""

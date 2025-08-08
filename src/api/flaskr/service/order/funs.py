@@ -5,8 +5,6 @@ from typing import List
 
 
 from flaskr.service.order.consts import (
-    ATTEND_STATUS_LOCKED,
-    ATTEND_STATUS_NOT_STARTED,
     BUY_STATUS_INIT,
     BUY_STATUS_SUCCESS,
     BUY_STATUS_TO_BE_PAID,
@@ -14,10 +12,6 @@ from flaskr.service.order.consts import (
     BUY_STATUS_TIMEOUT,
     DISCOUNT_TYPE_FIXED,
     DISCOUNT_TYPE_PERCENT,
-)
-from flaskr.service.lesson.const import (
-    STATUS_PUBLISH,
-    STATUS_DRAFT,
 )
 from flaskr.service.common.dtos import USER_STATE_PAID, USER_STATE_REGISTERED
 from flaskr.service.user.models import User, UserConversion
@@ -35,28 +29,20 @@ from ...dao import db, redis_client
 from ..common.models import (
     raise_error,
 )
-from ..lesson.models import AICourse, AILesson
-from .models import AICourseLessonAttend
 from ...util.uuid import generate_id as get_uuid
-from ..lesson.const import LESSON_TYPE_TRIAL
 from .pingxx_order import create_pingxx_order
 from .models import Discount
 import pytz
-
-
-def get_course_info(app: Flask, course_id: str) -> AICourse:
-    return (
-        AICourse.query.filter(
-            AICourse.course_id == course_id,
-            AICourse.status.in_([STATUS_PUBLISH]),
-        )
-        .order_by(AICourse.id.desc())
-        .first()
-    )
+from flaskr.service.lesson.funcs import get_course_info
+from flaskr.service.lesson.funcs import AICourseDTO
 
 
 @register_schema_to_swagger
 class AICourseLessonAttendDTO:
+    """
+    AICourseLessonAttendDTO
+    """
+
     attend_id: str
     lesson_id: str
     course_id: str
@@ -85,6 +71,10 @@ class AICourseLessonAttendDTO:
 
 @register_schema_to_swagger
 class PayItemDto:
+    """
+    PayItemDto
+    """
+
     name: str
     price_name: str
     price: str
@@ -109,6 +99,10 @@ class PayItemDto:
 
 @register_schema_to_swagger
 class AICourseBuyRecordDTO:
+    """
+    AICourseBuyRecordDTO
+    """
+
     order_id: str
     user_id: str
     course_id: str
@@ -160,10 +154,10 @@ def send_order_feishu(app: Flask, record_id: str):
     order_info = query_buy_record(app, record_id)
     if order_info is None:
         return
-    user_info = User.query.filter(User.user_id == order_info.user_id).first()
+    user_info: User = User.query.filter(User.user_id == order_info.user_id).first()
     if not user_info:
         return
-    course_info = get_course_info(app, order_info.course_id)
+    course_info: AICourseDTO = get_course_info(app, order_info.course_id)
     if not course_info:
         return
 
@@ -172,7 +166,7 @@ def send_order_feishu(app: Flask, record_id: str):
     msgs.append("手机号：{}".format(user_info.mobile))
     msgs.append("昵称：{}".format(user_info.name))
     msgs.append("课程名称：{}".format(course_info.course_name))
-    msgs.append("实付金额：{}".format(order_info.value_to_pay))
+    msgs.append("实付金额：{}".format(order_info.price))
     user_convertion = UserConversion.query.filter(
         UserConversion.user_id == order_info.user_id
     ).first()
@@ -221,7 +215,7 @@ def init_buy_record(app: Flask, user_id: str, course_id: str, active_id: str = N
     with app.app_context():
         order_timeout_make_new_order = False
         find_active_id = None
-        course_info = get_course_info(app, course_id)
+        course_info: AICourseDTO = get_course_info(app, course_id)
         if not course_info:
             raise_error("LESSON.COURSE_NOT_FOUND")
         origin_record = (
@@ -251,7 +245,7 @@ def init_buy_record(app: Flask, user_id: str, course_id: str, active_id: str = N
             buy_record = AICourseBuyRecord()
             buy_record.user_id = user_id
             buy_record.course_id = course_id
-            buy_record.price = course_info.course_price
+            buy_record.price = decimal.Decimal(course_info.course_price)
             buy_record.status = BUY_STATUS_INIT
             buy_record.record_id = order_id
             buy_record.discount_value = decimal.Decimal(0.00)
@@ -301,6 +295,10 @@ def init_buy_record(app: Flask, user_id: str, course_id: str, active_id: str = N
 
 @register_schema_to_swagger
 class BuyRecordDTO:
+    """
+    BuyRecordDTO
+    """
+
     order_id: str
     user_id: str  # 用户id
     price: str  # 价格
@@ -327,6 +325,9 @@ class BuyRecordDTO:
 def generate_charge(
     app: Flask, record_id: str, channel: str, client_ip: str
 ) -> BuyRecordDTO:
+    """
+    Generate charge
+    """
     with app.app_context():
         app.logger.info(
             "generate charge for record:{} channel:{}".format(record_id, channel)
@@ -338,7 +339,7 @@ def generate_charge(
         ).first()
         if not buy_record:
             raise_error("ORDER.ORDER_NOT_FOUND")
-        course = get_course_info(app, buy_record.course_id)
+        course: AICourseDTO = get_course_info(app, buy_record.course_id)
         if not course:
             raise_error("COURSE.COURSE_NOT_FOUND")
         app.logger.info("buy record found:{}".format(buy_record))
@@ -457,6 +458,9 @@ def generate_charge(
 
 
 def success_buy_record_from_pingxx(app: Flask, charge_id: str, body: dict):
+    """
+    Success buy record from pingxx
+    """
     with app.app_context():
         pingxx_order = PingxxOrder.query.filter(
             PingxxOrder.charge_id == charge_id
@@ -504,31 +508,6 @@ def success_buy_record_from_pingxx(app: Flask, charge_id: str, body: dict):
                         except Exception as e:
                             app.logger.error("update user state error:{}".format(e))
                         buy_record.status = BUY_STATUS_SUCCESS
-                        lessons = AILesson.query.filter(
-                            AILesson.course_id == buy_record.course_id,
-                            AILesson.status == 1,
-                            AILesson.lesson_type != LESSON_TYPE_TRIAL,
-                        ).all()
-                        for lesson in lessons:
-                            app.logger.info(
-                                "init lesson attend for user:{} lesson:{}".format(
-                                    buy_record.user_id, lesson.lesson_id
-                                )
-                            )
-                            attend = AICourseLessonAttend.query.filter(
-                                AICourseLessonAttend.user_id == buy_record.user_id,
-                                AICourseLessonAttend.lesson_id == lesson.lesson_id,
-                            ).first()
-                            if attend:
-                                continue
-                            attend = AICourseLessonAttend()
-                            attend.attend_id = str(get_uuid(app))
-                            attend.course_id = buy_record.course_id
-                            attend.lesson_id = lesson.lesson_id
-                            attend.user_id = buy_record.user_id
-                            attend.lesson_no = lesson.lesson_no
-                            attend.status = ATTEND_STATUS_LOCKED
-                            db.session.add(attend)
                         db.session.commit()
                         send_order_feishu(app, buy_record.record_id)
                         return query_buy_record(app, buy_record.record_id)
@@ -550,6 +529,9 @@ def success_buy_record_from_pingxx(app: Flask, charge_id: str, body: dict):
 
 
 def success_buy_record(app: Flask, record_id: str):
+    """
+    Success buy record
+    """
     with app.app_context():
         app.logger.info('success buy record:"{}"'.format(record_id))
         buy_record = AICourseBuyRecord.query.filter(
@@ -562,31 +544,6 @@ def success_buy_record(app: Flask, record_id: str):
             else:
                 user_info.user_state = USER_STATE_PAID
             buy_record.status = BUY_STATUS_SUCCESS
-            lessons = AILesson.query.filter(
-                AILesson.course_id == buy_record.course_id,
-                AILesson.status == 1,
-                AILesson.lesson_type != LESSON_TYPE_TRIAL,
-            ).all()
-            for lesson in lessons:
-                app.logger.info(
-                    "init lesson attend for user:{} lesson:{}".format(
-                        buy_record.user_id, lesson.lesson_id
-                    )
-                )
-                attend = AICourseLessonAttend.query.filter(
-                    AICourseLessonAttend.user_id == buy_record.user_id,
-                    AICourseLessonAttend.lesson_id == lesson.lesson_id,
-                ).first()
-                if attend:
-                    continue
-                attend = AICourseLessonAttend()
-                attend.attend_id = str(get_uuid(app))
-                attend.course_id = buy_record.course_id
-                attend.lesson_id = lesson.lesson_id
-                attend.user_id = buy_record.user_id
-                attend.lesson_no = lesson.lesson_no
-                attend.status = ATTEND_STATUS_LOCKED
-                db.session.add(attend)
             db.session.commit()
             send_order_feishu(app, buy_record.record_id)
             return query_buy_record(app, record_id)
@@ -595,111 +552,10 @@ def success_buy_record(app: Flask, record_id: str):
         return None
 
 
-def init_trial_lesson(
-    app: Flask, user_id: str, course_id: str, preview_mode: bool = False
-) -> list[AICourseLessonAttendDTO]:
-    app.logger.info(
-        "init trial lesson for user:{} course:{}".format(user_id, course_id)
-    )
-    response = []
-
-    if preview_mode:
-        status = [STATUS_DRAFT]
-    else:
-        status = [STATUS_PUBLISH]
-    lessons = AILesson.query.filter(
-        AILesson.course_id == course_id,
-        AILesson.lesson_type == LESSON_TYPE_TRIAL,
-        AILesson.status.in_(status),
-    ).all()
-    app.logger.info("init trial lesson:{}".format(lessons))
-    for lesson in lessons:
-        app.logger.info(
-            "init trial lesson:{} ,is trail:{}".format(
-                lesson.lesson_id, lesson.is_final()
-            )
-        )
-        attend = AICourseLessonAttend.query.filter(
-            AICourseLessonAttend.user_id == user_id,
-            AICourseLessonAttend.lesson_id == lesson.lesson_id,
-        ).first()
-        if attend:
-            if lesson.is_final():
-                item = AICourseLessonAttendDTO(
-                    attend.attend_id,
-                    attend.lesson_id,
-                    attend.course_id,
-                    attend.user_id,
-                    attend.status,
-                    lesson.lesson_index,
-                )
-                response.append(item)
-            continue
-        attend = AICourseLessonAttend()
-        attend.attend_id = str(get_uuid(app))
-        attend.course_id = course_id
-        attend.lesson_id = lesson.lesson_id
-        attend.user_id = user_id
-        if lesson.lesson_no in ["00", "0001"]:
-            attend.status = ATTEND_STATUS_NOT_STARTED
-        else:
-            attend.status = ATTEND_STATUS_LOCKED
-        db.session.add(attend)
-        if lesson.is_final() and attend.status == ATTEND_STATUS_NOT_STARTED:
-            response.append(
-                AICourseLessonAttendDTO(
-                    attend.attend_id,
-                    attend.lesson_id,
-                    attend.course_id,
-                    attend.user_id,
-                    attend.status,
-                    lesson.lesson_index,
-                )
-            )
-        db.session.commit()
-    return response
-
-
-def init_trial_lesson_inner(
-    app: Flask, user_id: str, course_id: str
-) -> list[AICourseLessonAttendDTO]:
-    app.logger.info(
-        "init trial lesson for user:{} course:{}".format(user_id, course_id)
-    )
-    lessons = AILesson.query.filter(
-        AILesson.course_id == course_id,
-        AILesson.lesson_type == LESSON_TYPE_TRIAL,
-        AILesson.status.in_([STATUS_PUBLISH]),
-    ).all()
-    response = []
-    app.logger.info("init trial lesson:{}".format(lessons))
-    for lesson in lessons:
-        app.logger.info(
-            "init trial lesson:{} ,is trail:{}".format(
-                lesson.lesson_id, lesson.is_final()
-            )
-        )
-        attend = AICourseLessonAttend.query.filter(
-            AICourseLessonAttend.user_id == user_id,
-            AICourseLessonAttend.lesson_id == lesson.lesson_id,
-        ).first()
-        if attend:
-            if lesson.is_final():
-                response.append(attend)
-            continue
-        attend = AICourseLessonAttend()
-        attend.attend_id = str(get_uuid(app))
-        attend.course_id = course_id
-        attend.lesson_id = lesson.lesson_id
-        attend.status = ATTEND_STATUS_LOCKED
-        attend.user_id = user_id
-        response.append(attend)
-        db.session.add(attend)
-    db.session.flush()
-    return response
-
-
 def query_raw_buy_record(app: Flask, user_id, course_id) -> AICourseBuyRecord:
+    """
+    Query raw buy record
+    """
     with app.app_context():
         buy_record = AICourseBuyRecord.query.filter(
             AICourseBuyRecord.course_id == course_id,
@@ -723,6 +579,9 @@ class DiscountInfo:
 def calculate_discount_value(
     app: Flask, price: str, active_records: list, discount_records: list
 ) -> DiscountInfo:
+    """
+    Calculate discount value
+    """
     discount_value = 0
     items = []
     if active_records is not None and len(active_records) > 0:
@@ -798,43 +657,3 @@ def query_buy_record(app: Flask, record_id: str) -> AICourseBuyRecordDTO:
                 item,
             )
         raise_error("ORDER.ORDER_NOT_FOUND")
-
-
-def fix_attend_info(app: Flask, user_id: str, course_id: str):
-    with app.app_context():
-        app.logger.info(
-            "fix attend info for user:{} course:{}".format(user_id, course_id)
-        )
-        lessons = AILesson.query.filter(
-            AILesson.course_id == course_id,
-            AILesson.status == 1,
-            AILesson.lesson_type != LESSON_TYPE_TRIAL,
-        ).all()
-        fix_lessons = []
-        for lesson in lessons:
-            attend = AICourseLessonAttend.query.filter(
-                AICourseLessonAttend.user_id == user_id,
-                AICourseLessonAttend.lesson_id == lesson.lesson_id,
-            ).first()
-            if attend:
-                continue
-            attend = AICourseLessonAttend()
-            attend.attend_id = str(get_uuid(app))
-            attend.course_id = course_id
-            attend.lesson_id = lesson.lesson_id
-            attend.user_id = user_id
-            attend.status = ATTEND_STATUS_LOCKED
-            attend.lesson_no = lesson.lesson_no
-            fix_lessons.append(
-                AICourseLessonAttendDTO(
-                    attend.attend_id,
-                    attend.lesson_id,
-                    attend.course_id,
-                    attend.user_id,
-                    attend.status,
-                    lesson.lesson_index,
-                )
-            )
-            db.session.add(attend)
-        db.session.commit()
-        return fix_lessons

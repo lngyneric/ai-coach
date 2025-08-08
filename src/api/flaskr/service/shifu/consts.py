@@ -1,3 +1,12 @@
+"""
+Shifu consts
+
+This module contains constants for shifu.
+
+Author: yfge
+Date: 2025-08-07
+"""
+
 UNIT_TYPE_TRIAL = "trial"
 UNIT_TYPE_NORMAL = "normal"
 

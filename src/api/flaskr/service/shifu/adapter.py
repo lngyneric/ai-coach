@@ -1,5 +1,20 @@
+"""
+Shifu adapter
+
+This module contains adapter functions for shifu.
+
+includes:
+    - convert html to markdown
+    - convert markdown to html
+    - convert outline to reorder outline item dto
+    - convert block dto to model
+    - convert model to block dto
+
+Author: yfge
+Date: 2025-08-07
+"""
+
 from flaskr.service.shifu.dtos import (
-    OutlineEditDto,
     BlockUpdateResultDto,
     ReorderOutlineItemDto,
     BlockDTO,
@@ -15,11 +30,15 @@ from flaskr.service.shifu.dtos import (
     CheckCodeDTO,
     PhoneDTO,
 )
-from flaskr.service.profile.dtos import ProfileItemDefinition
 from flaskr.i18n import _
 from flask import current_app as app
 
-from flaskr.service.lesson.models import AILessonScript
+from flaskr.service.lesson.models import (
+    AILessonScript,
+)
+from flaskr.service.profile.dtos import (
+    ProfileItemDefinition,
+)
 from flaskr.service.lesson.const import (
     SCRIPT_TYPE_FIX,
     SCRIPT_TYPE_PROMPT,
@@ -57,16 +76,16 @@ from .consts import (
 from typing import Union
 
 
-# convert outline dict to outline edit dto
-def convert_dict_to_outline_edit_dto(outline_dict: dict) -> OutlineEditDto:
-    type = outline_dict.get("type")
-    if type != "outline":
-        raise_error(_("SHIFU.INVALID_OUTLINE_TYPE"))
-    outline_info = OutlineEditDto(**(outline_dict.get("properties") or {}))
-    return outline_info
+def html_2_markdown(content: str, variables_in_prompt: list[str]) -> str:
+    """
+    convert html to markdown
+    Args:
+        content: The html content to convert
+        variables_in_prompt: The variables in prompt
+    Returns:
+        The markdown content
+    """
 
-
-def html_2_markdown(content, variables_in_prompt):
     def video_repl(match):
         url = match.group("url")
         title = match.group("title")
@@ -108,8 +127,15 @@ def html_2_markdown(content, variables_in_prompt):
     return content
 
 
-def markdown_2_html(content, variables_in_prompt):
-    import re
+def markdown_2_html(content: str, variables_in_prompt: list[str]) -> str:
+    """
+    convert markdown to html
+    Args:
+        content: The markdown content to convert
+        variables_in_prompt: The variables in prompt
+    Returns:
+        The html content
+    """
 
     def iframe_repl(match):
         bvid = match.group("bvid")
@@ -150,7 +176,13 @@ def markdown_2_html(content, variables_in_prompt):
 
 
 def get_profiles(profiles: str):
-
+    """
+    get profiles from string
+    Args:
+        profiles: The string to get profiles from
+    Returns:
+        The profiles
+    """
     profiles = re.findall(r"\[(.*?)\]", profiles)
     return profiles
 
@@ -158,6 +190,13 @@ def get_profiles(profiles: str):
 def convert_outline_to_reorder_outline_item_dto(
     json_array: list[dict],
 ) -> ReorderOutlineItemDto:
+    """
+    convert outline to reorder outline item dto
+    Args:
+        json_array: The json array to convert
+    Returns:
+        The reorder outline item dto
+    """
     return [
         ReorderOutlineItemDto(
             bid=item.get("bid"),
@@ -185,6 +224,13 @@ CONTENT_TYPE = {
 
 
 def convert_to_blockDTO(json_object: dict) -> BlockDTO:
+    """
+    convert json object to block dto
+    Args:
+        json_object: The json object to convert
+    Returns:
+        The block dto
+    """
     type = json_object.get("type")
     if type not in CONTENT_TYPE:
         raise_error(f"Invalid type: {type}")
@@ -196,22 +242,14 @@ def convert_to_blockDTO(json_object: dict) -> BlockDTO:
     )
 
 
-def _get_label_lang(label) -> LabelDTO:
-    # get label from label.lang
-    if isinstance(label, dict):
-        return LabelDTO(lang=label)
-    if label.startswith("{"):
-        return LabelDTO(lang=json.loads(label))
-    return LabelDTO(
-        lang={
-            "zh-CN": label,
-            "en-US": label,
-        }
-    )
-
-
 def _get_lang_dict(lang: str) -> dict[str, str]:
-
+    """
+    get lang dict
+    Args:
+        lang: The lang string to get
+    Returns:
+        The lang dict
+    """
     if isinstance(lang, dict):
         return lang
     if lang.startswith("{"):
@@ -228,200 +266,18 @@ def _get_lang_dict(lang: str) -> dict[str, str]:
     }
 
 
-def update_block_dto_to_model(
-    block_dto: BlockDTO,
+def generate_block_dto_from_model(
     block_model: AILessonScript,
     variable_definitions: list[ProfileItemDefinition],
-    new_block: bool = False,
-) -> BlockUpdateResultDto:
-
-    variables = []
-    block_model.script_ui_profile_id = ",".join(block_dto.variable_bids)
-    variable_definition_map = {
-        variable_definition.profile_id: variable_definition
-        for variable_definition in variable_definitions
-    }
-
-    if block_dto.type == "content":
-        if not new_block and (
-            not block_dto.block_content.content
-            or not block_dto.block_content.content.strip()
-        ):
-            return BlockUpdateResultDto(None, _("SHIFU.PROMPT_REQUIRED"))
-
-        raw_content = html_2_markdown(block_dto.block_content.content, variables)
-        block_model.script_ui_type = UI_TYPE_CONTENT
-        content: ContentDTO = block_dto.block_content  # type: ContentDTO
-
-        block_model.script_prompt = raw_content
-        block_model.script_profile = "[" + "][".join(variables) + "]"
-        block_model.script_model = content.llm
-        block_model.script_ui_profile = "[" + "][".join(variables) + "]"
-        block_model.script_temperature = content.llm_temperature
-        if content.llm_enabled:
-            block_model.script_type = SCRIPT_TYPE_PROMPT
-        else:
-            block_model.script_type = SCRIPT_TYPE_FIX
-        if block_dto.variable_bids:
-            block_model.script_ui_profile_id = ",".join(block_dto.variable_bids)
-        else:
-            block_model.script_ui_profile_id = ",".join(
-                [
-                    variable_definition.profile_id
-                    for variable_definition in variable_definitions
-                    if variable_definition.profile_key in variables
-                ]
-            )
-        return BlockUpdateResultDto(None, None)
-    block_model.script_type = SCRIPT_TYPE_ACTION
-    if block_dto.type == "break":
-        block_model.script_ui_type = UI_TYPE_BREAK
-        return BlockUpdateResultDto(None, None)
-    if block_dto.type == "button":
-        block_model.script_ui_type = UI_TYPE_BUTTON
-        content: ButtonDTO = block_dto.block_content  # type: ButtonDTO
-        block_model.script_ui_content = json.dumps(
-            content.label.lang, ensure_ascii=False
-        )
-
-        return BlockUpdateResultDto(None, None)
-
-    if block_dto.type == "login":
-        block_model.script_ui_type = UI_TYPE_LOGIN
-        content: LoginDTO = block_dto.block_content  # type: LoginDTO
-        block_model.script_ui_content = json.dumps(
-            content.label.lang, ensure_ascii=False
-        )
-        return BlockUpdateResultDto(None, None)
-
-    if block_dto.type == "payment":
-        block_model.script_ui_type = UI_TYPE_TO_PAY
-        content: PaymentDTO = block_dto.block_content  # type: PaymentDTO
-        block_model.script_ui_content = json.dumps(
-            content.label.lang, ensure_ascii=False
-        )
-        return BlockUpdateResultDto(None, None)
-
-    if block_dto.type == "options":
-        block_model.script_type = SCRIPT_TYPE_ACTION
-        block_model.script_ui_type = UI_TYPE_SELECTION
-        content: OptionsDTO = block_dto.block_content  # type: OptionsDTO
-        block_model.script_ui_content = content.result_variable_bid
-        variable_definition = variable_definition_map.get(
-            content.result_variable_bid if content.result_variable_bid else "",
-            None,
-        )
-        if (not new_block) and variable_definition is None:
-            return BlockUpdateResultDto(None, _("SHIFU.PROFILE_NOT_FOUND"))
-        if (not new_block) and (not content.options or not content.options):
-            return BlockUpdateResultDto(None, _("SHIFU.OPTIONS_REQUIRED"))
-
-        if not new_block:
-            for option in content.options:
-                if not option.label or not option.label.lang:
-                    return BlockUpdateResultDto(None, _("SHIFU.OPTION_NAME_REQUIRED"))
-                if not option.value:
-                    return BlockUpdateResultDto(None, _("SHIFU.OPTION_VALUE_REQUIRED"))
-
-        block_model.script_other_conf = json.dumps(
-            {
-                "var_name": (
-                    variable_definition.profile_key if variable_definition else ""
-                ),
-                "btns": [
-                    {
-                        "label": content.label.lang,
-                        "value": content.value,
-                    }
-                    for content in content.options
-                ],
-            }
-        )
-        block_model.script_ui_profile = (
-            "[" + variable_definition.profile_key if variable_definition else "" + "]"
-        )
-        return BlockUpdateResultDto(None, None)
-
-    if block_dto.type == "input":
-
-        block_model.script_ui_type = UI_TYPE_INPUT
-        content: InputDTO = block_dto.block_content  # type: InputDTO
-        if (not new_block) and (not content.prompt or not content.prompt.strip()):
-            return BlockUpdateResultDto(None, _("SHIFU.TEXT_INPUT_PROMPT_REQUIRED"))
-        if (not new_block) and (
-            content.result_variable_bids is None
-            or len(content.result_variable_bids) == 0
-        ):
-            return BlockUpdateResultDto(None, "SHIFU.RESULT_VARIABLE_BIDS_REQUIRED")
-        block_model.script_ui_content = json.dumps(
-            content.placeholder.lang, ensure_ascii=False
-        )
-
-        block_model.script_check_prompt = content.prompt
-        block_model.script_model = content.llm
-        block_model.script_temperature = content.llm_temperature
-        variable_definition = variable_definition_map.get(
-            (
-                block_dto.variable_bids[0]
-                if block_dto.variable_bids and len(block_dto.variable_bids) > 0
-                else ""
-            ),
-            None,
-        )
-        block_model.script_ui_profile_id = (
-            variable_definition.profile_id if variable_definition else ""
-        )
-
-        if (not new_block) and ("json" not in content.prompt.strip().lower()):
-            return BlockUpdateResultDto(
-                None, _("SHIFU.TEXT_INPUT_PROMPT_JSON_REQUIRED")
-            )
-        if (not new_block) and (
-            variable_definition.profile_key not in content.prompt.strip().lower()
-        ):
-            return BlockUpdateResultDto(
-                None, _("SHIFU.TEXT_INPUT_PROMPT_VARIABLE_REQUIRED")
-            )
-        return BlockUpdateResultDto(None, None)
-    if block_dto.type == "goto":
-        variable_definition = variable_definition_map.get(
-            (
-                block_dto.variable_bids[0]
-                if block_dto.variable_bids and len(block_dto.variable_bids) > 0
-                else ""
-            ),
-            None,
-        )
-        if not new_block and variable_definition is None:
-            return BlockUpdateResultDto(None, _("SHIFU.PROFILE_NOT_FOUND"))
-        block_model.script_ui_type = UI_TYPE_BRANCH
-        content: GotoDTO = block_dto.block_content
-        block_model.script_ui_content = ""
-        block_model.script_other_conf = json.dumps(
-            {
-                "var_name": (
-                    variable_definition.profile_key if variable_definition else ""
-                ),
-                "jump_rule": [
-                    {
-                        "goto_id": condition.destination_bid,
-                        "value": condition.value,
-                        "type": condition.destination_type,
-                    }
-                    for condition in content.conditions
-                ],
-            },
-            ensure_ascii=False,
-        )
-        return BlockUpdateResultDto(None, None)
-
-    return BlockUpdateResultDto(None, None)
-
-
-def generate_block_dto_from_model(
-    block_model: AILessonScript, variable_definitions: list[ProfileItemDefinition]
 ) -> list[BlockDTO]:
-
+    """
+    deprecated: use generate_block_dto_from_model_internal instead, only used in migration
+    Args:
+        block_model: The block model to convert
+        variable_definitions: The variable definitions to use
+    Returns:
+        The block dto
+    """
     ret = []
 
     if block_model.script_ui_profile_id:
@@ -609,8 +465,17 @@ def generate_block_dto_from_model(
 
 
 def check_content_block_dto(
-    block_dto: BlockDTO, variable_definition_map: dict[str, ProfileItemDefinition]
+    block_dto: BlockDTO,
+    variable_definition_map: dict[str, ProfileItemDefinition],
 ) -> BlockUpdateResultDto:
+    """
+    check content block dto
+    Args:
+        block_dto: The block dto to check
+        variable_definition_map: The variable definition map
+    Returns:
+        The block update result dto
+    """
     if (
         not block_dto.block_content.content
         or not block_dto.block_content.content.strip()
@@ -620,16 +485,34 @@ def check_content_block_dto(
 
 
 def check_button_block_dto(
-    block_dto: BlockDTO, variable_definition_map: dict[str, ProfileItemDefinition]
+    block_dto: BlockDTO,
+    variable_definition_map: dict[str, ProfileItemDefinition],
 ) -> BlockUpdateResultDto:
+    """
+    check button block dto
+    Args:
+        block_dto: The block dto to check
+        variable_definition_map: The variable definition map
+    Returns:
+        The block update result dto
+    """
     if not block_dto.block_content.label or not block_dto.block_content.label.lang:
         return BlockUpdateResultDto(None, _("SHIFU.BUTTON_LABEL_REQUIRED"))
     return BlockUpdateResultDto(None, None)
 
 
 def check_input_block_dto(
-    block_dto: BlockDTO, variable_definition_map: dict[str, ProfileItemDefinition]
+    block_dto: BlockDTO,
+    variable_definition_map: dict[str, ProfileItemDefinition],
 ) -> BlockUpdateResultDto:
+    """
+    check input block dto
+    Args:
+        block_dto: The block dto to check
+        variable_definition_map: The variable definition map
+    Returns:
+        The block update result dto
+    """
     content: InputDTO = block_dto.block_content
     if not content.prompt or not content.prompt.strip():
         return BlockUpdateResultDto(None, _("SHIFU.TEXT_INPUT_PROMPT_REQUIRED"))
@@ -649,8 +532,17 @@ def check_input_block_dto(
 
 
 def check_options_block_dto(
-    block_dto: BlockDTO, variable_definition_map: dict[str, ProfileItemDefinition]
+    block_dto: BlockDTO,
+    variable_definition_map: dict[str, ProfileItemDefinition],
 ) -> BlockUpdateResultDto:
+    """
+    check options block dto
+    Args:
+        block_dto: The block dto to check
+        variable_definition_map: The variable definition map
+    Returns:
+        The block update result dto
+    """
     content: OptionsDTO = block_dto.block_content
     if not content.options or len(content.options) == 0:
         return BlockUpdateResultDto(None, _("SHIFU.OPTIONS_REQUIRED"))
@@ -670,8 +562,20 @@ def check_options_block_dto(
 
 
 def check_goto_block_dto(
-    block_dto: BlockDTO, variable_definition_map: dict[str, ProfileItemDefinition]
+    block_dto: BlockDTO,
+    variable_definition_map: dict[str, ProfileItemDefinition],
 ) -> BlockUpdateResultDto:
+    """
+    Check if the goto block DTO is valid.
+
+    Args:
+        block_dto: The goto block DTO to validate
+        variable_definition_map: Map of variable definitions
+
+    Returns:
+        BlockUpdateResultDto: Result with error message if validation fails
+    """
+
     content: GotoDTO = block_dto.block_content
     if not content.conditions or len(content.conditions) == 0:
         return BlockUpdateResultDto(None, _("SHIFU.GOTO_CONDITIONS_REQUIRED"))
@@ -685,30 +589,78 @@ def check_goto_block_dto(
 
 
 def check_login_block_dto(
-    block_dto: BlockDTO, variable_definition_map: dict[str, ProfileItemDefinition]
+    block_dto: BlockDTO,
+    variable_definition_map: dict[str, ProfileItemDefinition],
 ) -> BlockUpdateResultDto:
-    if not block_dto.block_content.label or not block_dto.block_content.label.lang:
+    """
+    Check if the login block DTO is valid.
+
+    Args:
+        block_dto: The login block DTO to validate
+        variable_definition_map: Map of variable definitions
+
+    Returns:
+        BlockUpdateResultDto: Result with error message if validation fails
+    """
+    if (
+        not block_dto.block_content.label
+        or not block_dto.block_content.label.lang
+        or not "".join(list(block_dto.block_content.label.lang.values()))
+    ):
         return BlockUpdateResultDto(None, _("SHIFU.LOGIN_LABEL_REQUIRED"))
     return BlockUpdateResultDto(None, None)
 
 
 def check_payment_block_dto(
-    block_dto: BlockDTO, variable_definition_map: dict[str, ProfileItemDefinition]
+    block_dto: BlockDTO,
+    variable_definition_map: dict[str, ProfileItemDefinition],
 ) -> BlockUpdateResultDto:
-    if not block_dto.block_content.label or not block_dto.block_content.label.lang:
+    """
+    Check if the payment block DTO is valid.
+
+    Args:
+        block_dto: The payment block DTO to validate
+        variable_definition_map: Map of variable definitions
+
+    Returns:
+        BlockUpdateResultDto: Result with error message if validation fails
+    """
+    if (
+        not block_dto.block_content.label
+        or not block_dto.block_content.label.lang
+        or not "".join(list(block_dto.block_content.label.lang.values()))
+    ):
         return BlockUpdateResultDto(None, _("SHIFU.PAYMENT_LABEL_REQUIRED"))
     return BlockUpdateResultDto(None, None)
 
 
 def check_break_block_dto(
-    block_dto: BlockDTO, variable_definition_map: dict[str, ProfileItemDefinition]
+    block_dto: BlockDTO,
+    variable_definition_map: dict[str, ProfileItemDefinition],
 ) -> BlockUpdateResultDto:
+    """
+    check break block dto
+    Args:
+        block_dto: The block dto to check
+        variable_definition_map: The variable definition map
+    Returns:
+        The block update result dto
+    """
     return BlockUpdateResultDto(None, None)
 
 
 def check_block_dto(
-    block_dto: BlockDTO, variable_definition_map: dict[str, ProfileItemDefinition]
+    block_dto: BlockDTO,
+    variable_definition_map: dict[str, ProfileItemDefinition],
 ) -> BlockUpdateResultDto:
+    """
+    check block dto
+    Args:
+        block_dto: The block dto to check
+        variable_definition_map: The variable definition map
+    Returns:
+        The block update result dto
+    """
     func_map = {
         BLOCK_TYPE_CONTENT: check_content_block_dto,
         BLOCK_TYPE_BUTTON: check_button_block_dto,
@@ -731,6 +683,16 @@ def update_block_dto_to_model_internal(
     variable_definitions: list[ProfileItemDefinition],
     new_block: bool = False,
 ) -> BlockUpdateResultDto:
+    """
+    update block dto to model
+    Args:
+        block_dto: The block dto to update
+        block_model: The block model to update
+        variable_definitions: The variable definitions to use
+        new_block: Whether the block is new
+    Returns:
+        The block update result dto
+    """
     block_type = BLOCK_TYPE_VALUES.get(block_dto.type, None)
     if block_type is None:
         raise_error(f"Invalid block type: {block_dto.type}")
@@ -752,23 +714,34 @@ def update_block_dto_to_model_internal(
     block_model.resource_bids = ",".join(block_dto.resource_bids)
     if block_dto.type == BLOCK_TYPE_CONTENT:
         content: ContentDTO = block_dto.block_content
-        from flask import current_app as app
-
-        app.logger.info(f"content: {content.content}")
         content.content = html_2_markdown(content.content, [])
-        app.logger.info(f"content: {content.content}")
-        block_model.content = json.dumps(content.__json__(), ensure_ascii=False)
+        block_model.content = json.dumps(
+            content.__json__(),
+            ensure_ascii=False,
+        )
     if block_dto.type == BLOCK_TYPE_INPUT:
         content: InputDTO = block_dto.block_content
         content.prompt = html_2_markdown(content.prompt, [])
-        block_model.content = json.dumps(content.__json__(), ensure_ascii=False)
+        block_model.content = json.dumps(
+            content.__json__(),
+            ensure_ascii=False,
+        )
 
     return BlockUpdateResultDto(None, None)
 
 
 def generate_block_dto_from_model_internal(
-    block_model: Union[ShifuDraftBlock, ShifuPublishedBlock], convert_html: bool = False
+    block_model: Union[ShifuDraftBlock, ShifuPublishedBlock],
+    convert_html: bool = False,
 ) -> BlockDTO:
+    """
+    generate block dto from model
+    Args:
+        block_model: The block model to generate
+        convert_html: Whether to convert html to markdown
+    Returns:
+        The block dto
+    """
     type = BLOCK_TYPE_VALUES_REVERSE.get(block_model.type, None)
     if type is None:
         raise_error(f"Invalid block type: {block_model.type}")

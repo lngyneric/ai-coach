@@ -20,12 +20,9 @@ from ...service.order.consts import (
 from .dtos import AICourseDTO, StudyRecordItemDTO, ScriptInfoDTO
 from ...service.lesson.const import (
     LESSON_TYPE_TRIAL,
-    STATUS_PUBLISH,
-    STATUS_DRAFT,
 )
 from ...dao import db
 
-from ...service.lesson.models import AILesson, AILessonScript
 from ...service.order.models import (
     AICourseBuyRecord,
     AICourseLessonAttend,
@@ -64,6 +61,16 @@ from flaskr.service.study.output.handle_output_continue import _handle_output_co
 def fill_attend_info(
     app: Flask, user_id: str, is_paid: bool, ret: AICourseDTO
 ) -> AICourseDTO:
+    """
+    Fill the attend info for the outline items
+    Args:
+        app: Flask application instance
+        user_id: User id
+        is_paid: Is paid
+        ret: AICourseDTO
+    Returns:
+        AICourseDTO
+    """
     attend_status_values = get_attend_status_values()
     q = queue.Queue()
     for lesson in ret.lessons:
@@ -130,6 +137,16 @@ def fill_attend_info(
 def get_lesson_tree_to_study_inner(
     app: Flask, user_id: str, course_id: str = None, preview_mode: bool = False
 ) -> AICourseDTO:
+    """
+    Get the lesson tree to study
+    Args:
+        app: Flask application instance
+        user_id: User id
+        course_id: Course id
+        preview_mode: Preview mode
+    Returns:
+        AICourseDTO
+    """
     with app.app_context():
         shifu_info: ShifuInfoDto = get_shifu_outline_tree(app, course_id, preview_mode)
         q = queue.Queue()
@@ -199,6 +216,17 @@ def get_lesson_tree_to_study_inner(
 def get_lesson_tree_to_study(
     app: Flask, user_id: str, course_id: str = None, preview_mode: bool = False
 ) -> AICourseDTO:
+    """
+    Get the lesson tree to study
+    the lesson tree is used to display the lesson tree in the client
+    Args:
+        app: Flask application instance
+        user_id: User id
+        course_id: Course id
+        preview_mode: Preview mode
+    Returns:
+        AICourseDTO
+    """
     return run_with_redis(
         app,
         app.config.get("REDIS_KEY_PREFIX") + ":get_lesson_tree_to_study:" + user_id,
@@ -212,6 +240,17 @@ def get_lesson_tree_to_study(
 def get_study_record(
     app: Flask, user_id: str, lesson_id: str, preview_mode: bool = False
 ) -> StudyRecordDTO:
+    """
+    Get the study record
+    the study record is used to display the study record in the client
+    Args:
+        app: Flask application instance
+        user_id: User id
+        lesson_id: Lesson id
+        preview_mode: Preview mode
+    Returns:
+        StudyRecordDTO
+    """
     with app.app_context():
         block_model: Union[ShifuDraftBlock, ShifuPublishedBlock] = (
             ShifuDraftBlock if preview_mode else ShifuPublishedBlock
@@ -377,34 +416,28 @@ def get_study_record(
 def get_script_info(
     app: Flask, user_id: str, script_id: str, preview_mode: bool = False
 ) -> ScriptInfoDTO:
+    """
+    Get the script info
+    """
     with app.app_context():
-        ai_course_status = [STATUS_PUBLISH]
-        if preview_mode:
-            ai_course_status = [STATUS_DRAFT]
-        script_info = (
-            AILessonScript.query.filter(
-                AILessonScript.script_id == script_id,
-                AILessonScript.status.in_(ai_course_status),
-            )
-            .order_by(AILessonScript.id.desc())
-            .first()
+        block_model: Union[ShifuDraftBlock, ShifuPublishedBlock] = (
+            ShifuDraftBlock if preview_mode else ShifuPublishedBlock
         )
-        if not script_info:
+        block_info = block_model.query.filter(
+            block_model.block_bid == script_id,
+            block_model.deleted == 0,
+        ).first()
+        if not block_info:
             return None
-        lesson = (
-            AILesson.query.filter(
-                AILesson.lesson_id == script_info.lesson_id,
-                AILesson.status.in_(ai_course_status),
-            )
-            .order_by(AILesson.id.desc())
-            .first()
+        outline_item: ShifuOutlineItemDto = get_outline_item_dto(
+            app, block_info.outline_item_bid, preview_mode
         )
-        if not lesson:
+        if not outline_item:
             return None
         return ScriptInfoDTO(
-            script_info.script_index,
-            script_info.script_name,
-            lesson.lesson_type == LESSON_TYPE_TRIAL,
+            block_info.position - 1,
+            outline_item.title,
+            outline_item.type == LESSON_TYPE_TRIAL,
         )
 
 

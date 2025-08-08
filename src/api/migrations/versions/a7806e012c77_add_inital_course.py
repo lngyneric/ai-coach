@@ -125,7 +125,7 @@ def upgrade():
             )
         )
 
-    from flaskr.service.lesson.funs import update_lesson_info
+    from flaskr.service.lesson.funcs import update_lesson_info
     from flaskr.service.lesson.const import (
         LESSON_TYPE_TRIAL,
         LESSON_TYPE_BRANCH_HIDDEN,

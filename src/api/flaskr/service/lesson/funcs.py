@@ -3,7 +3,6 @@ from flaskr.service.common.models import raise_error
 from .models import AICourse, AILesson, AILessonScript
 from .const import (
     ASK_MODE_DEFAULT,
-    ASK_MODE_ENABLE,
     CONTENT_TYPE_TEXT,
     CONTENT_TYPES,
     LESSON_TYPE_NORMAL,
@@ -12,7 +11,6 @@ from .const import (
     UI_TYPE_EMPTY,
     UI_TYPE_SELECTION,
     UI_TYPES,
-    STATUS_PUBLISH,
 )
 from flask import Flask
 from ...dao import db
@@ -20,7 +18,6 @@ from flaskr.api.doc.feishu import list_records
 from flaskr.util.uuid import generate_id
 from sqlalchemy import func, text
 import json
-from flaskr.framework.plugin.plugin_manager import extensible
 from flaskr.service.shifu.models import ShifuPublishedShifu, ShifuDraftShifu
 from typing import Union
 from flaskr.service.shifu.utils import get_shifu_res_url
@@ -28,6 +25,10 @@ from flaskr.service.shifu.utils import get_shifu_res_url
 
 @register_schema_to_swagger
 class AICourseDTO:
+    """
+    AICourseDTO
+    """
+
     def __init__(
         self,
         course_id,
@@ -63,6 +64,10 @@ class AICourseDTO:
 
 @register_schema_to_swagger
 class AILessonDTO:
+    """
+    AILessonDTO
+    """
+
     def __init__(
         self,
         lesson_id,
@@ -88,6 +93,10 @@ class AILessonDTO:
 
 @register_schema_to_swagger
 class AILessonInfoDTO:
+    """
+    AILessonInfoDTO
+    """
+
     def __init__(
         self,
         lesson_no: str,
@@ -114,6 +123,10 @@ class AILessonInfoDTO:
 
 @register_schema_to_swagger
 class AICourseDetailDTO:
+    """
+    AICourseDetailDTO
+    """
+
     def __init__(
         self,
         course_id: str,
@@ -149,6 +162,10 @@ class AICourseDetailDTO:
 
 @register_schema_to_swagger
 class AILessonDetailDTO:
+    """
+    AILessonDetailDTO
+    """
+
     def __init__(
         self,
         lesson_id: str,
@@ -219,6 +236,10 @@ class AILessonDetailDTO:
 
 
 class AIScriptDTO:
+    """
+    AIScriptDTO
+    """
+
     def __init__(
         self,
         script_id,
@@ -311,6 +332,25 @@ def update_lesson_info(
     course_id: str = None,
     file_name: str = None,
 ):
+    """
+    update lesson info
+    deprecated, use shifu outline funcs instead
+    only used in db migration
+    Args:
+        app: Flask application instance
+        doc_id: Doc ID
+        table_id: Table ID
+        view_id: View ID
+        title: Title
+        index: Index
+        lesson_type: Lesson type
+        app_id: App ID
+        app_secret: App secret
+        course_id: Course ID
+        file_name: File name
+    Returns:
+        None
+    """
     with app.app_context():
         # 检查课程
         # 用飞书的AppId做为课程的唯一标识「
@@ -552,172 +592,6 @@ def update_lesson_info(
         return
 
 
-def run_lesson_script(app: Flask, lesson_id: str, script_id: str):
-    with app.app_context():
-        script = AILessonScript.query.filter_by(script_id=script_id).first()
-        if script is None:
-            return None
-        return script
-
-
-def get_lessons(app: Flask, feshu_doc_id) -> AICourseDetailDTO:
-    with app.app_context():
-        course = AICourse.query.filter(
-            AICourse.course_feishu_id == feshu_doc_id
-        ).first()
-
-        if course is None:
-            return []
-        lessons = AILesson.query.filter(
-            AILesson.status == 1,
-            AILesson.course_id == course.course_id,
-            func.length(AILesson.lesson_no) == 2,
-        ).all()
-        lessons = sorted(lessons, key=lambda x: (len(x.lesson_no), x.lesson_no))
-        lessonInfos = []
-        for lesson in lessons:
-            lessonInfo = AILessonInfoDTO(
-                lesson.lesson_no,
-                lesson.lesson_name,
-                lesson.lesson_id,
-                lesson.lesson_feishu_id,
-                lesson.lesson_type,
-            )
-            lessonInfos.append(lessonInfo)
-        return AICourseDetailDTO(
-            course.course_id,
-            course.course_name,
-            course.course_desc,
-            course.course_price,
-            course.course_status,
-            course.course_feishu_id,
-            course.status,
-            lessonInfos,
-        )
-
-
-def get_lesson_detail(app: Flask, lesson_id: str) -> AILessonDetailDTO:
-    with app.app_context():
-        lesson = (
-            AILesson.query.filter(
-                AILesson.lesson_id == lesson_id, AILesson.status.in_([STATUS_PUBLISH])
-            )
-            .order_by(AILesson.id.desc())
-            .first()
-        )
-        if lesson is None:
-            return None
-        return AILessonDetailDTO(
-            lesson.lesson_id,
-            lesson.lesson_name,
-            lesson.lesson_desc,
-            lesson.lesson_no,
-            lesson.lesson_index,
-            lesson.lesson_feishu_id,
-            lesson.lesson_status,
-            lesson.status,
-            lesson.lesson_type,
-            lesson.lesson_summary,
-            lesson.lesson_language,
-            lesson.lesson_name_multi_language,
-            lesson.ask_count_limit,
-            lesson.ask_model,
-            lesson.ask_prompt,
-            lesson.pre_lesson_no,
-            lesson.created_user_id,
-            lesson.updated_user_id,
-            lesson.created,
-            lesson.updated,
-        )
-
-
-def delete_lesson(app: Flask, table_id: str, course_id: str, lesson_no: str):
-    with app.app_context():
-        if table_id:
-            lessons = AILesson.query.filter(AILesson.lesson_feishu_id == table_id).all()
-        elif course_id and lesson_no:
-            lessons = AILesson.query.filter(
-                AILesson.course_id == course_id, AILesson.lesson_no == lesson_no
-            ).all()
-        if lessons is None:
-            return False
-        for lesson in lessons:
-            lesson.status = 0
-        db.session.commit()
-        return True
-
-
-def update_lesson_ask_info(
-    app: Flask,
-    lesson_id: str,
-    lesson_ask_count_limit: int,
-    lesson_ask_model: str,
-    lesson_ask_prompt: str,
-    lesson_ask_count_history: int,
-    lesson_summary: str,
-    lesson_language: str,
-    lesson_name_multi_language: str,
-    lesson_summary_multi_language: str,
-):
-    with app.app_context():
-        lesson = AILesson.query.filter(AILesson.lesson_id == lesson_id).first()
-        if lesson is None:
-            raise_error("LESSON.LESSON_NOT_FOUND")
-        lesson.lesson_ask_count_limit = lesson_ask_count_limit
-        lesson.ask_model = lesson_ask_model
-        lesson.ask_prompt = lesson_ask_prompt
-        lesson.ask_with_history = lesson_ask_count_history
-        lesson.lesson_summary = lesson_summary
-        lesson.lesson_language = lesson_language
-        lesson.lesson_name_multi_language = lesson_name_multi_language
-        lesson.lesson_summary_multi_language = lesson_summary_multi_language
-        lesson.ask_mode = ASK_MODE_ENABLE
-        db.session.commit()
-        return True
-
-
-def get_course_list(app: Flask) -> list[AICourseDTO]:
-    with app.app_context():
-        courses = AICourse.query.filter(AICourse.status == 1).all()
-        return [
-            AICourseDTO(
-                course.course_id,
-                course.course_name,
-                course.course_desc,
-                course.course_price,
-                course.course_feishu_id,
-                course.course_status,
-                course.course_teacher_avatar,
-            )
-            for course in courses
-        ]
-
-
-def update_course_info(
-    app: Flask,
-    course_id: str,
-    course_name: str,
-    course_desc: str,
-    course_price: float,
-    course_status: int,
-    course_feishu_id: str,
-    course_teacher_avatar: str,
-):
-    with app.app_context():
-        course = AICourse.query.filter(AICourse.course_id == course_id).first()
-        if course is None:
-            raise_error("LESSON.COURSE_NOT_FOUND")
-        course.course_name = course_name
-        course.course_desc = course_desc
-        course.course_price = course_price
-        course.course_status = course_status
-        course.course_feishu_id = course_feishu_id
-        course.course_teacher_avatar = course_teacher_avatar
-        db.session.commit()
-        return True
-
-
-@extensible
 def get_course_info(
     app: Flask, course_id: str, preview_mode: bool = False
 ) -> AICourseDTO:

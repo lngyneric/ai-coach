@@ -1,29 +1,16 @@
+"""
+common shifu funcs
+
+This module contains functions for shifu.
+
+Author: yfge
+Date: 2025-08-07
+"""
+
 from ...dao import redis_client as redis, db
-from datetime import datetime
-from .dtos import ShifuDto, ShifuDetailDto
-from ..lesson.models import AICourse, AILesson, AILessonScript
-from ...util.uuid import generate_id
-from ...util.prompt_loader import load_prompt_template
 from .models import FavoriteScenario, AiCourseAuth
-from ..common.dtos import PageNationDTO
-from ...service.lesson.const import (
-    STATUS_PUBLISH,
-    STATUS_DRAFT,
-    STATUS_DELETE,
-    STATUS_HISTORY,
-    STATUS_TO_DELETE,
-    SCRIPT_TYPE_SYSTEM,
-    ASK_MODE_ENABLE,
-)
-from ..check_risk.funcs import check_text_with_risk_control
 from ..common.models import raise_error, raise_error_with_args
 from ...common.config import get_config
-from ...service.resource.models import Resource
-from .utils import (
-    get_existing_outlines_for_publish,
-    get_existing_blocks_for_publish,
-    get_original_outline_tree,
-)
 import oss2
 import uuid
 import json
@@ -32,216 +19,29 @@ from io import BytesIO
 from urllib.parse import urlparse
 import re
 import time
-from collections import defaultdict
-from flaskr.api.llm import invoke_llm
-from flaskr.api.langfuse import langfuse_client
-import threading
+from .models import ShifuDraftShifu
+from ...service.resource.models import Resource
+from aliyunsdkcore.client import AcsClient
+from aliyunsdkcdn.request.v20180510.PushObjectCacheRequest import (
+    PushObjectCacheRequest,
+)
+from aliyunsdkcdn.request.v20180510.DescribeRefreshTasksRequest import (
+    DescribeRefreshTasksRequest,
+)
 
 
-from flaskr.framework.plugin.plugin_manager import extensible
-
-
-def get_raw_shifu_list(
-    app, user_id: str, page_index: int, page_size: int
-) -> PageNationDTO:
-    try:
-        page_index = max(page_index, 1)
-        page_size = max(page_size, 1)
-        page_offset = (page_index - 1) * page_size
-
-        created_total = AICourse.query.filter(
-            AICourse.created_user_id == user_id
-        ).count()
-        shared_total = AiCourseAuth.query.filter(
-            AiCourseAuth.user_id == user_id,
-        ).count()
-        total = created_total + shared_total
-
-        created_subquery = (
-            db.session.query(db.func.max(AICourse.id))
-            .filter(
-                AICourse.created_user_id == user_id,
-                AICourse.status.in_([STATUS_PUBLISH, STATUS_DRAFT]),
-            )
-            .group_by(AICourse.course_id)
-        )
-
-        shared_course_ids = (
-            db.session.query(AiCourseAuth.course_id)
-            .filter(AiCourseAuth.user_id == user_id)
-            .subquery()
-        )
-
-        shared_subquery = (
-            db.session.query(db.func.max(AICourse.id))
-            .filter(
-                AICourse.course_id.in_(shared_course_ids),
-                AICourse.status.in_([STATUS_PUBLISH, STATUS_DRAFT]),
-            )
-            .group_by(AICourse.course_id)
-        )
-
-        union_subquery = created_subquery.union(shared_subquery).subquery()
-
-        courses = (
-            db.session.query(AICourse)
-            .filter(AICourse.id.in_(union_subquery))
-            .order_by(AICourse.id.desc())
-            .offset(page_offset)
-            .limit(page_size)
-            .all()
-        )
-
-        infos = [f"{c.course_id} + {c.course_name} + {c.status}\r\n" for c in courses]
-        app.logger.info(f"{infos}")
-        shifu_dtos = [
-            ShifuDto(
-                course.course_id,
-                course.course_name,
-                course.course_desc,
-                course.course_teacher_avatar,
-                course.status,
-                False,
-            )
-            for course in courses
-        ]
-        return PageNationDTO(page_index, page_size, total, shifu_dtos)
-    except Exception as e:
-        app.logger.error(f"get raw shifu list failed: {e}")
-        return PageNationDTO(0, 0, 0, [])
-
-
-def get_favorite_shifu_list(
-    app, user_id: str, page_index: int, page_size: int
-) -> PageNationDTO:
-    try:
-        page_index = max(page_index, 1)
-        page_size = max(page_size, 1)
-        page_offset = (page_index - 1) * page_size
-        total = FavoriteScenario.query.filter(
-            FavoriteScenario.user_id == user_id
-        ).count()
-        favorite_scenarios = (
-            FavoriteScenario.query.filter(FavoriteScenario.user_id == user_id)
-            .order_by(FavoriteScenario.id.desc())
-            .offset(page_offset)
-            .limit(page_size)
-            .all()
-        )
-        shifu_ids = [
-            favorite_scenario.scenario_id for favorite_scenario in favorite_scenarios
-        ]
-        courses = AICourse.query.filter(
-            AICourse.course_id.in_(shifu_ids),
-            AICourse.status.in_([STATUS_PUBLISH, STATUS_DRAFT]),
-        ).all()
-        shifu_dtos = [
-            ShifuDto(
-                course.course_id,
-                course.course_name,
-                course.course_desc,
-                course.course_teacher_avatar,
-                course.status,
-                True,
-            )
-            for course in courses
-        ]
-        return PageNationDTO(page_index, page_size, total, shifu_dtos)
-    except Exception as e:
-        app.logger.error(f"get favorite shifu list failed: {e}")
-        return PageNationDTO(0, 0, 0, [])
-
-
-@extensible
-def get_shifu_list(
-    app, user_id: str, page_index: int, page_size: int, is_favorite: bool
-) -> PageNationDTO:
-    if is_favorite:
-        return get_favorite_shifu_list(app, user_id, page_index, page_size)
-    else:
-        return get_raw_shifu_list(app, user_id, page_index, page_size)
-
-
-@extensible
-def create_shifu(
-    app,
-    user_id: str,
-    shifu_name: str,
-    shifu_description: str,
-    shifu_image: str,
-    shifu_keywords: list[str] = None,
-):
-    with app.app_context():
-        shifu_id = generate_id(app)
-        if not shifu_name:
-            raise_error("SHIFU.SHIFU_NAME_REQUIRED")
-        if len(shifu_name) > 20:
-            raise_error("SHIFU.SHIFU_NAME_TOO_LONG")
-        if len(shifu_description) > 500:
-            raise_error("SHIFU.SHIFU_DESCRIPTION_TOO_LONG")
-        existing_shifu = AICourse.query.filter_by(course_name=shifu_name).first()
-        if existing_shifu:
-            raise_error("SHIFU.SHIFU_NAME_ALREADY_EXISTS")
-        course = AICourse(
-            course_id=shifu_id,
-            course_name=shifu_name,
-            course_desc=shifu_description,
-            course_teacher_avatar=shifu_image,
-            created_user_id=user_id,
-            updated_user_id=user_id,
-            status=STATUS_DRAFT,
-            course_keywords=",".join(shifu_keywords) if shifu_keywords else "",
-        )
-        check_text_with_risk_control(app, shifu_id, user_id, course.get_str_to_check())
-        db.session.add(course)
-        db.session.commit()
-        return ShifuDto(
-            shifu_id=shifu_id,
-            shifu_name=shifu_name,
-            shifu_description=shifu_description,
-            shifu_avatar=shifu_image,
-            shifu_state=STATUS_DRAFT,
-            is_favorite=False,
-        )
-
-
-@extensible
-def get_shifu_info(app, user_id: str, shifu_id: str):
-    with app.app_context():
-        shifu = (
-            AICourse.query.filter(
-                AICourse.course_id == shifu_id,
-                AICourse.status.in_([STATUS_PUBLISH, STATUS_DRAFT]),
-            )
-            .order_by(AICourse.id.desc())
-            .first()
-        )
-        if shifu:
-            return ShifuDetailDto(
-                shifu_id=shifu.course_id,
-                shifu_name=shifu.course_name,
-                shifu_description=shifu.course_desc,
-                shifu_avatar=shifu.course_teacher_avatar,
-                shifu_keywords=(
-                    shifu.course_keywords.split(",") if shifu.course_keywords else []
-                ),
-                shifu_model=shifu.course_default_model,
-                shifu_temperature=shifu.course_default_temperature,
-                shifu_price=shifu.course_price,
-                shifu_url=get_config("WEB_URL", "UNCONFIGURED")
-                + "/c/"
-                + shifu.course_id,
-                shifu_preview_url=get_config("WEB_URL", "UNCONFIGURED")
-                + "/c/"
-                + shifu.course_id
-                + "?preview=true",
-            )
-        raise_error("SHIFU.SHIFU_NOT_FOUND")
-
-
-# mark favorite shifu
-@extensible
 def mark_favorite_shifu(app, user_id: str, shifu_id: str):
+    """
+    Mark a shifu as favorite for a user.
+
+    Args:
+        app: Flask application instance
+        user_id: User ID
+        shifu_id: Shifu ID to mark as favorite
+
+    Returns:
+        bool: True if successful
+    """
     with app.app_context():
         existing_favorite_shifu = FavoriteScenario.query.filter_by(
             scenario_id=shifu_id, user_id=user_id
@@ -259,8 +59,18 @@ def mark_favorite_shifu(app, user_id: str, shifu_id: str):
 
 
 # unmark favorite shifu
-@extensible
 def unmark_favorite_shifu(app, user_id: str, shifu_id: str):
+    """
+    Unmark a shifu as favorite for a user.
+
+    Args:
+        app: Flask application instance
+        user_id: User ID
+        shifu_id: Shifu ID to unmark as favorite
+
+    Returns:
+        bool: True if successful
+    """
     with app.app_context():
         favorite_shifu = FavoriteScenario.query.filter_by(
             scenario_id=shifu_id, user_id=user_id
@@ -272,239 +82,35 @@ def unmark_favorite_shifu(app, user_id: str, shifu_id: str):
         return False
 
 
-@extensible
 def mark_or_unmark_favorite_shifu(app, user_id: str, shifu_id: str, is_favorite: bool):
+    """
+    Mark or unmark a shifu as favorite for a user.
+
+    Args:
+        app: Flask application instance
+        user_id: User ID
+        shifu_id: Shifu ID to mark or unmark as favorite
+        is_favorite: Whether to mark or unmark as favorite
+
+    Returns:
+        bool: True if successful
+    """
     if is_favorite:
         return mark_favorite_shifu(app, user_id, shifu_id)
     else:
         return unmark_favorite_shifu(app, user_id, shifu_id)
 
 
-def check_shifu_exist(app, shifu_id: str):
-    with app.app_context():
-        shifu = AICourse.query.filter(
-            AICourse.course_id == shifu_id,
-            AICourse.status.in_([STATUS_PUBLISH, STATUS_DRAFT]),
-        ).first()
-        if shifu:
-            return
-        raise_error("SHIFU.SHIFU_NOT_FOUND")
-
-
-def check_shifu_can_publish(app, shifu_id: str):
-    with app.app_context():
-        shifu = AICourse.query.filter(
-            AICourse.course_id == shifu_id,
-            AICourse.status.in_([STATUS_PUBLISH, STATUS_DRAFT]),
-        ).first()
-        if shifu:
-            return
-        raise_error("SHIFU.SHIFU_NOT_FOUND")
-
-
-def _run_summary_with_error_handling(app, shifu_id):
-    """Run shifu summary generation with error handling"""
-    try:
-        get_shifu_summary(app, shifu_id)
-    except Exception as e:
-        app.logger.error(f"Failed to generate shifu summary for {shifu_id}: {str(e)}")
-
-
-@extensible
-def publish_shifu(app, user_id, shifu_id: str):
-    with app.app_context():
-        current_time = datetime.now()
-        shifu = (
-            AICourse.query.filter(
-                AICourse.course_id == shifu_id,
-                AICourse.status.in_([STATUS_DRAFT, STATUS_PUBLISH]),
-            )
-            .order_by(AICourse.id.desc())
-            .first()
-        )
-        if shifu:
-            check_shifu_can_publish(app, shifu_id)
-            publish_shifu = shifu.clone()
-            publish_shifu.status = STATUS_PUBLISH
-            publish_shifu.updated_user_id = user_id
-            publish_shifu.updated_at = current_time
-            db.session.add(publish_shifu)
-            db.session.flush()
-            # deal with draft lessons
-            to_publish_lessons = get_existing_outlines_for_publish(app, shifu_id)
-            publish_outline_ids = []
-            for to_publish_lesson in to_publish_lessons:
-                if to_publish_lesson.status == STATUS_TO_DELETE:
-                    # delete the lesson
-                    to_publish_lesson.status = STATUS_DELETE
-                    AILesson.query.filter(
-                        AILesson.lesson_id == to_publish_lesson.lesson_id,
-                        AILesson.status.in_([STATUS_PUBLISH]),
-                    ).update(
-                        {
-                            "status": STATUS_DELETE,
-                            "updated_user_id": user_id,
-                            "updated": current_time,
-                        }
-                    )
-                    publish_outline_ids.append(to_publish_lesson.lesson_id)
-                elif to_publish_lesson.status == STATUS_PUBLISH:
-                    # change the lesson status to history
-                    # these logic would be removed in the future
-                    AILesson.query.filter(
-                        AILesson.lesson_id == to_publish_lesson.lesson_id,
-                        AILesson.status.in_([STATUS_PUBLISH]),
-                        AILesson.id != to_publish_lesson.id,
-                    ).update(
-                        {
-                            "status": STATUS_HISTORY,
-                            "updated_user_id": user_id,
-                            "updated": current_time,
-                        }
-                    )
-                    publish_outline_ids.append(to_publish_lesson.lesson_id)
-
-                elif to_publish_lesson.status == STATUS_DRAFT:
-                    # create a new lesson to publish
-                    new_lesson = to_publish_lesson.clone()
-                    new_lesson.status = STATUS_PUBLISH
-                    new_lesson.updated_user_id = user_id
-                    new_lesson.updated = current_time
-                    db.session.add(new_lesson)
-                    # change the lesson status to history
-                    AILesson.query.filter(
-                        AILesson.lesson_id == to_publish_lesson.lesson_id,
-                        AILesson.status.in_([STATUS_PUBLISH]),
-                        AILesson.id < to_publish_lesson.id,
-                    ).update(
-                        {
-                            "status": STATUS_HISTORY,
-                            "updated_user_id": user_id,
-                            "updated": current_time,
-                        }
-                    )
-                    publish_outline_ids.append(to_publish_lesson.lesson_id)
-
-            block_scripts = get_existing_blocks_for_publish(app, publish_outline_ids)
-            publish_block_ids = []
-            if block_scripts:
-                for block_script in block_scripts:
-                    if block_script.status == STATUS_TO_DELETE:
-                        # delete the block script
-                        block_script.status = STATUS_DELETE
-                        AILessonScript.query.filter(
-                            AILessonScript.script_id == block_script.script_id,
-                            AILessonScript.status.in_([STATUS_PUBLISH]),
-                        ).update(
-                            {
-                                "status": STATUS_DELETE,
-                                "updated_user_id": user_id,
-                                "updated": current_time,
-                            }
-                        )
-
-                    elif block_script.status == STATUS_DRAFT:
-                        # create a new block script to publish
-                        new_block_script = block_script.clone()
-                        new_block_script.status = STATUS_PUBLISH
-                        new_block_script.updated_user_id = user_id
-                        new_block_script.updated = current_time
-                        db.session.add(new_block_script)
-                        # change the block status to history
-                        AILessonScript.query.filter(
-                            AILessonScript.script_id == block_script.script_id,
-                            AILessonScript.status.in_([STATUS_PUBLISH]),
-                            AILessonScript.id < block_script.id,
-                        ).update(
-                            {
-                                "status": STATUS_HISTORY,
-                                "updated_user_id": user_id,
-                                "updated": current_time,
-                            }
-                        )
-                        publish_block_ids.append(block_script.script_id)
-
-                    elif block_script.status == STATUS_PUBLISH:
-                        # if the block is publish, then we need to change the status to history
-                        # these logic would be removed in the future
-                        block_script.status = STATUS_PUBLISH
-                        AILessonScript.query.filter(
-                            AILessonScript.script_id == block_script.script_id,
-                            AILessonScript.status.in_([STATUS_PUBLISH]),
-                            AILessonScript.id != block_script.id,
-                        ).update(
-                            {
-                                "status": STATUS_HISTORY,
-                                "updated_user_id": user_id,
-                                "updated": current_time,
-                            }
-                        )
-                        publish_block_ids.append(block_script.script_id)
-                    block_script.updated_user_id = user_id
-                    block_script.updated = current_time
-                    db.session.add(block_script)
-            AILessonScript.query.filter(
-                AILessonScript.lesson_id.in_(publish_outline_ids),
-                AILessonScript.status.in_([STATUS_PUBLISH]),
-                AILessonScript.script_id.notin_(publish_block_ids),
-            ).update(
-                {
-                    "status": STATUS_DELETE,
-                    "updated_user_id": user_id,
-                    "updated": current_time,
-                }
-            )
-
-            AILesson.query.filter(
-                AILesson.course_id == shifu_id,
-                AILesson.lesson_id.notin_(publish_outline_ids),
-                AILesson.status.in_([STATUS_PUBLISH]),
-            ).update(
-                {
-                    "status": STATUS_DELETE,
-                    "updated_user_id": user_id,
-                    "updated": current_time,
-                }
-            )
-
-            AICourse.query.filter(
-                AICourse.course_id == shifu_id,
-                AICourse.status.in_([STATUS_PUBLISH]),
-                AICourse.id != publish_shifu.id,
-            ).update(
-                {
-                    "status": STATUS_HISTORY,
-                    "updated_user_id": user_id,
-                    "updated": current_time,
-                }
-            )
-            db.session.commit()
-            thread = threading.Thread(
-                target=_run_summary_with_error_handling, args=(app, shifu_id)
-            )
-            thread.daemon = True  # Ensure thread doesn't prevent app shutdown
-            thread.start()
-            return get_config("WEB_URL", "UNCONFIGURED") + "/c/" + shifu.course_id
-        raise_error("SHIFU.SHIFU_NOT_FOUND")
-
-
-@extensible
-def preview_shifu(app, user_id, shifu_id: str, variables: dict, skip: bool):
-    with app.app_context():
-        shifu = AICourse.query.filter(AICourse.course_id == shifu_id).first()
-        if shifu:
-            check_shifu_can_publish(app, shifu_id)
-            return (
-                get_config("WEB_URL", "UNCONFIGURED")
-                + "/c/"
-                + shifu.course_id
-                + "?preview=true"
-                + "&skip="
-                + str(skip).lower()
-            )
-
-
 def get_content_type(filename):
+    """
+    Get the content type of a file.
+
+    Args:
+        filename: The filename to get the content type of
+    Returns:
+        The content type of the file
+    """
+
     extension = filename.rsplit(".", 1)[1].lower()
     if extension in ["jpg", "jpeg"]:
         return "image/jpeg"
@@ -516,16 +122,20 @@ def get_content_type(filename):
 
 
 def _warm_up_cdn(app, url: str, ALI_API_ID: str, ALI_API_SECRET: str, endpoint: str):
+    """
+    Warm up a CDN URL.
+
+    Args:
+        app: Flask application instance
+        url: The URL to warm up
+        ALI_API_ID: The Alibaba Cloud API ID
+        ALI_API_SECRET: The Alibaba Cloud API Secret
+        endpoint: The Alibaba Cloud endpoint
+
+    Returns:
+        bool: True if successful
+    """
     try:
-        from aliyunsdkcore.client import AcsClient
-        from aliyunsdkcdn.request.v20180510.PushObjectCacheRequest import (
-            PushObjectCacheRequest,
-        )
-        from aliyunsdkcdn.request.v20180510.DescribeRefreshTasksRequest import (
-            DescribeRefreshTasksRequest,
-        )
-        import json
-        import requests
 
         file_id = url.split("/")[-1]
 
@@ -601,6 +211,18 @@ def _warm_up_cdn(app, url: str, ALI_API_ID: str, ALI_API_SECRET: str, endpoint: 
 
 
 def _upload_to_oss(app, file_content, file_id: str, content_type: str) -> str:
+    """
+    Upload a file to OSS.
+
+    Args:
+        app: Flask application instance
+        file_content: The content of the file
+        file_id: The ID of the file
+        content_type: The content type of the file
+
+    Returns:
+        str: The URL of the uploaded file
+    """
     endpoint = get_config("ALIBABA_CLOUD_OSS_COURSES_ENDPOINT")
     ALI_API_ID = get_config("ALIBABA_CLOUD_OSS_COURSES_ACCESS_KEY_ID", None)
     ALI_API_SECRET = get_config("ALIBABA_CLOUD_OSS_COURSES_ACCESS_KEY_SECRET", None)
@@ -633,6 +255,18 @@ def _upload_to_oss(app, file_content, file_id: str, content_type: str) -> str:
 
 
 def upload_file(app, user_id: str, resource_id: str, file) -> str:
+    """
+    Upload a file to OSS.
+
+    Args:
+        app: Flask application instance
+        user_id: User ID
+        resource_id: Resource ID
+        file: The file to upload
+
+    Returns:
+        str: The URL of the uploaded file
+    """
     with app.app_context():
         isUpdate = False
         if resource_id == "":
@@ -669,6 +303,17 @@ def upload_file(app, user_id: str, resource_id: str, file) -> str:
 
 
 def upload_url(app, user_id: str, url: str) -> str:
+    """
+    Upload a file from a URL to OSS.
+
+    Args:
+        app: Flask application instance
+        user_id: User ID
+        url: The URL of the file to upload
+
+    Returns:
+        str: The URL of the uploaded file
+    """
     with app.app_context():
         try:
             # Validate URL format
@@ -741,118 +386,24 @@ def upload_url(app, user_id: str, url: str) -> str:
             raise_error("FILE.FILE_UPLOAD_FAILED")
 
 
-@extensible
-def get_shifu_detail(app, user_id: str, shifu_id: str):
-    with app.app_context():
-        shifu = (
-            AICourse.query.filter(
-                AICourse.course_id == shifu_id,
-                AICourse.status.in_([STATUS_PUBLISH, STATUS_DRAFT]),
-            )
-            .order_by(AICourse.id.desc())
-            .first()
-        )
-        if shifu:
-            keywords = shifu.course_keywords.split(",") if shifu.course_keywords else []
-            return ShifuDetailDto(
-                shifu_id=shifu.course_id,
-                shifu_name=shifu.course_name,
-                shifu_description=shifu.course_desc,
-                shifu_avatar=shifu.course_teacher_avatar,
-                shifu_keywords=keywords,
-                shifu_model=shifu.course_default_model,
-                shifu_temperature=shifu.course_default_temperature,
-                shifu_price=shifu.course_price,
-                shifu_preview_url=get_config("WEB_URL", "UNCONFIGURED")
-                + "/c/"
-                + shifu.course_id
-                + "?preview=true&skip=true",
-                shifu_url=get_config("WEB_URL", "UNCONFIGURED")
-                + "/c/"
-                + shifu.course_id,
-            )
-        raise_error("SHIFU.SHIFU_NOT_FOUND")
-
-
-# save shifu detail
-# @author: yfge
-# @date: 2025-04-14
-# save the shifu detail
-@extensible
-def save_shifu_detail(
-    app,
-    user_id: str,
-    shifu_id: str,
-    shifu_name: str,
-    shifu_description: str,
-    shifu_avatar: str,
-    shifu_keywords: list[str],
-    shifu_model: str,
-    shifu_price: float,
-    shifu_temperature: float,
-):
-    with app.app_context():
-        # query shifu
-        # the first query is to get the shifu latest record
-        shifu = (
-            AICourse.query.filter_by(course_id=shifu_id)
-            .order_by(AICourse.id.desc())
-            .first()
-        )
-        if shifu:
-            old_check_str = shifu.get_str_to_check()
-            new_shifu = shifu.clone()
-            new_shifu.course_name = shifu_name
-            new_shifu.course_desc = shifu_description
-            new_shifu.course_teacher_avatar = shifu_avatar
-            new_shifu.course_keywords = ",".join(shifu_keywords)
-            new_shifu.course_default_model = shifu_model
-            new_shifu.course_price = shifu_price
-            new_shifu.updated_user_id = user_id
-            new_shifu.updated_at = datetime.now()
-            new_shifu.course_default_temperature = shifu_temperature
-            new_check_str = new_shifu.get_str_to_check()
-            if old_check_str != new_check_str:
-                check_text_with_risk_control(app, shifu_id, user_id, new_check_str)
-            if not shifu.eq(new_shifu):
-                app.logger.info("shifu is not equal to new_shifu,save new_shifu")
-                new_shifu.status = STATUS_DRAFT
-                if shifu.status == STATUS_DRAFT:
-                    # if shifu is draft, history it
-                    # if shifu is publish,so DO NOTHING
-                    shifu.status = STATUS_HISTORY
-                db.session.add(new_shifu)
-            db.session.commit()
-            return ShifuDetailDto(
-                shifu_id=new_shifu.course_id,
-                shifu_name=new_shifu.course_name,
-                shifu_description=new_shifu.course_desc,
-                shifu_avatar=new_shifu.course_teacher_avatar,
-                shifu_keywords=(
-                    new_shifu.course_keywords.split(",")
-                    if new_shifu.course_keywords
-                    else []
-                ),
-                shifu_model=new_shifu.course_default_model,
-                shifu_price=str(new_shifu.course_price),
-                shifu_preview_url=get_config("WEB_URL", "UNCONFIGURED")
-                + "/c/"
-                + new_shifu.course_id
-                + "?preview=true&skip=true",
-                shifu_url=get_config("WEB_URL", "UNCONFIGURED")
-                + "/c/"
-                + new_shifu.course_id,
-                shifu_temperature=new_shifu.course_default_temperature,
-            )
-        raise_error("SHIFU.SHIFU_NOT_FOUND")
-
-
 def shifu_permission_verification(
     app,
     user_id: str,
     shifu_id: str,
     auth_type: str,
 ):
+    """
+    Verify the permission of a user to a shifu.
+
+    Args:
+        app: Flask application instance
+        user_id: User ID
+        shifu_id: Shifu ID
+        auth_type: The type of permission to verify
+
+    Returns:
+        bool: True if the user has the permission
+    """
     with app.app_context():
         cache_key = (
             get_config("REDIS_KEY_PREFIX", "ai-shifu:")
@@ -870,8 +421,9 @@ def shifu_permission_verification(
             except (json.JSONDecodeError, TypeError):
                 redis.delete(cache_key)
         # If it is not in the cache, query the database
-        shifu = AICourse.query.filter(
-            AICourse.course_id == shifu_id, AICourse.created_user_id == user_id
+        shifu = ShifuDraftShifu.query.filter(
+            ShifuDraftShifu.shifu_bid == shifu_id,
+            ShifuDraftShifu.created_user_bid == user_id,
         ).first()
         if shifu:
             # The creator has all the permissions
@@ -899,7 +451,15 @@ def shifu_permission_verification(
 
 def get_video_info(app, user_id: str, url: str) -> dict:
     """
-    Obtain video information
+    Obtain video information from a URL.
+
+    Args:
+        app: Flask application instance
+        user_id: User ID
+        url: The URL of the video to get information from
+
+    Returns:
+        dict: The video information
     """
     with app.app_context():
         try:
@@ -955,273 +515,3 @@ def get_video_info(app, user_id: str, url: str) -> dict:
         except Exception as e:
             app.logger.error(f"Unexpected error getting video info: {str(e)}")
             raise_error("FILE.VIDEO_GET_INFO_ERROR")
-
-
-def get_shifu_summary(app, shifu_id: str):
-    """
-    Obtain the shifu summary information
-    """
-    with app.app_context():
-        shifu = AICourse.query.filter(AICourse.course_id == shifu_id).first()
-        if not shifu:
-            app.logger.error(f"get_shifu_summary shifu_id: {shifu_id} not found")
-            return
-
-        # Get the prompt word template
-        summary_prompt_template = load_prompt_template("summary")
-        ask_prompt_template = load_prompt_template("ask")
-
-        # Get course data
-        outline_tree, outline_ids, all_blocks, lesson_map = _get_shifu_data(
-            app, shifu_id
-        )
-
-        # Generate summaries
-        outline_summary_map = _generate_summaries(
-            app, outline_tree, all_blocks, lesson_map, summary_prompt_template, shifu
-        )
-
-        # Generate ask_prompt
-        _generate_ask_prompts(
-            app,
-            outline_tree,
-            outline_ids,
-            outline_summary_map,
-            lesson_map,
-            ask_prompt_template,
-        )
-        shifu.ask_mode = ASK_MODE_ENABLE
-        db.session.commit()
-        return
-
-
-def _generate_ask_prompts(
-    app, outline_tree, outline_ids, outline_summary_map, lesson_map, ask_prompt_template
-):
-    """
-    Generate ask_prompt for each section
-    :param app: Flask app
-    :param outline_tree: Outline tree
-    :param outline_ids: Section ID list
-    :param outline_summary_map: Summary mapping
-    :param lesson_map: Lesson mapping
-    :param ask_prompt_template: Ask template
-    """
-    for chapter in outline_tree:
-        for section in chapter.children:
-            # Split outline_summary_map into learned and unlearned parts based on current section ID
-            current_section_id = section.outline.lesson_id
-
-            # Find the index of current section in outline_ids
-            current_index = outline_ids.index(current_section_id)
-
-            # Split content into learned and unlearned parts
-            learned_summaries = []
-            unlearned_summaries = []
-
-            for i, section_id in enumerate(outline_ids):
-                if section_id in outline_summary_map:
-                    if i <= current_index:
-                        # Current section and all previous sections (learned)
-                        learned_summaries.append(outline_summary_map[section_id])
-                    else:
-                        # All sections after current section (unlearned)
-                        unlearned_summaries.append(outline_summary_map[section_id])
-
-            # Build text for learned content
-            learned_text = _build_summary_text(learned_summaries, is_learned=True)
-
-            # Build text for unlearned content
-            unlearned_text = _build_summary_text(unlearned_summaries, is_learned=False)
-
-            ask_prompt = _make_ask_prompt(
-                app, ask_prompt_template, learned_text, unlearned_text
-            )
-            lesson = lesson_map.get(section.outline.lesson_id)
-            if lesson:
-                lesson.ask_prompt = ask_prompt
-
-
-def _generate_summaries(
-    app, outline_tree, all_blocks, lesson_map, summary_prompt_template, shifu
-) -> dict[str, dict]:
-    """
-    Generate summaries for all sections
-    :param app: Flask app
-    :param outline_tree: Outline tree
-    :param all_blocks: All block data
-    :param lesson_map: Lesson mapping
-    :param summary_prompt_template: Summary template
-    :param shifu: Course information
-    :return: Summary mapping
-    """
-    outline_summary_map = {}
-
-    # Get model configuration
-    model_name = shifu.ask_model or shifu.course_default_model
-    temperature = shifu.course_default_temperature or 0.3
-    if not model_name:
-        model_name = app.config.get("DEFAULT_LLM_MODEL", "")
-
-    for chapter in outline_tree:
-        for section in chapter.children:
-            section_blocks = all_blocks.get(section.outline.lesson_id, [])
-            now_lesson_script_prompts = "".join(
-                block.script_prompt for block in section_blocks
-            )
-
-            final_prompt = summary_prompt_template.format(
-                all_script_content=now_lesson_script_prompts
-            )
-
-            summary = _get_summary(
-                app,
-                prompt=final_prompt,
-                model_name=model_name,
-                temperature=temperature,
-            )
-
-            # Update section information
-            lesson = lesson_map.get(section.outline.lesson_id)
-            if lesson:
-                lesson.lesson_desc = summary
-                lesson.ask_mode = ASK_MODE_ENABLE
-
-                # Store summary information
-                outline_summary_map[section.outline.lesson_id] = {
-                    "chapter_id": chapter.outline.lesson_id,
-                    "chapter_name": chapter.outline.lesson_name,
-                    "section_id": section.outline.lesson_id,
-                    "section_name": section.outline.lesson_name,
-                    "content": summary,
-                }
-
-    return outline_summary_map
-
-
-def _get_shifu_data(app, shifu_id: str) -> tuple[list, dict, dict]:
-    """
-    Get shifu related data
-    :param app: Flask app
-    :param shifu_id: shifu ID
-    :return: (outline_tree, outline_ids, all_blocks, lesson_map)
-    """
-    outline_tree = get_original_outline_tree(app, shifu_id)
-    outline_ids = []
-
-    # Get all section IDs
-    for chapter in outline_tree:
-        for section in chapter.children:
-            outline_ids.append(section.outline.lesson_id)
-
-    # Get all section blocks
-    all_blocks = _get_all_publish_blocks(app, outline_ids)
-
-    # Get all section data
-    lesson_infos = (
-        AILesson.query.filter(
-            AILesson.lesson_id.in_(outline_ids),
-            AILesson.status == STATUS_PUBLISH,
-        )
-        .order_by(AILesson.id.desc())
-        .all()
-    )
-    lesson_map = {lesson.lesson_id: lesson for lesson in lesson_infos}
-
-    return outline_tree, outline_ids, all_blocks, lesson_map
-
-
-def _make_ask_prompt(
-    app, ask_prompt: str, learned_text: str, unlearned_text: str
-) -> str:
-    result = ask_prompt.format(
-        learned=("\n" + learned_text) if learned_text else "",
-        unlearned=("\n" + unlearned_text) if unlearned_text else "",
-        shifu_system_message="{shifu_system_message}",
-    )
-    return result
-
-
-def _get_all_publish_blocks(app, outline_ids: list[str]):
-    """
-    Return {outline_id: [block, ...]}, only contains STATUS_PUBLISH, and each group is sorted by script_index in ascending order
-    """
-    query = AILessonScript.query.filter(
-        AILessonScript.lesson_id.in_(outline_ids),
-        AILessonScript.status == STATUS_PUBLISH,
-        AILessonScript.script_type != SCRIPT_TYPE_SYSTEM,
-    )
-    blocks = query.all()
-    # Group by lesson_id
-    result = defaultdict(list)
-    for block in blocks:
-        result[block.lesson_id].append(block)
-    # Sort each group by script_index
-    for k in result:
-        result[k] = sorted(result[k], key=lambda b: b.script_index)
-    return dict(result)
-
-
-def _get_summary(app, prompt, model_name, user_id=None, temperature=0.8):
-    """
-    Call the AI model to generate summary
-    :param app: Flask app
-    :param prompt: Prompt to be summarized
-    :param model_name: Model name to use
-    :param user_id: Optional, user ID
-    :param temperature: Optional, sampling temperature
-    :return: Summary text
-    """
-    # Create langfuse trace/span
-    trace = langfuse_client.trace(
-        user_id=user_id or "shifu-summary", name="shifu_summary"
-    )
-    span = trace.span(name="shifu_summary", input=prompt)
-    response = invoke_llm(
-        app,
-        user_id or "shifu-summary",
-        span,
-        model_name,
-        prompt,
-        temperature=temperature,
-        generation_name="shifu_summary",
-    )
-    summary = ""
-    for chunk in response:
-        summary += getattr(chunk, "result", "")
-    span.update(output=summary)
-    span.end()
-    return summary
-
-
-def _build_summary_text(summaries: list[dict], is_learned: bool) -> str:
-    """
-    Build a summary text based on whether it's learned or unlearned
-    :param summaries: List of summary dictionaries
-    :param is_learned: Boolean indicating whether the summary is for learned or unlearned
-    :return: Built summary text
-    """
-    if not summaries:
-        return ""
-
-    result_lines = []
-    chapter_titles_added = set()
-
-    for summary in summaries:
-        chapter_id = summary["chapter_id"]
-        chapter_name = summary["chapter_name"]
-        section_name = summary["section_name"]
-        content = summary["content"]
-
-        # Check if chapter title needs to be added
-        if chapter_id not in chapter_titles_added:
-            # First time encountering this chapter, add chapter title
-            result_lines.append(f"### {chapter_name}")
-            chapter_titles_added.add(chapter_id)
-
-        # Add section title and content
-        result_lines.append(f"#### {section_name}")
-        result_lines.append(content)
-        result_lines.append("")  # Add empty line separator
-
-    return "\n".join(result_lines)

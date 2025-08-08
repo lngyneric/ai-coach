@@ -1,31 +1,41 @@
+"""
+Shifu route
+
+This module contains route functions for shifu.
+use restful api to manage shifu.
+will be auto registered by flaskr.framework.plugin.inject.inject
+includes:
+    - get shifu list
+    - create shifu
+    - get shifu detail
+    - save shifu detail
+    - mark favorite shifu
+    - publish shifu
+    - preview shifu
+    - reorder outline tree
+    - create outline
+    - modify outline
+    - get outline info
+    - delete outline
+    - get outline tree
+    - get block list
+    - save blocks
+    - add block
+    - upload file
+    - upload url
+    - get video info
+
+Author: yfge
+Date: 2025-08-07
+"""
+
 from flask import Flask, request, current_app
 from .funcs import (
-    get_shifu_list,
-    create_shifu,
     mark_or_unmark_favorite_shifu,
-    publish_shifu,
-    preview_shifu,
-    save_shifu_detail,
-    get_shifu_detail,
     upload_file,
     upload_url,
     get_video_info,
     shifu_permission_verification,
-)
-from .outline_funcs import (
-    reorder_outline_tree,
-    get_outline_tree,
-    create_outline,
-)
-from .unit_funcs import (
-    modify_unit,
-    delete_unit,
-    get_unit_by_id,
-)
-from .block_funcs import (
-    get_block_list,
-    save_block_list,
-    add_block,
 )
 from flaskr.route.common import make_common_response
 from flaskr.framework.plugin.inject import inject
@@ -35,16 +45,43 @@ from functools import wraps
 from enum import Enum
 
 
+from flaskr.service.shifu.shifu_draft_funcs import (
+    get_shifu_draft_list,
+    create_shifu_draft,
+    get_shifu_draft_info,
+    save_shifu_draft_info,
+)
+from flaskr.service.shifu.shifu_publish_funcs import (
+    publish_shifu_draft,
+    preview_shifu_draft,
+)
+from flaskr.service.shifu.shifu_outline_funcs import (
+    reorder_outline_tree,
+    create_outline,
+    modify_unit,
+    get_unit_by_id,
+    delete_unit,
+    get_outline_tree,
+)
+from flaskr.service.shifu.shifu_block_funcs import (
+    get_block_list,
+    save_shifu_block_list,
+    add_block,
+)
+
+
 class ShifuPermission(Enum):
     VIEW = "view"
     EDIT = "edit"
     PUBLISH = "publish"
 
 
-# Shifu permission verification decorator
-# @ShifuTokenValidation(ShifuPermission.xxx)
-# If is_creator is true, only verify whether there is creator permission
 class ShifuTokenValidation:
+    """
+    Shifu token validation decorator
+    if is_creator is true, only verify creator permission and skip shifu-specific verification
+    """
+
     def __init__(
         self,
         permission: ShifuPermission = ShifuPermission.VIEW,
@@ -98,6 +135,9 @@ class ShifuTokenValidation:
 
 @inject
 def register_shifu_routes(app: Flask, path_prefix="/api/shifu"):
+    """
+    Register shifu routes
+    """
     app.logger.info(f"register shifu routes {path_prefix}")
 
     @app.route(path_prefix + "/shifus", methods=["GET"])
@@ -153,7 +193,7 @@ def register_shifu_routes(app: Flask, path_prefix="/api/shifu"):
             f"get shifu list, user_id: {user_id}, page_index: {page_index}, page_size: {page_size}, is_favorite: {is_favorite}"
         )
         return make_common_response(
-            get_shifu_list(app, user_id, page_index, page_size, is_favorite)
+            get_shifu_draft_list(app, user_id, page_index, page_size, is_favorite)
         )
 
     @app.route(path_prefix + "/shifus", methods=["PUT"])
@@ -204,7 +244,9 @@ def register_shifu_routes(app: Flask, path_prefix="/api/shifu"):
         shifu_description = request.get_json().get("description")
         shifu_avatar = request.get_json().get("avatar", "")
         return make_common_response(
-            create_shifu(app, user_id, shifu_name, shifu_description, shifu_avatar, [])
+            create_shifu_draft(
+                app, user_id, shifu_name, shifu_description, shifu_avatar, []
+            )
         )
 
     @app.route(path_prefix + "/shifus/<shifu_bid>/detail", methods=["GET"])
@@ -238,7 +280,7 @@ def register_shifu_routes(app: Flask, path_prefix="/api/shifu"):
         """
         user_id = request.user.user_id
         app.logger.info(f"get shifu detail, user_id: {user_id}, shifu_bid: {shifu_bid}")
-        return make_common_response(get_shifu_detail(app, user_id, shifu_bid))
+        return make_common_response(get_shifu_draft_info(app, user_id, shifu_bid))
 
     @app.route(path_prefix + "/shifus/<shifu_bid>/detail", methods=["POST"])
     @ShifuTokenValidation(ShifuPermission.EDIT)
@@ -308,7 +350,7 @@ def register_shifu_routes(app: Flask, path_prefix="/api/shifu"):
         shifu_price = request.get_json().get("price")
         shifu_temperature = request.get_json().get("temperature")
         return make_common_response(
-            save_shifu_detail(
+            save_shifu_draft_info(
                 app,
                 user_id,
                 shifu_bid,
@@ -317,8 +359,8 @@ def register_shifu_routes(app: Flask, path_prefix="/api/shifu"):
                 shifu_avatar,
                 shifu_keywords,
                 shifu_model,
-                shifu_price,
                 shifu_temperature,
+                shifu_price,
             )
         )
 
@@ -403,7 +445,7 @@ def register_shifu_routes(app: Flask, path_prefix="/api/shifu"):
                                     description: publish url
         """
         user_id = request.user.user_id
-        return make_common_response(publish_shifu(app, user_id, shifu_bid))
+        return make_common_response(publish_shifu_draft(app, user_id, shifu_bid))
 
     @app.route(path_prefix + "/shifus/<shifu_bid>/preview", methods=["POST"])
     @ShifuTokenValidation(ShifuPermission.VIEW)
@@ -450,7 +492,7 @@ def register_shifu_routes(app: Flask, path_prefix="/api/shifu"):
         variables = request.get_json().get("variables")
         skip = request.get_json().get("skip", False)
         return make_common_response(
-            preview_shifu(app, user_id, shifu_bid, variables, skip)
+            preview_shifu_draft(app, user_id, shifu_bid, variables, skip)
         )
 
     @app.route(path_prefix + "/shifus/<shifu_bid>/outlines/reorder", methods=["PATCH"])
@@ -840,7 +882,9 @@ def register_shifu_routes(app: Flask, path_prefix="/api/shifu"):
         """
         user_id = request.user.user_id
         blocks = request.get_json().get("blocks")
-        return make_common_response(save_block_list(app, user_id, outline_bid, blocks))
+        return make_common_response(
+            save_shifu_block_list(app, user_id, outline_bid, blocks)
+        )
 
     @app.route(
         path_prefix + "/shifus/<shifu_bid>/outlines/<outline_bid>/blocks",

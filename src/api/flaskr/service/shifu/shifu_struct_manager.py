@@ -1,3 +1,16 @@
+"""
+Shifu struct manager
+
+This module contains functions for managing shifu struct.
+
+the shifu struct is a tree structure ,
+which is composed of shifu, outline items and blocks.
+and the struct of them is saved in database as json.
+
+Author: yfge
+Date: 2025-08-07
+"""
+
 from flask import Flask
 from flaskr.service.shifu.models import (
     ShifuLogPublishedStruct,
@@ -18,10 +31,14 @@ from flaskr.service.shifu.utils import get_shifu_res_url
 
 
 class ShifuOutlineItemDto(BaseModel):
+    """
+    Shifu outline item dto
+    """
+
     bid: str
     position: str
     title: str
-    type: int
+    type: int  # 401 trial 402 normal
     shifu_bid: str
     children: List["ShifuOutlineItemDto"]
 
@@ -30,6 +47,10 @@ class ShifuOutlineItemDto(BaseModel):
 
 
 class ShifuInfoDto(BaseModel):
+    """
+    Shifu info dto
+    """
+
     bid: str
     title: str
     description: str
@@ -44,8 +65,17 @@ class ShifuInfoDto(BaseModel):
 def get_shifu_struct(
     app: Flask, shifu_bid: str, is_preview: bool = False
 ) -> HistoryItem:
+    """
+    Get shifu struct
+    Args:
+        app: Flask application instance
+        shifu_bid: Shifu bid
+        is_preview: Is preview
+    Returns:
+        HistoryItem: Shifu struct
+    """
     with app.app_context():
-        app.logger.info("get_shifu_struct:{},{}".format(shifu_bid, is_preview))
+        app.logger.info(f"get_shifu_struct:{shifu_bid},{is_preview}")
         if is_preview:
             model = ShifuLogDraftStruct
         else:
@@ -145,6 +175,15 @@ def get_shifu_outline_tree(
 
 
 def get_shifu_dto(app: Flask, shifu_bid: str, is_preview: bool = False) -> ShifuInfoDto:
+    """
+    Get shifu dto
+    Args:
+        app: Flask application instance
+        shifu_bid: Shifu bid
+        is_preview: Is preview
+    Returns:
+        ShifuInfoDto: Shifu dto
+    """
     if is_preview:
         shifu_model = ShifuDraftShifu
     else:
@@ -172,6 +211,14 @@ def get_shifu_dto(app: Flask, shifu_bid: str, is_preview: bool = False) -> Shifu
 
 
 def get_default_shifu_dto(app: Flask, is_preview: bool = False) -> ShifuInfoDto:
+    """
+    Get default shifu dto
+    Args:
+        app: Flask application instance
+        is_preview: Is preview
+    Returns:
+        ShifuInfoDto: Shifu dto
+    """
     if is_preview:
         shifu_model = ShifuDraftShifu
     else:
@@ -200,6 +247,15 @@ def get_default_shifu_dto(app: Flask, is_preview: bool = False) -> ShifuInfoDto:
 def get_outline_item_dto(
     app: Flask, outline_item_bid: str, is_preview: bool = False
 ) -> ShifuOutlineItemDto:
+    """
+    Get outline item dto
+    Args:
+        app: Flask application instance
+        outline_item_bid: Outline item bid
+        is_preview: Is preview
+    Returns:
+        ShifuOutlineItemDto: Outline item dto
+    """
     if is_preview:
         outline_item_model = ShifuDraftOutlineItem
     else:

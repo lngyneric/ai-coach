@@ -1,6 +1,6 @@
 from flask import Flask
 from flaskr.service.user import generate_temp_user
-from flaskr.service.order import init_buy_record, init_trial_lesson
+from flaskr.service.order import init_buy_record
 from flaskr.service.order.discount import use_discount_code
 from flaskr.service.user.models import User
 from flaskr.service.common.dtos import USER_STATE_REGISTERED
@@ -30,6 +30,5 @@ def import_user(
             user_id = user.user_id
         else:
             user_id = user.user_id
-        init_trial_lesson(app, user_id, course_id)
         order = init_buy_record(app, user_id, course_id)
         use_discount_code(app, user_id, discount_code, order.order_id)

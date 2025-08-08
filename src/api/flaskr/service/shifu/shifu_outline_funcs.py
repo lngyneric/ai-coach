@@ -1,4 +1,12 @@
-from flaskr.framework.plugin.plugin_manager import extension
+"""
+Shifu outline funcs
+
+This module contains functions for managing shifu outline.
+
+Author: yfge
+Date: 2025-08-07
+"""
+
 from .dtos import (
     ReorderOutlineItemDto,
     SimpleOutlineDto,
@@ -29,15 +37,15 @@ from .shifu_history_manager import (
 from datetime import datetime
 
 
-# get existing outline items
-# author: yfge
-# date: 2025-07-13
-# version: 1.0.0
-# description: this function is used to get existing outline items
-# usage:
-# 1. get existing outline items
-# 2. sort outline items by position
 def __get_existing_outline_items(shifu_bid: str) -> list[ShifuDraftOutlineItem]:
+    """
+    Get existing outline items
+    internal function
+    Args:
+        shifu_bid: Shifu bid
+    Returns:
+        list[ShifuDraftOutlineItem]: Outline items
+    """
     sub_query = (
         db.session.query(db.func.max(ShifuDraftOutlineItem.id))
         .filter(
@@ -53,8 +61,15 @@ def __get_existing_outline_items(shifu_bid: str) -> list[ShifuDraftOutlineItem]:
     return sorted(outline_items, key=lambda x: (len(x.position), x.position))
 
 
-# build outline tree
 def build_outline_tree(app, shifu_bid: str) -> list[ShifuOutlineTreeNode]:
+    """
+    Build outline tree
+    Args:
+        app: Flask application instance
+        shifu_bid: Shifu bid
+    Returns:
+        list[ShifuOutlineTreeNode]: Outline tree
+    """
     outline_items = __get_existing_outline_items(shifu_bid)
     sorted_items = sorted(outline_items, key=lambda x: (len(x.position), x.position))
     outline_tree = []
@@ -85,6 +100,13 @@ def build_outline_tree(app, shifu_bid: str) -> list[ShifuOutlineTreeNode]:
 def get_outline_tree_dto(
     outline_tree: list[ShifuOutlineTreeNode],
 ) -> list[SimpleOutlineDto]:
+    """
+    Get outline tree dto
+    Args:
+        outline_tree: Outline tree
+    Returns:
+        list[SimpleOutlineDto]: Outline tree dto
+    """
     result = []
     for node in outline_tree:
         result.append(
@@ -95,20 +117,21 @@ def get_outline_tree_dto(
     return result
 
 
-# get outline tree
-# author: yfge
-# date: 2025-07-13
-# version: 1.0.0
-# description: this function is used to get outline tree
-# usage:
-# 1. get outline tree
-# 2. return outline tree
-# 3. it's a plugin function to get outline tree of new shifu draft
-@extension("get_outline_tree")
-def get_outline_tree(
-    result, app, user_id: str, shifu_bid: str
-) -> list[SimpleOutlineDto]:
-    """get outline tree"""
+def get_outline_tree(app, user_id: str, shifu_bid: str) -> list[SimpleOutlineDto]:
+    """
+    Get outline tree
+    build outline tree from outline items
+    usage:
+    1. get outline tree
+    2. return outline tree
+    3. it's a plugin function to get outline tree of new shifu draft
+    Args:
+        app: Flask application instance
+        user_id: User ID
+        shifu_bid: Shifu bid
+    Returns:
+        list[SimpleOutlineDto]: Outline tree
+    """
     app.logger.info(f"get outline tree, user_id: {user_id}, shifu_bid: {shifu_bid}")
     with app.app_context():
         outline_tree = build_outline_tree(app, shifu_bid)
@@ -116,19 +139,7 @@ def get_outline_tree(
         return get_outline_tree_dto(outline_tree)
 
 
-# create outline
-# author: yfge
-# date: 2025-07-13
-# version: 1.0.0
-# description: this function is used to create outline
-# usage:
-# 1. create a new outline
-# 2. add a child to the outline
-# 3. remove a child from the outline
-# 4. it's a plugin function to create outline of new shifu draft and parallel to create outline of old shifu draft
-@extension("create_outline")
 def create_outline(
-    result: SimpleOutlineDto,
     app,
     user_id: str,
     shifu_id: str,
@@ -140,14 +151,26 @@ def create_outline(
     system_prompt: str = None,
     is_hidden: bool = False,
 ):
-    """create outline"""
+    """
+    Create outline
+    Args:
+        app: Flask application instance
+        user_id: User ID
+        shifu_id: Shifu ID
+        parent_id: Parent ID
+        outline_name: Outline name
+        outline_description: Outline description
+        outline_index: Outline index
+        outline_type: Outline type
+        system_prompt: System prompt
+        is_hidden: Is hidden
+    Returns:
+        SimpleOutlineDto: Outline dto
+    """
     with app.app_context():
         now_time = datetime.now()
         # generate new outline id
-        if result and result.bid:
-            outline_bid = result.bid
-        else:
-            outline_bid = generate_id(app)
+        outline_bid = generate_id(app)
 
         # validate name length
         if len(outline_name) > 100:
@@ -221,18 +244,7 @@ def create_outline(
         )
 
 
-# modify outline
-# author: yfge
-# date: 2025-07-13
-# version: 1.0.0
-# description: this function is used to modify outline
-# usage:
-# 1. modify outline
-# 2. it's a plugin function to modify outline of new shifu draft
-#    and parallel to modify outline of old shifu draft
-@extension("modify_outline")
 def modify_outline(
-    result,
     app,
     user_id: str,
     shifu_id: str,
@@ -244,7 +256,22 @@ def modify_outline(
     system_prompt: str = None,
     is_hidden: bool = False,
 ):
-    """modify outline"""
+    """
+    Modify outline
+    Args:
+        app: Flask application instance
+        user_id: User ID
+        shifu_id: Shifu ID
+        outline_id: Outline ID
+        outline_name: Outline name
+        outline_description: Outline description
+        outline_index: Outline index
+        outline_type: Outline type
+        system_prompt: System prompt
+        is_hidden: Is hidden
+    Returns:
+        SimpleOutlineDto: Outline dto
+    """
     with app.app_context():
         # find existing outline
         now_time = datetime.now()
@@ -295,18 +322,17 @@ def modify_outline(
         )
 
 
-# delete outline
-# author: yfge
-# date: 2025-07-13
-# version: 1.0.0
-# description: this function is used to delete outline
-# usage:
-# 1. delete outline
-# 2. it's a plugin function to delete outline of new shifu draft
-#    and parallel to delete outline of old shifu draft
-@extension("delete_outline")
-def delete_outline(result, app, user_id: str, shifu_id: str, outline_id: str):
-    """delete outline"""
+def delete_outline(app, user_id: str, shifu_id: str, outline_id: str):
+    """
+    Delete outline
+    Args:
+        app: Flask application instance
+        user_id: User ID
+        shifu_id: Shifu ID
+        outline_id: Outline ID
+    Returns:
+        bool: True if deleted, False otherwise
+    """
     with app.app_context():
         now_time = datetime.now()
         # find the outline to delete
@@ -372,20 +398,22 @@ def delete_outline(result, app, user_id: str, shifu_id: str, outline_id: str):
         return True
 
 
-# reorder outline tree
-# author: yfge
-# date: 2025-07-13
-# version: 1.0.0
-# description: this function is used to reorder outline tree
-# usage:
-# 1. reorder outline tree
-# 2. it's a plugin function to reorder outline tree of new shifu draft
-#    and parallel to reorder outline tree of old shifu draft
-@extension("reorder_outline_tree")
 def reorder_outline_tree(
-    result, app, user_id: str, shifu_id: str, outlines: list[ReorderOutlineItemDto]
+    app, user_id: str, shifu_id: str, outlines: list[ReorderOutlineItemDto]
 ):
-    """reorder outline tree"""
+    """
+    Reorder outline tree
+    usage:
+    1. reorder outline tree
+
+    Args:
+        app: Flask application instance
+        user_id: User ID
+        shifu_id: Shifu ID
+        outlines: Outline items
+    Returns:
+        bool: True if reordered, False otherwise
+    """
     with app.app_context():
         app.logger.info(
             f"reorder outline tree, user_id: {user_id}, shifu_id: {shifu_id}"
@@ -444,18 +472,17 @@ def reorder_outline_tree(
         return True
 
 
-# get unit by id
-# author: yfge
-# date: 2025-07-13
-# version: 1.0.0
-# description: this function is used to get unit by id
-# usage:
-# 1. get unit by id
-# 2. it's a plugin function to get unit by id of new shifu draft
-#    and parallel to get unit by id of old shifu draft
-@extension("get_unit_by_id")
-def get_unit_by_id(result, app, user_id: str, unit_id: str):
-    """get unit by id"""
+def get_unit_by_id(app, user_id: str, unit_id: str):
+    """
+    Get unit by id
+    Args:
+        app: Flask application instance
+        user_id: User ID
+        unit_id: Unit ID
+    Returns:
+        OutlineDto: Outline dto
+        None: If unit not found
+    """
     with app.app_context():
         unit: ShifuDraftOutlineItem = (
             ShifuDraftOutlineItem.query.filter(
@@ -483,18 +510,7 @@ def get_unit_by_id(result, app, user_id: str, unit_id: str):
         )
 
 
-# modify unit
-# author: yfge
-# date: 2025-07-13
-# version: 1.0.0
-# description: this function is used to modify unit
-# usage:
-# 1. modify unit
-# 2. it's a plugin function to modify unit of new shifu draft
-#    and parallel to modify unit of old shifu draft
-@extension("modify_unit")
 def modify_unit(
-    result,
     app,
     user_id: str,
     unit_id: str,
@@ -505,7 +521,21 @@ def modify_unit(
     unit_is_hidden: bool = False,
     unit_type: str = UNIT_TYPE_NORMAL,
 ):
-    """modify unit"""
+    """
+    Modify unit
+    Args:
+        app: Flask application instance
+        user_id: User ID
+        unit_id: Unit ID
+        unit_name: Unit name
+        unit_description: Unit description
+        unit_index: Unit index
+        unit_system_prompt: Unit system prompt
+        unit_is_hidden: Unit is hidden
+        unit_type: Unit type
+    Returns:
+        OutlineDto: Outline dto
+    """
     with app.app_context():
         app.logger.info(f"modify unit: {unit_id}, name: {unit_name}")
         now_time = datetime.now()
@@ -572,18 +602,18 @@ def modify_unit(
         )
 
 
-# delete unit
-# author: yfge
-# date: 2025-07-13
-# version: 1.0.0
-# description: this function is used to delete unit
-# usage:
-# 1. delete unit
-# 2. it's a plugin function to delete unit of new shifu draft
-#    and parallel to delete unit of old shifu draft
-@extension("delete_unit")
-def delete_unit(result, app, user_id: str, unit_id: str):
-    """delete unit"""
+def delete_unit(app, user_id: str, unit_id: str):
+    """
+    Delete unit
+
+    Args:
+        app: Flask application instance
+        user_id: User ID
+        unit_id: Unit ID
+
+    Returns:
+        bool: True if deleted, False otherwise
+    """
     with app.app_context():
         now_time = datetime.now()
         # find the unit to delete

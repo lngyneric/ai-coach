@@ -7,31 +7,11 @@ from flaskr.util.uuid import generate_id
 from ...service.lesson.const import (
     ASK_MODE_DEFAULT,
     ASK_MODE_DISABLE,
-    LESSON_TYPE_BRANCH_HIDDEN,
-    LESSON_TYPE_TRIAL,
-    LESSON_TYPE_NORMAL,
-    SCRIPT_TYPE_SYSTEM,
 )
 from ...service.lesson.models import AICourse, AILesson, AILessonScript
-from ...service.order.consts import (
-    ATTEND_STATUS_BRANCH,
-    ATTEND_STATUS_COMPLETED,
-    ATTEND_STATUS_IN_PROGRESS,
-    ATTEND_STATUS_LOCKED,
-    ATTEND_STATUS_NOT_STARTED,
-    ATTEND_STATUS_RESET,
-    get_attend_status_values,
-)
-from ...service.order.funs import (
-    AICourseLessonAttendDTO,
-)
-from ...service.order.models import AICourseLessonAttend
 from ...service.profile.funcs import get_user_profiles
-from ...service.study.dtos import AILessonAttendDTO, ScriptDTO
-from ...service.study.models import AICourseAttendAsssotion, AICourseLessonAttendScript
-from ...dao import db
-from ...service.order.funs import query_raw_buy_record
-from ...service.order.consts import BUY_STATUS_SUCCESS
+from ...service.study.dtos import ScriptDTO
+from ...service.study.models import AICourseLessonAttendScript
 from flaskr.service.user.models import User
 from ...service.lesson.const import STATUS_PUBLISH, STATUS_DRAFT
 from flaskr.i18n import get_current_language
@@ -45,12 +25,6 @@ from flaskr.service.shifu.models import ShifuPublishedOutlineItem, ShifuPublishe
 from flaskr.service.shifu.shifu_history_manager import HistoryItem
 
 
-def get_current_lesson(
-    app: Flask, lesssons: list[AICourseLessonAttendDTO]
-) -> AICourseLessonAttendDTO:
-    return lesssons[0]
-
-
 def generation_attend(
     app: Flask,
     user_info: User,
@@ -59,79 +33,46 @@ def generation_attend(
     block_dto: BlockDTO,
     with_ui_conf: bool = False,
 ) -> AICourseLessonAttendScript:
+    """
+    Generation attend
+    the attend is used to store the attend info
+    Args:
+        app: Flask application instance
+        user_info: User info
+        attend_id: Attend id
+        outline_item_info: Outline item info
+        block_dto: Block dto
+        with_ui_conf: With ui conf
+    Returns:
+        AICourseLessonAttendScript: Attend script
+    """
     block_type = BLOCK_TYPE_VALUES.get(block_dto.type, None)
     if block_type is None:
         app.logger.error(f"Invalid block type: {block_dto.type}")
         block_type = 0
-    attendScript = AICourseLessonAttendScript()
-    attendScript.attend_id = attend_id
-    attendScript.user_id = user_info.user_id
-    attendScript.lesson_id = outline_item_info.bid
-    attendScript.course_id = outline_item_info.shifu_bid
-    attendScript.script_id = block_dto.bid
-    attendScript.script_ui_type = block_type
-    attendScript.log_id = generate_id(app)
-    attendScript.status = 1
+    attend_script: AICourseLessonAttendScript = AICourseLessonAttendScript()
+    attend_script.attend_id = attend_id
+    attend_script.user_id = user_info.user_id
+    attend_script.lesson_id = outline_item_info.bid
+    attend_script.course_id = outline_item_info.shifu_bid
+    attend_script.script_id = block_dto.bid
+    attend_script.script_ui_type = block_type
+    attend_script.log_id = generate_id(app)
+    attend_script.status = 1
     if with_ui_conf:
-        attendScript.script_ui_conf = json.dumps(
+        attend_script.script_ui_conf = json.dumps(
             block_dto.block_content.__json__(), ensure_ascii=False
         )
-    return attendScript
+    return attend_script
 
 
 def check_phone_number(app, user_info: User, input):
+    """
+    Check phone number
+    """
     if not re.match(r"^1[3-9]\d{9}$", input):
         return False
     return True
-
-
-# 得到一个课程的System Prompt
-
-
-def get_lesson_system(app: Flask, lesson_id: str) -> str:
-    status = [STATUS_PUBLISH, STATUS_DRAFT]
-    # 缓存逻辑
-    lesson_ids = [lesson_id]
-    lesson = (
-        AILesson.query.filter(
-            AILesson.lesson_id == lesson_id, AILesson.status.in_(status)
-        )
-        .order_by(AILesson.id.desc())
-        .first()
-    )
-    lesson_no = lesson.lesson_no
-    parent_no = lesson_no
-    if len(parent_no) > 2:
-        parent_no = parent_no[:2]
-    if parent_no != lesson_no:
-        parent_lesson = (
-            AILesson.query.filter(
-                AILesson.lesson_no == parent_no,
-                AILesson.course_id == lesson.course_id,
-                AILesson.status.in_(status),
-            )
-            .order_by(AILesson.id.desc())
-            .first()
-        )
-        if parent_lesson:
-            lesson_ids.append(parent_lesson.lesson_id)
-    app.logger.info("lesson_ids:{}".format(lesson_ids))
-    scripts = (
-        AILessonScript.query.filter(
-            AILessonScript.lesson_id.in_(lesson_ids),
-            AILessonScript.script_type == SCRIPT_TYPE_SYSTEM,
-            AILessonScript.status.in_(status),
-        )
-        .order_by(AILessonScript.id.desc())
-        .all()
-    )
-    app.logger.info("scripts:{}".format(scripts))
-    if len(scripts) > 0:
-        for script in scripts:
-            if script.lesson_id == lesson_id:
-                return script.script_prompt
-        return scripts[0].script_prompt
-    return None
 
 
 def fmt(o):
@@ -139,102 +80,6 @@ def fmt(o):
         return o.isoformat()
     else:
         return o.__json__()
-
-
-def get_profile_array(profile: str) -> list:
-    return re.findall(r"\[(.*?)\]", profile)
-
-
-def get_lesson_and_attend_info(
-    app: Flask, parent_no, course_id, user_id, preview_mode: bool = False
-):
-    status = [STATUS_PUBLISH]
-    if preview_mode:
-        status.append(STATUS_DRAFT)
-    lessons = (
-        AILesson.query.filter(
-            AILesson.lesson_no.like(parent_no + "%"),
-            AILesson.course_id == course_id,
-            AILesson.lesson_type != LESSON_TYPE_BRANCH_HIDDEN,
-            AILesson.status.in_(status),
-        )
-        .order_by(AILesson.id.desc())
-        .all()
-    )
-    if len(lessons) == 0:
-        return []
-    app.logger.info(
-        "lessons:{}".format(
-            ",".join("'" + lesson.lesson_no + "'" for lesson in lessons)
-        )
-    )
-    attend_infos = AICourseLessonAttend.query.filter(
-        AICourseLessonAttend.lesson_id.in_([lesson.lesson_id for lesson in lessons]),
-        AICourseLessonAttend.user_id == user_id,
-        AICourseLessonAttend.status != ATTEND_STATUS_RESET,
-    ).all()
-
-    if len(attend_infos) != len(lessons):
-        filtered_lessons = []
-        if preview_mode:
-            filtered_lessons = [lesson for lesson in lessons if lesson.status in [1, 2]]
-        else:
-            filtered_lessons = [lesson for lesson in lessons if lesson.status == 1]
-
-        if not filtered_lessons:
-            return []
-
-        lesson_type = filtered_lessons[0].lesson_type
-        add_attend = False
-        if lesson_type == LESSON_TYPE_TRIAL:
-            add_attend = True
-        elif lesson_type == LESSON_TYPE_NORMAL:
-            raw_order = query_raw_buy_record(app, user_id, course_id)
-            if raw_order and raw_order.status == BUY_STATUS_SUCCESS:
-                add_attend = True
-            else:
-                raise_error("COURSE.COURSE_NOT_PURCHASED")
-        if add_attend:
-            app.logger.info("add attend to fix attend info")
-            for lesson in filtered_lessons:
-                attends = [
-                    attend
-                    for attend in attend_infos
-                    if attend.lesson_id == lesson.lesson_id
-                ]
-                if len(attends) == 0:
-                    app.logger.info("add attend to lesson:{}".format(lesson.lesson_id))
-                    attend = AICourseLessonAttend()
-                    attend.attend_id = generate_id(app)
-                    attend.lesson_id = lesson.lesson_id
-                    attend.course_id = course_id
-                    attend.user_id = user_id
-                    attend.status = ATTEND_STATUS_LOCKED
-                    attend.lesson_no = lesson.lesson_no
-                    db.session.add(attend)
-                    attend_infos.append(attend)
-            db.session.flush()
-
-    attend_lesson_infos = [
-        {
-            "attend": attend,
-            "lesson": [
-                lesson for lesson in lessons if lesson.lesson_id == attend.lesson_id
-            ][0],
-        }
-        for attend in attend_infos
-    ]
-    app.logger.info("attend_lesson_infos length:{}".format(len(attend_lesson_infos)))
-    attend_lesson_infos = sorted(
-        attend_lesson_infos,
-        key=lambda x: (len(x["lesson"].lesson_no), x["lesson"].lesson_no),
-    )
-    app.logger.info(
-        "attends:{}".format(
-            ",".join("'" + a["lesson"].lesson_no + "'" for a in attend_lesson_infos)
-        )
-    )
-    return attend_lesson_infos
 
 
 def extract_json(app: Flask, text: str):
@@ -259,6 +104,9 @@ def extract_json(app: Flask, text: str):
 
 
 def extract_json_from_markdown(app: Flask, text: str):
+    """
+    Extract json from markdown
+    """
     markdown_patterns = [
         r"```json\s*\n(.*?)\n```",  # ```json format
         r"```\s*\n(.*?)\n```",  # ``` format
@@ -287,6 +135,9 @@ def extract_variables(template: str) -> list:
 
 
 def safe_format_template(template: str, variables: dict) -> str:
+    """
+    Safe format template
+    """
     # Replace {xxx} or {{xxx}} with values from variables dict, keep original if not found
     pattern = re.compile(r"(\{{1,2})([^{}]+)(\}{1,2})")
 
@@ -311,6 +162,18 @@ def get_fmt_prompt(
     input: str = None,
     profile_array_str: str = None,
 ) -> str:
+    """
+    Get fmt prompt
+    Args:
+        app: Flask application instance
+        user_id: User id
+        course_id: Course id
+        profile_tmplate: Profile template
+        input: Input
+        profile_array_str: Profile array str
+    Returns:
+        str: Fmt prompt
+    """
     app.logger.info("raw prompt:" + profile_tmplate)
     propmpt_keys = []
     profiles = {}
@@ -338,195 +201,20 @@ def get_fmt_prompt(
     return prompt
 
 
-def get_script(app: Flask, attend_id: str, next: int = 0, preview_mode: bool = False):
-    status = [STATUS_PUBLISH]
-    if preview_mode:
-        status.append(STATUS_DRAFT)
-    is_first = False
-    attend_info = AICourseLessonAttend.query.filter(
-        AICourseLessonAttend.attend_id == attend_id
-    ).first()
-    attend_infos = []
-    attend_status_values = get_attend_status_values()
-    app.logger.info(
-        "get next script,current:{},next:{}".format(attend_info.script_index, next)
-    )
-    if attend_info.status == ATTEND_STATUS_NOT_STARTED or attend_info.script_index <= 0:
-        attend_info.status = ATTEND_STATUS_IN_PROGRESS
-        attend_info.script_index = 1
-        # 检查是否是第一节课
-        lesson = (
-            AILesson.query.filter(
-                AILesson.lesson_id == attend_info.lesson_id,
-                AILesson.status.in_(status),
-            )
-            .order_by(AILesson.id.desc())
-            .first()
-        )
-        attend_infos.append(
-            AILessonAttendDTO(
-                lesson.lesson_no,
-                lesson.lesson_name,
-                lesson.lesson_id,
-                attend_status_values[ATTEND_STATUS_IN_PROGRESS],
-                ATTEND_STATUS_IN_PROGRESS,
-                lesson.lesson_type,
-            )
-        )
-        app.logger.info(lesson.lesson_no)
-        app.logger.info(lesson.lesson_no[-2:])
-        if len(lesson.lesson_no) >= 2 and lesson.lesson_no[-2:] == "01":
-            # 第一节课
-            app.logger.info("first lesson")
-            parent_lesson = (
-                AILesson.query.filter(
-                    AILesson.lesson_no == lesson.lesson_no[:-2],
-                    AILesson.course_id == lesson.course_id,
-                    AILesson.status.in_(status),
-                )
-                .order_by(AILesson.id.desc())
-                .first()
-            )
-            parent_attend = (
-                AICourseLessonAttend.query.filter(
-                    AICourseLessonAttend.lesson_id == parent_lesson.lesson_id,
-                    AICourseLessonAttend.user_id == attend_info.user_id,
-                    AICourseLessonAttend.status != ATTEND_STATUS_RESET,
-                )
-                .order_by(AICourseLessonAttend.id.desc())
-                .first()
-            )
-            is_first = True
-            if (
-                parent_attend is not None
-                and parent_attend.status == ATTEND_STATUS_NOT_STARTED
-            ):
-                parent_attend.status = ATTEND_STATUS_IN_PROGRESS
-                attend_infos.append(
-                    AILessonAttendDTO(
-                        parent_lesson.lesson_no,
-                        parent_lesson.lesson_name,
-                        parent_lesson.lesson_id,
-                        attend_status_values[ATTEND_STATUS_IN_PROGRESS],
-                        ATTEND_STATUS_IN_PROGRESS,
-                        parent_lesson.lesson_type,
-                    )
-                )
-
-    elif attend_info.status == ATTEND_STATUS_BRANCH:
-        # 分支课程
-        app.logger.info("branch")
-        current = attend_info
-        assoation = AICourseAttendAsssotion.query.filter(
-            AICourseAttendAsssotion.from_attend_id == current.attend_id
-        ).first()
-        if assoation:
-            app.logger.info("found assoation")
-            current = AICourseLessonAttend.query.filter(
-                AICourseLessonAttend.attend_id == assoation.to_attend_id
-            ).first()
-        while current.status == ATTEND_STATUS_BRANCH:
-            # 分支课程
-            assoation = AICourseAttendAsssotion.query.filter(
-                AICourseAttendAsssotion.from_attend_id == current.attend_id
-            ).first()
-            if assoation:
-                current = AICourseLessonAttend.query.filter(
-                    AICourseLessonAttend.attend_id == assoation.to_attend_id
-                ).first()
-        app.logger.info("to get branch script")
-        db.session.flush()
-        script_info, attend_infos, is_first = get_script(
-            app, current.attend_id, next, preview_mode
-        )
-        if script_info:
-            return script_info, [], is_first
-        else:
-            current.status = ATTEND_STATUS_COMPLETED
-            attend_info.status = ATTEND_STATUS_IN_PROGRESS
-            db.session.flush()
-            return get_script(app, attend_id, next, preview_mode)
-    elif next > 0:
-        attend_info.script_index = attend_info.script_index + next
-
-    subquery = []
-    script_info = None
-    if preview_mode:
-        subquery = (
-            db.session.query(db.func.max(AILessonScript.id))
-            .filter(
-                AILessonScript.lesson_id == (attend_info.lesson_id),
-            )
-            .group_by(AILessonScript.script_id)
-        )
-        script_info = (
-            AILessonScript.query.filter(
-                AILessonScript.id.in_(subquery),
-                AILessonScript.lesson_id == attend_info.lesson_id,
-                AILessonScript.status.in_(status),
-                AILessonScript.script_index == attend_info.script_index,
-                AILessonScript.script_type != SCRIPT_TYPE_SYSTEM,
-            )
-            .order_by(AILessonScript.id.desc())
-            .first()
-        )
-    else:
-        script_info = (
-            AILessonScript.query.filter(
-                AILessonScript.lesson_id == attend_info.lesson_id,
-                AILessonScript.status.in_(status),
-                AILessonScript.script_index == attend_info.script_index,
-                AILessonScript.script_type != SCRIPT_TYPE_SYSTEM,
-            )
-            .order_by(AILessonScript.id.desc())
-            .first()
-        )
-    if not script_info:
-        app.logger.info("no script found")
-        app.logger.info(attend_info.lesson_id)
-        if attend_info.status == ATTEND_STATUS_IN_PROGRESS:
-            attend_info.status = ATTEND_STATUS_COMPLETED
-            lesson = (
-                AILesson.query.filter(
-                    AILesson.lesson_id == attend_info.lesson_id,
-                    AILesson.status.in_(status),
-                )
-                .order_by(AILesson.id.desc())
-                .first()
-            )
-            attend_infos.append(
-                AILessonAttendDTO(
-                    lesson.lesson_no,
-                    lesson.lesson_name,
-                    lesson.lesson_id,
-                    attend_status_values[ATTEND_STATUS_COMPLETED],
-                    ATTEND_STATUS_COMPLETED,
-                    lesson.lesson_type,
-                )
-            )
-    db.session.flush()
-    return script_info, attend_infos, is_first
-
-
-def get_script_by_id(
-    app: Flask, script_id: str, preview_mode: bool = False
-) -> AILessonScript:
-    status = [STATUS_PUBLISH]
-    if preview_mode:
-        status.append(STATUS_DRAFT)
-    return (
-        AILessonScript.query.filter(
-            AILessonScript.script_id == script_id,
-            AILessonScript.status.in_(status),
-        )
-        .order_by(AILessonScript.id.desc())
-        .first()
-    )
-
-
 def make_script_dto(
     script_type, script_content, script_id, lesson_id=None, log_id=None
 ) -> str:
+    """
+    Make script dto
+    Args:
+        script_type: Script type
+        script_content: Script content
+        script_id: Script id
+        lesson_id: Lesson id
+        log_id: Log id
+    Returns:
+        str: Script dto for stream
+    """
     return (
         "data: "
         + json.dumps(
@@ -539,6 +227,13 @@ def make_script_dto(
 
 
 def make_script_dto_to_stream(dto: ScriptDTO) -> str:
+    """
+    Make script dto to stream
+    Args:
+        dto: Script dto
+    Returns:
+        str: Script dto to stream
+    """
     return (
         "data: "
         + json.dumps(dto, default=fmt, ensure_ascii=False)
@@ -547,6 +242,9 @@ def make_script_dto_to_stream(dto: ScriptDTO) -> str:
 
 
 class FollowUpInfo:
+    """
+    Follow up info
+    """
 
     ask_model: str
     ask_prompt: str
@@ -585,7 +283,9 @@ class FollowUpInfo:
 def get_follow_up_info(
     app: Flask, shifu_bid: str, block_dto: BlockDTO, attend_id: str
 ) -> FollowUpInfo:
-
+    """
+    Get follow up info
+    """
     struct_info = get_shifu_struct(app, shifu_bid)
     path = find_node_with_parents(struct_info, block_dto.bid)
     if not path:
@@ -642,6 +342,9 @@ def get_follow_up_info(
 
 
 class ModelSetting:
+    """
+    Model setting
+    """
 
     model_name: str
     model_args: dict
@@ -657,6 +360,9 @@ class ModelSetting:
 def get_model_setting(
     app: Flask, script_info: AILessonScript, status: list[int] = None
 ) -> ModelSetting:
+    """
+    Get model setting
+    """
     if status is None:
         status = [STATUS_PUBLISH, STATUS_DRAFT]
     if script_info.script_model and script_info.script_model.strip():
@@ -707,6 +413,14 @@ def get_model_setting(
 
 
 def get_script_ui_label(app, text):
+    """
+    Get script ui label, used to display the script ui in the client
+    Args:
+        app: Flask application instance
+        text: Text
+    Returns:
+        str: Script ui label
+    """
     if isinstance(text, dict):
         label = text.get(get_current_language(), "")
         return label
@@ -731,20 +445,3 @@ def get_script_ui_label(app, text):
                 return list(label_dto.lang.values())[0]
         return label
     return text
-
-
-class OutlineUpdateDTO:
-    outline_item_info: ShifuOutlineItemDto
-    outline_item_updated_event: str
-
-    def __init__(
-        self, outline_item_info: ShifuOutlineItemDto, outline_item_updated_event: str
-    ):
-        self.outline_item_info = outline_item_info
-        self.outline_item_updated_event = outline_item_updated_event
-
-    def __json__(self):
-        return {
-            "outline_item_info": self.outline_item_info.__json__(),
-            "outline_item_updated_event": self.outline_item_updated_event,
-        }
