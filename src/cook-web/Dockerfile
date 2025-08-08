@@ -2,9 +2,14 @@ FROM node:20.11.1-alpine AS builder
 
 WORKDIR /app
 
-COPY package.json package-lock.json* ./
+COPY package.json package-lock.json ./
 
-RUN npm ci && \
+# Configure npm for better network resilience and install dependencies
+RUN npm config set fetch-retries 5 && \
+    npm config set fetch-retry-mintimeout 20000 && \
+    npm config set fetch-retry-maxtimeout 120000 && \
+    npm config set fetch-timeout 300000 && \
+    npm ci && \
     npm cache clean --force
 
 COPY . .
