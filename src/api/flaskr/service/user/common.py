@@ -24,26 +24,13 @@ from ..common.dtos import (
 from ..common.models import raise_error
 from .utils import generate_token, get_user_language, get_user_openid
 from ...dao import redis_client as redis, db
-from .models import User as CommonUser, AdminUser as AdminUser
-from flaskr.common.log import get_mode
 from flaskr.service.lesson.models import AICourse
 from flaskr.i18n import get_i18n_list
 
 FIX_CHECK_CODE = get_config("UNIVERSAL_VERIFICATION_CODE")
 
 
-def get_model(app: Flask):
-    mode = get_mode()
-    if mode is None:
-        mode = get_config("MODE", "api")
-    if mode == "admin":
-        return AdminUser
-    else:
-        return CommonUser
-
-
 def verify_user(app: Flask, login: str, raw_password: str) -> UserToken:
-    User = get_model(app)
     with app.app_context():
         user = User.query.filter(
             (User.username == login) | (User.email == login) | (User.mobile == login)
@@ -76,7 +63,6 @@ def verify_user(app: Flask, login: str, raw_password: str) -> UserToken:
 
 
 def validate_user(app: Flask, token: str) -> UserInfo:
-    User = get_model(app)
     with app.app_context():
         if not token:
             raise_error("USER.USER_NOT_LOGIN")
@@ -144,7 +130,6 @@ def validate_user(app: Flask, token: str) -> UserInfo:
 def update_user_info(
     app: Flask, user: UserInfo, name, email=None, mobile=None, language=None
 ) -> UserInfo:
-    User = get_model(app)
     with app.app_context():
         if user:
             app.logger.info(
@@ -181,7 +166,6 @@ def update_user_info(
 
 
 def change_user_passwd(app: Flask, user: UserInfo, oldpwd, newpwd) -> UserInfo:
-    User = get_model(app)
     with app.app_context():
         if user:
             user = User.query.filter_by(user_id=user.user_id).first()
@@ -212,7 +196,6 @@ def change_user_passwd(app: Flask, user: UserInfo, oldpwd, newpwd) -> UserInfo:
 
 
 def get_user_info(app: Flask, user_id: str) -> UserInfo:
-    User = get_model(app)
     with app.app_context():
         user = User.query.filter_by(user_id=user_id).first()
         if user:
@@ -235,7 +218,6 @@ def get_user_info(app: Flask, user_id: str) -> UserInfo:
 
 
 def require_reset_pwd_code(app: Flask, login: str):
-    User = get_model(app)
     with app.app_context():
         user = User.query.filter(
             (User.username == login) | (User.email == login) | (User.mobile == login)
@@ -253,7 +235,6 @@ def require_reset_pwd_code(app: Flask, login: str):
 
 
 def reset_pwd(app: Flask, login: str, code: int, newpwd: str):
-    User = get_model(app)
     with app.app_context():
         user = User.query.filter(
             (User.username == login) | (User.email == login) | (User.mobile == login)
@@ -281,7 +262,6 @@ def reset_pwd(app: Flask, login: str, code: int, newpwd: str):
 
 
 def get_sms_code_info(app: Flask, user_id: str, resend: bool):
-    User = get_model(app)
     with app.app_context():
         phone = redis.get(app.config["REDIS_KEY_PREFIX_PHONE"] + user_id)
         if phone is None:
@@ -318,7 +298,6 @@ def send_sms_code_without_check(app: Flask, user_info: User, phone: str):
 def verify_sms_code_without_phone(
     app: Flask, user_info: User, checkcode, course_id: str = None
 ) -> UserToken:
-    User = get_model(app)
     with app.app_context():
         phone = redis.get(app.config["REDIS_KEY_PREFIX_PHONE"] + user_info.user_id)
         if phone is None:
@@ -410,7 +389,6 @@ def verify_sms_code(
         update_user_profile_with_lable,
     )
 
-    User = get_model(app)
     check_save = redis.get(app.config["REDIS_KEY_PREFIX_PHONE_CODE"] + phone)
     if check_save is None and chekcode != FIX_CHECK_CODE:
         raise_error("USER.SMS_SEND_EXPIRED")
@@ -506,7 +484,6 @@ def verify_mail_code(
         update_user_profile_with_lable,
     )
 
-    User = get_model(app)
     check_save = redis.get(app.config["REDIS_KEY_PREFIX_MAIL_CODE"] + mail)
     if check_save is None and chekcode != FIX_CHECK_CODE:
         raise_error("USER.MAIL_SEND_EXPIRED")
@@ -591,6 +568,7 @@ def verify_mail_code(
 def init_first_course(app: Flask, user_id: str):
     """
     Check if there is only one user and one course. If so, update the creator of the course
+    and set the first user as admin and creator
     """
     # Check the number of users
     user_count = User.query.filter(User.user_state != USER_STATE_UNREGISTERED).count()
@@ -601,6 +579,12 @@ def init_first_course(app: Flask, user_id: str):
     course_count = AICourse.query.count()
     if course_count != 1:
         return
+
+    # Set the first user as admin and creator
+    first_user = User.query.filter(User.user_id == user_id).first()
+    if first_user:
+        first_user.is_admin = True
+        first_user.is_creator = True
 
     # Get the only course
     course = AICourse.query.first()
