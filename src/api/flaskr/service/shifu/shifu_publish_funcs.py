@@ -11,12 +11,12 @@ from flaskr.service.shifu.shifu_draft_funcs import get_latest_shifu_draft
 from flaskr.service.common import raise_error
 from flaskr.dao import db
 from flaskr.service.shifu.models import (
-    ShifuPublishedShifu,
-    ShifuPublishedOutlineItem,
-    ShifuPublishedBlock,
-    ShifuDraftOutlineItem,
-    ShifuDraftBlock,
-    ShifuLogPublishedStruct,
+    PublishedShifu,
+    PublishedOutlineItem,
+    PublishedBlock,
+    DraftOutlineItem,
+    DraftBlock,
+    LogPublishedStruct,
 )
 from flaskr.service.shifu.shifu_outline_funcs import (
     build_outline_tree,
@@ -86,12 +86,10 @@ def publish_shifu_draft(app, user_id: str, shifu_id: str):
         shifu_draft = get_latest_shifu_draft(shifu_id)
         if not shifu_draft:
             raise_error("SHIFU.SHIFU_NOT_FOUND")
-        ShifuPublishedShifu.query.filter_by(shifu_bid=shifu_id).update({"deleted": 1})
-        ShifuPublishedOutlineItem.query.filter_by(shifu_bid=shifu_id).update(
-            {"deleted": 1}
-        )
-        ShifuPublishedBlock.query.filter_by(shifu_bid=shifu_id).update({"deleted": 1})
-        shifu_published = ShifuPublishedShifu()
+        PublishedShifu.query.filter_by(shifu_bid=shifu_id).update({"deleted": 1})
+        PublishedOutlineItem.query.filter_by(shifu_bid=shifu_id).update({"deleted": 1})
+        PublishedBlock.query.filter_by(shifu_bid=shifu_id).update({"deleted": 1})
+        shifu_published = PublishedShifu()
         shifu_published.shifu_bid = shifu_id
         shifu_published.title = shifu_draft.title
         shifu_published.description = shifu_draft.description
@@ -108,8 +106,8 @@ def publish_shifu_draft(app, user_id: str, shifu_id: str):
 
         def publish_outline_item(node: ShifuOutlineTreeNode, history_item: HistoryItem):
 
-            outline_item = ShifuPublishedOutlineItem()
-            draft_outline_item: ShifuDraftOutlineItem = node.outline
+            outline_item = PublishedOutlineItem()
+            draft_outline_item: DraftOutlineItem = node.outline
             outline_item.shifu_bid = shifu_id
             outline_item.outline_item_bid = draft_outline_item.outline_item_bid
             outline_item.title = draft_outline_item.title
@@ -143,11 +141,11 @@ def publish_shifu_draft(app, user_id: str, shifu_id: str):
                 for child in node.children:
                     publish_outline_item(child, outline_item_history_item)
             else:
-                draft_blocks: list[ShifuDraftBlock] = __get_block_list_internal(
+                draft_blocks: list[DraftBlock] = __get_block_list_internal(
                     draft_outline_item.outline_item_bid
                 )
                 for block in draft_blocks:
-                    block_item = ShifuPublishedBlock()
+                    block_item = PublishedBlock()
                     block_item.shifu_bid = shifu_id
                     block_item.block_bid = block.block_bid
                     block_item.position = block.position
@@ -174,7 +172,7 @@ def publish_shifu_draft(app, user_id: str, shifu_id: str):
         for node in outline_tree:
             publish_outline_item(node, history_item)
 
-        shifu_log_published_struct = ShifuLogPublishedStruct()
+        shifu_log_published_struct = LogPublishedStruct()
         shifu_log_published_struct.struct_bid = generate_id(app)
         shifu_log_published_struct.shifu_bid = shifu_id
         shifu_log_published_struct.struct = history_item.to_json()
@@ -212,9 +210,9 @@ def get_shifu_summary(app, shifu_id: str):
         shifu_id: Shifu ID
     """
     with app.app_context():
-        shifu: ShifuPublishedShifu = (
-            ShifuPublishedShifu.query.filter(ShifuPublishedShifu.shifu_bid == shifu_id)
-            .order_by(ShifuPublishedShifu.id.desc())
+        shifu: PublishedShifu = (
+            PublishedShifu.query.filter(PublishedShifu.shifu_bid == shifu_id)
+            .order_by(PublishedShifu.id.desc())
             .first()
         )
         if not shifu:
@@ -254,7 +252,7 @@ def _generate_ask_prompts(
     shifu_info: ShifuInfoDto,
     outline_ids: list[str],
     outline_summary_map: dict[str, dict],
-    outline_item_map: dict[str, ShifuPublishedOutlineItem],
+    outline_item_map: dict[str, PublishedOutlineItem],
     ask_prompt_template: str,
 ):
     """
@@ -304,10 +302,10 @@ def _generate_ask_prompts(
 def _generate_summaries(
     app,
     outline_tree: ShifuInfoDto,
-    all_blocks: dict[str, list[ShifuPublishedBlock]],
-    outline_item_map: dict[str, ShifuPublishedOutlineItem],
+    all_blocks: dict[str, list[PublishedBlock]],
+    outline_item_map: dict[str, PublishedOutlineItem],
     summary_prompt_template,
-    shifu: ShifuPublishedShifu,
+    shifu: PublishedShifu,
 ) -> dict[str, dict]:
     """
     Generate summaries for all sections
@@ -373,8 +371,8 @@ def _generate_summaries(
 def _get_shifu_data(app, shifu_id: str) -> tuple[
     ShifuInfoDto,
     list[str],
-    dict[str, list[ShifuPublishedBlock]],
-    dict[str, ShifuPublishedOutlineItem],
+    dict[str, list[PublishedBlock]],
+    dict[str, PublishedOutlineItem],
 ]:
     """
     Get shifu related data
@@ -404,11 +402,11 @@ def _get_shifu_data(app, shifu_id: str) -> tuple[
 
     # Get all section data
     outline_items = (
-        ShifuPublishedOutlineItem.query.filter(
-            ShifuPublishedOutlineItem.outline_item_bid.in_(outline_ids),
-            ShifuPublishedOutlineItem.deleted == 0,
+        PublishedOutlineItem.query.filter(
+            PublishedOutlineItem.outline_item_bid.in_(outline_ids),
+            PublishedOutlineItem.deleted == 0,
         )
-        .order_by(ShifuPublishedOutlineItem.id.desc())
+        .order_by(PublishedOutlineItem.id.desc())
         .all()
     )
     outline_item_map = {
@@ -443,11 +441,11 @@ def _get_all_publish_blocks(app, outline_ids: list[str]):
     """
     Return {outline_id: [block, ...]}, only contains STATUS_PUBLISH, and each group is sorted by script_index in ascending order
     """
-    query = ShifuPublishedBlock.query.filter(
-        ShifuPublishedBlock.outline_item_bid.in_(outline_ids),
-        ShifuPublishedBlock.deleted == 0,
+    query = PublishedBlock.query.filter(
+        PublishedBlock.outline_item_bid.in_(outline_ids),
+        PublishedBlock.deleted == 0,
     )
-    blocks: list[ShifuPublishedBlock] = query.all()
+    blocks: list[PublishedBlock] = query.all()
     # Group by lesson_id
     result = defaultdict(list)
     for block in blocks:

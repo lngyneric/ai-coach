@@ -42,8 +42,8 @@ from flaskr.service.shifu.shifu_struct_manager import (
     get_shifu_dto,
 )
 from flaskr.service.shifu.models import (
-    ShifuDraftBlock,
-    ShifuPublishedBlock,
+    DraftBlock,
+    PublishedBlock,
 )
 from flaskr.service.shifu.adapter import (
     BlockDTO,
@@ -252,8 +252,8 @@ def get_study_record(
         StudyRecordDTO
     """
     with app.app_context():
-        block_model: Union[ShifuDraftBlock, ShifuPublishedBlock] = (
-            ShifuDraftBlock if preview_mode else ShifuPublishedBlock
+        block_model: Union[DraftBlock, PublishedBlock] = (
+            DraftBlock if preview_mode else PublishedBlock
         )
         outline_item: ShifuOutlineItemDto = get_outline_item_dto(
             app, lesson_id, preview_mode
@@ -420,8 +420,8 @@ def get_script_info(
     Get the script info
     """
     with app.app_context():
-        block_model: Union[ShifuDraftBlock, ShifuPublishedBlock] = (
-            ShifuDraftBlock if preview_mode else ShifuPublishedBlock
+        block_model: Union[DraftBlock, PublishedBlock] = (
+            DraftBlock if preview_mode else PublishedBlock
         )
         block_info = block_model.query.filter(
             block_model.block_bid == script_id,

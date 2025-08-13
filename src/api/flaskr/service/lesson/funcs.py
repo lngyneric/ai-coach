@@ -18,7 +18,7 @@ from flaskr.api.doc.feishu import list_records
 from flaskr.util.uuid import generate_id
 from sqlalchemy import func, text
 import json
-from flaskr.service.shifu.models import ShifuPublishedShifu, ShifuDraftShifu
+from flaskr.service.shifu.models import PublishedShifu, DraftShifu
 from typing import Union
 from flaskr.service.shifu.utils import get_shifu_res_url
 
@@ -596,19 +596,17 @@ def get_course_info(
     app: Flask, course_id: str, preview_mode: bool = False
 ) -> AICourseDTO:
     with app.app_context():
-        shifu_info: Union[ShifuDraftShifu, ShifuPublishedShifu] = None
+        shifu_info: Union[DraftShifu, PublishedShifu] = None
         if preview_mode:
             shifu_info = (
-                ShifuDraftShifu.query.filter(ShifuDraftShifu.shifu_bid == course_id)
-                .order_by(ShifuDraftShifu.id.desc())
+                DraftShifu.query.filter(DraftShifu.shifu_bid == course_id)
+                .order_by(DraftShifu.id.desc())
                 .first()
             )
         else:
             shifu_info = (
-                ShifuPublishedShifu.query.filter(
-                    ShifuPublishedShifu.shifu_bid == course_id
-                )
-                .order_by(ShifuPublishedShifu.id.desc())
+                PublishedShifu.query.filter(PublishedShifu.shifu_bid == course_id)
+                .order_by(PublishedShifu.id.desc())
                 .first()
             )
         if shifu_info is None:

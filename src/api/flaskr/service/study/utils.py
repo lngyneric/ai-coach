@@ -21,7 +21,7 @@ from flaskr.service.shifu.adapter import BlockDTO
 from flaskr.service.shifu.consts import BLOCK_TYPE_VALUES
 from flaskr.service.shifu.shifu_struct_manager import get_shifu_struct
 from flaskr.service.shifu.struct_utils import find_node_with_parents
-from flaskr.service.shifu.models import ShifuPublishedOutlineItem, ShifuPublishedShifu
+from flaskr.service.shifu.models import PublishedOutlineItem, PublishedShifu
 from flaskr.service.shifu.shifu_history_manager import HistoryItem
 
 
@@ -302,12 +302,10 @@ def get_follow_up_info(
     path: list[HistoryItem] = [p for p in path if p.type == "outline"]
     outline_ids = [p.id for p in path]
 
-    outline_infos: list[ShifuPublishedOutlineItem] = (
-        ShifuPublishedOutlineItem.query.filter(
-            ShifuPublishedOutlineItem.id.in_(outline_ids),
-        ).all()
-    )
-    outline_infos_map: dict[str, ShifuPublishedOutlineItem] = {
+    outline_infos: list[PublishedOutlineItem] = PublishedOutlineItem.query.filter(
+        PublishedOutlineItem.id.in_(outline_ids),
+    ).all()
+    outline_infos_map: dict[str, PublishedOutlineItem] = {
         o.outline_item_bid: o for o in outline_infos
     }
 
@@ -323,8 +321,8 @@ def get_follow_up_info(
                     model_args={"temperature": outline_info.ask_llm_temperature},
                     ask_mode=outline_info.ask_enabled_status,
                 )
-    shifu_info: ShifuPublishedShifu = ShifuPublishedShifu.query.filter(
-        ShifuPublishedShifu.shifu_bid == shifu_bid, ShifuPublishedShifu.deleted == 0
+    shifu_info: PublishedShifu = PublishedShifu.query.filter(
+        PublishedShifu.shifu_bid == shifu_bid, PublishedShifu.deleted == 0
     ).first()
     ask_model = shifu_info.ask_llm
     ask_prompt = shifu_info.ask_llm_system_prompt

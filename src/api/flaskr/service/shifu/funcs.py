@@ -19,7 +19,7 @@ from io import BytesIO
 from urllib.parse import urlparse
 import re
 import time
-from .models import ShifuDraftShifu
+from .models import DraftShifu
 from ...service.resource.models import Resource
 from aliyunsdkcore.client import AcsClient
 from aliyunsdkcdn.request.v20180510.PushObjectCacheRequest import (
@@ -421,9 +421,9 @@ def shifu_permission_verification(
             except (json.JSONDecodeError, TypeError):
                 redis.delete(cache_key)
         # If it is not in the cache, query the database
-        shifu = ShifuDraftShifu.query.filter(
-            ShifuDraftShifu.shifu_bid == shifu_id,
-            ShifuDraftShifu.created_user_bid == user_id,
+        shifu = DraftShifu.query.filter(
+            DraftShifu.shifu_bid == shifu_id,
+            DraftShifu.created_user_bid == user_id,
         ).first()
         if shifu:
             # The creator has all the permissions

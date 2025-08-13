@@ -17,13 +17,13 @@ from flaskr.service.shifu.utils import (
 )
 from flaskr.framework.plugin.plugin_manager import plugin_manager
 from flaskr.service.shifu.models import (
-    ShifuDraftShifu,
-    ShifuDraftOutlineItem,
-    ShifuDraftBlock,
-    ShifuPublishedShifu,
-    ShifuPublishedOutlineItem,
-    ShifuPublishedBlock,
-    ShifuLogPublishedStruct,
+    DraftShifu,
+    DraftOutlineItem,
+    DraftBlock,
+    PublishedShifu,
+    PublishedOutlineItem,
+    PublishedBlock,
+    LogPublishedStruct,
 )
 from flaskr.util import get_now_time, generate_id
 from flaskr.dao import db
@@ -78,7 +78,7 @@ def migrate_shifu_draft_to_shifu_draft_v2(app, shifu_bid: str):
             app.logger.error(f"shifu not found, shifu_bid: {shifu_bid}")
             return
         user_id = old_shifu.created_user_id
-        new_shifu = ShifuDraftShifu()
+        new_shifu = DraftShifu()
         new_shifu.shifu_bid = shifu_bid
         new_shifu.title = old_shifu.course_name
         new_shifu.description = old_shifu.course_desc
@@ -123,7 +123,7 @@ def migrate_shifu_draft_to_shifu_draft_v2(app, shifu_bid: str):
                 .order_by(AILessonScript.id.desc())
                 .first()
             )
-            new_outline = ShifuDraftOutlineItem()
+            new_outline = DraftOutlineItem()
             new_outline.outline_item_bid = node.outline_id
             new_outline.shifu_bid = shifu_bid
 
@@ -175,7 +175,7 @@ def migrate_shifu_draft_to_shifu_draft_v2(app, shifu_bid: str):
                         block, variable_definitions
                     )
                     for block_dto in block_dtos:
-                        new_block = ShifuDraftBlock()
+                        new_block = DraftBlock()
                         new_block.block_bid = block_dto.bid
                         new_block.outline_item_bid = new_outline.outline_item_bid
                         new_block.position = block_index
@@ -228,17 +228,17 @@ def migrate_shifu_draft_to_shifu_draft_v2(app, shifu_bid: str):
             db.session.commit()
             return
         app.logger.info(f"migrate to publish shifu, shifu_bid: {shifu_bid}")
-        ShifuPublishedShifu.query.filter(
-            ShifuPublishedShifu.shifu_bid == shifu_bid
-        ).update({ShifuPublishedShifu.deleted: 1})
-        ShifuPublishedOutlineItem.query.filter(
-            ShifuPublishedOutlineItem.shifu_bid == shifu_bid
-        ).update({ShifuPublishedOutlineItem.deleted: 1})
-        ShifuPublishedBlock.query.filter(
-            ShifuPublishedBlock.shifu_bid == shifu_bid
-        ).update({ShifuPublishedBlock.deleted: 1})
+        PublishedShifu.query.filter(PublishedShifu.shifu_bid == shifu_bid).update(
+            {PublishedShifu.deleted: 1}
+        )
+        PublishedOutlineItem.query.filter(
+            PublishedOutlineItem.shifu_bid == shifu_bid
+        ).update({PublishedOutlineItem.deleted: 1})
+        PublishedBlock.query.filter(PublishedBlock.shifu_bid == shifu_bid).update(
+            {PublishedBlock.deleted: 1}
+        )
         db.session.flush()
-        new_online_course = ShifuPublishedShifu()
+        new_online_course = PublishedShifu()
         new_online_course.shifu_bid = shifu_bid
         new_online_course.title = new_shifu.title
         new_online_course.description = new_shifu.description
@@ -309,7 +309,7 @@ def migrate_shifu_draft_to_shifu_draft_v2(app, shifu_bid: str):
                 .order_by(AILessonScript.id.desc())
                 .first()
             )
-            new_published_outline = ShifuPublishedOutlineItem()
+            new_published_outline = PublishedOutlineItem()
             new_published_outline.outline_item_bid = node.outline_id
             new_published_outline.shifu_bid = shifu_bid
             new_published_outline.title = old_outline.lesson_name
@@ -367,7 +367,7 @@ def migrate_shifu_draft_to_shifu_draft_v2(app, shifu_bid: str):
                         block, variable_definitions
                     )
                     for block_dto in block_dtos:
-                        new_block = ShifuPublishedBlock()
+                        new_block = PublishedBlock()
                         new_block.block_bid = block_dto.bid
                         new_block.outline_item_bid = (
                             new_published_outline.outline_item_bid
@@ -404,7 +404,7 @@ def migrate_shifu_draft_to_shifu_draft_v2(app, shifu_bid: str):
 
         for node in outline_tree:
             migrate_published_outline(node, history_item)
-        shifu_log_published_struct = ShifuLogPublishedStruct()
+        shifu_log_published_struct = LogPublishedStruct()
         shifu_log_published_struct.struct_bid = generate_id(app)
         shifu_log_published_struct.shifu_bid = shifu_bid
         shifu_log_published_struct.struct = history_item.to_json()

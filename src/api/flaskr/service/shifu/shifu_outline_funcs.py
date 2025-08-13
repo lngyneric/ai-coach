@@ -20,7 +20,7 @@ from .consts import (
     UNIT_TYPE_NORMAL,
     UNIT_TYPE_TRIAL,
 )
-from .models import ShifuDraftOutlineItem
+from .models import DraftOutlineItem
 from ...dao import db
 from ...util import generate_id
 from ..common.models import raise_error
@@ -37,25 +37,25 @@ from .shifu_history_manager import (
 from datetime import datetime
 
 
-def __get_existing_outline_items(shifu_bid: str) -> list[ShifuDraftOutlineItem]:
+def __get_existing_outline_items(shifu_bid: str) -> list[DraftOutlineItem]:
     """
     Get existing outline items
     internal function
     Args:
         shifu_bid: Shifu bid
     Returns:
-        list[ShifuDraftOutlineItem]: Outline items
+        list[DraftOutlineItem]: Outline items
     """
     sub_query = (
-        db.session.query(db.func.max(ShifuDraftOutlineItem.id))
+        db.session.query(db.func.max(DraftOutlineItem.id))
         .filter(
-            ShifuDraftOutlineItem.shifu_bid == shifu_bid,
+            DraftOutlineItem.shifu_bid == shifu_bid,
         )
-        .group_by(ShifuDraftOutlineItem.outline_item_bid)
+        .group_by(DraftOutlineItem.outline_item_bid)
     )
-    outline_items = ShifuDraftOutlineItem.query.filter(
-        ShifuDraftOutlineItem.id.in_(sub_query),
-        ShifuDraftOutlineItem.deleted == 0,
+    outline_items = DraftOutlineItem.query.filter(
+        DraftOutlineItem.id.in_(sub_query),
+        DraftOutlineItem.deleted == 0,
     ).all()
 
     return sorted(outline_items, key=lambda x: (len(x.position), x.position))
@@ -203,7 +203,7 @@ def create_outline(
         type = UNIT_TYPE_VALUES.get(outline_type, UNIT_TYPE_VALUE_TRIAL)
 
         # create new outline
-        new_outline = ShifuDraftOutlineItem(
+        new_outline = DraftOutlineItem(
             outline_item_bid=outline_bid,
             shifu_bid=shifu_id,
             title=outline_name,
@@ -276,11 +276,11 @@ def modify_outline(
         # find existing outline
         now_time = datetime.now()
         existing_outline = (
-            ShifuDraftOutlineItem.query.filter(
-                ShifuDraftOutlineItem.outline_item_bid == outline_id,
-                ShifuDraftOutlineItem.shifu_bid == shifu_id,
+            DraftOutlineItem.query.filter(
+                DraftOutlineItem.outline_item_bid == outline_id,
+                DraftOutlineItem.shifu_bid == shifu_id,
             )
-            .order_by(ShifuDraftOutlineItem.id.desc())
+            .order_by(DraftOutlineItem.id.desc())
             .first()
         )
 
@@ -297,7 +297,7 @@ def modify_outline(
         # check if needs update
         old_check_str = existing_outline.get_str_to_check()
         # create new version
-        new_outline: ShifuDraftOutlineItem = existing_outline.clone()
+        new_outline: DraftOutlineItem = existing_outline.clone()
         new_outline.title = outline_name
         new_outline.llm_system_prompt = system_prompt or ""
         new_outline.updated_user_bid = user_id
@@ -337,12 +337,12 @@ def delete_outline(app, user_id: str, shifu_id: str, outline_id: str):
         now_time = datetime.now()
         # find the outline to delete
         outline_to_delete = (
-            ShifuDraftOutlineItem.query.filter(
-                ShifuDraftOutlineItem.outline_item_bid == outline_id,
-                ShifuDraftOutlineItem.shifu_bid == shifu_id,
-                ShifuDraftOutlineItem.deleted == 0,
+            DraftOutlineItem.query.filter(
+                DraftOutlineItem.outline_item_bid == outline_id,
+                DraftOutlineItem.shifu_bid == shifu_id,
+                DraftOutlineItem.deleted == 0,
             )
-            .order_by(ShifuDraftOutlineItem.id.desc())
+            .order_by(DraftOutlineItem.id.desc())
             .first()
         )
 
@@ -379,16 +379,16 @@ def delete_outline(app, user_id: str, shifu_id: str, outline_id: str):
         # mark all related outlines as deleted
         for item_id in ids_to_delete:
             item = (
-                ShifuDraftOutlineItem.query.filter(
-                    ShifuDraftOutlineItem.outline_item_bid == item_id,
-                    ShifuDraftOutlineItem.shifu_bid == shifu_id,
-                    ShifuDraftOutlineItem.deleted == 0,
+                DraftOutlineItem.query.filter(
+                    DraftOutlineItem.outline_item_bid == item_id,
+                    DraftOutlineItem.shifu_bid == shifu_id,
+                    DraftOutlineItem.deleted == 0,
                 )
-                .order_by(ShifuDraftOutlineItem.id.desc())
+                .order_by(DraftOutlineItem.id.desc())
                 .first()
             )
             if item:
-                new_item: ShifuDraftOutlineItem = item.clone()
+                new_item: DraftOutlineItem = item.clone()
                 new_item.deleted = 1
                 new_item.updated_user_bid = user_id
                 new_item.updated_at = now_time
@@ -439,7 +439,7 @@ def reorder_outline_tree(
 
                     if item.position != new_position:
                         # create new version
-                        new_item: ShifuDraftOutlineItem = item.clone()
+                        new_item: DraftOutlineItem = item.clone()
                         new_item.position = new_position
                         new_item.updated_user_bid = user_id
                         new_item.updated_at = now_time
@@ -484,12 +484,12 @@ def get_unit_by_id(app, user_id: str, unit_id: str):
         None: If unit not found
     """
     with app.app_context():
-        unit: ShifuDraftOutlineItem = (
-            ShifuDraftOutlineItem.query.filter(
-                ShifuDraftOutlineItem.outline_item_bid == unit_id,
-                ShifuDraftOutlineItem.deleted == 0,
+        unit: DraftOutlineItem = (
+            DraftOutlineItem.query.filter(
+                DraftOutlineItem.outline_item_bid == unit_id,
+                DraftOutlineItem.deleted == 0,
             )
-            .order_by(ShifuDraftOutlineItem.id.desc())
+            .order_by(DraftOutlineItem.id.desc())
             .first()
         )
 
@@ -541,11 +541,11 @@ def modify_unit(
         now_time = datetime.now()
         # find existing unit
         existing_unit = (
-            ShifuDraftOutlineItem.query.filter(
-                ShifuDraftOutlineItem.outline_item_bid == unit_id,
-                ShifuDraftOutlineItem.deleted == 0,
+            DraftOutlineItem.query.filter(
+                DraftOutlineItem.outline_item_bid == unit_id,
+                DraftOutlineItem.deleted == 0,
             )
-            .order_by(ShifuDraftOutlineItem.id.desc())
+            .order_by(DraftOutlineItem.id.desc())
             .first()
         )
 
@@ -560,7 +560,7 @@ def modify_unit(
         old_check_str = existing_unit.get_str_to_check()
 
         # create new version
-        new_unit: ShifuDraftOutlineItem = existing_unit.clone()
+        new_unit: DraftOutlineItem = existing_unit.clone()
 
         if unit_name:
             new_unit.title = unit_name
@@ -618,11 +618,11 @@ def delete_unit(app, user_id: str, unit_id: str):
         now_time = datetime.now()
         # find the unit to delete
         unit_to_delete = (
-            ShifuDraftOutlineItem.query.filter(
-                ShifuDraftOutlineItem.outline_item_bid == unit_id,
-                ShifuDraftOutlineItem.deleted == 0,
+            DraftOutlineItem.query.filter(
+                DraftOutlineItem.outline_item_bid == unit_id,
+                DraftOutlineItem.deleted == 0,
             )
-            .order_by(ShifuDraftOutlineItem.id.desc())
+            .order_by(DraftOutlineItem.id.desc())
             .first()
         )
 
@@ -658,15 +658,15 @@ def delete_unit(app, user_id: str, unit_id: str):
 
         # mark all related outlines as deleted
         for item_id in ids_to_delete:
-            item: ShifuDraftOutlineItem = (
-                ShifuDraftOutlineItem.query.filter(
-                    ShifuDraftOutlineItem.outline_item_bid == item_id,
+            item: DraftOutlineItem = (
+                DraftOutlineItem.query.filter(
+                    DraftOutlineItem.outline_item_bid == item_id,
                 )
-                .order_by(ShifuDraftOutlineItem.id.desc())
+                .order_by(DraftOutlineItem.id.desc())
                 .first()
             )
             if item:
-                new_item: ShifuDraftOutlineItem = item.clone()
+                new_item: DraftOutlineItem = item.clone()
                 new_item.deleted = 1
                 new_item.updated_user_bid = user_id
                 new_item.updated_at = now_time

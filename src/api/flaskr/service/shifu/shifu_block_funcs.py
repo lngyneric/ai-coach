@@ -19,7 +19,7 @@ from flaskr.service.shifu.adapter import (
 )
 from flaskr.service.common import raise_error
 
-from .models import ShifuDraftOutlineItem, ShifuDraftBlock
+from .models import DraftOutlineItem, DraftBlock
 from flaskr.service.check_risk.funcs import check_text_with_risk_control
 from flaskr.util import generate_id
 from flaskr.service.profile.profile_manage import (
@@ -32,20 +32,20 @@ from .shifu_history_manager import (
 from datetime import datetime
 
 
-def __get_block_list_internal(outline_id: str) -> list[ShifuDraftBlock]:
+def __get_block_list_internal(outline_id: str) -> list[DraftBlock]:
     sub_query = (
-        db.session.query(db.func.max(ShifuDraftBlock.id))
+        db.session.query(db.func.max(DraftBlock.id))
         .filter(
-            ShifuDraftBlock.outline_item_bid == outline_id,
+            DraftBlock.outline_item_bid == outline_id,
         )
-        .group_by(ShifuDraftBlock.block_bid)
+        .group_by(DraftBlock.block_bid)
     )
     blocks = (
-        ShifuDraftBlock.query.filter(
-            ShifuDraftBlock.id.in_(sub_query),
-            ShifuDraftBlock.deleted == 0,
+        DraftBlock.query.filter(
+            DraftBlock.id.in_(sub_query),
+            DraftBlock.deleted == 0,
         )
-        .order_by(ShifuDraftBlock.position.asc())
+        .order_by(DraftBlock.position.asc())
         .all()
     )
     return blocks
@@ -140,11 +140,11 @@ def save_shifu_block_list(
     with app.app_context():
         app.logger.info(f"save block list: {outline_id}, {block_list}")
         now_time = datetime.now()
-        outline: ShifuDraftOutlineItem = (
-            ShifuDraftOutlineItem.query.filter(
-                ShifuDraftOutlineItem.outline_item_bid == outline_id,
+        outline: DraftOutlineItem = (
+            DraftOutlineItem.query.filter(
+                DraftOutlineItem.outline_item_bid == outline_id,
             )
-            .order_by(ShifuDraftOutlineItem.id.desc())
+            .order_by(DraftOutlineItem.id.desc())
             .first()
         )
         if outline is None:
@@ -165,7 +165,7 @@ def save_shifu_block_list(
                 (b for b in blocks if b.block_bid == block_dto.bid), None
             )
             if block_model is None:
-                block_model = ShifuDraftBlock()
+                block_model = DraftBlock()
                 block_model.block_bid = generate_id(app)
                 result = update_block_dto_to_model_internal(
                     block_dto,
@@ -268,11 +268,11 @@ def add_block(
     """
     with app.app_context():
         now_time = datetime.now()
-        outline: ShifuDraftOutlineItem = (
-            ShifuDraftOutlineItem.query.filter(
-                ShifuDraftOutlineItem.outline_item_bid == outline_id,
+        outline: DraftOutlineItem = (
+            DraftOutlineItem.query.filter(
+                DraftOutlineItem.outline_item_bid == outline_id,
             )
-            .order_by(ShifuDraftOutlineItem.id.desc())
+            .order_by(DraftOutlineItem.id.desc())
             .first()
         )
         if outline is None:
@@ -284,7 +284,7 @@ def add_block(
         block_index = block_index + 1
         variable_definitions = get_profile_item_definition_list(app, outline.shifu_bid)
         existing_blocks = __get_block_list_internal(outline_id)
-        block_model: ShifuDraftBlock = ShifuDraftBlock()
+        block_model: DraftBlock = DraftBlock()
         block_model.outline_item_bid = outline_id
         block_model.position = block_index
         block_model.block_bid = block_bid

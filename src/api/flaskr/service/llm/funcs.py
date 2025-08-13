@@ -8,7 +8,7 @@ from flaskr.service.study.dtos import ScriptDTO
 from flaskr.service.study.utils import make_script_dto_to_stream
 from flaskr.service.lesson.const import STATUS_PUBLISH, STATUS_DRAFT
 
-from flaskr.service.shifu.models import ShifuDraftBlock
+from flaskr.service.shifu.models import DraftBlock
 
 
 def format_script_prompt(script_prompt: str, script_variables: dict) -> str:
@@ -44,11 +44,11 @@ def debug_script(
 
         try:
             block_info = (
-                ShifuDraftBlock.query.filter(
-                    ShifuDraftBlock.block_bid == block_id,
-                    ShifuDraftBlock.deleted == 0,
+                DraftBlock.query.filter(
+                    DraftBlock.block_bid == block_id,
+                    DraftBlock.deleted == 0,
                 )
-                .order_by(ShifuDraftBlock.id.desc())
+                .order_by(DraftBlock.id.desc())
                 .first()
             )
             if not block_info:

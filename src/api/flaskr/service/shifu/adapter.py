@@ -59,7 +59,7 @@ import json
 from flaskr.service.common import raise_error
 from flaskr.util import generate_id
 import re
-from .models import ShifuDraftBlock, ShifuPublishedBlock
+from .models import DraftBlock, PublishedBlock
 from .consts import (
     BLOCK_TYPE_VALUES,
     BLOCK_TYPE_VALUES_REVERSE,
@@ -679,7 +679,7 @@ def check_block_dto(
 
 def update_block_dto_to_model_internal(
     block_dto: BlockDTO,
-    block_model: ShifuDraftBlock,
+    block_model: DraftBlock,
     variable_definitions: list[ProfileItemDefinition],
     new_block: bool = False,
 ) -> BlockUpdateResultDto:
@@ -731,7 +731,7 @@ def update_block_dto_to_model_internal(
 
 
 def generate_block_dto_from_model_internal(
-    block_model: Union[ShifuDraftBlock, ShifuPublishedBlock],
+    block_model: Union[DraftBlock, PublishedBlock],
     convert_html: bool = False,
 ) -> BlockDTO:
     """

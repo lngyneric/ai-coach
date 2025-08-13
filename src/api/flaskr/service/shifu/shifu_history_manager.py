@@ -39,7 +39,7 @@ format:
 from flask import Flask
 from typing import Generic, TypeVar, List
 from pydantic import BaseModel
-from .models import ShifuLogDraftStruct
+from .models import LogDraftStruct
 from flaskr.dao import db
 from flaskr.util import generate_id
 import queue
@@ -101,10 +101,10 @@ def get_shifu_history(app, shifu_bid: str) -> HistoryItem:
     """
     with app.app_context():
         shifu_history = (
-            ShifuLogDraftStruct.query.filter_by(
+            LogDraftStruct.query.filter_by(
                 shifu_bid=shifu_bid,
             )
-            .order_by(ShifuLogDraftStruct.created_at.desc())
+            .order_by(LogDraftStruct.created_at.desc())
             .first()
         )
         if not shifu_history:
@@ -127,7 +127,7 @@ def __save_shifu_history(
         None
     """
     now = datetime.now()
-    shifu_history = ShifuLogDraftStruct(
+    shifu_history = LogDraftStruct(
         struct_bid=generate_id(app),
         shifu_bid=shifu_bid,
         struct=history.to_json(),

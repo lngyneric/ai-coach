@@ -112,7 +112,7 @@ class AiCourseAuth(db.Model):
 
 
 # draft shifu's model
-class ShifuDraftShifu(db.Model):
+class DraftShifu(db.Model):
     """
     Shifu draft shifu
     """
@@ -209,7 +209,7 @@ class ShifuDraftShifu(db.Model):
     )
 
     def clone(self):
-        return ShifuDraftShifu(
+        return DraftShifu(
             shifu_bid=self.shifu_bid,
             title=self.title,
             keywords=self.keywords,
@@ -251,7 +251,7 @@ class ShifuDraftShifu(db.Model):
         return f"{self.title} {self.keywords} {self.description} {self.llm_system_prompt} {self.ask_llm_system_prompt}"
 
 
-class ShifuDraftOutlineItem(db.Model):
+class DraftOutlineItem(db.Model):
     __tablename__ = "shifu_draft_outline_items"
     id = Column(BIGINT, primary_key=True, autoincrement=True)
     outline_item_bid = Column(
@@ -364,7 +364,7 @@ class ShifuDraftOutlineItem(db.Model):
     )
 
     def clone(self):
-        return ShifuDraftOutlineItem(
+        return DraftOutlineItem(
             outline_item_bid=self.outline_item_bid,
             shifu_bid=self.shifu_bid,
             title=self.title,
@@ -410,7 +410,7 @@ class ShifuDraftOutlineItem(db.Model):
         return f"{self.title} {self.llm_system_prompt} {self.ask_llm_system_prompt}"
 
 
-class ShifuDraftBlock(db.Model):
+class DraftBlock(db.Model):
     __tablename__ = "shifu_draft_blocks"
     id = Column(BIGINT, primary_key=True, autoincrement=True)
     block_bid = Column(
@@ -499,8 +499,8 @@ class ShifuDraftBlock(db.Model):
     def get_str_to_check(self):
         return f"{self.content}"
 
-    def clone(self) -> "ShifuDraftBlock":
-        return ShifuDraftBlock(
+    def clone(self) -> "DraftBlock":
+        return DraftBlock(
             block_bid=self.block_bid,
             shifu_bid=self.shifu_bid,
             outline_item_bid=self.outline_item_bid,
@@ -512,7 +512,7 @@ class ShifuDraftBlock(db.Model):
         )
 
 
-class ShifuLogDraftStruct(db.Model):
+class LogDraftStruct(db.Model):
     __tablename__ = "shifu_log_draft_structs"
     id = Column(BIGINT, primary_key=True, autoincrement=True)
     struct_bid = Column(
@@ -564,7 +564,7 @@ class ShifuLogDraftStruct(db.Model):
 
 
 # published shifu's model
-class ShifuPublishedShifu(db.Model):
+class PublishedShifu(db.Model):
     __tablename__ = "shifu_published_shifus"
     id = Column(BIGINT, primary_key=True, autoincrement=True)
     shifu_bid = Column(
@@ -641,7 +641,7 @@ class ShifuPublishedShifu(db.Model):
     )
 
 
-class ShifuPublishedOutlineItem(db.Model):
+class PublishedOutlineItem(db.Model):
     __tablename__ = "shifu_published_outline_items"
     id = Column(BIGINT, primary_key=True, autoincrement=True)
     outline_item_bid = Column(
@@ -747,7 +747,7 @@ class ShifuPublishedOutlineItem(db.Model):
     )
 
 
-class ShifuPublishedBlock(db.Model):
+class PublishedBlock(db.Model):
     __tablename__ = "shifu_published_blocks"
     id = Column(BIGINT, primary_key=True, autoincrement=True)
     block_bid = Column(
@@ -821,7 +821,7 @@ class ShifuPublishedBlock(db.Model):
     )
 
 
-class ShifuLogPublishedStruct(db.Model):
+class LogPublishedStruct(db.Model):
     __tablename__ = "shifu_log_published_structs"
     id = Column(BIGINT, primary_key=True, autoincrement=True)
     struct_bid = Column(

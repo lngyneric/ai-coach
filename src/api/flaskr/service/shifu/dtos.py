@@ -9,7 +9,7 @@ Date: 2025-08-07
 
 from flaskr.common.swagger import register_schema_to_swagger
 from flaskr.service.shifu.models import (
-    ShifuDraftOutlineItem,
+    DraftOutlineItem,
 )
 from flaskr.service.profile.dtos import (
     TextProfileDto,
@@ -163,11 +163,11 @@ class SimpleOutlineDto(BaseModel):
         }
 
 
-# new outline tree node class, for handling ShifuDraftOutlineItem
+# new outline tree node class, for handling DraftOutlineItem
 # author: yfge
 # date: 2025-07-13
 # version: 1.0.0
-# description: this class is used to handle ShifuDraftOutlineItem
+# description: this class is used to handle DraftOutlineItem
 # usage:
 # 1. create a new ShifuOutlineTreeNode
 # 2. add a child to the node
@@ -177,7 +177,7 @@ class ShifuOutlineTreeNode:
     Shifu outline tree node
     """
 
-    def __init__(self, outline_item: ShifuDraftOutlineItem):
+    def __init__(self, outline_item: DraftOutlineItem):
         self.outline = outline_item
         self.children = []
         if outline_item:

@@ -20,31 +20,31 @@ from .utils import (
     parse_shifu_res_bid,
     get_shifu_res_url_dict,
 )
-from .models import ShifuDraftShifu, AiCourseAuth
+from .models import DraftShifu, AiCourseAuth
 from .shifu_history_manager import save_shifu_history
 from ..common.dtos import PageNationDTO
 
 
-def get_latest_shifu_draft(shifu_id: str) -> ShifuDraftShifu:
+def get_latest_shifu_draft(shifu_id: str) -> DraftShifu:
     """
     Get the latest shifu draft
     Args:
         shifu_id: Shifu ID
     Returns:
-        ShifuDraftShifu: Shifu draft
+        DraftShifu: Shifu draft
     """
-    shifu_draft: ShifuDraftShifu = (
-        ShifuDraftShifu.query.filter(
-            ShifuDraftShifu.shifu_bid == shifu_id,
-            ShifuDraftShifu.deleted == 0,
+    shifu_draft: DraftShifu = (
+        DraftShifu.query.filter(
+            DraftShifu.shifu_bid == shifu_id,
+            DraftShifu.deleted == 0,
         )
-        .order_by(ShifuDraftShifu.id.desc())
+        .order_by(DraftShifu.id.desc())
         .first()
     )
     return shifu_draft
 
 
-def return_shifu_draft_dto(shifu_draft: ShifuDraftShifu) -> ShifuDetailDto:
+def return_shifu_draft_dto(shifu_draft: DraftShifu) -> ShifuDetailDto:
     """
     Return shifu draft dto
     Args:
@@ -111,14 +111,14 @@ def create_shifu_draft(
 
         # check if the name already exists
         existing_shifu = (
-            ShifuDraftShifu.query.filter_by(title=shifu_name, deleted=0)
-            .order_by(ShifuDraftShifu.id.desc())
+            DraftShifu.query.filter_by(title=shifu_name, deleted=0)
+            .order_by(DraftShifu.id.desc())
             .first()
         )
         if existing_shifu:
             raise_error("SHIFU.SHIFU_NAME_ALREADY_EXISTS")
-        # create a new ShifuDraftShifu object
-        shifu_draft: ShifuDraftShifu = ShifuDraftShifu(
+        # create a new DraftShifu object
+        shifu_draft: DraftShifu = DraftShifu(
             shifu_bid=shifu_id,
             title=shifu_name,
             description=shifu_description,
@@ -205,7 +205,7 @@ def save_shifu_draft_info(
     with app.app_context():
         shifu_draft = get_latest_shifu_draft(shifu_id)
         if not shifu_draft:
-            shifu_draft: ShifuDraftShifu = ShifuDraftShifu(
+            shifu_draft: DraftShifu = DraftShifu(
                 shifu_bid=shifu_id,
                 title=shifu_name,
                 description=shifu_description,
@@ -223,7 +223,7 @@ def save_shifu_draft_info(
             save_shifu_history(app, user_id, shifu_id, shifu_draft.id)
             db.session.commit()
         else:
-            new_shifu_draft: ShifuDraftShifu = shifu_draft.clone()
+            new_shifu_draft: DraftShifu = shifu_draft.clone()
             new_shifu_draft.title = shifu_name
             new_shifu_draft.description = shifu_description
             new_shifu_draft.avatar_res_bid = parse_shifu_res_bid(shifu_avatar)
@@ -267,8 +267,9 @@ def get_shifu_draft_list(
         page_size = max(page_size, 1)
         page_offset = (page_index - 1) * page_size
 
-        created_total = ShifuDraftShifu.query.filter(
-            ShifuDraftShifu.created_user_bid == user_id
+        created_total = DraftShifu.query.filter(
+            DraftShifu.created_user_bid == user_id,
+            DraftShifu.deleted == 0,
         ).count()
         shared_total = AiCourseAuth.query.filter(
             AiCourseAuth.user_id == user_id,
@@ -276,12 +277,12 @@ def get_shifu_draft_list(
         total = created_total + shared_total
 
         created_subquery = (
-            db.session.query(db.func.max(ShifuDraftShifu.id))
+            db.session.query(db.func.max(DraftShifu.id))
             .filter(
-                ShifuDraftShifu.created_user_bid == user_id,
-                ShifuDraftShifu.deleted == 0,
+                DraftShifu.created_user_bid == user_id,
+                DraftShifu.deleted == 0,
             )
-            .group_by(ShifuDraftShifu.shifu_bid)
+            .group_by(DraftShifu.shifu_bid)
         )
 
         shared_course_ids = (
@@ -291,20 +292,20 @@ def get_shifu_draft_list(
         )
 
         shared_subquery = (
-            db.session.query(db.func.max(ShifuDraftShifu.id))
+            db.session.query(db.func.max(DraftShifu.id))
             .filter(
-                ShifuDraftShifu.shifu_bid.in_(shared_course_ids),
-                ShifuDraftShifu.deleted == 0,
+                DraftShifu.shifu_bid.in_(shared_course_ids),
+                DraftShifu.deleted == 0,
             )
-            .group_by(ShifuDraftShifu.shifu_bid)
+            .group_by(DraftShifu.shifu_bid)
         )
 
         union_subquery = created_subquery.union(shared_subquery).subquery()
 
-        shifu_drafts: list[ShifuDraftShifu] = (
-            db.session.query(ShifuDraftShifu)
-            .filter(ShifuDraftShifu.id.in_(union_subquery))
-            .order_by(ShifuDraftShifu.id.desc())
+        shifu_drafts: list[DraftShifu] = (
+            db.session.query(DraftShifu)
+            .filter(DraftShifu.id.in_(union_subquery))
+            .order_by(DraftShifu.id.desc())
             .offset(page_offset)
             .limit(page_size)
             .all()

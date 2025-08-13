@@ -13,12 +13,12 @@ Date: 2025-08-07
 
 from flask import Flask
 from flaskr.service.shifu.models import (
-    ShifuLogPublishedStruct,
-    ShifuLogDraftStruct,
-    ShifuDraftShifu,
-    ShifuDraftOutlineItem,
-    ShifuPublishedShifu,
-    ShifuPublishedOutlineItem,
+    LogPublishedStruct,
+    LogDraftStruct,
+    DraftShifu,
+    DraftOutlineItem,
+    PublishedShifu,
+    PublishedOutlineItem,
 )
 
 from flaskr.service.shifu.shifu_history_manager import HistoryItem
@@ -77,9 +77,9 @@ def get_shifu_struct(
     with app.app_context():
         app.logger.info(f"get_shifu_struct:{shifu_bid},{is_preview}")
         if is_preview:
-            model = ShifuLogDraftStruct
+            model = LogDraftStruct
         else:
-            model = ShifuLogPublishedStruct
+            model = LogPublishedStruct
         shifu_struct = (
             model.query.filter(
                 model.shifu_bid == shifu_bid,
@@ -101,11 +101,11 @@ def get_shifu_outline_tree(
         app.logger.info("get_shifu_outline_tree:{}".format(shifu_bid))
         struct: HistoryItem = get_shifu_struct(app, shifu_bid, is_preview)
         if is_preview:
-            shifu_model = ShifuDraftShifu
-            outline_item_model = ShifuDraftOutlineItem
+            shifu_model = DraftShifu
+            outline_item_model = DraftOutlineItem
         else:
-            shifu_model = ShifuPublishedShifu
-            outline_item_model = ShifuPublishedOutlineItem
+            shifu_model = PublishedShifu
+            outline_item_model = PublishedOutlineItem
 
         shifu_ids = []
         outline_item_ids = []
@@ -122,7 +122,7 @@ def get_shifu_outline_tree(
                     q.put(child)
         if len(shifu_ids) != 1:
             raise_error("SHIFU.SHIFU_NOT_FOUND")
-        shifu: Union[ShifuDraftShifu, ShifuPublishedShifu] = shifu_model.query.filter(
+        shifu: Union[DraftShifu, PublishedShifu] = shifu_model.query.filter(
             shifu_model.id.in_(shifu_ids),
         ).first()
         if not shifu:
@@ -144,9 +144,9 @@ def get_shifu_outline_tree(
 
         def recurse_outline_item(item: HistoryItem) -> ShifuOutlineItemDto:
             if item.type == "outline":
-                outline_item: Union[
-                    ShifuDraftOutlineItem, ShifuPublishedOutlineItem
-                ] = outline_items_map.get(item.id, None)
+                outline_item: Union[DraftOutlineItem, PublishedOutlineItem] = (
+                    outline_items_map.get(item.id, None)
+                )
                 if not outline_item:
                     app.logger.error(f"outline_item not found: {item.id}")
 
@@ -185,10 +185,10 @@ def get_shifu_dto(app: Flask, shifu_bid: str, is_preview: bool = False) -> Shifu
         ShifuInfoDto: Shifu dto
     """
     if is_preview:
-        shifu_model = ShifuDraftShifu
+        shifu_model = DraftShifu
     else:
-        shifu_model = ShifuPublishedShifu
-    shifu: Union[ShifuDraftShifu, ShifuPublishedShifu] = (
+        shifu_model = PublishedShifu
+    shifu: Union[DraftShifu, PublishedShifu] = (
         shifu_model.query.filter(
             shifu_model.shifu_bid == shifu_bid,
             shifu_model.deleted == 0,
@@ -220,10 +220,10 @@ def get_default_shifu_dto(app: Flask, is_preview: bool = False) -> ShifuInfoDto:
         ShifuInfoDto: Shifu dto
     """
     if is_preview:
-        shifu_model = ShifuDraftShifu
+        shifu_model = DraftShifu
     else:
-        shifu_model = ShifuPublishedShifu
-    shifu: Union[ShifuDraftShifu, ShifuPublishedShifu] = (
+        shifu_model = PublishedShifu
+    shifu: Union[DraftShifu, PublishedShifu] = (
         shifu_model.query.filter(
             shifu_model.deleted == 0,
         )
@@ -257,10 +257,10 @@ def get_outline_item_dto(
         ShifuOutlineItemDto: Outline item dto
     """
     if is_preview:
-        outline_item_model = ShifuDraftOutlineItem
+        outline_item_model = DraftOutlineItem
     else:
-        outline_item_model = ShifuPublishedOutlineItem
-    outline_item: Union[ShifuDraftOutlineItem, ShifuPublishedOutlineItem] = (
+        outline_item_model = PublishedOutlineItem
+    outline_item: Union[DraftOutlineItem, PublishedOutlineItem] = (
         outline_item_model.query.filter(
             outline_item_model.outline_item_bid == outline_item_bid,
             outline_item_model.deleted == 0,

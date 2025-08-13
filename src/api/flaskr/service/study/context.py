@@ -8,12 +8,12 @@ from flaskr.dao import db
 from flaskr.service.shifu.shifu_struct_manager import ShifuOutlineItemDto, ShifuInfoDto
 from flaskr.service.study.utils import make_script_dto
 from flaskr.service.shifu.models import (
-    ShifuDraftBlock,
-    ShifuPublishedBlock,
-    ShifuDraftOutlineItem,
-    ShifuPublishedOutlineItem,
-    ShifuDraftShifu,
-    ShifuPublishedShifu,
+    DraftBlock,
+    PublishedBlock,
+    DraftOutlineItem,
+    PublishedOutlineItem,
+    DraftShifu,
+    PublishedShifu,
 )
 from flaskr.service.order.models import AICourseLessonAttend
 from flaskr.service.shifu.shifu_history_manager import HistoryItem
@@ -120,9 +120,9 @@ class RunScriptContext:
     _shifu_ids: list[str]
     _run_type: RunType
     _app: Flask
-    _shifu_model: Union[ShifuDraftShifu, ShifuPublishedShifu]
-    _outline_model: Union[ShifuDraftOutlineItem, ShifuPublishedOutlineItem]
-    _block_model: Union[ShifuDraftBlock, ShifuPublishedBlock]
+    _shifu_model: Union[DraftShifu, PublishedShifu]
+    _outline_model: Union[DraftOutlineItem, PublishedOutlineItem]
+    _block_model: Union[DraftBlock, PublishedBlock]
     _trace_args: dict
     _shifu_info: ShifuInfoDto
     _trace: Union[StatefulTraceClient, MockClient]
@@ -155,13 +155,13 @@ class RunScriptContext:
         self._can_continue = True
 
         if preview_mode:
-            self._outline_model = ShifuDraftOutlineItem
-            self._block_model = ShifuDraftBlock
-            self._shifu_model = ShifuDraftShifu
+            self._outline_model = DraftOutlineItem
+            self._block_model = DraftBlock
+            self._shifu_model = DraftShifu
         else:
-            self._outline_model = ShifuPublishedOutlineItem
-            self._block_model = ShifuPublishedBlock
-            self._shifu_model = ShifuPublishedShifu
+            self._outline_model = PublishedOutlineItem
+            self._block_model = PublishedBlock
+            self._shifu_model = PublishedShifu
         # get current attend
         self._q = queue.Queue()
         self._q.put(struct)
@@ -207,11 +207,11 @@ class RunScriptContext:
             .first()
         )
         if not attend_info:
-            outline_item_info_db: Union[
-                ShifuDraftOutlineItem, ShifuPublishedOutlineItem
-            ] = self._outline_model.query.filter(
-                self._outline_model.outline_item_bid == outline_item_info.bid,
-            ).first()
+            outline_item_info_db: Union[DraftOutlineItem, PublishedOutlineItem] = (
+                self._outline_model.query.filter(
+                    self._outline_model.outline_item_bid == outline_item_info.bid,
+                ).first()
+            )
             if not outline_item_info_db:
                 raise_error("LESSON.LESSON_NOT_FOUND_IN_COURSE")
             if outline_item_info_db.type == LESSON_TYPE_NORMAL:
@@ -358,14 +358,14 @@ class RunScriptContext:
     ) -> Generator[str, None, None]:
         attend_status_values = get_attend_status_values()
         shif_bids = [o.outline_item_info.bid for o in outline_updates]
-        outline_item_info_db: Union[
-            ShifuDraftOutlineItem, ShifuPublishedOutlineItem
-        ] = self._outline_model.query.filter(
-            self._outline_model.outline_item_bid.in_(shif_bids),
-            self._outline_model.deleted == 0,
-        ).all()
+        outline_item_info_db: Union[DraftOutlineItem, PublishedOutlineItem] = (
+            self._outline_model.query.filter(
+                self._outline_model.outline_item_bid.in_(shif_bids),
+                self._outline_model.deleted == 0,
+            ).all()
+        )
         outline_item_info_map: dict[
-            str, Union[ShifuDraftOutlineItem, ShifuPublishedOutlineItem]
+            str, Union[DraftOutlineItem, PublishedOutlineItem]
         ] = {o.outline_item_bid: o for o in outline_item_info_db}
         for update in outline_updates:
             self.app.logger.info(
@@ -568,11 +568,9 @@ class RunScriptContext:
         if attend.script_index >= len(outline_struct.children):
             return None
         block_id = outline_struct.children[attend.script_index].id
-        block_info: Union[ShifuDraftBlock, ShifuPublishedBlock] = (
-            self._block_model.query.filter(
-                self._block_model.id == block_id,
-            ).first()
-        )
+        block_info: Union[DraftBlock, PublishedBlock] = self._block_model.query.filter(
+            self._block_model.id == block_id,
+        ).first()
         if not block_info:
             raise_error("LESSON.LESSON_NOT_FOUND_IN_COURSE")
         block_dto = generate_block_dto_from_model_internal(
@@ -598,7 +596,7 @@ class RunScriptContext:
         )
 
     def _get_run_script_info_by_block_id(self, block_id: str) -> RunScriptInfo:
-        block_info: Union[ShifuDraftBlock, ShifuPublishedBlock] = (
+        block_info: Union[DraftBlock, PublishedBlock] = (
             self._block_model.query.filter(
                 self._block_model.block_bid == block_id,
             )
@@ -710,20 +708,20 @@ class RunScriptContext:
         path = list(reversed(path))
         outline_ids = [item.id for item in path if item.type == "outline"]
         shifu_ids = [item.id for item in path if item.type == "shifu"]
-        outline_item_info_db: Union[
-            ShifuDraftOutlineItem, ShifuPublishedOutlineItem
-        ] = self._outline_model.query.filter(
-            self._outline_model.id.in_(outline_ids),
-            self._outline_model.deleted == 0,
-        ).all()
+        outline_item_info_db: Union[DraftOutlineItem, PublishedOutlineItem] = (
+            self._outline_model.query.filter(
+                self._outline_model.id.in_(outline_ids),
+                self._outline_model.deleted == 0,
+            ).all()
+        )
         outline_item_info_map: dict[
-            str, Union[ShifuDraftOutlineItem, ShifuPublishedOutlineItem]
+            str, Union[DraftOutlineItem, PublishedOutlineItem]
         ] = {o.id: o for o in outline_item_info_db}
         for id in outline_ids:
             outline_item_info = outline_item_info_map.get(id, None)
             if outline_item_info and outline_item_info.llm_system_prompt:
                 return outline_item_info.llm_system_prompt
-        shifu_info_db: Union[ShifuDraftShifu, ShifuPublishedShifu] = (
+        shifu_info_db: Union[DraftShifu, PublishedShifu] = (
             self._shifu_model.query.filter(
                 self._shifu_model.id.in_(shifu_ids),
                 self._shifu_model.deleted == 0,
@@ -738,12 +736,12 @@ class RunScriptContext:
         path.reverse()
         outline_ids = [item.id for item in path if item.type == "outline"]
         shifu_ids = [item.id for item in path if item.type == "shifu"]
-        outline_item_info_db: Union[
-            ShifuDraftOutlineItem, ShifuPublishedOutlineItem
-        ] = self._outline_model.query.filter(
-            self._outline_model.id.in_(outline_ids),
-            self._outline_model.deleted == 0,
-        ).all()
+        outline_item_info_db: Union[DraftOutlineItem, PublishedOutlineItem] = (
+            self._outline_model.query.filter(
+                self._outline_model.id.in_(outline_ids),
+                self._outline_model.deleted == 0,
+            ).all()
+        )
         outline_item_info_map = {o.id: o for o in outline_item_info_db}
         for id in outline_ids:
             outline_item_info = outline_item_info_map.get(id, None)
@@ -752,7 +750,7 @@ class RunScriptContext:
                     model=outline_item_info.llm,
                     temperature=outline_item_info.llm_temperature,
                 )
-        shifu_info_db: Union[ShifuDraftShifu, ShifuPublishedShifu] = (
+        shifu_info_db: Union[DraftShifu, PublishedShifu] = (
             self._shifu_model.query.filter(
                 self._shifu_model.id.in_(shifu_ids),
                 self._shifu_model.deleted == 0,
