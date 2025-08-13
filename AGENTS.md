@@ -128,6 +128,167 @@ Cook Web provides tools for:
 - Key tables include: `ai_course`, `ai_lesson`, `ai_lesson_script`, `user_info`, `user_profile`
 - Database schema managed through Alembic migrations in `src/api/migrations/`
 
+### Database Model Design Standards
+
+The project follows strict conventions for database model definitions to ensure consistency and maintainability:
+
+#### File Structure and Location
+
+- **Model Definition Location**: All database models must be placed in `src/api/flaskr/service/[module]/models.py`
+- **Module Organization**: Each service module has its own models file for separation of concerns
+
+#### Naming Conventions
+
+- **Table Names**: Use format `[module]_[table_names]` (e.g., `order_orders`)
+- **Model Class Names**: Use PascalCase format `[TableName]` (e.g., `Order`)
+- **Business Key Names**: Use format `[name]_bid` (e.g., `order_bid`)
+
+#### Required Fields and Structure
+
+**1. Primary Key**
+```python
+id = Column(BIGINT, primary_key=True, autoincrement=True)
+```
+
+**2. Business Identifier**
+All tables must include a business identifier and must be indexed:
+```python
+shifu_bid = Column(String(32),
+    nullable=False,
+    default="",
+    index=True,
+    comment="Shifu business identifier")
+```
+- Type: `String(32)`
+- Must be indexed for performance
+- Comment format: `[table_name] business identifier`
+
+**3. Soft Delete and Timestamps**
+All tables must include these fields at the end:
+```python
+deleted = Column(
+    SmallInteger,
+    nullable=False,
+    default=0,
+    index=True,
+    comment="Deletion flag: 0=active, 1=deleted",
+)
+created_at = Column(
+    DateTime,
+    nullable=False,
+    default=func.now(),
+    server_default=func.now(),
+    comment="Creation timestamp"
+)
+updated_at = Column(
+    DateTime,
+    nullable=False,
+    default=func.now(),
+    server_default=func.now(),
+    comment="Last update timestamp",
+    onupdate=func.now(),
+)
+```
+
+**4. User Tracking (Cook Tables Only)**
+For tables used in Cook interface, add user tracking fields:
+```python
+created_user_bid = Column(
+    String(32),
+    nullable=False,
+    index=True,
+    default="",
+    comment="Creator user business identifier",
+)
+updated_user_bid = Column(
+    String(32),
+    nullable=False,
+    default="",
+    comment="Last updater user business identifier",
+)
+```
+
+#### Status Field Conventions
+
+**Single Status Field**
+```python
+#olny for example
+status = Column(
+    SmallInteger,
+    nullable=False,
+    default=0,
+    comment="Status: 5101=default, 5102=disabled, 5103=enabled",
+)
+```
+
+**Multiple Status Fields**
+```python
+# only for example
+ask_enabled_status = Column(
+        SmallInteger,
+        nullable=False,
+        default=ASK_MODE_DEFAULT,
+        comment="Ask agent status: 5101=default, 5102=disabled, 5103=enabled",
+    )
+```
+
+#### Column Order Standards
+
+Fields must follow this specific order:
+1. `id` (primary key)
+2. `[table_name]_bid` (business identifier)
+3. External business identifiers (foreign keys)
+4. Business columns
+5. `status` (if applicable)
+6. `deleted`
+7. `created_at`
+8. `created_user_bid` (if applicable)
+9. `updated_at`
+10. `updated_user_bid` (if applicable)
+
+#### Foreign Key Relationships
+
+**Parent-Child Ordering**: When multiple foreign keys reference the same entity hierarchy, order child before parent:
+```python
+class ShifuPublishedBlock(db.Model):
+    __tablename__ = "shifu_published_blocks"
+    id = Column(BIGINT, primary_key=True, autoincrement=True)
+    block_bid = Column(
+        String(32),
+        nullable=False,
+        index=True,
+        default="",
+        comment="Block business identifier",
+    )
+    outline_item_bid = Column(  # Child entity first
+        String(32),
+        nullable=False,
+        index=True,
+        default="",
+        comment="Outline item business identifier",
+    )
+    shifu_bid = Column(  # Parent entity second
+        String(32),
+        nullable=False,
+        index=True,
+        default="",
+        comment="Shifu business identifier",
+    )
+```
+
+**Important**: Business foreign keys should be indexed for performance but do NOT create database-level foreign key constraints.
+
+#### Comment Standards
+
+- **Table comments**: should be defined via SQLAlchemy so they are reflected in the DB and migrations:
+```python
+  class DraftShifu(db.Model):
+      __tablename__ = "shifu_draft_shifu"
+      __table_args__ = {"comment": "Draft shifu entities"}
+```
+- **Comment Capitalization**: First letter capitalized (e.g., "Shifu business identifier")
+- **Status Comments**: Must include value descriptions using format `Status: [value] = [description]`
+
 ### Database Migration Rules
 
 **CRITICAL**: Every database schema change MUST follow this process:
