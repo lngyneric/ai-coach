@@ -59,14 +59,23 @@ def _handle_input_ask(
     context = RunScriptContext.get_current_context(app)
     app.logger.info("follow_up_info:{}".format(follow_up_info.__json__()))
 
+    raw_ask_max_history_len = app.config.get("ASK_MAX_HISTORY_LEN", 10)
+    try:
+        ask_max_history_len = int(raw_ask_max_history_len)
+    except ValueError:
+        ask_max_history_len = 10
+
     # Query historical conversation records, ordered by time
     history_scripts = (
         AICourseLessonAttendScript.query.filter(
             AICourseLessonAttendScript.attend_id == attend_id,
         )
-        .order_by(AICourseLessonAttendScript.id.asc())
+        .order_by(AICourseLessonAttendScript.id.desc())
+        .limit(ask_max_history_len)
         .all()
     )
+
+    history_scripts = history_scripts[::-1]
 
     messages = []  # List to store conversation messages
     input = input.replace("{", "{{").replace(
