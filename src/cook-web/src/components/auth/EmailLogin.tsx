@@ -2,114 +2,27 @@
 
 import type React from 'react';
 
-import { useState } from 'react';
 import { Button } from '@/components/ui/Button';
 import { Input } from '@/components/ui/Input';
 import { Label } from '@/components/ui/Label';
-import { useToast } from '@/hooks/useToast';
-import { Loader2 } from 'lucide-react';
-import { TermsCheckbox } from '@/components/TermsCheckbox';
-import { isValidEmail } from '@/lib/validators';
 import { useTranslation } from 'react-i18next';
-import { useAuth } from '@/hooks/useAuth';
+import { Mail, ExternalLink } from 'lucide-react';
 
 import type { UserInfo } from '@/c-types';
 
 interface EmailLoginProps {
   onLoginSuccess: (userInfo: UserInfo) => void;
-  onForgotPassword: () => void;
 }
 
-export function EmailLogin({
-  onLoginSuccess,
-  onForgotPassword,
-}: EmailLoginProps) {
-  const { toast } = useToast();
-  const [isLoading, setIsLoading] = useState(false);
-  const [email, setEmail] = useState('');
-  const [password, setPassword] = useState('');
-  const [termsAccepted, setTermsAccepted] = useState(false);
-  const [emailError, setEmailError] = useState('');
-  const [passwordError, setPasswordError] = useState('');
+export function EmailLogin({}: EmailLoginProps) {
   const { t } = useTranslation();
-  const { loginWithEmailPassword } = useAuth({ onSuccess: onLoginSuccess });
-
-  const validateEmail = (email: string) => {
-    if (!email) {
-      setEmailError(t('auth.emailEmpty'));
-      return false;
-    }
-
-    if (!isValidEmail(email)) {
-      setEmailError(t('auth.emailError'));
-      return false;
-    }
-
-    setEmailError('');
-    return true;
-  };
-
-  const validatePassword = (password: string) => {
-    if (!password) {
-      setPasswordError(t('auth.passwordError'));
-      return false;
-    }
-
-    setPasswordError('');
-    return true;
-  };
-
-  const handleEmailChange = (e: React.ChangeEvent<HTMLInputElement>) => {
-    const value = e.target.value;
-    setEmail(value);
-    if (value) {
-      validateEmail(value);
-    } else {
-      setEmailError('');
-    }
-  };
-
-  const handlePasswordChange = (e: React.ChangeEvent<HTMLInputElement>) => {
-    const value = e.target.value;
-    setPassword(value);
-    if (value) {
-      validatePassword(value);
-    } else {
-      setPasswordError('');
-    }
-  };
-
-  const handlePasswordLogin = async () => {
-    const isEmailValid = validateEmail(email);
-    const isPasswordValid = validatePassword(password);
-
-    if (!isEmailValid || !isPasswordValid) {
-      return;
-    }
-
-    if (!termsAccepted) {
-      toast({
-        title: t('auth.termsError'),
-        variant: 'destructive',
-      });
-      return;
-    }
-
-    try {
-      setIsLoading(true);
-      const username = email;
-      await loginWithEmailPassword(username, password);
-    } finally {
-      setIsLoading(false);
-    }
-  };
 
   return (
     <div className='space-y-4'>
       <div className='space-y-2'>
         <Label
           htmlFor='email'
-          className={emailError ? 'text-red-500' : ''}
+          className='text-muted-foreground'
         >
           {t('auth.email')}
         </Label>
@@ -117,60 +30,35 @@ export function EmailLogin({
           id='email'
           type='email'
           placeholder={t('auth.emailPlaceholder')}
-          value={email}
-          onChange={handleEmailChange}
-          disabled={isLoading}
-          className={
-            emailError ? 'border-red-500 focus-visible:ring-red-500' : ''
-          }
+          disabled
+          className='bg-muted'
         />
-        {emailError && <p className='text-xs text-red-500'>{emailError}</p>}
       </div>
-      <div className='space-y-2'>
-        <div className='flex items-center justify-between'>
-          <Label
-            htmlFor='password'
-            className={passwordError ? 'text-red-500' : ''}
-          >
-            {t('auth.password')}
-          </Label>
-          <button
-            type='button'
-            onClick={onForgotPassword}
-            className='text-primary text-sm hover:underline'
-          >
-            {t('auth.forgotPassword')}
-          </button>
+
+      <div className='text-center py-8 px-4'>
+        <div className='flex justify-center mb-4'>
+          <div className='rounded-full bg-muted p-3'>
+            <Mail className='h-8 w-8 text-muted-foreground' />
+          </div>
         </div>
-        <Input
-          id='password'
-          type='password'
-          placeholder={t('auth.passwordPlaceholder')}
-          value={password}
-          onChange={handlePasswordChange}
-          disabled={isLoading}
-          className={
-            passwordError ? 'border-red-500 focus-visible:ring-red-500' : ''
-          }
-        />
-        {passwordError && (
-          <p className='text-xs text-red-500'>{passwordError}</p>
-        )}
+        <h3 className='text-lg font-medium mb-2'>{t('auth.comingSoon')}</h3>
+        <p className='text-sm text-muted-foreground mb-4'>
+          {t('auth.moreLoginMethodsComingSoon')}
+        </p>
+        <div className='space-y-2'>
+          <div className='flex items-center justify-center space-x-2 text-sm text-muted-foreground'>
+            <ExternalLink className='h-4 w-4' />
+            <span>{t('auth.googleLoginSoon')}</span>
+          </div>
+        </div>
       </div>
-      <TermsCheckbox
-        checked={termsAccepted}
-        onCheckedChange={setTermsAccepted}
-        disabled={isLoading}
-      />
+
       <Button
-        className='w-full h-8'
-        onClick={handlePasswordLogin}
-        disabled={
-          isLoading || !email || !password || !!emailError || !!passwordError
-        }
+        className='w-full'
+        disabled
+        variant='outline'
       >
-        {isLoading ? <Loader2 className='h-4 w-4 animate-spin mr-2' /> : null}
-        {t('auth.login')}
+        {t('auth.moreOptionsComingSoon')}
       </Button>
     </div>
   );
