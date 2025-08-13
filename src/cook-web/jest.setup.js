@@ -61,6 +61,7 @@ window.location = {
 
 // Suppress console errors in tests
 const originalError = console.error;
+
 beforeAll(() => {
   console.error = (...args) => {
     if (

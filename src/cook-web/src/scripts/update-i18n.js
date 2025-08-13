@@ -5,6 +5,7 @@ function getAllFiles(dir, files = []) {
   try {
     fs.readdirSync(dir).forEach(file => {
       const fullPath = path.join(dir, file);
+
       if (fs.statSync(fullPath).isDirectory()) {
         if (!['local', 'assets'].includes(file)) {
           getAllFiles(fullPath, files);
@@ -13,9 +14,11 @@ function getAllFiles(dir, files = []) {
         files.push(fullPath);
       }
     });
+
     return files;
   } catch (error) {
     console.error(`${dir} read failed. ${error}`);
+
     return [];
   }
 }
@@ -27,12 +30,15 @@ function extractKeysFromFile(filePath) {
       /(?:{)?\s*t\s*\(\s*['"]([a-zA-Z0-9_-]+(?:\.[a-zA-Z0-9_-]+)+)['"]\s*(?:,\s*\{[^}]*\})?\s*\)(?:})?/g;
     let match,
       keys = [];
+
     while ((match = regex.exec(content)) !== null) {
       keys.push(match[1]);
     }
+
     return keys;
   } catch (error) {
     console.error(`${filePath} read failed. ${error}`);
+
     return [];
   }
 }
@@ -40,6 +46,7 @@ function extractKeysFromFile(filePath) {
 function setNested(obj, key, value) {
   const keys = key.split('.');
   let cur = obj;
+
   keys.forEach((k, idx) => {
     if (idx === keys.length - 1) {
       if (!(k in cur)) cur[k] = value;
@@ -52,7 +59,9 @@ function setNested(obj, key, value) {
 
 function buildNestedJson(keys, langMark) {
   const result = {};
+
   keys.forEach(key => setNested(result, key, langMark));
+
   return result;
 }
 
@@ -69,6 +78,7 @@ function mergeJson(base, patch) {
       if (!(k in base)) base[k] = patch[k];
     }
   }
+
   return base;
 }
 
@@ -78,15 +88,18 @@ function sortObjectKeys(obj) {
   }
 
   const sortedObj = {};
+
   Object.keys(obj)
     .sort((a, b) => {
       if (a === 'langName') return -1;
       if (b === 'langName') return 1;
+
       return a.localeCompare(b);
     })
     .forEach(key => {
       sortedObj[key] = sortObjectKeys(obj[key]);
     });
+
   return sortedObj;
 }
 
@@ -98,11 +111,13 @@ function pruneUnusedKeys(obj, validKeys, prefix = '') {
   const hasValidChildren = (obj, currentPrefix) => {
     for (const key in obj) {
       const fullKey = currentPrefix ? `${currentPrefix}.${key}` : key;
+
       if (validKeysSet.has(fullKey)) return true;
       if (typeof obj[key] === 'object' && obj[key] !== null) {
         if (hasValidChildren(obj[key], fullKey)) return true;
       }
     }
+
     return false;
   };
 
@@ -121,6 +136,7 @@ function pruneUnusedKeys(obj, validKeys, prefix = '') {
       }
     }
   }
+
   return result;
 }
 
@@ -135,6 +151,7 @@ fs.readdirSync(LOCALE_DIR).forEach(file => {
     const langFile = path.join(LOCALE_DIR, file);
     const langMark = `@${file}`;
     let baseJson = {};
+
     try {
       if (fs.existsSync(langFile)) {
         baseJson = JSON.parse(fs.readFileSync(langFile, 'utf8'));
@@ -143,6 +160,7 @@ fs.readdirSync(LOCALE_DIR).forEach(file => {
       const prunedBaseJson = pruneUnusedKeys(baseJson, allKeys);
       const merged = mergeJson(prunedBaseJson, patchJson);
       const sorted = sortObjectKeys(merged);
+
       fs.writeFileSync(langFile, JSON.stringify(sorted, null, 2), 'utf8');
     } catch (error) {
       console.error(`${file} update failed. ${error}`);

@@ -1,3 +1,5 @@
+ci:
+  skip: [eslint]  # Skip ESLint hooks in pre-commit.ci since not work
 repos:
 -   repo: https://github.com/pre-commit/pre-commit-hooks
     rev: v2.3.0
@@ -26,6 +28,20 @@ repos:
         name: Prettier cook-web files
         entry: prettier
         language: node
-        files: ^src/cook-web/.*\.(js|jsx|ts|tsx|css|scss|md|json)$
+        files: ^src/cook-web/.*\.(js|jsx|ts|tsx|mjs|cjs|css|scss|md|json)$
         args: ['--write', '--config', 'src/cook-web/.prettierrc']
         additional_dependencies: ['prettier@^3.5.3']
+-   repo: local
+    hooks:
+    -   id: eslint
+        name: ESLint cook-web files (errors only)
+        entry: bash -c 'cd src/cook-web && npm run lint-file -- $(echo "$@" | sed "s|src/cook-web/||g")' --
+        language: system
+        files: ^src/cook-web/.*\.(js|jsx|ts|tsx)$
+-   repo: https://github.com/pre-commit/mirrors-eslint
+    rev: v9.33.0
+    hooks:
+    -   id: eslint
+        name: ESLint web files (errors only)
+        files: ^src/web/.*\.(js|jsx|ts|tsx)$
+        args: [--config, src/web/eslint.config.cjs, --max-warnings=0, --fix]
