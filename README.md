@@ -43,8 +43,19 @@ Make sure your machine has installed [Docker](https://docs.docker.com/get-docker
 ```bash
 git clone https://github.com/ai-shifu/ai-shifu.git
 cd ai-shifu/docker
-cp .env.example .env
-# Modify the configuration in the .env file. At least one LLM access key should be configured, and set DEFAULT_LLM_MODEL to the name of the model
+
+# For minimal setup (only required variables):
+cp .env.example.minimal .env
+
+# Or for full configuration options:
+cp .env.example.full .env
+
+# Edit .env and configure the required variables:
+# - SQLALCHEMY_DATABASE_URI: Database connection
+# - SECRET_KEY: JWT signing key (generate with: python -c "import secrets; print(secrets.token_urlsafe(32))")
+# - UNIVERSAL_VERIFICATION_CODE: Test verification code
+# - At least one LLM API key (OPENAI_API_KEY, ERNIE_API_KEY, etc.)
+
 docker compose up -d
 ```
 
@@ -53,8 +64,16 @@ docker compose up -d
 ```bash
 git clone https://github.com/ai-shifu/ai-shifu.git
 cd ai-shifu/docker
-cp .env.example .env
-# Modify the configuration in the .env file. At least one LLM access key should be configured, and set DEFAULT_LLM_MODEL to the name of the model
+
+# Choose configuration template:
+cp .env.example.minimal .env  # For minimal setup
+# OR
+cp .env.example.full .env      # For full configuration
+
+# Configure the required variables in .env file
+# See .env.example.minimal for required variables
+# See .env.example.full for all available options
+
 ./dev_in_docker.sh
 ```
 

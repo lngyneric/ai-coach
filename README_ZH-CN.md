@@ -43,8 +43,19 @@ AI 师傅既是老师、主播、说书人，也是向导……作为一名 AI �
 ```bash
 git clone https://github.com/ai-shifu/ai-shifu.git
 cd ai-shifu/docker
-cp .env.example .env
-# 修改 .env 文件中的配置。至少要配置好一个大模型的参数，并将 DEFAULT_LLM_MODEL 设置为该模型的名称
+
+# 最小化配置（仅必需变量）：
+cp .env.example.minimal .env
+
+# 或选择完整配置选项：
+cp .env.example.full .env
+
+# 编辑 .env 文件并配置必需的变量：
+# - SQLALCHEMY_DATABASE_URI: 数据库连接
+# - SECRET_KEY: JWT签名密钥（生成方法: python -c "import secrets; print(secrets.token_urlsafe(32))"）
+# - UNIVERSAL_VERIFICATION_CODE: 测试验证码
+# - 至少一个大模型 API key（OPENAI_API_KEY、ERNIE_API_KEY 等）
+
 docker compose up -d
 ```
 
@@ -53,8 +64,16 @@ docker compose up -d
 ```bash
 git clone https://github.com/ai-shifu/ai-shifu.git
 cd ai-shifu/docker
-cp .env.example .env
-# 修改 .env 文件中的配置。至少要配置好一个大模型的参数，并将 DEFAULT_LLM_MODEL 设置为该模型的名称
+
+# 选择配置模板：
+cp .env.example.minimal .env  # 最小化配置
+# 或
+cp .env.example.full .env      # 完整配置
+
+# 在 .env 文件中配置必需的变量
+# 参考 .env.example.minimal 了解必需变量
+# 参考 .env.example.full 了解所有可用选项
+
 ./dev_in_docker.sh
 ```
 

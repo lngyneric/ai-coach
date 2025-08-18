@@ -146,12 +146,14 @@ The project follows strict conventions for database model definitions to ensure 
 #### Required Fields and Structure
 
 **1. Primary Key**
+
 ```python
 id = Column(BIGINT, primary_key=True, autoincrement=True)
 ```
 
 **2. Business Identifier**
 All tables must include a business identifier and must be indexed:
+
 ```python
 shifu_bid = Column(String(32),
     nullable=False,
@@ -159,12 +161,14 @@ shifu_bid = Column(String(32),
     index=True,
     comment="Shifu business identifier")
 ```
+
 - Type: `String(32)`
 - Must be indexed for performance
 - Comment format: `[table_name] business identifier`
 
 **3. Soft Delete and Timestamps**
 All tables must include these fields at the end:
+
 ```python
 deleted = Column(
     SmallInteger,
@@ -192,6 +196,7 @@ updated_at = Column(
 
 **4. User Tracking (Cook Tables Only)**
 For tables used in Cook interface, add user tracking fields:
+
 ```python
 created_user_bid = Column(
     String(32),
@@ -211,6 +216,7 @@ updated_user_bid = Column(
 #### Status Field Conventions
 
 **Single Status Field**
+
 ```python
 #olny for example
 status = Column(
@@ -222,6 +228,7 @@ status = Column(
 ```
 
 **Multiple Status Fields**
+
 ```python
 # only for example
 ask_enabled_status = Column(
@@ -235,6 +242,7 @@ ask_enabled_status = Column(
 #### Column Order Standards
 
 Fields must follow this specific order:
+
 1. `id` (primary key)
 2. `[table_name]_bid` (business identifier)
 3. External business identifiers (foreign keys)
@@ -249,6 +257,7 @@ Fields must follow this specific order:
 #### Foreign Key Relationships
 
 **Parent-Child Ordering**: When multiple foreign keys reference the same entity hierarchy, order child before parent:
+
 ```python
 class ShifuPublishedBlock(db.Model):
     __tablename__ = "shifu_published_blocks"
@@ -281,11 +290,13 @@ class ShifuPublishedBlock(db.Model):
 #### Comment Standards
 
 - **Table comments**: should be defined via SQLAlchemy so they are reflected in the DB and migrations:
+
 ```python
   class DraftShifu(db.Model):
       __tablename__ = "shifu_draft_shifu"
       __table_args__ = {"comment": "Draft shifu entities"}
 ```
+
 - **Comment Capitalization**: First letter capitalized (e.g., "Shifu business identifier")
 - **Status Comments**: Must include value descriptions using format `Status: [value] = [description]`
 
@@ -297,10 +308,12 @@ class ShifuPublishedBlock(db.Model):
 
 1. **Make model changes** in SQLAlchemy model files (`src/api/flaskr/service/*/models.py`)
 2. **Generate migration script** using Flask-Migrate:
+
    ```bash
    cd src/api
    flask db migrate -m "descriptive message about the change"
    ```
+
 3. **Review the generated migration** in `src/api/migrations/versions/`
 4. **Commit the migration file** to version control
 
@@ -369,11 +382,76 @@ export DATABASE_URL="your_database_connection_string"
 
 ## Environment Configuration
 
+### Configuration Files
+
 Environment variables are managed through `.env` files:
 
 - Docker: `docker/.env`
 - Local development: individual `.env` files in component directories
 - Key configurations: LLM API keys, database connections, Redis settings
+- Example files: `docker/.env.example.minimal` (required only) and `docker/.env.example.full` (all variables)
+
+### Managing Environment Variables
+
+#### Adding or Modifying Environment Variables
+
+When you need to add or modify environment variables:
+
+1. **Update the configuration definition** in `src/api/flaskr/common/config.py`:
+
+   ```python
+   "NEW_VARIABLE": EnvVar(
+       name="NEW_VARIABLE",
+       required=False,  # True if this variable MUST be set
+       default="default_value",  # Default value (None if required=True)
+       type=str,  # Type: str, int, float, bool, list
+       description="""Detailed description of the variable
+       Can be multi-line for complex explanations""",
+       secret=False,  # True for sensitive values like API keys
+       group="app",  # Group: app, database, redis, auth, llm, etc.
+       validator=lambda x: validator_function(x),  # Optional validation
+   ),
+   ```
+
+2. **Regenerate example files**:
+
+   ```bash
+   cd src/api
+   python scripts/generate_env_examples.py
+   ```
+
+   This will update:
+   - `docker/.env.example.minimal` - Only required variables
+   - `docker/.env.example.full` - All available variables
+
+3. **Update tests if needed**:
+   - Add to test fixtures in `src/api/tests/common/fixtures/config_data.py`
+   - Update relevant test cases
+
+#### Important Configuration Guidelines
+
+1. **Required vs Optional**:
+   - `required=True`: Variable MUST be set, no default value allowed
+   - `required=False` with default: Optional with fallback value
+   - `required=False` without default: Handled by libraries
+
+2. **Secret Values**:
+   - Mark sensitive data with `secret=True`
+   - Examples: API keys, passwords, tokens
+   - These won't show default values in generated examples
+
+3. **Type Conversion**:
+   - Supported types: `str`, `int`, `float`, `bool`, `list`
+   - List values are comma-separated: `"value1,value2,value3"`
+
+4. **Validation**:
+   - Add validators for values with specific requirements
+   - Example: Port numbers, email formats, URL patterns
+
+5. **Descriptions**:
+   - Be detailed and clear
+   - Include examples when helpful
+   - Support multi-line for complex configurations
 
 ## Cook Web API Request Architecture
 
@@ -485,7 +563,7 @@ const userInfo = await getUserInfo(); // Both routes - direct data
 
 **English-Only Policy for Code**: All code-related content MUST be written in English to ensure consistency, maintainability, and international collaboration.
 
-#### What MUST be in English:
+#### What MUST be in English
 
 - **Code Comments**: All inline comments, block comments, and documentation comments
   - ✅ Correct: `# Calculate user discount based on membership level`
@@ -523,7 +601,7 @@ const userInfo = await getUserInfo(); // Both routes - direct data
   - ✅ Correct: Technical documentation in English
   - ❌ Wrong: Technical documentation in other languages
 
-#### Exceptions (Where Other Languages ARE Allowed):
+#### Exceptions (Where Other Languages ARE Allowed)
 
 - **User-Facing Strings**: All text displayed to end users should use i18n
   - These should be translation keys, not hardcoded strings
@@ -534,7 +612,7 @@ const userInfo = await getUserInfo(); // Both routes - direct data
 - **Business Logic Comments**: When documenting specific regional business requirements, a brief explanation in the local language may be added AFTER the English comment for clarity
   - Example: `# Check if user has valid ID card (检查身份证有效性)`
 
-#### Rationale:
+#### Rationale
 
 - Ensures codebase is accessible to international developers
 - Facilitates easier debugging and maintenance
