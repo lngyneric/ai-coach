@@ -7,6 +7,9 @@ import logging
 import traceback
 import os
 
+# create a global db object
+db = None
+
 
 def init_db(app: Flask):
     global db

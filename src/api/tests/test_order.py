@@ -1,12 +1,39 @@
 def test_buy_and_pay(app):
-    from flaskr.service.order.funs import init_buy_record, generate_charge
+    from flaskr.service.order.funs import (
+        init_buy_record,
+        generate_charge,
+        query_buy_record,
+    )
 
     from flaskr.service.user.models import User
-    from flaskr.service.lesson.models import AICourse
+    from flaskr.service.shifu.models import PublishedShifu
+    from flaskr.service.order.models import Order
+    from flaskr.dao import db
 
     with app.app_context():
         user = User.query.first()
-        course = AICourse.query.first()
+        shifu = (
+            PublishedShifu.query.filter(
+                PublishedShifu.price > 0,
+                PublishedShifu.deleted == 0,
+            )
+            .order_by(PublishedShifu.id.desc())
+            .first()
+        )
         user_id = user.user_id
-        record = init_buy_record(app, user_id, course.course_id)
-        generate_charge(app, record.order_id, "wx_pub_qr", "237.0.0.1")
+
+        Order.query.filter(
+            Order.user_bid == user_id,
+            Order.shifu_bid == shifu.shifu_bid,
+        ).delete()
+        db.session.commit()
+
+        record = init_buy_record(app, user_id, shifu.shifu_bid)
+
+        print(record)
+        print(record.__json__())
+        record = query_buy_record(app, record.order_id)
+        print(record.__json__())
+
+        res = generate_charge(app, record.order_id, "wx_pub_qr", "237.0.0.1")
+        print(res.__json__())
