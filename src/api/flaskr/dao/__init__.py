@@ -13,32 +13,6 @@ db = None
 
 def init_db(app: Flask):
     global db
-    app.logger.info("init db")
-    if (
-        app.config.get("MYSQL_HOST", None) is not None
-        and app.config.get("MYSQL_PORT", None) is not None
-        and app.config.get("MYSQL_DB", None) is not None
-        and app.config["MYSQL_USER"] is not None
-        and app.config.get("MYSQL_PASSWORD") is not None
-    ):
-        app.logger.info("init dbconfig from env")
-        app.config["SQLALCHEMY_DATABASE_URI"] = (
-            "mysql://"
-            + app.config["MYSQL_USER"]
-            + ":"
-            + app.config["MYSQL_PASSWORD"]
-            + "@"
-            + app.config["MYSQL_HOST"]
-            + ":"
-            + str(app.config["MYSQL_PORT"])
-            + "/"
-            + app.config["MYSQL_DB"]
-            + "?charset="
-            + app.config.get("MYSQL_CHARSET", "utf8mb4")
-        )
-    else:
-        app.logger.info("init dbconfig from config")
-
     if app.debug:
         logging.getLogger("sqlalchemy.engine").setLevel(logging.WARNING)
 
