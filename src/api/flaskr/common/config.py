@@ -690,6 +690,26 @@ Generate secure key: python -c "import secrets; print(secrets.token_urlsafe(32))
         description="SMTP sender email address",
         group="email",
     ),
+    # Pingxx Configuration
+    "PINGXX_APP_ID": EnvVar(
+        name="PINGXX_APP_ID",
+        default="",
+        description="Pingxx app ID",
+        group="pingxx",
+    ),
+    "PINGXX_SECRET_KEY": EnvVar(
+        name="PINGXX_SECRET_KEY",
+        default="",
+        description="Pingxx secret key",
+        secret=True,
+        group="pingxx",
+    ),
+    "PINGXX_PRIVATE_KEY_PATH": EnvVar(
+        name="PINGXX_PRIVATE_KEY_PATH",
+        default="",
+        description="Pingxx private key path",
+        group="pingxx",
+    ),
     # Flask Configuration
     "FLASK_APP": EnvVar(
         name="FLASK_APP",

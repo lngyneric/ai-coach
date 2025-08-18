@@ -360,7 +360,7 @@ def generate_charge(
         body = course.course_name
         order_no = str(get_uuid(app))
         qr_url = None
-        pingpp_id = app.config.get("PINGPP_APP_ID")
+        pingpp_id = app.config.get("PINGXX_APP_ID")
         if amount == 0:
             success_buy_record(app, buy_record.order_bid)
             return BuyRecordDTO(
