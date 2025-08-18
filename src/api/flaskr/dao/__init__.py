@@ -90,11 +90,20 @@ def init_db(app: Flask):
 
 def init_redis(app: Flask):
     global redis_client
+
+    if app.config["REDIS_HOST"] is None or app.config["REDIS_PORT"] is None:
+        app.logger.warning(
+            "Redis not configured: REDIS_HOST or REDIS_PORT is None - running without Redis"
+        )
+        redis_client = None
+        return
+
     app.logger.info(
         "init redis {} {} {}".format(
             app.config["REDIS_HOST"], app.config["REDIS_PORT"], app.config["REDIS_DB"]
         )
     )
+
     if app.config["REDIS_PASSWORD"] is not None and app.config["REDIS_PASSWORD"] != "":
         redis_client = Redis(
             host=app.config["REDIS_HOST"],
