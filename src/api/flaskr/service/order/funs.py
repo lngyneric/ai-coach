@@ -34,6 +34,7 @@ from flaskr.service.lesson.funcs import get_course_info
 from flaskr.service.lesson.funcs import AICourseDTO
 from flaskr.service.promo.consts import COUPON_TYPE_FIXED, COUPON_TYPE_PERCENT
 from flaskr.service.order.query_discount import query_discount_record
+from flaskr.common.config import get_config
 
 
 @register_schema_to_swagger
@@ -360,7 +361,7 @@ def generate_charge(
         body = course.course_name
         order_no = str(get_uuid(app))
         qr_url = None
-        pingpp_id = app.config.get("PINGXX_APP_ID")
+        pingpp_id = get_config("PINGXX_APP_ID")
         if amount == 0:
             success_buy_record(app, buy_record.order_bid)
             return BuyRecordDTO(

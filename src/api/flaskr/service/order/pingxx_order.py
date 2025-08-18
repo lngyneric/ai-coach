@@ -1,12 +1,13 @@
 from flask import Flask
 import pingpp
 import os
+from flaskr.common.config import get_config
 
 
 def init_pingxx(app: Flask):
     app.logger.info("init pingxx")
-    pingpp.api_key = app.config["PINGXX_SECRET_KEY"]
-    pingpp.private_key_path = app.config["PINGXX_PRIVATE_KEY_PATH"]
+    pingpp.api_key = get_config("PINGXX_SECRET_KEY")
+    pingpp.private_key_path = get_config("PINGXX_PRIVATE_KEY_PATH")
     if not os.path.exists(pingpp.private_key_path):
         app.logger.error("private key not exists")
         return None

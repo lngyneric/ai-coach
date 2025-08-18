@@ -173,7 +173,7 @@ def init_log(app: Flask) -> Flask:
         app.logger.handlers = []
         app.logger.addHandler(file_handler)
         app.logger.addHandler(console_handler)
-    feishu_webhook_url = app.config.get("FEISHU_LOG_WEBHOOK_URL", None)
+    feishu_webhook_url = get_config("FEISHU_LOG_WEBHOOK_URL", None)
     if feishu_webhook_url:
         app.logger.info("Feishu enabled.")
         feishu_handler = FeishuLogHandler(feishu_webhook_url)

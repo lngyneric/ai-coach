@@ -222,7 +222,7 @@ def list_tables(app: Flask, app_token: str):
 
 
 def send_notify(app: Flask, title, msgs):
-    url = app.config.get("FEISHU_NOTIFY_URL", None)
+    url = get_config("FEISHU_NOTIFY_URL", None)
     if not url:
         app.logger.warning("feishu notify url not found")
         return
