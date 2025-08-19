@@ -2,6 +2,53 @@
 
 This file provides guidance to all Coding Agents such as Claude Code (claude.ai/code), Codex when working with code in this repository.
 
+## Quick Start
+
+### Most Common Tasks
+
+| Task | Command | Location |
+|------|---------|----------|
+| Start backend dev server | `flask run` | `cd src/api` |
+| Start web frontend | `npm run start:dev` | `cd src/web` |
+| Start Cook Web (CMS) | `npm run dev` | `cd src/cook-web` |
+| Run backend tests | `pytest` | `cd src/api` |
+| Generate DB migration | `FLASK_APP=app.py flask db migrate -m "message"` | `cd src/api` |
+| Apply DB migration | `FLASK_APP=app.py flask db upgrade` | `cd src/api` |
+| Check code quality | `pre-commit run -a` | Root directory |
+| Start all services (Docker) | `docker compose up -d` | `cd docker` |
+
+### Essential Environment Variables
+
+```bash
+# Backend (src/api/.env)
+FLASK_APP=app.py
+
+# Frontend (src/web/.env)
+REACT_APP_API_URL=http://localhost:5000
+
+# Cook Web (src/cook-web/.env.local)
+NEXT_PUBLIC_API_URL=http://localhost:5000
+```
+
+## Critical Warnings ⚠️
+
+### MUST DO Before Any Commit
+
+1. **Run pre-commit hooks**: `pre-commit run` (MANDATORY)
+2. **Generate migration for DB changes**: `flask db migrate -m "description"`
+3. **Test your changes**: Run relevant test suites
+4. **Use English for all code**: Comments, variables, commit messages
+5. **Follow Conventional Commits**: `type: description` (lowercase type, imperative mood)
+
+### Common Pitfalls to Avoid
+
+- **Never edit applied migrations** - Always create new ones
+- **Don't hardcode user-facing strings** - Use i18n keys
+- **Don't create DB foreign key constraints** - Use indexed business keys only
+- **Don't skip pre-commit** - It catches formatting and type issues
+- **Don't commit secrets** - Use environment variables
+- **Don't use Chinese in code** - English only (except i18n files)
+
 ## Project Overview
 
 AI-Shifu is an AI-led chat platform that provides interactive, personalized conversations across education, storytelling, product guides, and surveys. Unlike traditional human-led chatbots, AI-Shifu follows an AI-led conversation flow where users can ask questions and interact, but the AI maintains control of the narrative progression.
@@ -23,6 +70,9 @@ The project follows a microservices architecture with 3 main components:
   - `service/study/`: Learning session management and user interactions
   - `service/user/`: User authentication and profile management
   - `service/order/`: Payment and subscription handling
+  - `service/profile/`: User profile and preferences
+  - `service/lesson/`: Lesson content management
+  - `service/llm/`: LLM integration layer
 - Database migrations managed with Alembic (`migrations/`)
 - Internationalization support with separate locale files (`i18n/`)
 
@@ -37,347 +87,343 @@ The project follows a microservices architecture with 3 main components:
 
 ```bash
 cd src/api
+
 # Development server
-flask run
-# Database migrations
-flask db upgrade
-# Run tests
-pytest
+FLASK_APP=app.py flask run
+
+# Database operations
+FLASK_APP=app.py flask db migrate -m "descriptive message"  # Create migration
+FLASK_APP=app.py flask db upgrade                           # Apply migrations
+FLASK_APP=app.py flask db downgrade                        # Rollback migration
+FLASK_APP=app.py flask db current                          # Show current migration
+FLASK_APP=app.py flask db history                          # Show migration history
+
+# Testing
+pytest                                    # Run all tests
+pytest tests/service/shifu/              # Run specific module tests
+pytest -k "test_function_name"           # Run specific test
+pytest --cov=flaskr --cov-report=html   # With coverage report
 ```
 
 ### Web Application
 
 ```bash
 cd src/web
-# Development server
-npm run start:dev
-# Build for production
-npm run build
-# Run tests
-npm test
+
+# Install dependencies (first time)
+npm install
+
+# Development
+npm run start:dev                        # Start dev server
+npm run build                            # Production build
+npm test                                 # Run tests
+npm run lint                             # Check linting
 ```
 
 ### Cook Web (Content Management)
 
 ```bash
 cd src/cook-web
-# Development server
-npm run dev
-# Build for production
-npm run build
-# Lint code
-npm run lint
+
+# Install dependencies (first time)
+npm install
+
+# Development
+npm run dev                              # Start dev server
+npm run build                            # Production build
+npm run lint                             # Check linting
+npm run type-check                       # TypeScript check
 ```
 
 ### Docker Development
 
 ```bash
 cd docker
+
 # Start all services
 docker compose up -d
+
+# Stop all services
+docker compose down
+
 # Build from source
 ./dev_in_docker.sh
+
+# View logs
+docker compose logs -f [service_name]
+
+# Access container
+docker compose exec [service_name] bash
 ```
-
-## Key Concepts
-
-### Shifu System
-
-The core AI conversation system is built around "Shifu" (master/teacher) concepts:
-
-- **Outlines**: Structured conversation templates with blocks and units
-- **Blocks**: Individual conversation segments with different types (AI responses, user inputs, etc.)
-- **Study Sessions**: User interaction sessions that follow outline progressions
-- **Profiles**: User personality and preference data for personalization
-
-### Plugin Architecture
-
-The backend uses a flexible plugin system (`flaskr/framework/plugin/`) that supports:
-
-- Hot reloading of plugins during development
-- Dependency injection for services
-- Modular feature development
-
-### Content Management
-
-Cook Web provides tools for:
-
-- Creating and editing conversation outlines
-- Managing AI profiles and personalities
-- Debugging conversation flows
-- Content localization
-
-## Testing
-
-### Backend Tests
-
-- Located in `src/api/tests/`
-- Use pytest framework
-- Include service layer tests, API endpoint tests, and utility tests
-- Run with: `pytest`
-
-### Frontend Tests
-
-- Web app uses React Testing Library
-- Run with: `npm test`
 
 ## Database
 
-- MySQL database with comprehensive migration system
-- Key tables include: `ai_course`, `ai_lesson`, `ai_lesson_script`, `user_info`, `user_profile`
-- Database schema managed through Alembic migrations in `src/api/migrations/`
-
 ### Database Model Design Standards
 
-The project follows strict conventions for database model definitions to ensure consistency and maintainability:
+The project follows strict conventions for database model definitions to ensure consistency and maintainability.
 
-#### File Structure and Location
-
-- **Model Definition Location**: All database models must be placed in `src/api/flaskr/service/[module]/models.py`
-- **Module Organization**: Each service module has its own models file for separation of concerns
-
-#### Naming Conventions
-
-- **Table Names**: Use format `[module]_[table_names]` (e.g., `order_orders`)
-- **Model Class Names**: Use PascalCase format `[TableName]` (e.g., `Order`)
-- **Business Key Names**: Use format `[name]_bid` (e.g., `order_bid`)
-
-#### Required Fields and Structure
-
-**1. Primary Key**
+#### Complete Model Example
 
 ```python
-id = Column(BIGINT, primary_key=True, autoincrement=True)
-```
+from sqlalchemy import Column, BIGINT, String, SmallInteger, DateTime, func
+from flaskr import db
 
-**2. Business Identifier**
-All tables must include a business identifier and must be indexed:
+class Order(db.Model):
+    """Order model following all conventions"""
+    __tablename__ = "order_orders"
+    __table_args__ = {"comment": "Order entities"}
 
-```python
-shifu_bid = Column(String(32),
-    nullable=False,
-    default="",
-    index=True,
-    comment="Shifu business identifier")
-```
+    # 1. Primary key (always first)
+    id = Column(BIGINT, primary_key=True, autoincrement=True)
 
-- Type: `String(32)`
-- Must be indexed for performance
-- Comment format: `[table_name] business identifier`
+    # 2. Business identifier (always second, indexed)
+    order_bid = Column(
+        String(32),
+        nullable=False,
+        default="",
+        index=True,
+        comment="Order business identifier"
+    )
 
-**3. Soft Delete and Timestamps**
-All tables must include these fields at the end:
+    # 3. Foreign keys (child before parent, indexed)
+    user_bid = Column(
+        String(32),
+        nullable=False,
+        default="",
+        index=True,
+        comment="User business identifier"
+    )
 
-```python
-deleted = Column(
-    SmallInteger,
-    nullable=False,
-    default=0,
-    index=True,
-    comment="Deletion flag: 0=active, 1=deleted",
-)
-created_at = Column(
-    DateTime,
-    nullable=False,
-    default=func.now(),
-    server_default=func.now(),
-    comment="Creation timestamp"
-)
-updated_at = Column(
-    DateTime,
-    nullable=False,
-    default=func.now(),
-    server_default=func.now(),
-    comment="Last update timestamp",
-    onupdate=func.now(),
-)
-```
+    # 4. Business columns
+    amount = Column(
+        BIGINT,
+        nullable=False,
+        default=0,
+        comment="Order amount in cents"
+    )
 
-**4. User Tracking (Cook Tables Only)**
-For tables used in Cook interface, add user tracking fields:
-
-```python
-created_user_bid = Column(
-    String(32),
-    nullable=False,
-    index=True,
-    default="",
-    comment="Creator user business identifier",
-)
-updated_user_bid = Column(
-    String(32),
-    nullable=False,
-    default="",
-    comment="Last updater user business identifier",
-)
-```
-
-#### Status Field Conventions
-
-**Single Status Field**
-
-```python
-#olny for example
-status = Column(
-    SmallInteger,
-    nullable=False,
-    default=0,
-    comment="Status: 5101=default, 5102=disabled, 5103=enabled",
-)
-```
-
-**Multiple Status Fields**
-
-```python
-# only for example
-ask_enabled_status = Column(
+    # 5. Status field (if applicable)
+    status = Column(
         SmallInteger,
         nullable=False,
-        default=ASK_MODE_DEFAULT,
-        comment="Ask agent status: 5101=default, 5102=disabled, 5103=enabled",
+        default=0,
+        comment="Status: 0=pending, 1=paid, 2=cancelled"
+    )
+
+    # 6. Soft delete flag
+    deleted = Column(
+        SmallInteger,
+        nullable=False,
+        default=0,
+        index=True,
+        comment="Deletion flag: 0=active, 1=deleted"
+    )
+
+    # 7. Timestamps
+    created_at = Column(
+        DateTime,
+        nullable=False,
+        default=func.now(),
+        server_default=func.now(),
+        comment="Creation timestamp"
+    )
+
+    # 8. User tracking (Cook tables only)
+    created_user_bid = Column(
+        String(32),
+        nullable=False,
+        index=True,
+        default="",
+        comment="Creator user business identifier"
+    )
+
+    updated_at = Column(
+        DateTime,
+        nullable=False,
+        default=func.now(),
+        server_default=func.now(),
+        onupdate=func.now(),
+        comment="Last update timestamp"
+    )
+
+    updated_user_bid = Column(
+        String(32),
+        nullable=False,
+        index=True,
+        default="",
+        comment="Last updater user business identifier"
     )
 ```
 
-#### Column Order Standards
+#### Database Change Checklist
 
-Fields must follow this specific order:
+- [ ] Model changes made in `src/api/flaskr/service/[module]/models.py`
+- [ ] Migration generated: `FLASK_APP=app.py flask db migrate -m "description"`
+- [ ] Migration reviewed in `src/api/migrations/versions/`
+- [ ] Migration file committed to version control
+- [ ] Tests updated/added for new model
+- [ ] Documentation updated if needed
 
-1. `id` (primary key)
-2. `[table_name]_bid` (business identifier)
-3. External business identifiers (foreign keys)
-4. Business columns
-5. `status` (if applicable)
-6. `deleted`
-7. `created_at`
-8. `created_user_bid` (if applicable)
-9. `updated_at`
-10. `updated_user_bid` (if applicable)
+#### Migration Troubleshooting
 
-#### Foreign Key Relationships
+| Problem | Solution |
+|---------|----------|
+| `flask: command not found` | `export FLASK_APP=app.py` or `python -m flask db migrate` |
+| `Could not locate a Flask application` | `export FLASK_APP=app.py` |
+| `Target database is not up to date` | Check status: `flask db current`, then `flask db upgrade` |
+| Database connection errors | `export DATABASE_URL="mysql://user:pass@host/db"` |
+| Migration not detecting changes | Check model is imported in `__init__.py` |
 
-**Parent-Child Ordering**: When multiple foreign keys reference the same entity hierarchy, order child before parent:
+## API Endpoint Standards
+
+### Standard Response Format
+
+```json
+{
+    "code": 0,           // 0 for success, non-zero for errors
+    "message": "Success", // Human-readable message
+    "data": {}           // Response payload
+}
+```
+
+### Common Error Codes
+
+| Code | Meaning | Action |
+|------|---------|--------|
+| 0 | Success | Process data |
+| 1001 | Unauthorized | Redirect to login |
+| 1004 | Token expired | Refresh token |
+| 1005 | Invalid token | Clear token, redirect to login |
+| 9002 | No permission | Show permission error |
+| 5001+ | Business errors | Show error message |
+
+### Authentication Headers
+
+```javascript
+// Required headers for authenticated requests
+{
+    "Authorization": "Bearer {token}",
+    "Token": "{token}",
+    "X-Request-ID": "{uuid}"
+}
+```
+
+## Testing Guidelines
+
+### Test File Structure
+
+```text
+src/api/tests/
+├── conftest.py                 # Shared fixtures
+├── service/
+│   ├── shifu/
+│   │   ├── test_models.py     # Model tests
+│   │   ├── test_service.py    # Service logic tests
+│   │   └── test_api.py        # API endpoint tests
+│   └── ...
+└── common/
+    └── fixtures/
+        └── test_data.py        # Test data fixtures
+```
+
+### Test Patterns
 
 ```python
-class ShifuPublishedBlock(db.Model):
-    __tablename__ = "shifu_published_blocks"
-    id = Column(BIGINT, primary_key=True, autoincrement=True)
-    block_bid = Column(
-        String(32),
-        nullable=False,
-        index=True,
-        default="",
-        comment="Block business identifier",
-    )
-    outline_item_bid = Column(  # Child entity first
-        String(32),
-        nullable=False,
-        index=True,
-        default="",
-        comment="Outline item business identifier",
-    )
-    shifu_bid = Column(  # Parent entity second
-        String(32),
-        nullable=False,
-        index=True,
-        default="",
-        comment="Shifu business identifier",
-    )
+# Test file naming: test_[module].py
+# Test function naming: test_[function]_[scenario]
+
+import pytest
+from unittest.mock import patch, MagicMock
+
+class TestShifuService:
+    """Group related tests in classes"""
+
+    @pytest.fixture
+    def mock_shifu(self):
+        """Provide test fixtures"""
+        return {"shifu_bid": "test123", "name": "Test Shifu"}
+
+    def test_create_shifu_success(self, mock_shifu):
+        """Test successful shifu creation"""
+        # Arrange
+        expected = mock_shifu
+
+        # Act
+        result = create_shifu(mock_shifu)
+
+        # Assert
+        assert result["shifu_bid"] == expected["shifu_bid"]
+
+    @patch('flaskr.service.shifu.service.db.session')
+    def test_create_shifu_db_error(self, mock_session):
+        """Test database error handling"""
+        # Arrange
+        mock_session.commit.side_effect = Exception("DB Error")
+
+        # Act & Assert
+        with pytest.raises(Exception):
+            create_shifu({})
 ```
 
-**Important**: Business foreign keys should be indexed for performance but do NOT create database-level foreign key constraints.
+### Coverage Requirements
 
-#### Comment Standards
+- Aim for >80% code coverage
+- Critical paths must have 100% coverage
+- Run coverage: `pytest --cov=flaskr --cov-report=html`
 
-- **Table comments**: should be defined via SQLAlchemy so they are reflected in the DB and migrations:
+## Development Workflow
 
-```python
-  class DraftShifu(db.Model):
-      __tablename__ = "shifu_draft_shifu"
-      __table_args__ = {"comment": "Draft shifu entities"}
-```
+### Branch Naming
 
-- **Comment Capitalization**: First letter capitalized (e.g., "Shifu business identifier")
-- **Status Comments**: Must include value descriptions using format `Status: [value] = [description]`
+- Feature: `feat/description-of-feature`
+- Bug fix: `fix/description-of-fix`
+- Refactor: `refactor/description`
+- Documentation: `docs/description`
 
-### Database Migration Rules
+### Pull Request Checklist
 
-**CRITICAL**: Every database schema change MUST follow this process:
+- [ ] Code follows project conventions
+- [ ] Pre-commit hooks pass
+- [ ] Tests added/updated and passing
+- [ ] Database migrations created if needed
+- [ ] Documentation updated if needed
+- [ ] PR title follows Conventional Commits
+- [ ] No hardcoded strings (use i18n)
+- [ ] No secrets in code
 
-#### Required Steps for Database Changes
+### Deployment Process
 
-1. **Make model changes** in SQLAlchemy model files (`src/api/flaskr/service/*/models.py`)
-2. **Generate migration script** using Flask-Migrate:
+1. Merge to main branch
+2. CI/CD runs tests and builds
+3. Deploy to staging environment
+4. Run smoke tests
+5. Deploy to production
 
-   ```bash
-   cd src/api
-   flask db migrate -m "descriptive message about the change"
-   ```
+## Performance Guidelines
 
-3. **Review the generated migration** in `src/api/migrations/versions/`
-4. **Commit the migration file** to version control
+### Database Optimization
 
-**Note**: `flask db upgrade` is used for deployment/environment setup, not required during development.
+- **Always index foreign keys**: Add `index=True` to all `_bid` columns
+- **Use batch operations**: Prefer bulk inserts/updates
+- **Limit query results**: Use pagination for large datasets
+- **Avoid N+1 queries**: Use joins or eager loading
+- **Cache frequently accessed data**: Use Redis for hot data
 
-#### Prerequisites for Migration Commands
+### API Performance
 
-Before running `flask db migrate`, ensure:
+- **Response time targets**: <200ms for reads, <500ms for writes
+- **Pagination**: Default 20 items, max 100 items per page
+- **Use async where appropriate**: For I/O bound operations
+- **Implement rate limiting**: Protect against abuse
+- **Add request timeouts**: Default 30s timeout
 
-```bash
-# 1. Navigate to API directory
-cd src/api
+### Frontend Performance
 
-# 2. Set environment variables
-export FLASK_APP=flaskr
-export DATABASE_URL="mysql://user:password@localhost/dbname"
-
-# 3. Generate new migration
-flask db migrate -m "describe your changes"
-```
-
-#### When to Use Migration Commands
-
-- **Adding new tables or columns**
-- **Modifying column types or constraints**
-- **Dropping tables or columns**
-- **Adding or removing indexes**
-- **Any structural database changes**
-
-#### Migration Best Practices
-
-- **Always review** the auto-generated migration before applying
-- **Use descriptive messages** that explain the business purpose
-- **Test migrations** on a copy of production data
-- **Never edit applied migrations** - create new ones instead
-- **Include both upgrade() and downgrade()** functions for rollback capability
-
-#### Common Migration Issues & Solutions
-
-**Problem**: `flask: command not found`
-
-```bash
-export FLASK_APP=flaskr
-# or use: python -m flask db migrate
-```
-
-**Problem**: `Could not locate a Flask application`
-
-```bash
-export FLASK_APP=flaskr
-```
-
-**Problem**: `Target database is not up to date`
-
-```bash
-# This usually means database state doesn't match migration history
-# Check current migration status: flask db current
-# Review migration history: flask db history
-```
-
-**Problem**: Database connection errors
-
-```bash
-export DATABASE_URL="your_database_connection_string"
-```
+- **Code splitting**: Lazy load routes and heavy components
+- **Image optimization**: Use appropriate formats and sizes
+- **Bundle size**: Keep main bundle <500KB
+- **Cache API responses**: Use React Query or SWR
+- **Debounce user input**: For search and filters
 
 ## Environment Configuration
 
@@ -427,31 +473,6 @@ When you need to add or modify environment variables:
    - Add to test fixtures in `src/api/tests/common/fixtures/config_data.py`
    - Update relevant test cases
 
-#### Important Configuration Guidelines
-
-1. **Required vs Optional**:
-   - `required=True`: Variable MUST be set, no default value allowed
-   - `required=False` with default: Optional with fallback value
-   - `required=False` without default: Handled by libraries
-
-2. **Secret Values**:
-   - Mark sensitive data with `secret=True`
-   - Examples: API keys, passwords, tokens
-   - These won't show default values in generated examples
-
-3. **Type Conversion**:
-   - Supported types: `str`, `int`, `float`, `bool`, `list`
-   - List values are comma-separated: `"value1,value2,value3"`
-
-4. **Validation**:
-   - Add validators for values with specific requirements
-   - Example: Port numbers, email formats, URL patterns
-
-5. **Descriptions**:
-   - Be detailed and clear
-   - Include examples when helpful
-   - Support multi-line for complex configurations
-
 ## Cook Web API Request Architecture
 
 ### Unified Request System (Updated 2025-07-12)
@@ -461,7 +482,7 @@ The Cook Web frontend has been unified to use a single, consistent API request s
 #### Architecture Overview
 
 ```text
-业务代码 → Request 类 → handleBusinessCode() → 返回业务数据
+Application Logic → Request Handler → Business Code Handler → Business Data Response
 ```
 
 #### Key Components
@@ -505,56 +526,33 @@ The Cook Web frontend has been unified to use a single, consistent API request s
    - Returns `response.data` for success
 5. **Business Layer**: Receives clean business data directly
 
-#### Authentication
+## Key Concepts
 
-- **Token Source**: `useUserStore.getState().getToken()`
-- **Headers Added**: `Authorization: Bearer ${token}`, `Token: ${token}`, `X-Request-ID: ${uuid}`
-- **Storage**: Uses localStorage via `tokenTool` for persistent sessions
-- **Guest Mode**: Automatic fallback for unauthenticated users
+### Shifu System
 
-#### Error Handling
+The core AI conversation system is built around "Shifu" (master/teacher) concepts:
 
-- **Network Errors**: Handled in Request class with toast notifications
-- **Business Errors**: Handled in `handleBusinessCode` with specific logic per error code
-- **Authentication Errors**: Automatic redirect to `/login`
-- **Permission Errors**: Toast notification for insufficient permissions
-- **SSR Safety**: All browser APIs wrapped in `typeof window !== 'undefined'` checks
+- **Outlines**: Structured conversation templates with blocks and units
+- **Blocks**: Individual conversation segments with different types (AI responses, user inputs, etc.)
+- **Study Sessions**: User interaction sessions that follow outline progressions
+- **Profiles**: User personality and preference data for personalization
 
-#### Route Consistency
+### Plugin Architecture
 
-Both `/main` and `/c` routes now use identical request infrastructure:
+The backend uses a flexible plugin system (`flaskr/framework/plugin/`) that supports:
 
-- **Same HTTP Client**: Request class
-- **Same Authentication**: useUserStore token management
-- **Same Error Handling**: handleBusinessCode logic
-- **Same Response Format**: Direct business data (no manual `.data` extraction needed)
+- Hot reloading of plugins during development
+- Dependency injection for services
+- Modular feature development
 
-#### Migration Notes
+### Content Management
 
-Previous architecture had dual systems:
+Cook Web provides tools for:
 
-- `/main` used `Request` class with `api.ts` generation
-- `/c` used `axiosrequest` with manual response handling
-
-This has been unified so all business code receives clean data directly:
-
-```typescript
-// Before (mixed patterns):
-const res = await api.getUserInfo({}); // /main - direct data
-const userInfo = res.data; // /c - manual extraction
-
-// After (unified):
-const userInfo = await api.getUserInfo({}); // Both routes - direct data
-const userInfo = await getUserInfo(); // Both routes - direct data
-```
-
-#### Important Files
-
-- `src/cook-web/src/lib/request.ts`: Core Request class and error handling
-- `src/cook-web/src/lib/api.ts`: API generation system
-- `src/cook-web/src/api/api.ts`: API endpoint definitions for /main
-- `src/cook-web/src/c-api/*.ts`: API endpoint definitions for /c
-- `src/cook-web/src/c-store/useUserStore.ts`: User authentication state
+- Creating and editing conversation outlines
+- Managing AI profiles and personalities
+- Debugging conversation flows
+- Content localization
 
 ## Code Quality
 
@@ -565,82 +563,45 @@ const userInfo = await getUserInfo(); // Both routes - direct data
 #### What MUST be in English
 
 - **Code Comments**: All inline comments, block comments, and documentation comments
-  - ✅ Correct: `# Calculate user discount based on membership level`
-  - ❌ Wrong: `# 根据会员等级计算用户折扣`
-
 - **Variable and Function Names**: All identifiers in the code
-  - ✅ Correct: `getUserProfile()`, `isValid`, `maxRetryCount`
-  - ❌ Wrong: `获取用户资料()`, `是否有效`, `最大重试次数`
-
 - **Database Elements**: Table names, column names, and database comments
-  - ✅ Correct: `user_profile`, `created_at`, comment="User creation timestamp"
-  - ❌ Wrong: `用户资料`, `创建时间`, comment="用户创建时间戳"
-
 - **Constants and Enums**: All constant values and enumeration names
-  - ✅ Correct: `STATUS_ACTIVE = 1`, `PaymentStatus.PENDING`
-  - ❌ Wrong: `状态_激活 = 1`, `支付状态.待处理`
-
 - **Log Messages and Debug Output**: All logging statements and debug information
-  - ✅ Correct: `logger.info("User login successful")`
-  - ❌ Wrong: `logger.info("用户登录成功")`
-
 - **Error Messages in Code**: Internal error messages and exception messages
-  - ✅ Correct: `raise ValueError("Invalid email format")`
-  - ❌ Wrong: `raise ValueError("无效的邮箱格式")`
-
 - **Configuration Keys**: All configuration file keys and environment variable names
-  - ✅ Correct: `DATABASE_URL`, `max_connections`
-  - ❌ Wrong: `数据库地址`, `最大连接数`
-
 - **Git Commit Messages and PR Titles**: MUST use Conventional Commits format
-  - **Required Format**: `<type>: <description>` (e.g., `fix: resolve database connection timeout issue`)
-  - **Style Rules**:
-    - Type must be lowercase (e.g., `fix:` not `Fix:`)
-    - Use imperative mood in description (e.g., "add", "fix", "remove" not "added", "fixes", "removing")
-    - Keep subject line concise (≤ 72 characters) and omit trailing period
-    - English only
-  - **Common Types**:
-    - `feat:` (new feature)
-    - `fix:` (bug fix)
-    - `docs:` (documentation)
-    - `refactor:` (code refactoring)
-    - `test:` (tests)
-    - `chore:` (maintenance)
-    - `build:` (build system or external dependencies)
-    - `ci:` (CI configuration and scripts)
-    - `perf:` (performance improvements)
-    - `style:` (formatting, missing semicolons, etc. - no code change)
-    - `revert:` (revert a previous commit)
-  - ✅ Correct: `feat: add user profile export functionality`
-  - ✅ Correct: `fix: resolve database connection timeout issue`
-  - ✅ Correct: `refactor: remove mysql prefix configuration`
-  - ❌ Wrong: `修复：解决数据库连接超时问题` (not in English)
-  - ❌ Wrong: `Fixed the bug` (past tense, missing type prefix)
-  - ❌ Wrong: `Fix: Added new feature.` (capitalized type, past tense, trailing period)
-  - **Applies to**: All git commits AND all PR titles
-
 - **Code Documentation**: README files, API documentation, code architecture docs
-  - ✅ Correct: Technical documentation in English
-  - ❌ Wrong: Technical documentation in other languages
+#### Exceptions to English-Only Policy
 
-#### Exceptions (Where Other Languages ARE Allowed)
+- **User-Facing Text**: All text for the UI must use i18n keys. The translation files (e.g., `en-US.json`, `zh-CN.json`) will naturally contain non-English text.
+- **Test Data**: Test data can be in any language, especially for testing internationalization features.
+- **Clarifying Comments**: For complex, region-specific business logic, a non-English comment can be added *after* the English one for extra clarity. Example: `# Check for valid ID card (检查身份证有效性)`
 
-- **User-Facing Strings**: All text displayed to end users should use i18n
-  - These should be translation keys, not hardcoded strings
-  - Actual translations in locale files (`zh-CN.json`, `en-US.json`, etc.)
+#### Conventional Commits Format
 
-- **Test Data**: Sample user data or content used for testing may be in any language if testing internationalization
+**Required Format**: `<type>: <description>` (e.g., `fix: resolve database connection timeout issue`)
 
-- **Business Logic Comments**: When documenting specific regional business requirements, a brief explanation in the local language may be added AFTER the English comment for clarity
-  - Example: `# Check if user has valid ID card (检查身份证有效性)`
+**Common Types**:
 
-#### Rationale
+- `feat:` - New feature
+- `fix:` - Bug fix
+- `docs:` - Documentation
+- `refactor:` - Code refactoring
+- `test:` - Tests
+- `chore:` - Maintenance
+- `build:` - Build system or dependencies
+- `ci:` - CI configuration
+- `perf:` - Performance improvements
+- `style:` - Formatting (no code change)
+- `revert:` - Revert a previous commit
 
-- Ensures codebase is accessible to international developers
-- Facilitates easier debugging and maintenance
-- Improves consistency across the entire project
-- Enables better collaboration with global teams
-- Makes code review more effective
+**Style Rules**:
+
+- Type must be lowercase
+- Use imperative mood ("add", not "added")
+- Keep subject line ≤72 characters
+- No trailing period
+- English only
 
 ### Pre-commit Hooks
 
@@ -683,22 +644,21 @@ const userInfo = await getUserInfo(); // Both routes - direct data
 
 #### File Naming
 
-- **Component files**: Use PascalCase (e.g., `UserProfile.tsx`, `NavBar.tsx`, `AuthForm.tsx`)
-- **Regular TypeScript/JavaScript files**: Use kebab-case (e.g., `api-utils.ts`, `auth-helper.ts`, `date-formatter.ts`)
-- **CSS/SCSS files**: Use kebab-case (e.g., `global-styles.css`, `theme-variables.scss`)
-- **CSS Modules**: Match component name but with `.module.css` or `.module.scss` (e.g., `UserProfile.module.scss`)
+- **Component files**: Use PascalCase (e.g., `UserProfile.tsx`, `NavBar.tsx`)
+- **Regular TypeScript/JavaScript files**: Use kebab-case (e.g., `api-utils.ts`, `auth-helper.ts`)
+- **CSS/SCSS files**: Use kebab-case (e.g., `global-styles.css`)
+- **CSS Modules**: Match component name (e.g., `UserProfile.module.scss`)
 - **Test files**: Match the file being tested with `.test.ts` or `.spec.ts` suffix
-- **Type definition files**: Use kebab-case with `.d.ts` extension (e.g., `api-types.d.ts`)
-- **Configuration files**: Use lowercase with dots (e.g., `.eslintrc.json`, `.prettierrc`, `next.config.ts`)
+- **Type definition files**: Use kebab-case with `.d.ts` extension
+- **Configuration files**: Use lowercase with dots (e.g., `.eslintrc.json`)
 
-#### Special Cases
+#### Special Cases (Next.js)
 
-- **MDX files**: Can use either PascalCase or kebab-case depending on usage
-- **API route files in Next.js**: Always `route.ts` or `route.js`
-- **Page files in Next.js**: Always `page.tsx` or `page.js`
-- **Layout files in Next.js**: Always `layout.tsx` or `layout.js`
-- **Loading files in Next.js**: Always `loading.tsx` or `loading.js`
-- **Error files in Next.js**: Always `error.tsx` or `error.js`
+- **API route files**: Always `route.ts`
+- **Page files**: Always `page.tsx`
+- **Layout files**: Always `layout.tsx`
+- **Loading files**: Always `loading.tsx`
+- **Error files**: Always `error.tsx`
 
 #### Examples of Proper Structure
 
@@ -723,3 +683,53 @@ src/
     ├── api-types.d.ts         # kebab-case type definition
     └── user-types.d.ts        # kebab-case type definition
 ```
+
+## Troubleshooting
+
+### Common Issues and Solutions
+
+| Issue | Solution |
+|-------|----------|
+| Flask app won't start | Check `FLASK_APP=app.py` is set |
+| Database connection fails | Verify MySQL is running and credentials in DATABASE_URL |
+| Migration not detecting changes | Ensure model is imported in module's `__init__.py` |
+| Frontend can't connect to API | Check CORS settings and API_URL configuration |
+| Pre-commit fails | Run `pre-commit install` to set up hooks |
+| Tests fail with import errors | Check PYTHONPATH includes project root |
+| Docker build fails | Ensure all .env files are present |
+| TypeScript errors in Cook Web | Run `npm run type-check` to see detailed errors |
+| Redis connection optional | Redis is optional, app works without it |
+
+### Debug Commands
+
+```bash
+# Check Python environment
+which python
+pip list
+
+# Check Node environment
+node --version
+npm --version
+
+# Check database connection
+mysql -u root -p -e "SHOW DATABASES;"
+
+# Check Flask configuration
+flask routes
+
+# Check Docker status
+docker ps
+docker compose logs [service]
+
+# Check port usage
+lsof -i :5000  # Backend
+lsof -i :3000  # Frontend
+```
+
+## Additional Resources
+
+- Flask Documentation: <https://flask.palletsprojects.com/>
+- SQLAlchemy Documentation: <https://www.sqlalchemy.org/>
+- React Documentation: <https://reactjs.org/>
+- Next.js Documentation: <https://nextjs.org/>
+- Conventional Commits: <https://www.conventionalcommits.org/>
