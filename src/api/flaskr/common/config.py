@@ -1050,17 +1050,7 @@ class Config(FlaskConfig):
 
     def __getitem__(self, key: Any) -> Any:
         """Get configuration value using enhanced config first, with fallback to parent."""
-        # Try enhanced config first
-        value = self.enhanced.get(key)
-        if value is not None:
-            return value
-
-        # Fallback to parent Flask config
-        try:
-            return self.parent.__getitem__(key)
-        except KeyError:
-            # Return None for missing keys instead of raising
-            return None
+        return self.get(key)
 
     def __getattr__(self, key: Any) -> Any:
         """Get configuration attribute using enhanced config first."""
@@ -1095,7 +1085,22 @@ class Config(FlaskConfig):
             return value
 
         # Fallback to parent Flask config
-        return self.parent.get(key, default)
+        value = self.parent.get(key, None)
+        if value is not None:
+            return value
+
+        # Fallback to environment variable as last resort
+        env_value = os.environ.get(key)
+        if env_value is not None:
+            self.app.logger.warning(
+                f"Configuration key '{key}' not defined in ENV_VARS registry. "
+                f"Falling back to environment variable value. "
+                f"Consider adding this to ENV_VARS in config.py for proper type conversion and validation."
+            )
+            return env_value
+
+        # Return default if nothing found
+        return default
 
     def get_str(self, key: str) -> str:
         """Get string configuration value."""
