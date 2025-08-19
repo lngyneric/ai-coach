@@ -47,7 +47,7 @@ def _handle_input_ask(
 
     # Get follow-up information (including Q&A prompts and model configuration)
     follow_up_info = get_follow_up_info(
-        app, outline_item_info.shifu_bid, block_dto, attend_id
+        app, outline_item_info.shifu_bid, block_dto, attend_id, is_preview
     )
 
     context = RunScriptContext.get_current_context(app)
@@ -107,11 +107,11 @@ def _handle_input_ask(
     for script in history_scripts:
         if script.role == ROLE_STUDENT:
             messages.append(
-                {"role": "user", "content": script.script_content}
+                {"role": "user", "content": script.generated_content}
             )  # Add user message
         elif script.role == ROLE_TEACHER:
             messages.append(
-                {"role": "assistant", "content": script.script_content}
+                {"role": "assistant", "content": script.generated_content}
             )  # Add assistant message
 
     # RAG retrieval has been removed from this system
