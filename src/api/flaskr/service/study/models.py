@@ -139,7 +139,9 @@ class LearnGeneratedBlock(db.Model):
     )
     type = Column(Integer, nullable=False, default=0, comment="Block content type")
     role = Column(Integer, nullable=False, default=0, comment="Block role")
-    generated_content = Column(Text, nullable=False, comment="Block generate content")
+    generated_content = Column(
+        Text, nullable=False, default="", comment="Block generate content"
+    )
     position = Column(
         Integer, nullable=False, default=0, comment="Block position index"
     )

@@ -64,6 +64,7 @@ def generation_attend(
     generated_block.block_bid = block_dto.bid
     generated_block.type = block_type
     generated_block.generated_block_bid = generate_id(app)
+    generated_block.generated_content = ""
     generated_block.status = 1
     if with_ui_conf:
         generated_block.block_content_conf = json.dumps(
