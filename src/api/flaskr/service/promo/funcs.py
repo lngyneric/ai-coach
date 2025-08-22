@@ -11,7 +11,6 @@ from .models import Coupon, CouponUsage as CouponUsageModel
 from ...dao import db
 from .consts import (
     COUPON_APPLY_TYPE_SPECIFIC,
-    COUPON_APPLY_TYPE_ALL,
     COUPON_STATUS_ACTIVE,
     COUPON_STATUS_USED,
 )
@@ -47,16 +46,16 @@ def generate_coupon_code(
     Args:
         app: Flask app
         user_id: User id
-        discount_value: Discount value
-        discount_filter: Discount filter
-        discount_start: Discount start time
-        discount_end: Discount end time
-        discount_channel: Discount channel
+        value: Discount value
+        filter: Discount filter
+        start: Discount start time
+        end: Discount end time
+        channel: Discount channel
         discount_type: Discount type
-        discount_apply_type: Discount apply type
-        discount_count: Discount count
-        discount_code: Discount code
-        discount_id: Discount id
+        usage_type: Discount apply type
+        total_count: Discount count
+        code: Discount code
+        coupon_bid: Discount id
         args: Additional arguments
     Returns:
         Coupon bid
@@ -113,51 +112,21 @@ def generate_coupon_code(
         return coupon.coupon_bid
 
 
-def generate_coupon_code_by_rule(app: Flask, discount_id):
-    """
-    Generate coupon code by rule
-    Args:
-        app: Flask app
-        discount_id: Discount id
-    Returns:
-        Coupon usage bid
-    """
-    with app.app_context():
-        discount_info: Coupon = Coupon.query.filter(
-            Coupon.coupon_bid == discount_id
-        ).first()
-        if not discount_info:
-            return None
-        if discount_info.usage_type == COUPON_APPLY_TYPE_ALL:
-            return None
-        code = generate_coupon_strcode(app)
-        usage: CouponUsageModel = CouponUsageModel()
-        usage.coupon_usage_bid = generate_id(app)
-        usage.coupon_bid = discount_info.coupon_bid
-        usage.code = code
-        usage.discount_type = discount_info.discount_type
-        usage.value = discount_info.value
-        usage.status = COUPON_STATUS_ACTIVE
-        discount_info.total_count = discount_info.total_count + 1
-        db.session.add(usage)
-        db.session.commit()
-
-
-def timeout_coupon_code_rollback(app: Flask, user_id, order_id):
+def timeout_coupon_code_rollback(app: Flask, user_bid, order_bid):
     """
     Timeout coupon code rollback
     Args:
         app: Flask app
-        user_id: User id
-        order_id: Order id
+        user_bid: User bid
+        order_bid: Order bid
     """
     with app.app_context():
-        discount = CouponUsageModel.query.filter(
-            CouponUsageModel.user_bid == user_id,
-            CouponUsageModel.order_bid == order_id,
+        usage = CouponUsageModel.query.filter(
+            CouponUsageModel.user_bid == user_bid,
+            CouponUsageModel.order_bid == order_bid,
             CouponUsageModel.status == COUPON_STATUS_USED,
         ).first()
-        if not discount:
+        if not usage:
             return
-        discount.status = COUPON_STATUS_ACTIVE
+        usage.status = COUPON_STATUS_ACTIVE
         db.session.commit()
