@@ -98,8 +98,8 @@ def check_text_with_llm_response(
         log_script = generation_attend(
             app, user_info, attend_id, outline_item_info, block_dto
         )
-        log_script.script_content = response_text
-        log_script.script_role = ROLE_TEACHER
+        log_script.generated_content = response_text
+        log_script.role = ROLE_TEACHER
         db.session.add(log_script)
         db.session.flush()
         yield make_script_dto(
