@@ -24,6 +24,8 @@ import json
 from flaskr.service.study.output.handle_output_input import _handle_output_input
 from flaskr.service.user.models import User
 from flaskr.service.profile.models import ProfileItem
+from flaskr.service.profile.profile_manage import get_profile_item_definition_list
+from flaskr.service.profile.dtos import ProfileToSave
 from langfuse.client import StatefulTraceClient
 from flaskr.service.shifu.shifu_struct_manager import ShifuOutlineItemDto
 from flaskr.service.shifu.adapter import BlockDTO
@@ -193,9 +195,31 @@ def _handle_input_input(
     if check_success:
         app.logger.info("check success")
         profile_tosave = jsonObj.get("parse_vars")
+
         if profile_tosave and isinstance(profile_tosave, dict):
+            profile_tosave_new = []
+            profile_items = get_profile_item_definition_list(
+                app, outline_item_info.shifu_bid
+            )
+            for key in profile_tosave:
+                profile_item = next(
+                    (item for item in profile_items if item.profile_key == key), None
+                )
+                if profile_item:
+                    profile_tosave_new.append(
+                        ProfileToSave(
+                            profile_item.profile_key,
+                            profile_tosave[key],
+                            profile_item.profile_id,
+                        )
+                    )
+                else:
+                    app.logger.warning(f"profile_item not found: {key}")
+                    profile_tosave_new.append(
+                        ProfileToSave(key, profile_tosave[key], "")
+                    )
             save_user_profiles(
-                app, user_info.user_id, outline_item_info.shifu_bid, profile_tosave
+                app, user_info.user_id, outline_item_info.shifu_bid, profile_tosave_new
             )
             for key in profile_tosave:
                 yield make_script_dto(

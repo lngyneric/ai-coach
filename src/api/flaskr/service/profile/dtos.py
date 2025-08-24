@@ -191,3 +191,18 @@ class ProfileOptionListDto:
             "info": self.info,
             "list": self.list,
         }
+
+
+@register_schema_to_swagger
+class ProfileToSave:
+    key: str
+    value: str
+    bid: str
+
+    def __init__(self, key: str, value: str, bid: str):
+        self.key = key
+        self.value = value
+        self.bid = bid
+
+    def __json__(self):
+        return {"key": self.key, "value": self.value, "bid": self.bid}

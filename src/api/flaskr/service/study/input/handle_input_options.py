@@ -14,6 +14,7 @@ from langfuse.client import StatefulTraceClient
 from flaskr.service.shifu.shifu_struct_manager import ShifuOutlineItemDto
 from flaskr.service.shifu.adapter import BlockDTO, OptionsDTO
 from flaskr.service.profile.funcs import get_profile_item_definition_list
+from flaskr.service.profile.dtos import ProfileToSave
 from flaskr.service.study.output.handle_output_options import get_script_ui_label
 from typing import Generator
 
@@ -37,19 +38,26 @@ def _handle_input_options(
     result_variable_id = options.result_variable_bid
 
     profile_list = get_profile_item_definition_list(app, outline_item_info.shifu_bid)
-    profile_to_save = {}
+    profile_to_save = []
     for profile in profile_list:
         if profile.profile_id == result_variable_id:
             for option in options.options:
                 label = get_script_ui_label(app, option.label)
                 if label == input:
-                    profile_to_save[profile.profile_key] = option.value
+                    profile_to_save.append(
+                        ProfileToSave(
+                            profile.profile_key, option.value, profile.profile_id
+                        )
+                    )
                     break
 
             break
-    save_user_profiles(
-        app, user_info.user_id, outline_item_info.shifu_bid, profile_to_save
-    )
+    if profile_to_save:
+        save_user_profiles(
+            app, user_info.user_id, outline_item_info.shifu_bid, profile_to_save
+        )
+    else:
+        app.logger.warning(f"profile_to_save is empty: {profile_to_save}")
     log_script = generation_attend(
         app, user_info, attend_id, outline_item_info, block_dto
     )
