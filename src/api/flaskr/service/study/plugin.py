@@ -197,7 +197,14 @@ def handle_block_output(
 ):
     if block_dto.type in SHIFU_OUTPUT_HANDLER_MAP:
         res = SHIFU_OUTPUT_HANDLER_MAP[block_dto.type](
-            app, user_info, attend_id, outline_item_info, block_dto, trace_args, trace
+            app,
+            user_info,
+            attend_id,
+            outline_item_info,
+            block_dto,
+            trace_args,
+            trace,
+            is_preview,
         )
         if isinstance(res, ScriptDTO):
             yield make_script_dto_to_stream(res)
