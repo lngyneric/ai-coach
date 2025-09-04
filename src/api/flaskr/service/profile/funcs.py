@@ -427,6 +427,12 @@ def update_user_profile_with_lable(
                         "profile_item not found:{}".format(profile["key"])
                     )
                 user_profile.status = 1
+                if (
+                    bool(profile_value)
+                    and (profile_value != default_value)
+                    and user_profile.profile_value != profile_value
+                ):
+                    user_profile.profile_value = profile_value
             elif not profile_lable.get("mapping"):
                 user_profile = UserProfile(
                     user_id=user_id,
@@ -437,8 +443,6 @@ def update_user_profile_with_lable(
                     status=1,
                 )
                 db.session.add(user_profile)
-            if user_profile and (profile_value != default_value):
-                user_profile.profile_value = profile_value
         db.session.flush()
         return True
 
