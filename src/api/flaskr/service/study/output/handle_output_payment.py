@@ -26,17 +26,18 @@ def _handle_output_payment(
     trace: StatefulTraceClient,
     is_preview: bool = False,
 ) -> ScriptDTO:
-    order = init_buy_record(app, user_info.user_id, outline_item_info.shifu_bid)
-    if order.status != ORDER_STATUS_SUCCESS:
-        payment: PaymentDTO = block_dto.block_content
-        title = payment.label
-        title = get_script_ui_label(app, title)
-        if not title:
-            title = _("COMMON.CHECKOUT")
-        btn = [{"label": title, "value": order.order_id}]
-        return ScriptDTO(
-            "order", {"buttons": btn}, outline_item_info.bid, block_dto.bid
-        )
+    if not is_preview:
+        order = init_buy_record(app, user_info.user_id, outline_item_info.shifu_bid)
+        if order.status != ORDER_STATUS_SUCCESS:
+            payment: PaymentDTO = block_dto.block_content
+            title = payment.label
+            title = get_script_ui_label(app, title)
+            if not title:
+                title = _("COMMON.CHECKOUT")
+            btn = [{"label": title, "value": order.order_id}]
+            return ScriptDTO(
+                "order", {"buttons": btn}, outline_item_info.bid, block_dto.bid
+            )
     else:
         title = _("COMMON.CONTINUE")
         btn = [
