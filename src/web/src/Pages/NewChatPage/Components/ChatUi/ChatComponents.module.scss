@@ -196,3 +196,16 @@
     color: rgba(0, 0, 0, .45);
   }
 }
+
+.aiDisclaimer {
+  position: absolute;
+  bottom: 10px;
+  left: 50%;
+  transform: translateX(-50%);
+  font-size: 12px;
+  color: var(--color-disclaimer);
+  text-align: center;
+  z-index: 100;
+  white-space: nowrap;
+  pointer-events: none;
+}

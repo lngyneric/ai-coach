@@ -1,5 +1,6 @@
 {
   "chat": {
+    "aiDisclaimer": "内容由 AI 在人类指导下生成",
     "ask": "追问",
     "askContent": "对刚学的内容有什么问题？",
     "chatInputPlaceholder": "有什么想问的？",
