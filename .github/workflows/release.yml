@@ -79,23 +79,54 @@ jobs:
           echo "📝 Recent commits:"
           git log --oneline -5
 
-          # Try commitizen dry-run with error handling
-          if DRY_RUN_OUTPUT=$(cz bump --dry-run 2>&1); then
+          # Try commitizen dry-run with error handling and non-interactive mode
+          if DRY_RUN_OUTPUT=$(cz bump --dry-run --yes 2>&1); then
             echo "🧪 Commitizen dry-run output:"
             echo "$DRY_RUN_OUTPUT"
           else
             echo "⚠️ Commitizen dry-run failed with exit code $?, trying alternative detection..."
-            DRY_RUN_OUTPUT=$(cz bump --dry-run 2>&1 || true)
+            DRY_RUN_OUTPUT=$(cz bump --dry-run --yes 2>&1 || true)
             echo "🧪 Commitizen dry-run output (with errors):"
             echo "$DRY_RUN_OUTPUT"
           fi
 
+          # Check if version bump is needed
           if echo "$DRY_RUN_OUTPUT" | grep -q "bump: version"; then
             echo "bump_needed=true" >> $GITHUB_OUTPUT
             echo "✅ Version bump detected based on conventional commits"
+          elif echo "$DRY_RUN_OUTPUT" | grep -q "No commits to bump"; then
+            echo "bump_needed=false" >> $GITHUB_OUTPUT
+            echo "ℹ️ No commits to bump - all commits already processed"
+            # Exit early to avoid further processing
+            exit 0
+          elif echo "$DRY_RUN_OUTPUT" | grep -q "No tag matching configuration could be found"; then
+            echo "bump_needed=true" >> $GITHUB_OUTPUT
+            echo "✅ No previous tags found - this will be the initial release"
+          else
+            # Fallback: check recent commits manually for conventional commit types
+            RECENT_COMMITS=$(git log --oneline --since="$(git describe --tags --abbrev=0 2>/dev/null | xargs git log -1 --format=%cd --date=iso || echo '1 week ago')" --grep="^feat:" --grep="^fix:" --grep="^BREAKING CHANGE:" --extended-regexp)
+            if [ -n "$RECENT_COMMITS" ]; then
+              echo "bump_needed=true" >> $GITHUB_OUTPUT
+              echo "✅ Version bump needed based on manual commit analysis"
+            else
+              echo "bump_needed=false" >> $GITHUB_OUTPUT
+              echo "ℹ️ No version bump needed based on commit analysis"
+              exit 0
+            fi
+          fi
+
+          # Only proceed if bump is needed
+          BUMP_NEEDED=$(grep "bump_needed=true" $GITHUB_OUTPUT || echo "")
+          if [ -n "$BUMP_NEEDED" ]; then
 
             # Get the new version that commitizen would create
-            NEW_VERSION=$(echo "$DRY_RUN_OUTPUT" | grep "bump: version" | sed 's/.*→ //' | tr -d ' ')
+            if echo "$DRY_RUN_OUTPUT" | grep -q "bump: version"; then
+              NEW_VERSION=$(echo "$DRY_RUN_OUTPUT" | grep "bump: version" | sed 's/.*→ //' | tr -d ' ')
+            else
+              # Calculate next version manually if commitizen didn't provide it
+              CURRENT_VERSION=$(git describe --tags --abbrev=0 2>/dev/null | sed 's/^v//' || echo "0.5.0")
+              NEW_VERSION=$(echo "$CURRENT_VERSION" | awk -F. '{$NF = $NF + 1;} 1' | sed 's/ /./g')
+            fi
             echo "new_version=$NEW_VERSION" >> $GITHUB_OUTPUT
             echo "📋 New version will be: $NEW_VERSION"
 
@@ -149,8 +180,7 @@ jobs:
 
             echo "✅ Release tag v$NEW_VERSION pushed successfully"
           else
-            echo "bump_needed=false" >> $GITHUB_OUTPUT
-            echo "ℹ️ No version bump needed based on commit messages"
+            echo "ℹ️ No version bump processing needed"
           fi
 
       - name: Display changelog content
