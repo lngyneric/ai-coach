@@ -5,6 +5,10 @@
     "version_scheme": "semver",
     "version": "0.5.0",
     "update_changelog_on_bump": true,
-    "major_version_zero": true
+    "major_version_zero": true,
+    "legacy_tag_formats": [
+      "v$major.$minor-beta",
+      "$major.$minor-beta"
+    ]
   }
 }

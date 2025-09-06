@@ -140,10 +140,17 @@ jobs:
       - name: Get current version
         id: version
         run: |
-          VERSION=$(python -c "import json; print(json.load(open('cz.json'))['commitizen']['version'])")
+          if [ "${{ steps.bump-version.outputs.bump_needed }}" = "true" ]; then
+            # Use the new version from bump step
+            VERSION="${{ steps.bump-version.outputs.new_version }}"
+            echo "📋 Using new version from bump: $VERSION"
+          else
+            # Use version from cz.json
+            VERSION=$(python -c "import json; print(json.load(open('cz.json'))['commitizen']['version'])")
+            echo "📋 Using current version from config: $VERSION"
+          fi
           echo "version=$VERSION" >> $GITHUB_OUTPUT
           echo "tag=v$VERSION" >> $GITHUB_OUTPUT
-          echo "📋 Current version: $VERSION"
 
       - name: Create GitHub Release
         if: steps.bump-version.outputs.bump_needed == 'true'
