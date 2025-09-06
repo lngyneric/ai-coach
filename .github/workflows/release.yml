@@ -201,16 +201,3 @@ jobs:
           draft: false
           prerelease: false
           make_latest: true
-
-  # Trigger the existing build workflow after successful release
-  trigger-build:
-    needs: release
-    if: needs.release.outputs.bump_needed == 'true'
-    runs-on: ubuntu-latest
-    steps:
-      - name: Trigger Docker Build
-        uses: peter-evans/repository-dispatch@v3
-        with:
-          token: ${{ secrets.PAT_TOKEN || secrets.GITHUB_TOKEN }}
-          event-type: release-created
-          client-payload: '{"ref": "${{ github.ref }}", "version": "${{ needs.release.outputs.new_version }}"}'
