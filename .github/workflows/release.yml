@@ -111,6 +111,20 @@ jobs:
             DRY_RUN_OUTPUT=$(cz bump --dry-run --yes 2>&1 || true)
             echo "🧪 Commitizen dry-run output (with errors):"
             echo "$DRY_RUN_OUTPUT"
+
+            # Check if failure is due to invalid tags interfering with commitizen
+            if echo "$DRY_RUN_OUTPUT" | grep -q "Invalid version tag"; then
+              echo "🔄 Detected invalid tags interfering with commitizen, using manual version calculation"
+              # Get the latest semantic version tag
+              LATEST_TAG=$(git tag -l --sort=-version:refname | grep -E "^v[0-9]+\.[0-9]+\.[0-9]+" | head -1 || echo "")
+              if [ -n "$LATEST_TAG" ]; then
+                CURRENT_VERSION=$(echo "$LATEST_TAG" | sed 's/^v//')
+                NEW_VERSION=$(echo "$CURRENT_VERSION" | awk -F. '{$NF = $NF + 1;} 1' | sed 's/ /./g')
+                echo "✅ Manual calculation: $CURRENT_VERSION → $NEW_VERSION"
+                # Override commitizen output with our calculation
+                DRY_RUN_OUTPUT="bump: version $CURRENT_VERSION → $NEW_VERSION"
+              fi
+            fi
           fi
 
           # Check if version bump is needed
