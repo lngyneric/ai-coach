@@ -104,7 +104,7 @@ jobs:
             echo "✅ No previous tags found - this will be the initial release"
           else
             # Fallback: check recent commits manually for conventional commit types
-            RECENT_COMMITS=$(git log --oneline --since="$(git describe --tags --abbrev=0 2>/dev/null | xargs git log -1 --format=%cd --date=iso || echo '1 week ago')" --grep="^feat:" --grep="^fix:" --grep="^BREAKING CHANGE:" --extended-regexp)
+            RECENT_COMMITS=$(git log --oneline --since="$(git tag -l --sort=-version:refname | grep -E "^v[0-9]+\.[0-9]+\.[0-9]+" | head -1 | xargs git log -1 --format=%cd --date=iso || echo '1 week ago')" --grep="^feat:" --grep="^fix:" --grep="^BREAKING CHANGE:" --extended-regexp)
             if [ -n "$RECENT_COMMITS" ]; then
               echo "bump_needed=true" >> $GITHUB_OUTPUT
               echo "✅ Version bump needed based on manual commit analysis"
@@ -124,14 +124,14 @@ jobs:
               NEW_VERSION=$(echo "$DRY_RUN_OUTPUT" | grep "bump: version" | sed 's/.*→ //' | tr -d ' ')
             else
               # Calculate next version manually if commitizen didn't provide it
-              CURRENT_VERSION=$(git describe --tags --abbrev=0 2>/dev/null | sed 's/^v//' || echo "0.5.0")
+              CURRENT_VERSION=$(git tag -l --sort=-version:refname | grep -E "^v[0-9]+\.[0-9]+\.[0-9]+" | head -1 | sed 's/^v//' || echo "0.5.0")
               NEW_VERSION=$(echo "$CURRENT_VERSION" | awk -F. '{$NF = $NF + 1;} 1' | sed 's/ /./g')
             fi
             echo "new_version=$NEW_VERSION" >> $GITHUB_OUTPUT
             echo "📋 New version will be: $NEW_VERSION"
 
             # Generate changelog content
-            LAST_TAG=$(git describe --tags --abbrev=0 2>/dev/null || echo "")
+            LAST_TAG=$(git tag -l --sort=-version:refname | grep -E "^v[0-9]+\.[0-9]+\.[0-9]+" | head -1 || echo "")
             if [ -n "$LAST_TAG" ]; then
               CHANGELOG_CONTENT=$(cz changelog --start-rev=$LAST_TAG --unreleased-version=$NEW_VERSION --dry-run 2>/dev/null || echo "## Changes\n\nAutomated release based on conventional commits")
             else
@@ -153,7 +153,7 @@ jobs:
               if git tag -l | grep -q "^v$NEW_VERSION$"; then
                 echo "⚠️ Tag v$NEW_VERSION already exists, skipping tag creation"
               else
-                git tag "v$NEW_VERSION" -m "bump: version $(git describe --tags --abbrev=0 2>/dev/null || echo '1.0.0') → $NEW_VERSION"
+                git tag "v$NEW_VERSION" -m "bump: version $(git tag -l --sort=-version:refname | grep -E "^v[0-9]+\.[0-9]+\.[0-9]+" | head -1 | sed 's/^v//' || echo '1.0.0') → $NEW_VERSION"
                 echo "✅ Manual tag created: v$NEW_VERSION"
               fi
             else
@@ -204,7 +204,7 @@ jobs:
               echo "📋 Using latest git tag version: $VERSION"
             else
               # Fallback: try to get any semantic version tag
-              VERSION=$(git describe --tags --abbrev=0 2>/dev/null | sed 's/^v//' || echo "1.0.0")
+              VERSION=$(git tag -l --sort=-version:refname | grep -E "^v[0-9]+\.[0-9]+\.[0-9]+" | head -1 | sed 's/^v//' || echo "1.0.0")
               echo "📋 Using fallback version: $VERSION"
             fi
           fi
