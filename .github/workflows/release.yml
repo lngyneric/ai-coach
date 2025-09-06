@@ -23,6 +23,7 @@ jobs:
         uses: actions/checkout@v4
         with:
           fetch-depth: 0
+          fetch-tags: true
           token: ${{ secrets.PAT_TOKEN || secrets.GITHUB_TOKEN }}
 
       - name: Set up Python
@@ -47,6 +48,28 @@ jobs:
             git config --global init.templateDir ""
           else
             pre-commit install
+          fi
+
+      - name: Debug git tags availability
+        run: |
+          echo "🏷️ All available tags:"
+          git tag -l --sort=-version:refname || echo "No tags found"
+          echo ""
+          echo "🔍 Semantic version tags (v*.*.*):"
+          git tag -l --sort=-version:refname | grep -E "^v[0-9]+\.[0-9]+\.[0-9]+" || echo "No semantic version tags found"
+          echo ""
+          echo "📋 Latest semantic version tag:"
+          LATEST_TAG=$(git tag -l --sort=-version:refname | grep -E "^v[0-9]+\.[0-9]+\.[0-9]+" | head -1 || echo "")
+          echo "LATEST_TAG='${LATEST_TAG}'"
+          echo ""
+          echo "🧪 Test version calculation:"
+          if [ -n "$LATEST_TAG" ]; then
+            CURRENT_VERSION=$(echo "$LATEST_TAG" | sed 's/^v//')
+            NEW_VERSION=$(echo "$CURRENT_VERSION" | awk -F. '{$NF = $NF + 1;} 1' | sed 's/ /./g')
+            echo "CURRENT_VERSION='$CURRENT_VERSION'"
+            echo "CALCULATED_NEW_VERSION='$NEW_VERSION'"
+          else
+            echo "No semantic version tags found - would start from 0.1.0"
           fi
 
       - name: Check branch protection status
