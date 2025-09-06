@@ -147,7 +147,6 @@ jobs:
               }
             fi
 
-
             echo "✅ Release tag v$NEW_VERSION pushed successfully"
           else
             echo "bump_needed=false" >> $GITHUB_OUTPUT
