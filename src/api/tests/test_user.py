@@ -2,7 +2,6 @@ from tests.common import print_json
 
 
 def test_get_user_profile(app):
-
     from flaskr.service.profile.funcs import get_user_profile_labels
     from flaskr.service.profile.funcs import update_user_profile
 

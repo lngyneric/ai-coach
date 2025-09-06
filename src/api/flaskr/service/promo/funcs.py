@@ -39,7 +39,7 @@ def generate_coupon_code(
     total_count=100,
     code=None,
     coupon_bid=None,
-    **args
+    **args,
 ):
     """
     Generate coupon code

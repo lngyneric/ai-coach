@@ -49,7 +49,6 @@ def optional_token_validation(f):
 
 
 def register_user_handler(app: Flask, path_prefix: str) -> Flask:
-
     @app.before_request
     def before_request():
         if (
@@ -338,7 +337,6 @@ def register_user_handler(app: Flask, path_prefix: str) -> Flask:
            - user
         """
         with app.app_context():
-
             mobile = request.get_json().get("mobile", None)
             sms_code = request.get_json().get("sms_code", None)
             course_id = request.get_json().get("course_id", None)
@@ -672,7 +670,6 @@ def register_user_handler(app: Flask, path_prefix: str) -> Flask:
 
         """
         with app.app_context():
-
             mail = request.get_json().get("mail", None)
             mail_code = request.get_json().get("mail_code", None)
             course_id = request.get_json().get("course_id", None)

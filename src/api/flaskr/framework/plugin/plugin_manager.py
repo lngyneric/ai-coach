@@ -133,7 +133,6 @@ def extensible_generic(func):
 
     @wraps(func)
     def wrapper(*args, **kwargs):
-
         result = func(*args, **kwargs)
         if result:
             yield from result

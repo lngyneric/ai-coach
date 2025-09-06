@@ -418,7 +418,7 @@ class UnifiedMigrationTask:
                             update_query = text(
                                 f"""
                                 UPDATE {target_table}
-                                SET {', '.join(update_fields)}
+                                SET {", ".join(update_fields)}
                                 WHERE {target_key} = :key_value
                             """
                             )
@@ -430,8 +430,8 @@ class UnifiedMigrationTask:
 
                         insert_query = text(
                             f"""
-                            INSERT INTO {target_table} ({', '.join(field_names)})
-                            VALUES ({', '.join(field_placeholders)})
+                            INSERT INTO {target_table} ({", ".join(field_names)})
+                            VALUES ({", ".join(field_placeholders)})
                         """
                         )
                         session.execute(insert_query, mapped_data)
@@ -493,10 +493,11 @@ class UnifiedMigrationTask:
                 )
 
                 # Sample integrity check
-                sample_check_passed, mismatches = (
-                    await self._verify_sample_integrity_async(
-                        source_table, target_table, key_field, target_key
-                    )
+                (
+                    sample_check_passed,
+                    mismatches,
+                ) = await self._verify_sample_integrity_async(
+                    source_table, target_table, key_field, target_key
                 )
 
                 result = ConsistencyCheckResult(

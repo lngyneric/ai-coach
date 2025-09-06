@@ -28,7 +28,7 @@ class TestEnvVarInitialization:
         assert env_var.name == "TEST_VAR"
         assert env_var.default == "default_value"
         assert env_var.required is False
-        assert env_var.type == str
+        assert env_var.type is str
         assert env_var.description == "Test variable"
         assert env_var.group == "test"
         assert env_var.secret is False
@@ -318,7 +318,7 @@ class TestEnvVarEdgeCases:
         assert env_var.name == "COMPLETE_VAR"
         assert env_var.required is False
         assert env_var.default == "default"
-        assert env_var.type == str
+        assert env_var.type is str
         assert env_var.description == "Complete variable with all fields"
         assert env_var.validator is not None
         assert env_var.secret is True
@@ -332,7 +332,7 @@ class TestEnvVarEdgeCases:
         assert env_var.name == "MINIMAL_VAR"
         assert env_var.required is False
         assert env_var.default is None
-        assert env_var.type == str
+        assert env_var.type is str
         assert env_var.description == ""
         assert env_var.validator is None
         assert env_var.secret is False

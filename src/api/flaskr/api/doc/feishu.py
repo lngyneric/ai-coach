@@ -38,7 +38,6 @@ def get_tenant_token(app: Flask, app_id=APPID, app_secret=APP_SECRET):
 
 
 def create_document(app: Flask, title: str):
-
     token = get_tenant_token(app)
     url = "https://open.feishu.cn/open-apis/docx/v1/documents"
     headers = {"Content-Type": "application/json", "Authorization": "Bearer " + token}

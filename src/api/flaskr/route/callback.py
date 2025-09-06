@@ -5,7 +5,6 @@ from ..service.order import success_buy_record_from_pingxx
 
 
 def register_callback_handler(app: Flask, path_prefix: str):
-
     # pingxx支付回调
     @app.route(path_prefix + "/pingxx-callback", methods=["POST"])
     @bypass_token_validation

@@ -51,25 +51,25 @@ class EnvVar:
         # If value is already the correct type, return it
         if isinstance(value, self.type):
             return value
-        if self.type == bool:
+        if self.type is bool:
             if isinstance(value, str):
                 return value.lower() in ("true", "1", "yes", "on")
             return bool(value)
-        elif self.type == int:
+        elif self.type is int:
             try:
                 return int(value)
             except ValueError:
                 raise EnvironmentConfigError(
                     f"Invalid integer value for {self.name}: {value}"
                 )
-        elif self.type == float:
+        elif self.type is float:
             try:
                 return float(value)
             except ValueError:
                 raise EnvironmentConfigError(
                     f"Invalid float value for {self.name}: {value}"
                 )
-        elif self.type == list:
+        elif self.type is list:
             if isinstance(value, str):
                 return [item.strip() for item in value.split(",") if item.strip()]
             return list(value)
@@ -985,7 +985,7 @@ class EnhancedConfig:
                 else:
                     metadata.append(f"Optional - default: {env_var.default}")
 
-                if env_var.type != str:
+                if env_var.type is not str:
                     metadata.append(f"Type: {env_var.type.__name__}")
 
                 if env_var.validator:

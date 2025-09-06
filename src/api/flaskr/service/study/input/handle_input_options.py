@@ -33,7 +33,6 @@ def _handle_input_options(
     trace: StatefulTraceClient,
     is_preview: bool = False,
 ) -> Generator[str, None, None]:
-
     options: OptionsDTO = block_dto.block_content
     result_variable_id = options.result_variable_bid
 

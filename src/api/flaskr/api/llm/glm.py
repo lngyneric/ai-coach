@@ -101,7 +101,6 @@ def get_chat_response(app: Flask, msg: str) -> Generator[ChatResponse, None, Non
 def invoke_glm(
     app: Flask, model, messages, **args
 ) -> Generator[ChatResponse, None, None]:
-
     data = {"model": model, "messages": messages, "stream": True}
 
     data = {**data, **args}

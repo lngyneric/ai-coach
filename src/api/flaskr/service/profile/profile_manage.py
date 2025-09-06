@@ -460,7 +460,6 @@ def delete_profile_item(app: Flask, user_id: str, profile_id: str):
 
         app.logger.info(item_ids)
         if len(item_ids) > 0:
-
             ProfileItemValue.query.filter(
                 ProfileItemValue.profile_id == profile_id,
                 ProfileItemValue.profile_item_id.in_(item_ids),
@@ -502,7 +501,6 @@ def save_profile_item_defination(
             ProfileItem.status == 1,
         ).first()
         if profile_item is None:
-
             profile_item = ProfileItem(
                 profile_id=generate_id(app),
                 parent_id=scenario_id,

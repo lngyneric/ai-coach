@@ -136,7 +136,6 @@ def _warm_up_cdn(app, url: str, ALI_API_ID: str, ALI_API_SECRET: str, endpoint: 
         bool: True if successful
     """
     try:
-
         file_id = url.split("/")[-1]
 
         region_id = endpoint.split(".")[0].replace("oss-", "")

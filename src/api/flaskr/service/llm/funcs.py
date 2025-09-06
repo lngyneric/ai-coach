@@ -39,9 +39,7 @@ def debug_script(
     block_variables,
     block_other_conf,
 ):
-
     with app.app_context():
-
         try:
             block_info = (
                 DraftBlock.query.filter(

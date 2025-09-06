@@ -23,5 +23,4 @@ def _handle_input_start(
     trace: StatefulTraceClient,
     is_preview: bool = False,
 ) -> Generator[str, None, None]:
-
     return None

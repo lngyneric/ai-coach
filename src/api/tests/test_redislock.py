@@ -16,7 +16,6 @@ def func(i):
 
 
 def test_redis_lock(app):
-
     threads = []
     for i in range(10):
         app.logger.info("init {}".format(i))

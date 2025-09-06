@@ -9,7 +9,6 @@ from flask_migrate import upgrade
 #
 @pytest.fixture(scope="session", autouse=True)
 def app():
-
     app = create_app()
 
     with app.app_context():

@@ -295,7 +295,6 @@ def migrate_shifu_draft_to_shifu_draft_v2(app, shifu_bid: str):
                     )
 
         def migrate_published_outline(node: OutlineTreeNode, history_item: HistoryItem):
-
             old_outline: AILesson = node.outline
             app.logger.info(
                 f"migrate published outline: {old_outline.lesson_id} {old_outline.lesson_no} {old_outline.lesson_name}"
@@ -350,7 +349,6 @@ def migrate_shifu_draft_to_shifu_draft_v2(app, shifu_bid: str):
                 for child in node.children:
                     migrate_published_outline(child, outline_history_item)
             else:
-
                 old_blocks = (
                     AILessonScript.query.filter(
                         AILessonScript.lesson_id == old_outline.lesson_id,

@@ -25,7 +25,6 @@ def test_save_profile_item(test_client, app, token):
 
 
 def test_save_profile_item_option(test_client, app, token):
-
     json_data = {
         "profile_id": None,
         "parent_id": "b8e9efc6f62e4bed81b6dca5e5ce2385",

@@ -29,9 +29,9 @@ class TestSecretKeyValidator:
         ]
 
         for value in valid_values:
-            assert (
-                secret_key_env.validator(value) is True
-            ), f"Failed for value: {repr(value)}"
+            assert secret_key_env.validator(value) is True, (
+                f"Failed for value: {repr(value)}"
+            )
 
     def test_secret_key_invalid_values(self):
         """Test that invalid SECRET_KEY values fail validation."""
@@ -48,9 +48,9 @@ class TestSecretKeyValidator:
         ]
 
         for value in invalid_values:
-            assert (
-                secret_key_env.validator(value) is False
-            ), f"Should have failed for value: {repr(value)}"
+            assert secret_key_env.validator(value) is False, (
+                f"Should have failed for value: {repr(value)}"
+            )
 
     def test_secret_key_required_field(self):
         """Test that SECRET_KEY is marked as required."""

@@ -23,7 +23,6 @@ def _handle_output_continue(
     trace: StatefulTraceClient,
     is_preview: bool = False,
 ) -> ScriptDTO:
-
     msg = ""
     if isinstance(block_dto.block_content, ButtonDTO):
         msg = get_script_ui_label(app, block_dto.block_content.label)

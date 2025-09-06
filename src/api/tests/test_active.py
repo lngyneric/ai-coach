@@ -27,7 +27,6 @@ def test_create_order_with_active(app):
     from flaskr.service.order.discount import use_discount_code
 
     with app.app_context():
-
         user = generate_temp_user(app, generate_id(app), str(123456))
         user_id = user.userInfo.user_id
         course = AICourse.query.first()

@@ -122,8 +122,7 @@ def use_coupon_code(app: Flask, user_id, coupon_code, order_id):
             )
         elif coupon.discount_type == COUPON_TYPE_PERCENT:
             buy_record.paid_price = (
-                buy_record.paid_price
-                - buy_record.payable_price * coupon_usage.value  # noqa W503
+                buy_record.paid_price - buy_record.payable_price * coupon_usage.value  # noqa W503
             )
         if buy_record.paid_price < 0:
             buy_record.paid_price = 0

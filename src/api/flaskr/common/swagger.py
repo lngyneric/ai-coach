@@ -74,18 +74,18 @@ def get_field_schema(typ, description: str = ""):
     args = typing.get_args(typ)
     if typ in (str, int, float, bool):
         field_schema["type"] = typ.__name__
-        if typ == str:
+        if typ is str:
             field_schema["type"] = "string"
-        elif typ == int:
+        elif typ is int:
             field_schema["type"] = "integer"
-        elif typ == float:
+        elif typ is float:
             field_schema["type"] = "number"
     # 处理列表类型
-    elif origin == list:
+    elif origin is list:
         item_type = args[0]
         field_schema["type"] = "array"
         field_schema["items"] = get_field_schema(item_type)
-    elif origin == dict:
+    elif origin is dict:
         key_type, value_type = args
         field_schema["type"] = "object"
         field_schema["additionalProperties"] = get_field_schema(value_type)

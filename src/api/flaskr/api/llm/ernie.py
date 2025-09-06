@@ -29,7 +29,7 @@ class ErnieStreamResponse:
         finish_reason=None,
         usage=None,
         content_type=None,
-        **args
+        **args,
     ):
         self.id = id
         self.object = object

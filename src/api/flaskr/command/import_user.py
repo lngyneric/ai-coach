@@ -14,7 +14,6 @@ def import_user(
     """Import user and enable course"""
     app.logger.info(f"import_user: {mobile}, {course_id}")
     with app.app_context():
-
         user = User.query.filter_by(mobile=mobile).first()
 
         if not user:

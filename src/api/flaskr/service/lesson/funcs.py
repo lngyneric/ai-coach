@@ -438,7 +438,7 @@ def update_lesson_info(
                     view_id=view_id,
                     page_token=page_token,
                     page_size=100,
-                    **kwargs
+                    **kwargs,
                 )
                 # with open(lessonNo+".json", "w") as f:
                 #     json.dump(resp,f, ensure_ascii=False)

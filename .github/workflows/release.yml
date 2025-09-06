@@ -1,0 +1,215 @@
+name: Automated Release
+
+on:
+  push:
+    branches:
+      - main
+    paths-ignore:
+      - '**/*.md'
+      - 'docs/**'
+  workflow_dispatch:
+
+jobs:
+  release:
+    runs-on: ubuntu-latest
+    permissions:
+      contents: write
+      issues: write
+      pull-requests: write
+      id-token: write
+
+    steps:
+      - name: Check out repository
+        uses: actions/checkout@v4
+        with:
+          fetch-depth: 0
+          token: ${{ secrets.PAT_TOKEN || secrets.GITHUB_TOKEN }}
+
+      - name: Set up Node.js
+        uses: actions/setup-node@v4
+        with:
+          node-version: '18'
+          cache: 'npm'
+
+      - name: Set up Python
+        uses: actions/setup-python@v5
+        with:
+          python-version: '3.11'
+
+      - name: Install Python dependencies
+        run: |
+          python -m pip install --upgrade pip
+          pip install commitizen pre-commit
+
+      - name: Configure Git
+        run: |
+          git config --local user.email "action@github.com"
+          git config --local user.name "GitHub Action"
+
+      - name: Install pre-commit hooks
+        run: |
+          if [[ "${ACT:-false}" == "true" ]]; then
+            echo "Skipping pre-commit setup in act environment"
+            git config --global init.templateDir ""
+          else
+            pre-commit install
+          fi
+
+      - name: Check branch protection status
+        id: branch-protection
+        run: |
+          if git push --dry-run origin main 2>/dev/null; then
+            echo "can_push_directly=true" >> $GITHUB_OUTPUT
+            echo "Branch allows direct push"
+          else
+            echo "can_push_directly=false" >> $GITHUB_OUTPUT
+            echo "Branch is protected, will need special handling"
+          fi
+
+      - name: Bump version automatically
+        id: bump-version
+        run: |
+          echo "🔍 Checking for conventional commits that warrant version bump..."
+          echo "📋 Current commitizen config:"
+          cz info || echo "⚠️ Commitizen info failed"
+
+          echo "📊 Current git status:"
+          git status --porcelain
+
+          echo "🏷️ Current tags:"
+          git tag -l --sort=-version:refname | head -5
+
+          echo "📝 Recent commits:"
+          git log --oneline -10
+
+          # Try commitizen dry-run with error handling
+          if DRY_RUN_OUTPUT=$(cz bump --dry-run 2>&1); then
+            echo "🧪 Commitizen dry-run output:"
+            echo "$DRY_RUN_OUTPUT"
+          else
+            echo "⚠️ Commitizen dry-run failed with exit code $?, trying alternative detection..."
+            DRY_RUN_OUTPUT=$(cz bump --dry-run 2>&1 || true)
+            echo "🧪 Commitizen dry-run output (with errors):"
+            echo "$DRY_RUN_OUTPUT"
+          fi
+
+          if echo "$DRY_RUN_OUTPUT" | grep -q "bump: version"; then
+            echo "bump_needed=true" >> $GITHUB_OUTPUT
+            echo "✅ Version bump detected based on conventional commits"
+
+            # Get the new version that commitizen would create
+            NEW_VERSION=$(echo "$DRY_RUN_OUTPUT" | grep "bump: version" | sed 's/.*→ //' | tr -d ' ')
+            echo "new_version=$NEW_VERSION" >> $GITHUB_OUTPUT
+            echo "📋 New version will be: $NEW_VERSION"
+
+            # Generate changelog content
+            LAST_TAG=$(git describe --tags --abbrev=0 2>/dev/null || echo "")
+            if [ -n "$LAST_TAG" ]; then
+              CHANGELOG_CONTENT=$(cz changelog --start-rev=$LAST_TAG --unreleased-version=$NEW_VERSION --dry-run 2>/dev/null || echo "## Changes\n\nAutomated release based on conventional commits")
+            else
+              CHANGELOG_CONTENT=$(cz changelog --unreleased-version=$NEW_VERSION --dry-run 2>/dev/null || echo "## Changes\n\nInitial automated release")
+            fi
+            echo "changelog_content<<EOF" >> $GITHUB_OUTPUT
+            echo "$CHANGELOG_CONTENT" >> $GITHUB_OUTPUT
+            echo "EOF" >> $GITHUB_OUTPUT
+
+            # Only create the git tag, no commits to main branch
+            if ! cz bump --yes --check-consistency --dry-run; then
+              echo "⚠️ Commitizen bump would fail, trying manual tag creation..."
+              if git tag -l | grep -q "^v$NEW_VERSION$"; then
+                echo "⚠️ Tag v$NEW_VERSION already exists, skipping tag creation"
+              else
+                git tag "v$NEW_VERSION" -m "Release v$NEW_VERSION
+
+                🤖 Generated with [Claude Code](https://claude.ai/code)"
+                echo "✅ Manual tag created: v$NEW_VERSION"
+              fi
+            else
+              echo "✅ Using commitizen for tag creation..."
+              cz bump --yes --check-consistency --no-verify
+            fi
+
+            # Push only the tag, not commits
+            echo "🏷️ Pushing release tag..."
+            git push origin "v$NEW_VERSION"
+          else
+            echo "bump_needed=false" >> $GITHUB_OUTPUT
+            echo "ℹ️ No version bump needed based on commit messages"
+          fi
+
+      - name: Display changelog content
+        if: steps.bump-version.outputs.bump_needed == 'true'
+        run: |
+          echo "📋 Generated changelog content:"
+          echo "${{ steps.bump-version.outputs.changelog_content }}"
+
+      - name: Get current version
+        id: version
+        run: |
+          VERSION=$(python -c "import json; print(json.load(open('cz.json'))['commitizen']['version'])")
+          echo "version=$VERSION" >> $GITHUB_OUTPUT
+          echo "tag=v$VERSION" >> $GITHUB_OUTPUT
+          echo "📋 Current version: $VERSION"
+
+      - name: Create GitHub Release
+        if: steps.bump-version.outputs.bump_needed == 'true'
+        uses: softprops/action-gh-release@v2
+        with:
+          tag_name: ${{ steps.version.outputs.tag }}
+          name: Release ${{ steps.version.outputs.tag }}
+          body: |
+            # AI-Shifu Release ${{ steps.version.outputs.tag }}
+
+            ${{ steps.bump-version.outputs.changelog_content }}
+
+            ## 🚀 Deployment
+
+            ### Docker Images
+            ```bash
+            # API Server
+            docker pull ${{ secrets.DOCKERHUB_USER || 'aishifu' }}/ai-shifu-api:${{ steps.version.outputs.version }}
+
+            # Web Application
+            docker pull ${{ secrets.DOCKERHUB_USER || 'aishifu' }}/ai-shifu-web:${{ steps.version.outputs.version }}
+
+            # Cook Web (CMS)
+            docker pull ${{ secrets.DOCKERHUB_USER || 'aishifu' }}/ai-shifu-cook-web:${{ steps.version.outputs.version }}
+            ```
+
+            ### Quick Start
+            ```bash
+            # Clone the repository
+            git clone https://github.com/ai-shifu/ai-shifu.git
+            cd ai-shifu
+
+            # Checkout this release
+            git checkout ${{ steps.version.outputs.tag }}
+
+            # Start with Docker
+            cd docker
+            docker compose up -d
+            ```
+
+            ## 📖 Documentation
+            - [Installation Manual](INSTALL_MANUAL.md)
+            - [Contributing Guide](CONTRIBUTING.md)
+            - [Development Guide](AGENTS.md)
+
+            ---
+            🤖 Generated with [Claude Code](https://claude.ai/code)
+          draft: false
+          prerelease: false
+          make_latest: true
+
+  # Trigger the existing build workflow after successful release
+  trigger-build:
+    needs: release
+    if: needs.release.outputs.bump_needed == 'true'
+    runs-on: ubuntu-latest
+    steps:
+      - name: Trigger Docker Build
+        uses: peter-evans/repository-dispatch@v3
+        with:
+          token: ${{ secrets.PAT_TOKEN || secrets.GITHUB_TOKEN }}
+          event-type: release-created
+          client-payload: '{"ref": "${{ github.ref }}", "version": "${{ needs.release.outputs.new_version }}"}'

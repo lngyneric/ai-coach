@@ -28,7 +28,6 @@ def check_text_content(
     user_id: str,
     input: str,
 ):
-
     check_id = generate_id(app)
     res = check_text(app, check_id, input, user_id)
     add_risk_control_result(

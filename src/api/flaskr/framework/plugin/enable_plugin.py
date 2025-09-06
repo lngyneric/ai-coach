@@ -10,7 +10,6 @@ from .plugin_manager import plugin_manager
 
 
 def enable_plugins(app: Flask):
-
     @app.cli.group()
     def plugin():
         """Plugin management commands."""

@@ -212,7 +212,6 @@ def run_migrations_online() -> None:
                         and "TINYINT(1)" in modify_type_str
                     )
                 ):
-
                     # check if there are other meaningful modifications
                     has_other_changes = False
                     if hasattr(op, "modify_comment") and op.modify_comment is not None:
@@ -533,7 +532,6 @@ def run_migrations_online() -> None:
                             and type(current_op).__name__ == "AlterColumnOp"
                             and type(next_op).__name__ == "AlterColumnOp"
                         ):
-
                             logger.info(
                                 f"Merging operations for column {current_op.column_name} in table {table_name}"
                             )

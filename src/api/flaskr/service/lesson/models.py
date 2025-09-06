@@ -101,7 +101,6 @@ class AICourse(db.Model):
         )
 
     def eq(self, other):
-
         return (
             self.course_id == other.course_id
             and self.course_name == other.course_name
@@ -130,7 +129,9 @@ class AICourse(db.Model):
             else (
                 "" + self.course_desc
                 if self.course_desc
-                else "" + self.course_keywords if self.course_keywords else ""
+                else "" + self.course_keywords
+                if self.course_keywords
+                else ""
             )
         )
 
@@ -264,7 +265,6 @@ class AILesson(db.Model):
         )
 
     def eq(self, other):
-
         return (
             self.lesson_id == other.lesson_id
             and self.lesson_name == other.lesson_name
@@ -295,7 +295,9 @@ class AILesson(db.Model):
             else (
                 "" + self.lesson_desc
                 if self.lesson_desc
-                else "" + self.lesson_summary if self.lesson_summary else ""
+                else "" + self.lesson_summary
+                if self.lesson_summary
+                else ""
             )
         )
 
@@ -432,7 +434,6 @@ class AILessonScript(db.Model):
         )
 
     def eq(self, other):
-
         return (
             self.script_id == other.script_id
             and self.lesson_id == other.lesson_id
