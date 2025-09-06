@@ -102,29 +102,64 @@ jobs:
           echo "📝 Recent commits:"
           git log --oneline -5
 
-          # Try commitizen dry-run with error handling and non-interactive mode
-          if DRY_RUN_OUTPUT=$(cz bump --dry-run --yes 2>&1); then
-            echo "🧪 Commitizen dry-run output:"
-            echo "$DRY_RUN_OUTPUT"
-          else
-            echo "⚠️ Commitizen dry-run failed with exit code $?, trying alternative detection..."
-            DRY_RUN_OUTPUT=$(cz bump --dry-run --yes 2>&1 || true)
-            echo "🧪 Commitizen dry-run output (with errors):"
-            echo "$DRY_RUN_OUTPUT"
+          # Smart commitizen approach: dynamically set version if needed
+          echo "🔍 Preparing commitizen with correct base version..."
 
-            # Check if failure is due to invalid tags interfering with commitizen
-            if echo "$DRY_RUN_OUTPUT" | grep -q "Invalid version tag"; then
-              echo "🔄 Detected invalid tags interfering with commitizen, using manual version calculation"
-              # Get the latest semantic version tag
-              LATEST_TAG=$(git tag -l --sort=-version:refname | grep -E "^v[0-9]+\.[0-9]+\.[0-9]+" | head -1 || echo "")
-              if [ -n "$LATEST_TAG" ]; then
-                CURRENT_VERSION=$(echo "$LATEST_TAG" | sed 's/^v//')
-                NEW_VERSION=$(echo "$CURRENT_VERSION" | awk -F. '{$NF = $NF + 1;} 1' | sed 's/ /./g')
-                echo "✅ Manual calculation: $CURRENT_VERSION → $NEW_VERSION"
-                # Override commitizen output with our calculation
-                DRY_RUN_OUTPUT="bump: version $CURRENT_VERSION → $NEW_VERSION"
-              fi
+          # Get the latest semantic version tag
+          LATEST_TAG=$(git tag -l --sort=-version:refname | grep -E "^v[0-9]+\.[0-9]+\.[0-9]+" | head -1 || echo "")
+
+          if [ -n "$LATEST_TAG" ]; then
+            LATEST_VERSION=$(echo "$LATEST_TAG" | sed 's/^v//')
+            echo "✅ Found latest semantic version: $LATEST_VERSION"
+
+            # Create a backup of cz.json and temporarily modify it
+            cp cz.json cz.json.bak
+
+            # Add version field to cz.json temporarily
+            jq --arg version "$LATEST_VERSION" '.commitizen.version = $version' cz.json > cz.json.tmp && mv cz.json.tmp cz.json
+            echo "🔧 Temporarily set cz.json version to: $LATEST_VERSION"
+
+            # Now run commitizen with correct base version
+            if DRY_RUN_OUTPUT=$(cz bump --dry-run --yes 2>&1); then
+              echo "🧪 Commitizen dry-run output (with corrected base version):"
+              echo "$DRY_RUN_OUTPUT"
+              COMMITIZEN_SUCCESS=true
+            else
+              echo "⚠️ Commitizen dry-run failed even with version correction, exit code $?"
+              DRY_RUN_OUTPUT=$(cz bump --dry-run --yes 2>&1 || true)
+              echo "🧪 Commitizen dry-run output (with errors):"
+              echo "$DRY_RUN_OUTPUT"
+              COMMITIZEN_SUCCESS=false
             fi
+
+            # Restore original cz.json (no permanent changes)
+            mv cz.json.bak cz.json
+            echo "🔄 Restored original cz.json"
+
+          else
+            echo "⚠️ No semantic version tags found, using standard commitizen"
+
+            # Fallback to original approach when no semantic tags exist
+            if DRY_RUN_OUTPUT=$(cz bump --dry-run --yes 2>&1); then
+              echo "🧪 Commitizen dry-run output:"
+              echo "$DRY_RUN_OUTPUT"
+              COMMITIZEN_SUCCESS=true
+            else
+              echo "⚠️ Commitizen dry-run failed with exit code $?"
+              DRY_RUN_OUTPUT=$(cz bump --dry-run --yes 2>&1 || true)
+              echo "🧪 Commitizen dry-run output (with errors):"
+              echo "$DRY_RUN_OUTPUT"
+              COMMITIZEN_SUCCESS=false
+            fi
+          fi
+
+          # Fallback manual calculation if commitizen still produces wrong results
+          if echo "$DRY_RUN_OUTPUT" | grep -q "bump: version 0.0.0" && [ -n "$LATEST_TAG" ]; then
+            echo "🔄 Commitizen still used 0.0.0 despite version correction, using manual fallback"
+            CURRENT_VERSION=$(echo "$LATEST_TAG" | sed 's/^v//')
+            NEW_VERSION=$(echo "$CURRENT_VERSION" | awk -F. '{$NF = $NF + 1;} 1' | sed 's/ /./g')
+            echo "✅ Manual calculation: $CURRENT_VERSION → $NEW_VERSION"
+            DRY_RUN_OUTPUT="bump: version $CURRENT_VERSION → $NEW_VERSION"
           fi
 
           # Check if version bump is needed
@@ -182,19 +217,39 @@ jobs:
             # All version info comes from git tags via dynamic version detection
             echo "Creating git tag..."
 
-            # Try commitizen bump with error handling
-            if ! cz bump --yes; then
-              echo "⚠️ Commitizen bump failed, trying manual tag creation..."
+            # Use manual tag creation to avoid commitizen's second inconsistent run
+            echo "🏷️ Creating tag manually to ensure version consistency..."
 
-              # Manual tag creation as fallback
-              if git tag -l | grep -q "^v$NEW_VERSION$"; then
-                echo "⚠️ Tag v$NEW_VERSION already exists, skipping tag creation"
-              else
-                git tag "v$NEW_VERSION" -m "bump: version $(git tag -l --sort=-version:refname | grep -E "^v[0-9]+\.[0-9]+\.[0-9]+" | head -1 | sed 's/^v//' || echo '1.0.0') → $NEW_VERSION"
-                echo "✅ Manual tag created: v$NEW_VERSION"
-              fi
+            if git tag -l | grep -q "^v$NEW_VERSION$"; then
+              echo "⚠️ Tag v$NEW_VERSION already exists, skipping tag creation"
             else
-              echo "✅ Commitizen tag created successfully"
+              # Get previous version for commit message
+              PREV_VERSION=$(git tag -l --sort=-version:refname | grep -E "^v[0-9]+\.[0-9]+\.[0-9]+" | head -1 | sed 's/^v//' || echo "0.0.0")
+
+              # Create git tag with proper commit message
+              git tag "v$NEW_VERSION" -m "bump: version $PREV_VERSION → $NEW_VERSION"
+              echo "✅ Manual tag created: v$NEW_VERSION (from $PREV_VERSION)"
+
+              # Create CHANGELOG.md using commitizen
+              echo "📝 Generating changelog..."
+              if [ -n "$LATEST_TAG" ]; then
+                # Temporarily modify cz.json again for changelog generation
+                cp cz.json cz.json.bak2
+                jq --arg version "$PREV_VERSION" '.commitizen.version = $version' cz.json > cz.json.tmp && mv cz.json.tmp cz.json
+
+                # Generate changelog with correct version context
+                if cz changelog --unreleased-version="$NEW_VERSION" --dry-run > CHANGELOG_PREVIEW.md 2>/dev/null; then
+                  echo "✅ Changelog preview generated"
+                  head -20 CHANGELOG_PREVIEW.md || echo "Changelog preview not available"
+                else
+                  echo "⚠️ Changelog generation failed, will be created by GitHub release"
+                fi
+
+                # Restore cz.json
+                mv cz.json.bak2 cz.json
+              else
+                echo "📝 No previous tags for changelog generation"
+              fi
             fi
 
             # Push based on branch protection status
