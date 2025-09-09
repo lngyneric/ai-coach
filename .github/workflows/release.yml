@@ -2,11 +2,8 @@ name: Automated Release
 
 on:
   push:
-    branches:
-      - main
-    paths-ignore:
-      - '**/*.md'
-      - 'docs/**'
+    tags:
+      - 'v*.*.*'
   workflow_dispatch:
 
 jobs:
@@ -18,8 +15,8 @@ jobs:
       pull-requests: write
       id-token: write
     outputs:
-      bump_needed: ${{ steps.bump-version.outputs.bump_needed }}
       tag: ${{ steps.version.outputs.tag }}
+      version: ${{ steps.version.outputs.version }}
 
     steps:
       - name: Check out repository
@@ -37,277 +34,41 @@ jobs:
       - name: Install Python dependencies
         run: |
           python -m pip install --upgrade pip
-          pip install commitizen pre-commit
+          pip install commitizen
 
-      - name: Configure Git
-        run: |
-          git config --local user.email "action@github.com"
-          git config --local user.name "GitHub Action"
-
-      - name: Install pre-commit hooks
-        run: |
-          if [[ "${ACT:-false}" == "true" ]]; then
-            echo "Skipping pre-commit setup in act environment"
-            git config --global init.templateDir ""
-          else
-            pre-commit install
-          fi
-
-      - name: Debug git tags availability
-        run: |
-          echo "🏷️ All available tags:"
-          git tag -l --sort=-version:refname || echo "No tags found"
-          echo ""
-          echo "🔍 Semantic version tags (v*.*.*):"
-          git tag -l --sort=-version:refname | grep -E "^v[0-9]+\.[0-9]+\.[0-9]+" || echo "No semantic version tags found"
-          echo ""
-          echo "📋 Latest semantic version tag:"
-          LATEST_TAG=$(git tag -l --sort=-version:refname | grep -E "^v[0-9]+\.[0-9]+\.[0-9]+" | head -1 || echo "")
-          echo "LATEST_TAG='${LATEST_TAG}'"
-          echo ""
-          echo "🧪 Test version calculation:"
-          if [ -n "$LATEST_TAG" ]; then
-            CURRENT_VERSION=$(echo "$LATEST_TAG" | sed 's/^v//')
-            NEW_VERSION=$(echo "$CURRENT_VERSION" | awk -F. '{$NF = $NF + 1;} 1' | sed 's/ /./g')
-            echo "CURRENT_VERSION='$CURRENT_VERSION'"
-            echo "CALCULATED_NEW_VERSION='$NEW_VERSION'"
-          else
-            echo "No semantic version tags found - would start from 0.1.0"
-          fi
-
-      - name: Check branch protection status
-        id: branch-protection
-        run: |
-          if git push --dry-run origin main 2>/dev/null; then
-            echo "can_push_directly=true" >> $GITHUB_OUTPUT
-            echo "Branch allows direct push"
-          else
-            echo "can_push_directly=false" >> $GITHUB_OUTPUT
-            echo "Branch is protected, will need special handling"
-          fi
-
-      - name: Bump version automatically
-        id: bump-version
-        run: |
-          # Git-tag-based versioning: Version is determined entirely by git tags
-          # No cz.json version updates needed - everything is tag-driven
-
-          echo "🔍 Checking for conventional commits that warrant version bump..."
-          echo "📋 Current commitizen config:"
-          cz info || echo "⚠️ Commitizen info failed"
-
-          echo "📊 Current git status:"
-          git status --porcelain
-
-          echo "🏷️ Current tags:"
-          git tag -l --sort=-version:refname | head -5
-
-          echo "📝 Recent commits:"
-          git log --oneline -5
-
-          # Smart commitizen approach: dynamically set version if needed
-          echo "🔍 Preparing commitizen with correct base version..."
-
-          # Get the latest semantic version tag
-          LATEST_TAG=$(git tag -l --sort=-version:refname | grep -E "^v[0-9]+\.[0-9]+\.[0-9]+" | head -1 || echo "")
-
-          if [ -n "$LATEST_TAG" ]; then
-            LATEST_VERSION=$(echo "$LATEST_TAG" | sed 's/^v//')
-            echo "✅ Found latest semantic version: $LATEST_VERSION"
-
-            # Create a backup of cz.json and temporarily modify it
-            cp cz.json cz.json.bak
-
-            # Add version field to cz.json temporarily
-            jq --arg version "$LATEST_VERSION" '.commitizen.version = $version' cz.json > cz.json.tmp && mv cz.json.tmp cz.json
-            echo "🔧 Temporarily set cz.json version to: $LATEST_VERSION"
-
-            # Now run commitizen with correct base version
-            if DRY_RUN_OUTPUT=$(cz bump --dry-run --yes 2>&1); then
-              echo "🧪 Commitizen dry-run output (with corrected base version):"
-              echo "$DRY_RUN_OUTPUT"
-              COMMITIZEN_SUCCESS=true
-            else
-              echo "⚠️ Commitizen dry-run failed even with version correction, exit code $?"
-              DRY_RUN_OUTPUT=$(cz bump --dry-run --yes 2>&1 || true)
-              echo "🧪 Commitizen dry-run output (with errors):"
-              echo "$DRY_RUN_OUTPUT"
-              COMMITIZEN_SUCCESS=false
-            fi
-
-            # Restore original cz.json (no permanent changes)
-            mv cz.json.bak cz.json
-            echo "🔄 Restored original cz.json"
-
-          else
-            echo "⚠️ No semantic version tags found, using standard commitizen"
-
-            # Fallback to original approach when no semantic tags exist
-            if DRY_RUN_OUTPUT=$(cz bump --dry-run --yes 2>&1); then
-              echo "🧪 Commitizen dry-run output:"
-              echo "$DRY_RUN_OUTPUT"
-              COMMITIZEN_SUCCESS=true
-            else
-              echo "⚠️ Commitizen dry-run failed with exit code $?"
-              DRY_RUN_OUTPUT=$(cz bump --dry-run --yes 2>&1 || true)
-              echo "🧪 Commitizen dry-run output (with errors):"
-              echo "$DRY_RUN_OUTPUT"
-              COMMITIZEN_SUCCESS=false
-            fi
-          fi
-
-          # Fallback manual calculation if commitizen still produces wrong results
-          if echo "$DRY_RUN_OUTPUT" | grep -q "bump: version 0.0.0" && [ -n "$LATEST_TAG" ]; then
-            echo "🔄 Commitizen still used 0.0.0 despite version correction, using manual fallback"
-            CURRENT_VERSION=$(echo "$LATEST_TAG" | sed 's/^v//')
-            NEW_VERSION=$(echo "$CURRENT_VERSION" | awk -F. '{$NF = $NF + 1;} 1' | sed 's/ /./g')
-            echo "✅ Manual calculation: $CURRENT_VERSION → $NEW_VERSION"
-            DRY_RUN_OUTPUT="bump: version $CURRENT_VERSION → $NEW_VERSION"
-          fi
-
-          # Check if version bump is needed
-          if echo "$DRY_RUN_OUTPUT" | grep -q "bump: version"; then
-            echo "bump_needed=true" >> $GITHUB_OUTPUT
-            echo "✅ Version bump detected based on conventional commits"
-          elif echo "$DRY_RUN_OUTPUT" | grep -q "No commits to bump"; then
-            echo "bump_needed=false" >> $GITHUB_OUTPUT
-            echo "ℹ️ No commits to bump - all commits already processed"
-            # Exit early to avoid further processing
-            exit 0
-          elif echo "$DRY_RUN_OUTPUT" | grep -q "No tag matching configuration could be found"; then
-            echo "bump_needed=true" >> $GITHUB_OUTPUT
-            echo "✅ No previous tags found - this will be the initial release"
-          else
-            # Fallback: check recent commits manually for conventional commit types
-            RECENT_COMMITS=$(git log --oneline --since="$(git tag -l --sort=-version:refname | grep -E "^v[0-9]+\.[0-9]+\.[0-9]+" | head -1 | xargs git log -1 --format=%cd --date=iso || echo '1 week ago')" --grep="^feat:" --grep="^fix:" --grep="^BREAKING CHANGE:" --extended-regexp)
-            if [ -n "$RECENT_COMMITS" ]; then
-              echo "bump_needed=true" >> $GITHUB_OUTPUT
-              echo "✅ Version bump needed based on manual commit analysis"
-            else
-              echo "bump_needed=false" >> $GITHUB_OUTPUT
-              echo "ℹ️ No version bump needed based on commit analysis"
-              exit 0
-            fi
-          fi
-
-          # Only proceed if bump is needed
-          BUMP_NEEDED=$(grep "bump_needed=true" $GITHUB_OUTPUT || echo "")
-          if [ -n "$BUMP_NEEDED" ]; then
-
-            # Get the new version that commitizen would create
-            if echo "$DRY_RUN_OUTPUT" | grep -q "bump: version"; then
-              NEW_VERSION=$(echo "$DRY_RUN_OUTPUT" | grep "bump: version" | sed 's/.*→ //' | tr -d ' ')
-            else
-              # Calculate next version manually if commitizen didn't provide it
-              CURRENT_VERSION=$(git tag -l --sort=-version:refname | grep -E "^v[0-9]+\.[0-9]+\.[0-9]+" | head -1 | sed 's/^v//' || echo "0.5.0")
-              NEW_VERSION=$(echo "$CURRENT_VERSION" | awk -F. '{$NF = $NF + 1;} 1' | sed 's/ /./g')
-            fi
-            echo "new_version=$NEW_VERSION" >> $GITHUB_OUTPUT
-            echo "📋 New version will be: $NEW_VERSION"
-
-            # Generate changelog content
-            LAST_TAG=$(git tag -l --sort=-version:refname | grep -E "^v[0-9]+\.[0-9]+\.[0-9]+" | head -1 || echo "")
-            if [ -n "$LAST_TAG" ]; then
-              CHANGELOG_CONTENT=$(cz changelog --start-rev=$LAST_TAG --unreleased-version=$NEW_VERSION --dry-run 2>/dev/null || echo "## Changes\n\nAutomated release based on conventional commits")
-            else
-              CHANGELOG_CONTENT=$(cz changelog --unreleased-version=$NEW_VERSION --dry-run 2>/dev/null || echo "## Changes\n\nInitial automated release")
-            fi
-            echo "changelog_content<<EOF" >> $GITHUB_OUTPUT
-            echo "$CHANGELOG_CONTENT" >> $GITHUB_OUTPUT
-            echo "EOF" >> $GITHUB_OUTPUT
-
-            # Create ONLY git tag - no file modifications needed
-            # All version info comes from git tags via dynamic version detection
-            echo "Creating git tag..."
-
-            # Use manual tag creation to avoid commitizen's second inconsistent run
-            echo "🏷️ Creating tag manually to ensure version consistency..."
-
-            if git tag -l | grep -q "^v$NEW_VERSION$"; then
-              echo "⚠️ Tag v$NEW_VERSION already exists, skipping tag creation"
-            else
-              # Get previous version for commit message
-              PREV_VERSION=$(git tag -l --sort=-version:refname | grep -E "^v[0-9]+\.[0-9]+\.[0-9]+" | head -1 | sed 's/^v//' || echo "0.0.0")
-
-              # Create git tag with proper commit message
-              git tag "v$NEW_VERSION" -m "bump: version $PREV_VERSION → $NEW_VERSION"
-              echo "✅ Manual tag created: v$NEW_VERSION (from $PREV_VERSION)"
-
-              # Create CHANGELOG.md using commitizen
-              echo "📝 Generating changelog..."
-              if [ -n "$LATEST_TAG" ]; then
-                # Temporarily modify cz.json again for changelog generation
-                cp cz.json cz.json.bak2
-                jq --arg version "$PREV_VERSION" '.commitizen.version = $version' cz.json > cz.json.tmp && mv cz.json.tmp cz.json
-
-                # Generate changelog with correct version context
-                if cz changelog --unreleased-version="$NEW_VERSION" --dry-run > CHANGELOG_PREVIEW.md 2>/dev/null; then
-                  echo "✅ Changelog preview generated"
-                  head -20 CHANGELOG_PREVIEW.md || echo "Changelog preview not available"
-                else
-                  echo "⚠️ Changelog generation failed, will be created by GitHub release"
-                fi
-
-                # Restore cz.json
-                mv cz.json.bak2 cz.json
-              else
-                echo "📝 No previous tags for changelog generation"
-              fi
-            fi
-
-            # Push based on branch protection status
-            if [ "${{ steps.branch-protection.outputs.can_push_directly }}" = "true" ]; then
-              echo "🚀 Pushing tag directly to main branch..."
-              git push origin "v$NEW_VERSION"
-            else
-              echo "⚠️ Branch is protected, using alternative push strategy..."
-              # Try with different authentication methods
-              git push origin "v$NEW_VERSION" || {
-                echo "🔄 Standard tag push failed, trying with force-with-lease..."
-                git push origin "v$NEW_VERSION" --force-with-lease || {
-                  echo "❌ All push attempts failed. This might be due to branch protection rules."
-                  echo "Please check repository settings or use a Personal Access Token (PAT_TOKEN)."
-                  echo "You can also temporarily disable branch protection for releases."
-                  exit 1
-                }
-              }
-            fi
-
-            echo "✅ Release tag v$NEW_VERSION pushed successfully"
-          else
-            echo "ℹ️ No version bump processing needed"
-          fi
-
-      - name: Display changelog content
-        if: steps.bump-version.outputs.bump_needed == 'true'
-        run: |
-          echo "📋 Generated changelog content:"
-          echo "${{ steps.bump-version.outputs.changelog_content }}"
-
-      - name: Get current version
+      - name: Get version from tag
         id: version
         run: |
-          if [ "${{ steps.bump-version.outputs.bump_needed }}" = "true" ]; then
-            # Use the new version from bump step
-            VERSION="${{ steps.bump-version.outputs.new_version }}"
-            echo "📋 Using new version from bump: $VERSION"
-          else
-            # Get latest version from git tags
-            LATEST_TAG=$(git tag -l --sort=-version:refname | grep -E "^v[0-9]+\.[0-9]+\.[0-9]+" | head -1)
-            if [ -n "$LATEST_TAG" ]; then
-              VERSION=${LATEST_TAG#v}  # Remove 'v' prefix
-              echo "📋 Using latest git tag version: $VERSION"
-            else
-              # Fallback: try to get any semantic version tag
-              VERSION=$(git tag -l --sort=-version:refname | grep -E "^v[0-9]+\.[0-9]+\.[0-9]+" | head -1 | sed 's/^v//' || echo "1.0.0")
-              echo "📋 Using fallback version: $VERSION"
-            fi
-          fi
+          # Extract version from the pushed tag
+          TAG_NAME=${GITHUB_REF#refs/tags/}
+          VERSION=${TAG_NAME#v}  # Remove 'v' prefix
+          echo "tag=$TAG_NAME" >> $GITHUB_OUTPUT
           echo "version=$VERSION" >> $GITHUB_OUTPUT
-          echo "tag=v$VERSION" >> $GITHUB_OUTPUT
+          echo "📋 Release version: $VERSION (tag: $TAG_NAME)"
+
+      - name: Generate changelog
+        id: changelog
+        run: |
+          echo "📝 Generating changelog for version ${{ steps.version.outputs.version }}..."
+
+          # Get previous tag for changelog generation
+          PREV_TAG=$(git tag -l --sort=-version:refname | grep -E "^v[0-9]+\.[0-9]+\.[0-9]+" | grep -v "${{ steps.version.outputs.tag }}" | head -1 || echo "")
+
+          if [ -n "$PREV_TAG" ]; then
+            echo "📋 Previous tag: $PREV_TAG"
+            # Generate incremental changelog (works better with commitizen)
+            CHANGELOG_CONTENT=$(cz changelog --incremental --dry-run 2>/dev/null | sed -n '/## Unreleased/,/## v[0-9]/p' | sed '$d' | sed '/^$/d' || echo "## Changes\n\nAutomated release based on conventional commits")
+          else
+            echo "📋 No previous tag found, generating full changelog"
+            CHANGELOG_CONTENT=$(cz changelog --incremental --dry-run 2>/dev/null || echo "## Changes\n\nInitial automated release")
+          fi
+
+          # Store changelog content
+          echo "changelog_content<<EOF" >> $GITHUB_OUTPUT
+          echo "$CHANGELOG_CONTENT" >> $GITHUB_OUTPUT
+          echo "EOF" >> $GITHUB_OUTPUT
 
       - name: Create GitHub Release
-        if: steps.bump-version.outputs.bump_needed == 'true'
         uses: softprops/action-gh-release@v2
         with:
           token: ${{ secrets.PAT_TOKEN || secrets.GITHUB_TOKEN }}
@@ -316,7 +77,7 @@ jobs:
           body: |
             # AI-Shifu Release ${{ steps.version.outputs.tag }}
 
-            ${{ steps.bump-version.outputs.changelog_content }}
+            ${{ steps.changelog.outputs.changelog_content }}
 
             ## 🚀 Deployment
 
@@ -361,7 +122,6 @@ jobs:
     name: Build & Push Docker (${{ matrix.service_name }})
     needs: release
     runs-on: ubuntu-latest
-    if: needs.release.outputs.bump_needed == 'true'
     permissions:
       contents: read
     timeout-minutes: 90
