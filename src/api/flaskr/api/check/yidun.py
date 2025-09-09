@@ -72,7 +72,9 @@ def gen_signature(params=None):
         return hashlib.md5(buff.encode("utf8")).hexdigest()
 
 
-def yidun_check(app: Flask, data_id: str, content: str, user_id: str = None):
+def yidun_check(
+    app: Flask, data_id: str, content: str, user_id: str = None
+) -> CheckResultDTO:
     if not YIDUN_SECRET_ID or not YIDUN_SECRET_KEY or not YIDUN_BUSINESS_ID:
         app.logger.warning(
             "YIDUN_SECRET_ID, YIDUN_SECRET_KEY, YIDUN_BUSINESS_ID not configured"
@@ -122,6 +124,7 @@ def yidun_check(app: Flask, data_id: str, content: str, user_id: str = None):
                     .get("label", 100)
                 ],
                 provider=PROVIDER,
+                raw_data=response_json,
             )
         else:
             app.logger.error(f"yidun check error: {response_json.get('message', '')}")

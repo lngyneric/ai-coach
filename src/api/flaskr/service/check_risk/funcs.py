@@ -4,6 +4,7 @@ from .models import RiskControlResult
 from flaskr.api.check import check_text, CHECK_RESULT_REJECT, CHECK_RESULT_PASS
 from flaskr.service.common.models import raise_error
 from datetime import datetime
+from flaskr.api.check.dto import CheckResultDTO
 
 
 def add_risk_control_result(
@@ -33,7 +34,9 @@ def add_risk_control_result(
         return risk_control_result.id
 
 
-def check_text_with_risk_control(app: Flask, check_id, user_id, text):
+def check_text_with_risk_control(
+    app: Flask, check_id: str, user_id: str, text: str
+) -> CheckResultDTO:
     log_id = check_id + datetime.now().strftime("%Y%m%d%H%M%S")
 
     res = check_text(app, log_id, text, user_id)
