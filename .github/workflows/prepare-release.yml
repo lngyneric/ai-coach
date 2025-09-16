@@ -418,12 +418,12 @@ jobs:
         uses: peter-evans/create-pull-request@v6
         with:
           token: ${{ secrets.PAT_TOKEN || secrets.GITHUB_TOKEN }}
-          commit-message: "chore: prepare release ${{ steps.version.outputs.tag }}"
+          commit-message: "chore: flow version to ${{ steps.version.outputs.tag }}"
           committer: github-actions[bot] <41898282+github-actions[bot]@users.noreply.github.com>
           author: github-actions[bot] <41898282+github-actions[bot]@users.noreply.github.com>
           branch: release/version-bump-${{ steps.version.outputs.tag }}
           base: ${{ github.ref_name }}
-          title: "chore: prepare release ${{ steps.version.outputs.tag }}"
+          title: "chore: flow version to ${{ steps.version.outputs.tag }}"
           body: |
             This PR prepares the repository for release ${{ steps.version.outputs.tag }}.
 
