@@ -210,8 +210,6 @@ def register_study_handler(app: Flask, path_prefix: str) -> Flask:
                 description: 参数错误
         """
         script_id = request.args.get("script_id")
-        if not script_id:
-            raise_param_error("script_id is not found")
         user_id = request.user.user_id
         preview_mode = request.args.get("preview_mode", "False").lower() == "true"
         return make_common_response(

@@ -21,10 +21,11 @@ from flaskr.service.shifu.shifu_struct_manager import get_outline_item_dto
 from flaskr.service.shifu.adapter import (
     generate_block_dto_from_model_internal,
     BlockDTO,
+    PaymentDTO,
 )
 from langfuse.client import StatefulTraceClient
 from ...api.langfuse import langfuse_client as langfuse, MockClient
-from flaskr.service.common import raise_error
+from flaskr.service.common import raise_error, AppException, ERROR_CODE
 from flaskr.service.order.consts import (
     LEARN_STATUS_RESET,
     LEARN_STATUS_IN_PROGRESS,
@@ -48,6 +49,14 @@ from flaskr.service.profile.funcs import get_user_variable_by_variable_id
 from flaskr.service.learn.const import ROLE_TEACHER
 
 context_local = threading.local()
+
+
+class PaidException(AppException):
+    def __init__(self):
+        super().__init__(
+            "ORDER.COURSE_NOT_PAID",
+            ERROR_CODE.get("ORDER.COURSE_NOT_PAID", ERROR_CODE["COMMON.UNKNOWN_ERROR"]),
+        )
 
 
 class RunType(Enum):
@@ -172,14 +181,14 @@ class RunScriptContext:
             if item.children:
                 for child in item.children:
                     self._q.put(child)
-        self._current_attend = self._get_current_attend(self._outline_item_info)
-        self.app.logger.info(
-            f"current_attend: {self._current_attend.progress_record_bid} {self._current_attend.block_position}"
-        )
+        # Move _get_current_attend call to run method to handle PaidException properly
+        self._current_attend = None
 
         self._trace_args = {}
         self._trace_args["user_id"] = user_info.user_id
-        self._trace_args["session_id"] = self._current_attend.progress_record_bid
+        self._trace_args["session_id"] = (
+            ""  # Will be set when _current_attend is initialized
+        )
         self._trace_args["input"] = ""
         self._trace_args["name"] = self._outline_item_info.title
         self._trace = langfuse.trace(**self._trace_args)
@@ -215,7 +224,7 @@ class RunScriptContext:
                 raise_error("LESSON.LESSON_NOT_FOUND_IN_COURSE")
             if outline_item_info_db.type == LESSON_TYPE_NORMAL:
                 if (not self._is_paid) and (not self._preview_mode):
-                    raise_error("ORDER.COURSE_NOT_PAID")
+                    raise PaidException()
             parent_path = find_node_with_parents(
                 self._struct, outline_item_info_db.outline_item_bid
             )
@@ -625,58 +634,53 @@ class RunScriptContext:
         )
 
     def run(self, app: Flask) -> Generator[str, None, None]:
-        app.logger.info(
-            f"run_context.run {self._current_attend.block_position} {self._current_attend.status}"
-        )
-        yield make_script_dto("teacher_avatar", self._shifu_info.avatar, "")
-        if not self._current_attend:
-            self._current_attend = self._get_current_attend(self._outline_item_info)
-        outline_updates = self._get_next_outline_item()
-        if len(outline_updates) > 0:
-            yield from self._render_outline_updates(outline_updates, new_chapter=False)
-            db.session.flush()
-            if self._current_attend.status != LEARN_STATUS_IN_PROGRESS:
-                self._can_continue = False
-                return
-        run_script_info: RunScriptInfo = self._get_run_script_info(self._current_attend)
-        if run_script_info and self._run_type == RunType.INPUT:
-            res = handle_block_input(
-                app=app,
-                user_info=self._user_info,
-                attend_id=run_script_info.attend.progress_record_bid,
-                input_type=self._input_type,
-                input=self._input,
-                outline_item_info=self._outline_item_info,
-                block_dto=run_script_info.block_dto,
-                trace_args=self._trace_args,
-                trace=self._trace,
-                is_preview=self._preview_mode,
+        try:
+            yield make_script_dto("teacher_avatar", self._shifu_info.avatar, "")
+            if not self._current_attend:
+                self._current_attend = self._get_current_attend(self._outline_item_info)
+            self.app.logger.info(
+                f"current_attend: {self._current_attend.progress_record_bid} {self._current_attend.block_position}"
             )
-            if res:
-                yield from res
-            self._can_continue = True
-            if (
-                run_script_info.block_dto.type != "content"
-                and self._input_type != "ask"
-            ):
-                run_script_info.attend.block_position += 1
-            run_script_info.attend.status = LEARN_STATUS_IN_PROGRESS
-            self._input_type = "continue"
-            self._run_type = RunType.OUTPUT
-            db.session.flush()
-        elif run_script_info:
-            continue_check = check_block_continue(
-                app=app,
-                user_info=self._user_info,
-                attend_id=run_script_info.attend.progress_record_bid,
-                outline_item_info=self._outline_item_info,
-                block_dto=run_script_info.block_dto,
-                trace_args=self._trace_args,
-                trace=self._trace,
-                is_preview=self._preview_mode,
+            self._trace_args["session_id"] = self._current_attend.progress_record_bid
+            outline_updates = self._get_next_outline_item()
+            if len(outline_updates) > 0:
+                yield from self._render_outline_updates(
+                    outline_updates, new_chapter=False
+                )
+                db.session.flush()
+                if self._current_attend.status != LEARN_STATUS_IN_PROGRESS:
+                    self._can_continue = False
+                    return
+            run_script_info: RunScriptInfo = self._get_run_script_info(
+                self._current_attend
             )
-            if run_script_info.block_dto.type == "content" or not continue_check:
-                res = handle_block_output(
+            if run_script_info and self._run_type == RunType.INPUT:
+                res = handle_block_input(
+                    app=app,
+                    user_info=self._user_info,
+                    attend_id=run_script_info.attend.progress_record_bid,
+                    input_type=self._input_type,
+                    input=self._input,
+                    outline_item_info=self._outline_item_info,
+                    block_dto=run_script_info.block_dto,
+                    trace_args=self._trace_args,
+                    trace=self._trace,
+                    is_preview=self._preview_mode,
+                )
+                if res:
+                    yield from res
+                self._can_continue = True
+                if (
+                    run_script_info.block_dto.type != "content"
+                    and self._input_type != "ask"
+                ):
+                    run_script_info.attend.block_position += 1
+                run_script_info.attend.status = LEARN_STATUS_IN_PROGRESS
+                self._input_type = "continue"
+                self._run_type = RunType.OUTPUT
+                db.session.flush()
+            elif run_script_info:
+                continue_check = check_block_continue(
                     app=app,
                     user_info=self._user_info,
                     attend_id=run_script_info.attend.progress_record_bid,
@@ -686,22 +690,55 @@ class RunScriptContext:
                     trace=self._trace,
                     is_preview=self._preview_mode,
                 )
-                if res:
-                    yield from res
-            self._current_attend.status = LEARN_STATUS_IN_PROGRESS
-            self._input_type = "continue"
-            self._run_type = RunType.OUTPUT
-            app.logger.info(f"output block type: {run_script_info.block_dto.type}")
-            self._can_continue = continue_check
-            if self._can_continue:
-                run_script_info.attend.block_position += 1
-            db.session.flush()
-        outline_updates = self._get_next_outline_item()
-        if len(outline_updates) > 0:
-            yield from self._render_outline_updates(outline_updates, new_chapter=True)
+                if run_script_info.block_dto.type == "content" or not continue_check:
+                    res = handle_block_output(
+                        app=app,
+                        user_info=self._user_info,
+                        attend_id=run_script_info.attend.progress_record_bid,
+                        outline_item_info=self._outline_item_info,
+                        block_dto=run_script_info.block_dto,
+                        trace_args=self._trace_args,
+                        trace=self._trace,
+                        is_preview=self._preview_mode,
+                    )
+                    if res:
+                        yield from res
+                self._current_attend.status = LEARN_STATUS_IN_PROGRESS
+                self._input_type = "continue"
+                self._run_type = RunType.OUTPUT
+                app.logger.info(f"output block type: {run_script_info.block_dto.type}")
+                self._can_continue = continue_check
+                if self._can_continue:
+                    run_script_info.attend.block_position += 1
+                db.session.flush()
+            outline_updates = self._get_next_outline_item()
+            if len(outline_updates) > 0:
+                yield from self._render_outline_updates(
+                    outline_updates, new_chapter=True
+                )
+                self._can_continue = False
+                db.session.flush()
+            self._trace.update(**self._trace_args)
+        except PaidException as e:
+            self.app.logger.info(f"PaidException: {e}")
             self._can_continue = False
-            db.session.flush()
-        self._trace.update(**self._trace_args)
+            yield from handle_block_output(
+                app=app,
+                user_info=self._user_info,
+                attend_id="",
+                outline_item_info=self._outline_item_info,
+                block_dto=BlockDTO(
+                    bid="",
+                    block_content=PaymentDTO(
+                        label={"lang": {}},
+                    ),
+                    variable_bids=[],
+                    resource_bids=[],
+                ),
+                trace_args=self._trace_args,
+                trace=self._trace,
+                is_preview=self._preview_mode,
+            )
 
     def has_next(self) -> bool:
         self.app.logger.info(f"has_next {self._can_continue}")
