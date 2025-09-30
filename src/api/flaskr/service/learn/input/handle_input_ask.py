@@ -39,6 +39,7 @@ def _handle_input_ask(
     trace_args: dict,
     trace: StatefulTraceClient,
     is_preview: bool = False,
+    last_position: int = -1,
 ) -> Generator[str, None, None]:
     """
     Main function to handle user Q&A input
@@ -136,6 +137,7 @@ def _handle_input_ask(
     log_script.generated_content = input
     log_script.role = ROLE_STUDENT  # Mark as student role
     log_script.type = UI_TYPE_ASK  # Mark as Q&A type
+    log_script.position = last_position
     db.session.add(log_script)
 
     # Create trace span
@@ -162,6 +164,7 @@ def _handle_input_ask(
         block_dto,
         attend_id,
         prompt,
+        last_position,
     )
 
     try:
@@ -217,6 +220,7 @@ def _handle_input_ask(
     log_script.generated_content = response_text
     log_script.role = ROLE_TEACHER  # Mark as teacher role
     log_script.type = UI_TYPE_ASK  # Mark as Q&A type
+    log_script.position = last_position
     db.session.add(log_script)
 
     # End trace span

@@ -23,6 +23,7 @@ from flaskr.service.profile.models import (
     CONST_PROFILE_TYPE_OPTION,
 )
 from flaskr.service.profile.dtos import ProfileToSave
+from flaskr.service.user.dtos import UserProfileLabelDTO, UserProfileLabelItemDTO
 
 _LANGUAGE_BASE_DISPLAY = {
     "en": "English",
@@ -210,7 +211,7 @@ def save_user_profile(
 
 def save_user_profiles(
     app: Flask, user_id: str, course_id: str, profiles: list[ProfileToSave]
-):
+) -> bool:
     PROFILES_LABLES = get_profile_labels()
     app.logger.info("save user profiles:{}".format(profiles))
     user_info = User.query.filter(User.user_id == user_id).first()
@@ -316,7 +317,9 @@ def get_user_profiles(app: Flask, user_id: str, course_id: str) -> dict:
     return result
 
 
-def get_user_profile_labels(app: Flask, user_id: str, course_id: str) -> list:
+def get_user_profile_labels(
+    app: Flask, user_id: str, course_id: str
+) -> UserProfileLabelDTO:
     """
     Get user profile labels
     Args:
@@ -335,7 +338,7 @@ def get_user_profile_labels(app: Flask, user_id: str, course_id: str) -> list:
     user_info: User = User.query.filter(User.user_id == user_id).first()
     profiles_items = get_profile_item_definition_list(app, course_id)
     PROFILES_LABLES = get_profile_labels()
-    result = []
+    result = UserProfileLabelDTO(profiles=[], language=get_user_language(user_info))
     mapping_keys = []
     if user_info:
         for key in PROFILES_LABLES.keys():
@@ -356,7 +359,15 @@ def get_user_profile_labels(app: Flask, user_id: str, course_id: str) -> list:
                         PROFILES_LABLES[key].get("items")[0],
                     )
 
-                result.append(item)
+                result.profiles.append(
+                    UserProfileLabelItemDTO(
+                        key=item["key"],
+                        label=item["label"],
+                        type=item["type"],
+                        value=item["value"],
+                        items=item["items"],
+                    )
+                )
     for key in PROFILES_LABLES.keys():
         if key in mapping_keys:
             continue
@@ -397,7 +408,16 @@ def get_user_profile_labels(app: Flask, user_id: str, course_id: str) -> list:
         if user_profile:
             app.logger.info("user_profile:{}".format(user_profile.profile_value))
             item["value"] = user_profile.profile_value
-        result.append(item)
+        result.profiles.append(
+            UserProfileLabelItemDTO(
+                key=item["key"],
+                label=item["label"],
+                type=item["type"],
+                value=item["value"],
+                items=item["items"],
+            )
+        )
+
     return result
 
 

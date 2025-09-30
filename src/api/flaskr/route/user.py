@@ -127,6 +127,9 @@ def register_user_handler(app: Flask, path_prefix: str) -> Flask:
                     language:
                         type: string
                         description: language
+                    avatar:
+                        type: string
+                        description: avatar
         responses:
             200:
                 description: update success
@@ -144,11 +147,12 @@ def register_user_handler(app: Flask, path_prefix: str) -> Flask:
                                     $ref: "#/components/schemas/UserInfo"
         """
         email = request.get_json().get("email", None)
-        name = request.get_json().get("name", "")
+        name = request.get_json().get("name", None)
         mobile = request.get_json().get("mobile", None)
         language = request.get_json().get("language", None)
+        avatar = request.get_json().get("avatar", None)
         return make_common_response(
-            update_user_info(app, request.user, name, email, mobile, language)
+            update_user_info(app, request.user, name, email, mobile, language, avatar)
         )
 
     @app.route(path_prefix + "/require_tmp", methods=["POST"])
@@ -355,12 +359,18 @@ def register_user_handler(app: Flask, path_prefix: str) -> Flask:
 
     @app.route(path_prefix + "/get_profile", methods=["GET"])
     def get_profile():
-        course_id = request.args.get("course_id", None)
         """
         get user profile
         ---
         tags:
             - user
+        parameters:
+            - in: query
+              name: course_id
+              in: query
+              type: string
+              description: course id
+              required: true
         responses:
             200:
                 description: Return user profile
@@ -375,10 +385,12 @@ def register_user_handler(app: Flask, path_prefix: str) -> Flask:
                                     type: string
                                     description: return message
                                 data:
-                                    type: object
-                                    description: user profile
+                                    $ref: "#/components/schemas/UserProfileLabelDTO"
 
         """
+        course_id = request.args.get("course_id", None)
+        if not course_id:
+            raise_param_error("course_id")
         return make_common_response(
             get_user_profile_labels(app, request.user.user_id, course_id)
         )
@@ -386,7 +398,7 @@ def register_user_handler(app: Flask, path_prefix: str) -> Flask:
     @app.route(path_prefix + "/update_profile", methods=["POST"])
     def update_profile():
         """
-        update user information
+        update user profile
         ---
         tags:
             - user
@@ -423,6 +435,11 @@ def register_user_handler(app: Flask, path_prefix: str) -> Flask:
                                 message:
                                     type: string
                                     description: return information
+                                data:
+                                    type: object
+                                    description: user profile
+                                    properties:
+                                        $ref: "#/components/schemas/UserProfileLabelDTO"
         """
         profiles = request.get_json().get("profiles", None)
         course_id = request.get_json().get("course_id", None)
@@ -437,7 +454,8 @@ def register_user_handler(app: Flask, path_prefix: str) -> Flask:
                 course_id=course_id,
             )
             db.session.commit()
-            return make_common_response(ret)
+            ret = get_user_profile_labels(app, request.user.user_id, course_id)
+            return make_common_response(ret.__json__())
 
     @app.route(path_prefix + "/upload_avatar", methods=["POST"])
     def upload_avatar():

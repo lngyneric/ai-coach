@@ -122,7 +122,7 @@ export const UserSettings = ({
 
   const loadData = useCallback(async () => {
     const { data: respData } = await getUserProfile(courseId);
-    respData.forEach((v) => {
+    respData.profiles.forEach((v) => {
       if (v.key === 'sys_user_nickname') {
         setNickName(v.value);
       } else if (v.key === 'avatar') {

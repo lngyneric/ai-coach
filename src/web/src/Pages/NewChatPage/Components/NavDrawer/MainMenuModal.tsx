@@ -58,7 +58,7 @@ const MainMenuModal = ({
         const languageSetting = data.find((item) => item.key === 'language');
         if (languageSetting) {
           languageSetting.value = languageData;
-          await updateUserProfile(data);
+          await updateUserProfile(data.profiles);
         }
       }
       i18n.changeLanguage(key);
