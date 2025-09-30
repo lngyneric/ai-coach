@@ -20,24 +20,24 @@ const ShortcutModal = ({ open, onClose }: Props) => {
   );
   const shortcutKeysOptions: {
     id: string;
-    titleKey: string;
+    title: string;
     keys: string[];
   }[] = [
     {
       id: 'continue',
-      titleKey: 'shortcut.continue',
+      title: t('shortcut.continue'),
       keys: [t('shortcut.keys.space')],
     },
     {
       id: 'ask',
-      titleKey: 'shortcut.ask',
+      title: t('shortcut.ask'),
       keys: inMacOs
         ? [t('shortcut.keys.cmd'), t('shortcut.keys.shift'), 'A']
         : [t('shortcut.keys.ctrl'), t('shortcut.keys.shift'), 'A'],
     },
     {
       id: 'shortcut',
-      titleKey: 'shortcut.showHelp',
+      title: t('shortcut.showHelp'),
       keys: inMacOs
         ? [t('shortcut.keys.cmd'), '/']
         : [t('shortcut.keys.ctrl'), '/'],
