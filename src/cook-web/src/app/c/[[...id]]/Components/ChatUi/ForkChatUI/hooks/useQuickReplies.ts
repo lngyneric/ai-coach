@@ -17,8 +17,8 @@ export default function useQuickReplies(initialState: QuickReplies = []) {
     setQuickReplies(prev => [...list, ...prev]);
   };
 
-  // prepend、replace 后立即 save 只会保存上一个状态
-  // 因为 savedRef.current 的更新优先级最后，用 setTimeout 可解
+  // Calling save immediately after prepend/replace only captures the previous state
+  // Because savedRef.current updates last, wrapping it in setTimeout resolves the timing issue
   const save = () => {
     stashRef.current = savedRef.current;
   };

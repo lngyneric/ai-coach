@@ -61,10 +61,15 @@ const handleBusinessCode = (response: any) => {
     }
 
     // Authentication related errors, redirect to login (only on client side)
+    // BUGFIX: Prevent double redirects during logout
+    // Issue: After logout refreshes the page, some API calls still return auth errors and trigger another redirect
+    // Fix: Check the global __IS_LOGGING_OUT__ flag and skip automatic redirects while logout is in progress
+    // Related file: src/store/useUserStore.ts
     if (
       typeof window !== 'undefined' &&
       location.pathname !== '/login' &&
-      [1001, 1004, 1005].includes(response.code)
+      [1001, 1004, 1005].includes(response.code) &&
+      !window.__IS_LOGGING_OUT__ // Added: skip redirects while logout is in progress
     ) {
       const currentPath = encodeURIComponent(
         location.pathname + location.search,
@@ -115,6 +120,12 @@ export class Request {
         ...config.headers,
       },
     };
+
+    const isFormDataBody =
+      typeof FormData !== 'undefined' && config.body instanceof FormData;
+    if (isFormDataBody && mergedConfig.headers) {
+      delete (mergedConfig.headers as Record<string, string>)['Content-Type'];
+    }
 
     // Handle URL
     let fullUrl = url;
@@ -180,19 +191,57 @@ export class Request {
   }
 
   post(url: string, body: any = {}, config: RequestConfig = {}) {
-    return this.interceptFetch(url, {
+    const isFormData =
+      typeof FormData !== 'undefined' && body instanceof FormData;
+    const headers = { ...(config.headers as HeadersInit) };
+
+    const requestConfig: RequestConfig = {
       method: 'POST',
-      body: JSON.stringify(body),
       ...config,
-    });
+    };
+
+    if (isFormData) {
+      if (headers && 'Content-Type' in headers) {
+        delete (headers as Record<string, string>)['Content-Type'];
+      }
+      requestConfig.headers = headers;
+      requestConfig.body = body;
+    } else {
+      requestConfig.body = JSON.stringify(body ?? {});
+      requestConfig.headers = {
+        'Content-Type': 'application/json',
+        ...headers,
+      } as HeadersInit;
+    }
+
+    return this.interceptFetch(url, requestConfig);
   }
 
   put(url: string, body: any = {}, config: RequestConfig = {}) {
-    return this.interceptFetch(url, {
+    const isFormData =
+      typeof FormData !== 'undefined' && body instanceof FormData;
+    const headers = { ...(config.headers as HeadersInit) };
+
+    const requestConfig: RequestConfig = {
       method: 'PUT',
-      body: JSON.stringify(body),
       ...config,
-    });
+    };
+
+    if (isFormData) {
+      if (headers && 'Content-Type' in headers) {
+        delete (headers as Record<string, string>)['Content-Type'];
+      }
+      requestConfig.headers = headers;
+      requestConfig.body = body;
+    } else {
+      requestConfig.body = JSON.stringify(body ?? {});
+      requestConfig.headers = {
+        'Content-Type': 'application/json',
+        ...headers,
+      } as HeadersInit;
+    }
+
+    return this.interceptFetch(url, requestConfig);
   }
 
   delete(url: string, config: RequestConfig = {}) {

@@ -1,6 +1,6 @@
 import styles from './BirthdaySettingModal.module.scss';
 
-import { useState, memo } from 'react';
+import { useState, memo, useCallback, useEffect, useMemo } from 'react';
 import SettingBaseModal from './SettingBaseModal';
 
 import { Calendar } from '@/components/ui/Calendar';
@@ -12,24 +12,57 @@ export const BirthdaySettingModal = ({
   onOk,
   currentBirthday,
 }) => {
-  const { t } = useTranslation('translation', { keyPrefix: 'c' });
+  const { t, i18n } = useTranslation();
 
-  const [value] = useState(currentBirthday || new Date('2000-01-01'));
+  // BUGFIX: Improve state management for the birthday selector
+  // Issue: After initialization the Calendar does not update when the parent changes currentBirthday
+  // Fix: Use useEffect to watch currentBirthday and keep the state in sync
+  // Default: Existing users see the backend value; new users default to 2000-01-01
+  const [value, setValue] = useState(currentBirthday || new Date('2000-01-01'));
+
+  useEffect(() => {
+    if (currentBirthday) {
+      setValue(currentBirthday);
+    } else {
+      setValue(new Date('2000-01-01'));
+    }
+  }, [currentBirthday]);
+
   const onOkClick = () => {
     onOk({ birthday: value });
   };
-  const now = new Date();
-  const min = new Date();
-  min.setFullYear(now.getFullYear() - 100);
 
-  // const _onChange = useCallback((val) => {
-  //   setValue(val);
-  // }, []);
+  const onChange = useCallback((val: Date | undefined) => {
+    if (val) {
+      setValue(val);
+    }
+  }, []);
+
+  const formatters = useMemo(() => {
+    const isZh = i18n.language.startsWith('zh');
+    const locale = isZh ? 'zh-CN' : 'en-US';
+
+    return {
+      formatMonthCaption: (date: Date) => {
+        return date.toLocaleDateString(locale, {
+          year: 'numeric',
+          month: 'long',
+        });
+      },
+      formatWeekdayName: (date: Date) => {
+        if (isZh) {
+          const weekdays = ['日', '一', '二', '三', '四', '五', '六'];
+          return weekdays[date.getDay()];
+        }
+        return date.toLocaleDateString(locale, { weekday: 'short' });
+      },
+    };
+  }, [i18n.language]);
 
   return (
     <SettingBaseModal
       // @ts-expect-error EXPECT
-      className={styles.SexSettingModal}
+      className={styles.BirthdaySettingModal}
       open={open}
       onClose={onClose}
       onOk={onOkClick}
@@ -38,7 +71,12 @@ export const BirthdaySettingModal = ({
     >
       <Calendar
         mode='single'
-        className='rounded-lg'
+        selected={value}
+        onSelect={onChange}
+        defaultMonth={value}
+        className='rounded-lg w-full'
+        formatters={formatters}
+        key={i18n.language}
       />
     </SettingBaseModal>
   );

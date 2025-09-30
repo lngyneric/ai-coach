@@ -11,7 +11,6 @@ export const checkChapterCanLearning = ({ status_value }) => {
     status_value === LESSON_STATUS_VALUE.LEARNING ||
     status_value === LESSON_STATUS_VALUE.COMPLETED ||
     status_value === LESSON_STATUS_VALUE.PREPARE_LEARNING;
-
   return canLearn;
 };
 
@@ -82,31 +81,31 @@ export const useLessonTree = () => {
       return null;
     }
 
-    if (treeData.course_id !== useEnvStore.getState().courseId) {
-      await updateCourseId(treeData.course_id);
-    }
+    // new api without course_id
+    // if (treeData.course_id !== useEnvStore.getState().courseId) {
+    //   await updateCourseId(treeData.course_id);
+    // }
 
     let lessonCount = 0;
-    const catalogs = treeData.lessons.map(l => {
+    const catalogs = (treeData.outline_items || []).map(l => {
       const lessons = l.children.map(c => {
         lessonCount += 1;
         return {
-          id: c.lesson_id,
-          name: c.lesson_name,
+          id: c.bid,
+          name: c.title,
           status: c.status,
-          status_value: c.status_value,
-          canLearning: checkChapterCanLearning(c),
+          status_value: c.status, // TODO: DELETE status_value
+          canLearning: checkChapterCanLearning({ status_value: c.status }),
         };
       });
 
       return {
-        id: l.lesson_id,
-        name: l.lesson_name,
+        id: l.bid,
+        name: l.title,
         status: l.status,
-        status_value: l.status_value,
+        status_value: l.status,
         lessons,
         collapse: false,
-        bannerInfo: l.banner_info,
       };
     });
 
@@ -148,7 +147,7 @@ export const useLessonTree = () => {
     return true;
   }, []);
 
-  // 用于重新加载课程树，但保持临时状态
+  // Reload the course tree while preserving transient state
   const reloadTree = useCallback(
     async (chapterId = undefined, lessonId = undefined) => {
       const newTree = await loadTreeInner();
@@ -157,7 +156,7 @@ export const useLessonTree = () => {
       } else {
         setSelectedState(newTree, chapterId, lessonId);
       }
-      // 设置 collapse 状态
+      // Restore each catalog's collapse state
       await newTree?.catalogs.forEach(c => {
         const oldCatalog = tree?.catalogs.find(oc => oc.id === c.id);
 
@@ -186,7 +185,6 @@ export const useLessonTree = () => {
         initialSelectedChapter(newTree);
       }
       setTree(newTree);
-
       return newTree;
     },
     [initialSelectedChapter, loadTreeInner, setSelectedState, tree],

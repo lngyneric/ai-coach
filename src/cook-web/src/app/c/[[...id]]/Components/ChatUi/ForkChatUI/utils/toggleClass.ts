@@ -1,4 +1,4 @@
-// IE 不支持 toggle 第二个参数
+// IE does not support the second argument of classList.toggle
 const toggleClass = (
   className: string,
   flag: boolean,

@@ -5,21 +5,26 @@ import { useTranslation } from 'react-i18next';
 import { cn } from '@/lib/utils';
 
 import { calModalWidth } from '@/c-utils/common';
-import { AppContext } from '@/c-components/AppContext';
+import { AppContext } from '../AppContext';
 
 import { Button } from '@/components/ui/Button';
-import { Dialog, DialogContent } from '@/components/ui/Dialog';
+import {
+  Dialog,
+  DialogContent,
+  DialogHeader,
+  DialogTitle,
+} from '@/components/ui/Dialog';
 
 export const SettingBaseModal = ({
   open,
   children,
   onOk,
   onClose,
-  defaultWidth = '360px',
+  defaultWidth = '100%',
   title,
   header = (t, title) => <div className={styles.header}>{title}</div>,
 }) => {
-  const { t } = useTranslation('translation', { keyPrefix: 'c' });
+  const { t } = useTranslation();
 
   const { mobileStyle } = useContext(AppContext);
 
@@ -35,6 +40,9 @@ export const SettingBaseModal = ({
       onOpenChange={handleOpenChange}
     >
       <DialogContent className={cn(styles.SettingBaseModal)}>
+        {/* <DialogHeader>
+          <DialogTitle>{title || t('common.settings')}</DialogTitle>
+        </DialogHeader> */}
         <div
           style={{
             width: calModalWidth({

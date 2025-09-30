@@ -61,6 +61,14 @@ export const useUserStore = create<
 
     // Public API: Logout user
     logout: async (reload = true) => {
+      // BUGFIX: Prevent the page from loading twice during logout
+      // Issue: Logout triggers a refresh, some API calls then return auth errors, and request.ts redirects again
+      // Fix: Set a global flag so request.ts skips automatic redirects while logout is in progress
+      // Related file: src/lib/request.ts
+      if (typeof window !== 'undefined') {
+        window.__IS_LOGGING_OUT__ = true;
+      }
+
       await registerAsGuest();
       set(() => ({
         userInfo: null,
@@ -69,8 +77,10 @@ export const useUserStore = create<
       get()._updateUserStatus();
 
       if (reload) {
+        // OPTIMIZATION: Use replace instead of assign to avoid duplicating history entries
+        // This keeps the back button from returning to the intermediate "logging out" state
         const url = removeParamFromUrl(window.location.href, ['code', 'state']);
-        window.location.assign(url);
+        window.location.replace(url);
       }
     },
 
@@ -107,8 +117,7 @@ export const useUserStore = create<
 
         // If already has token, try to get user info
         try {
-          const res = await getUserInfo();
-          const userInfo = res;
+          const userInfo = await getUserInfo();
 
           // Determine if user is authenticated based on mobile number or email
           const isAuthenticated = !!(userInfo.mobile || userInfo.email);
@@ -117,9 +126,9 @@ export const useUserStore = create<
           set(() => ({
             userInfo,
           }));
-
-          // Let i18next handle the language and its fallback mechanism
-          i18n.changeLanguage(userInfo.language);
+          if (userInfo.language) {
+            i18n.changeLanguage(userInfo.language);
+          }
         } catch (err) {
           // @ts-expect-error EXPECT
           // Only reset to guest if it's a clear authentication error (not network or server issues)

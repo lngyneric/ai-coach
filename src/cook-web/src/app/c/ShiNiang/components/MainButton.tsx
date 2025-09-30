@@ -23,7 +23,7 @@ export const MainButton = forwardRef<HTMLButtonElement, MainButtonProps>(
       ...rest
     } = props;
 
-    // 将 shape 转换为对应的 className
+    // Map the shape value to its corresponding className
     const shapeClass = shape === 'square' ? 'rounded-md' : 'rounded-full';
 
     return (

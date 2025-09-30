@@ -60,17 +60,17 @@
 ```typescript
 import { environment } from '@/config/environment';
 
-// 获取API基础URL
+// Get API base URL
 const apiUrl = environment.apiBaseUrl;
 
-// 获取课程ID
+// Get course ID
 const courseId = environment.courseId;
 
-// 获取微信配置
+// Get WeChat configuration
 const wechatAppId = environment.wechatAppId;
 const wechatEnabled = environment.enableWechatCode;
 
-// 获取认证配置
+// Get authentication configuration
 const loginMethods = environment.loginMethodsEnabled; // ['phone', 'email']
 const defaultMethod = environment.defaultLoginMethod; // 'phone' | 'email'
 const isPhoneEnabled = loginMethods.includes('phone');
@@ -86,7 +86,7 @@ export async function GET() {
   return NextResponse.json({
     apiBaseUrl: environment.apiBaseUrl,
     courseId: environment.courseId,
-    // ... 其他配置
+    // ... other settings
   });
 }
 ```

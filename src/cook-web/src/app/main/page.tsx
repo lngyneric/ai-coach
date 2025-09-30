@@ -107,7 +107,7 @@ const ScriptManagementPage = () => {
       }
 
       setShifus(prev => {
-        // 避免重复数据
+        // Prevent duplicate records
         const existingIds = new Set(prev.map(shifu => shifu.bid));
         const newItems = items.filter(
           (item: Shifu) => !existingIds.has(item.bid),

@@ -9,7 +9,7 @@ import Image from 'next/image';
 import { LoaderIcon, LoaderCircleIcon } from 'lucide-react';
 
 import { QRCodeSVG } from 'qrcode.react';
-import { Dialog, DialogContent } from '@/components/ui/Dialog';
+import { Dialog, DialogContent, DialogTitle } from '@/components/ui/Dialog';
 
 import { Button } from '@/components/ui/Button';
 
@@ -41,14 +41,14 @@ const MAX_TIMEOUT = 1000 * 60 * 3;
 const COUNTDOWN_INTERVAL = 1000;
 
 const CompletedSection = memo(() => {
-  const { t } = useTranslation('translation', { keyPrefix: 'c' });
+  const { t } = useTranslation();
   return (
     <div className={styles.completedSection}>
       <div className={styles.title}>{t('pay.paySuccess')}</div>
       <div className={styles.completeWrapper}>
         <Image
           className={styles.paySuccessBg}
-          src={paySucessBg.src}
+          src={paySucessBg}
           alt=''
         />
       </div>
@@ -65,7 +65,7 @@ export const PayModal = ({
   type = '',
   payload = {},
 }) => {
-  const { t } = useTranslation('translation', { keyPrefix: 'c' });
+  const { t } = useTranslation();
   const [isLoading, setIsLoading] = useState(false);
   const [initLoading, setInitLoading] = useState(true);
   const [isTimeout, setIsTimeout] = useState(false);
@@ -111,7 +111,7 @@ export const PayModal = ({
       }
       setCountDown(countDwon - COUNTDOWN_INTERVAL);
 
-      const { data: resp } = await queryOrder({ orderId });
+      const resp = await queryOrder({ orderId });
 
       if (resp.status === ORDER_STATUS.BUY_STATUS_SUCCESS) {
         setIsCompleted(true);
@@ -130,7 +130,7 @@ export const PayModal = ({
   const refreshOrderQrcode = useCallback(
     async orderId => {
       if (orderId) {
-        const { data: qrcodeResp } = await getPayUrl({
+        const qrcodeResp = await getPayUrl({
           channel: payChannel,
           orderId,
         });
@@ -158,7 +158,7 @@ export const PayModal = ({
     setInterval(null);
     setCouponCode('');
     setOriginalPrice('');
-    const { data: resp } = await initOrderUniform(courseId);
+    const resp = await initOrderUniform(courseId);
     setPrice(resp.value_to_pay);
     setPriceItems(resp.price_item?.filter(item => item.is_discount) || []);
     const orderId = resp.order_id;
@@ -190,7 +190,7 @@ export const PayModal = ({
     setOriginalPrice('');
 
     const resp = await getCourseInfo(courseId, previewMode);
-    setPrice(resp.course_price);
+    setPrice(resp?.course_price);
 
     setIsLoading(false);
   }, [courseId, previewMode]);
@@ -264,9 +264,10 @@ export const PayModal = ({
         onOpenChange={handleOpenChange}
       >
         <DialogContent
-          className={cn(styles.payModal, 'w-[700px] h-[588px]')}
+          className={cn(styles.payModal, 'max-w-none')}
           onPointerDownOutside={evt => evt.preventDefault()}
         >
+          <DialogTitle className='sr-only'>{t('pay.dialogTitle')}</DialogTitle>
           {!initLoading && (
             <div className={styles.payModalContent}>
               <div
@@ -332,12 +333,18 @@ export const PayModal = ({
                           level={'M'}
                         />
                         {qrcodeStatus !== 'active' ? (
-                          <div className='absolute left-0 top-0 right-0 bottom-0 flex flex-col content-center justify-center bg-black/75'>
+                          <div className='absolute left-0 top-0 right-0 bottom-0 flex flex-col items-center justify-center pointer-events-none bg-white/50 backdrop-blur-[1px] transition-opacity duration-200'>
                             {qrcodeStatus === 'loading' ? (
-                              <LoaderIcon className='animation-spin' />
+                              <LoaderIcon
+                                className={cn(
+                                  'animation-spin h-8 w-8 drop-shadow',
+                                  styles.price,
+                                )}
+                              />
                             ) : null}
                             {qrcodeStatus === 'error' ? (
                               <Button
+                                className='pointer-events-auto bg-white/95 text-black shadow'
                                 variant='outline'
                                 onClick={onQrcodeRefresh}
                               >

@@ -1,6 +1,6 @@
 import { memo, useContext, useCallback } from 'react';
 
-import { AppContext } from '@/c-components/AppContext';
+import { AppContext } from '../AppContext';
 import CourseSection from './CourseSection';
 import styles from './CourseCatalog.module.scss';
 

@@ -5,9 +5,11 @@
   flex: 1 1 auto;
   justify-content: center;
   position: relative;
+  overflow-y: auto;
 
   &.mobile {
     width: 100%;
+    padding-top: 80px;
   }
 
   .chatComponents {
@@ -15,16 +17,15 @@
     max-width: 1000px;
   }
 
+  .chatComponentsHidden {
+    overflow-y: hidden;
+  }
+
   .UserSettings {
     position: absolute;
     width: 100%;
     height: 100%;
-  }
-
-  .globalInfoButton {
-    position: absolute;
-    right: 15px;
-    bottom: 15px;
+    z-index: 2;
   }
 }
 

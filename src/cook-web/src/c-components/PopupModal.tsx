@@ -15,7 +15,7 @@ export const PopupModal = ({
 }) => {
   const popupRef = useRef(null);
 
-  // 点击其他区域关闭弹出窗口
+  // Close the popup when clicking outside the modal
   const handleClickOutside = useCallback(
     event => {
       // @ts-expect-error EXPECT
@@ -30,7 +30,7 @@ export const PopupModal = ({
     [onClose],
   );
 
-  // 监听点击事件
+  // Listen for outside click events
   useEffect(() => {
     document.addEventListener('mousedown', handleClickOutside);
     return () => {

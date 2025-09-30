@@ -8,7 +8,7 @@ import { Button } from '@/components/ui/Button';
 export const MainButtonM = forwardRef((props, ref) => {
   const [loading, setLoading] = useState(false);
 
-  // 防止重复提交
+  // Prevent duplicate submissions
   const _onClick = e => {
     if (loading) {
       return;

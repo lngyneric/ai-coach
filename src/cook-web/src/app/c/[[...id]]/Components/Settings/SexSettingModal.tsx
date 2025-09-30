@@ -26,7 +26,7 @@ export const SexSettingModal = ({
   // @ts-expect-error EXPECT
   const [selectedSex, setSelectedSex] = useState(initialValues.sex);
 
-  const { t } = useTranslation('tanslation', { keyPrefix: 'c' });
+  const { t } = useTranslation();
   const checkSelected = useCallback(
     sex => {
       return sex === selectedSex;
@@ -51,21 +51,21 @@ export const SexSettingModal = ({
 
   const sexMaleIcon = useCallback(
     sex => {
-      return checkSelected(sex) ? iconMaleHl2x.src : iconMale2x.src;
+      return checkSelected(sex) ? iconMaleHl2x : iconMale2x;
     },
     [checkSelected],
   );
 
   const sexFemaleIcon = useCallback(
     sex => {
-      return checkSelected(sex) ? iconFemaleHl2x.src : iconFemale2x.src;
+      return checkSelected(sex) ? iconFemaleHl2x : iconFemale2x;
     },
     [checkSelected],
   );
 
   const sexSecretIcon = useCallback(
     sex => {
-      return checkSelected(sex) ? iconAccountHl2x.src : iconAccount.src;
+      return checkSelected(sex) ? iconAccountHl2x : iconAccount;
     },
     [checkSelected],
   );
@@ -91,6 +91,8 @@ export const SexSettingModal = ({
             className={styles.itemIcon}
             src={sexMaleIcon(SEX_NAMES[SEX.MALE])}
             alt='male'
+            width={24}
+            height={24}
           />
           <div className={styles.itemTitle}>{t('user.gender.male')}</div>
         </div>
@@ -105,6 +107,8 @@ export const SexSettingModal = ({
             className={styles.itemIcon}
             src={sexFemaleIcon(SEX_NAMES[SEX.FEMALE])}
             alt='female'
+            width={24}
+            height={24}
           />
           <div className={styles.itemTitle}>{t('user.gender.female')}</div>
         </div>
@@ -119,6 +123,8 @@ export const SexSettingModal = ({
             className={styles.itemIcon}
             src={sexSecretIcon(t('user.gender.secret'))}
             alt='secret'
+            width={24}
+            height={24}
           />
           <div className={styles.itemTitle}>{t('user.gender.secret')}</div>
         </div>

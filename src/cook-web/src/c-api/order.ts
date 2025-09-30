@@ -4,12 +4,12 @@ export const testPurchaseOrder = ({ orderId }) => {
   return request.post('/api/order/order-test', { order_id: orderId });
 };
 
-// 创建订单
+// Create order
 export const initOrder = course_id => {
   return request.post('/api/order/init-order', { course_id });
 };
 
-// 获取支付链接
+// Retrieve payment URL
 export const getPayUrl = ({ channel, orderId }) => {
   return request.post('/api/order/reqiure-to-pay', {
     channel,
@@ -17,12 +17,12 @@ export const getPayUrl = ({ channel, orderId }) => {
   });
 };
 
-// 查询订单
+// Query order status
 export const queryOrder = ({ orderId }) => {
   return request.post('/api/order/query-order', { order_id: orderId });
 };
 
-// 使用优惠码
+// Apply discount code
 export const applyDiscountCode = ({ orderId, code }) => {
   return request.post('/api/order/apply-discount', {
     discount_code: code,

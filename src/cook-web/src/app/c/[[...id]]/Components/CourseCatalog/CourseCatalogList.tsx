@@ -1,4 +1,4 @@
-// 课程目录
+// Course catalog
 import { memo, useCallback, useState, useEffect } from 'react';
 import styles from './CourseCatalogList.module.scss';
 import { useTranslation } from 'react-i18next';

@@ -65,7 +65,7 @@ export const MessageContainer = React.forwardRef<
   const scrollerRef = useRef<PullToRefreshHandle>(null);
   const lastMessage = messages[messages.length - 1];
 
-  // 是否显示滚动查看更多内容按钮
+  // Whether to show the "scroll to view more" hint
   let showScrollMore = false;
   const scroller = scrollerRef.current;
   const wrapper = scroller && scroller.wrapperRef.current;
@@ -105,7 +105,7 @@ export const MessageContainer = React.forwardRef<
     throttle((el: HTMLElement) => {
       if (isNearBottom(el, 3)) {
         if (newCountRef.current) {
-          // 如果有新消息，离底部0.5屏-隐藏提示
+          // If new messages arrive and we are within half a screen of the bottom, hide the hint
           if (isNearBottom(el, 0.5)) {
             // setNewCount(0);
             // setShowBackBottom(false);
@@ -115,7 +115,7 @@ export const MessageContainer = React.forwardRef<
           setShowBackBottom(false);
         }
       } else {
-        // 3屏+显示回到底部
+        // More than three screens away shows the back-to-bottom prompt
         setShowBackBottom(true);
       }
     }),
@@ -146,15 +146,15 @@ export const MessageContainer = React.forwardRef<
     }
 
     if (lastMessage.position === 'left') {
-      // 左侧消息(AI 系统回复)，不进行自动滚屏而是判断判断提示是否有更多内容
-      // PS: 初始化阶段，最外层的 `scrollToEnd` 会把消息列表滚动到底部
+      // Left-side messages (AI replies) should not auto-scroll; instead decide whether to show the hint
+      // Note: During initialization the outer scrollToEnd already scrolls the list to the bottom
       // if (lastMessage !== messages[0]) {
       return;
       // }
     }
 
     if (lastMessage.position === 'right') {
-      // 自己发的消息，强制滚动到底部
+      // User-sent messages should force a scroll to the bottom
       scrollToEnd({ force: true });
     } else if (isNearBottom(wrapper, 2)) {
       const animated = !!wrapper.scrollTop;

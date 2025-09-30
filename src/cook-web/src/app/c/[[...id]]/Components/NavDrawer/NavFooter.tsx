@@ -11,12 +11,11 @@ import imgUser from '@/c-assets/newchat/light/user.png';
 
 // @ts-expect-error EXPECT
 export const NavFooter = forwardRef(({ onClick, isCollapse = false }, ref) => {
-  const { t } = useTranslation('translation', { keyPrefix: 'c' });
+  const { t } = useTranslation();
 
   const userInfo = useUserStore(state => state.userInfo);
   const isLoggedIn = useUserStore(state => state.isLoggedIn);
   const avatar = userInfo?.avatar || imgUser.src;
-
   const htmlRef = useRef(null);
 
   const containElement = elem => {

@@ -86,7 +86,7 @@ export const ShifuProvider: React.FC<{ children: ReactNode }> = ({
   >([]);
   const [models, setModels] = useState<string[]>([]);
 
-  // 确保在客户端环境下获取 UI 类型和内容类型
+  // Ensure UI types and content types are fetched only in the client environment
   // const UITypes = useUITypes()
   const ContentTypes = useContentTypes();
 

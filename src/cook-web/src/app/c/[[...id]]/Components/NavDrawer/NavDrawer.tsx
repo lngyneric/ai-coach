@@ -1,11 +1,18 @@
 /*
- * 左侧导航控件容器
+ * Left-hand navigation container
  */
 import styles from './NavDrawer.module.scss';
-import { useContext, useState, useRef, memo, useCallback } from 'react';
+import {
+  useContext,
+  useState,
+  useRef,
+  memo,
+  useCallback,
+  useEffect,
+} from 'react';
 import clsx from 'clsx';
 
-import { AppContext } from '@/c-components/AppContext';
+import { AppContext } from '../AppContext';
 import NavHeader from './NavHeader';
 import NavBody from './NavBody';
 import NavFooter from './NavFooter';
@@ -23,17 +30,17 @@ import { useDisclosure } from '@/c-common/hooks/useDisclosure';
 import MainMenuModal from './MainMenuModal';
 
 import { useUserStore } from '@/store';
-
+import { useUiLayoutStore } from '@/c-store/useUiLayoutStore';
 /**
- * 导航栏展示形式
- * 0: 默认，在 dom 流中展示
- * 1：作为抽屉展示
+ * Navigation display modes
+ * 0: Default, rendered in-flow
+ * 1: Rendered as a drawer
  */
 export const NAV_SHOW_TYPE_NORMAL = 0;
 export const NAV_SHOW_TYPE_DRAWER = 1;
 
 /**
- * 小窗口状态
+ * Popup window states
  */
 export const POPUP_WINDOW_STATE_CLOSE = 0;
 export const POPUP_WINDOW_STATE_THEME = 2;
@@ -71,12 +78,15 @@ const NavDrawer = ({
   onPersonalInfoClick,
 }) => {
   const isLoggedIn = useUserStore(state => state.isLoggedIn);
+  const [delayedIsLoggedIn, setDelayedIsLoggedIn] = useState(isLoggedIn);
 
   const [isCollapse, setIsCollapse] = useState(false);
 
   const [bodyScrollTop, setBodyScrollTop] = useState(0);
   const { trackEvent } = useTracking();
-  const { frameLayout, mobileStyle } = useContext(AppContext);
+  const { frameLayout } = useUiLayoutStore(state => state);
+
+  const { mobileStyle } = useContext(AppContext);
 
   const [feedbackModalOpen, setFeedbackModalOpen] = useState(false);
   const alwaysShowLessonTree = getBoolEnv('alwaysShowLessonTree');
@@ -113,6 +123,19 @@ const NavDrawer = ({
     [onMainModalClose],
   );
 
+  // BUGFIX: Smooth out visual flash when login state changes
+  // Issue: Switching between logged-in and logged-out states caused a noticeable flash in the navigation
+  // Fix: Add a 100ms delayed update so the transition is smoother and visual jumps are reduced
+  // Scenario: Especially after logout, avoid the flash between the login button and course list
+  useEffect(() => {
+    if (isLoggedIn !== delayedIsLoggedIn) {
+      const timer = setTimeout(() => {
+        setDelayedIsLoggedIn(isLoggedIn);
+      }, 100); // 100ms delay
+      return () => clearTimeout(timer);
+    }
+  }, [isLoggedIn, delayedIsLoggedIn]);
+
   const onFooterClick = useCallback(() => {
     onMainModalToggle();
     trackEvent(EVENT_NAMES.USER_MENU, {
@@ -124,7 +147,7 @@ const NavDrawer = ({
     <div
       className={clsx(
         styles.navDrawerWrapper,
-        mobileStyle ? styles.mobile : '',
+        frameLayout === FRAME_LAYOUT_MOBILE ? styles.mobile : '',
       )}
       style={{ width: isCollapse ? COLLAPSE_WIDTH : calcNavWidth(frameLayout) }}
     >
@@ -143,7 +166,7 @@ const NavDrawer = ({
             ref={bodyRef}
           >
             {!isCollapse &&
-              (isLoggedIn || alwaysShowLessonTree ? (
+              (delayedIsLoggedIn || alwaysShowLessonTree ? (
                 <CourseCatalogList
                   courseName={courseName}
                   selectedLessonId={selectedLessonId}
@@ -175,7 +198,7 @@ const NavDrawer = ({
           // @ts-expect-error EXPECT
           onClose={mainModalCloseHandler}
           className={popupWindowClassname()}
-          mobileStyle={mobileStyle}
+          mobileStyle={frameLayout === FRAME_LAYOUT_MOBILE}
           onBasicInfoClick={onBasicInfoClick}
           onPersonalInfoClick={onPersonalInfoClick}
         />

@@ -129,8 +129,10 @@
     "copySuccess": "Copied to clipboard",
     "copyText": "Copy",
     "loginSuccess": "Login successful",
+    "outputInProgress": "Content is still generating. Please wait before retrying.",
     "startAutoSkip": "Start Auto-skip",
-    "stopAutoSkip": "Stop Auto-skip"
+    "stopAutoSkip": "Stop Auto-skip",
+    "thinking": "Thinking..."
   },
   "cmEditor": {
     "image": "Image",
@@ -169,6 +171,21 @@
     "selectModel": "Select Model",
     "settings": "Settings",
     "shifu": "Shifu",
+    "shortcut": {
+      "key": {
+        "/": "/",
+        "a": "A",
+        "cmd": "⌘",
+        "ctrl": "Ctrl",
+        "shift": "⇧",
+        "space": "Space"
+      },
+      "title": {
+        "ask": "Ask follow-up questions",
+        "continue": "Continue (when no input or selection required)",
+        "shortcut": "Display Shortcuts"
+      }
+    },
     "submitFailed": "Submit failed",
     "submitting": "Submitting...",
     "unknownError": "Unknown error",
@@ -299,6 +316,7 @@
     "setting": "Settings"
   },
   "pay": {
+    "dialogTitle": "Payment dialog",
     "modelServiceAgreement": "Model Service Agreement",
     "payChannelAlipay": "Alipay",
     "payChannelWechat": "WeChat",
@@ -465,7 +483,7 @@
     "gender": {
       "female": "Female",
       "male": "Male",
-      "secret": "Private"
+      "secret": "Secret"
     },
     "login": "Login",
     "loginMainButton": "Login/Register",

@@ -19,6 +19,8 @@ html {
     --primary: 217 89% 50%;
     --primary-lighter: 217 89% 60%;
     --primary-foreground: 210 20% 98%;
+    --primary-color: hsl(var(--primary));
+    --primary-foreground-color: hsl(var(--primary-foreground));
     --secondary: 220 14.3% 95.9%;
     --secondary-foreground: 220.9 39.3% 11%;
     --muted: 220 14.3% 95.9%;
@@ -48,6 +50,8 @@ html {
     --primary: 217 89% 50%;
     --primary-lighter: 217 89% 60%;
     --primary-foreground: 210 20% 98%;
+    --primary-color: hsl(var(--primary));
+    --primary-foreground-color: hsl(var(--primary-foreground));
     --secondary: 215 27.9% 16.9%;
     --secondary-foreground: 210 20% 98%;
     --muted: 215 27.9% 16.9%;
@@ -105,4 +109,19 @@ html {
 
 .dnd-sortable-tree_simple_handle {
   display: none !important;
+}
+
+/* HACK: mdf-ui not support hsl, so we need to use var(--primary-color) and var(--primary-foreground-color) */
+.content-render-theme {
+  --primary: var(--primary-color);
+  --primary-foreground: var(--primary-foreground-color);
+  .markdown-body input {
+    min-width: 380px;
+  }
+  &.mobile {
+    .markdown-body input {
+      min-width: 0;
+      width: 100%;
+    }
+  }
 }

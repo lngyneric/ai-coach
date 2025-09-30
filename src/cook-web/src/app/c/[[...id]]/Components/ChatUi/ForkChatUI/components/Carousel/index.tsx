@@ -310,7 +310,7 @@ export const Carousel = React.forwardRef<CarouselHandle, CarouselProps>(
           setDragging(true);
         }
 
-        // 阻尼
+        // Damping
         // if ((activeIndex === 0 && dragOffset > 0) || (activeIndex === count - 1 && dragOffset < 0)) {
         //   dragOffset *= 0.35;
         // }

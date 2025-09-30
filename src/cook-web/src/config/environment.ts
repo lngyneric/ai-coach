@@ -4,7 +4,7 @@
  * This module provides a unified interface for accessing all environment variables
  * across the application. It uses the new standardized naming scheme.
  *
- * 支持运行时动态获取环境变量
+ * Supports retrieving environment variables at runtime
  */
 
 interface EnvironmentConfig {
@@ -36,21 +36,20 @@ interface EnvironmentConfig {
 }
 
 /**
- * 运行时获取环境变量
- * 在服务端运行时获取环境变量
+ * Runtime helper for reading environment variables
+ * Executed on the server during SSR
  */
 function getRuntimeEnv(key: string): string | undefined {
   if (typeof window === 'undefined') {
-    // 服务端
+    // Server-side
     return process.env[key];
   }
   return undefined;
 }
 
 /**
- * 客户端动态获取API基础URL
- * 在客户端运行时从 /api/config 获取配置
- * 支持 npm start 后通过环境变量动态配置
+ * Client-side retrieval for the API base URL
+ * Fetches /api/config at runtime so npm start can pick up env overrides
  */
 let cachedApiBaseUrl: string = '';
 let configFetchPromise: Promise<string> | null = null;
@@ -60,7 +59,7 @@ async function getClientApiBaseUrl(): Promise<string> {
     return cachedApiBaseUrl;
   }
 
-  // 防止多次并发请求
+  // Prevent concurrent fetches
   if (configFetchPromise) {
     return configFetchPromise;
   }
@@ -79,40 +78,40 @@ async function getClientApiBaseUrl(): Promise<string> {
       console.warn('Failed to fetch runtime config:', error);
     }
 
-    // 如果获取失败，使用默认值
+    // Fallback to the default value when fetching fails
     cachedApiBaseUrl = 'http://localhost:8081';
     return cachedApiBaseUrl;
   })();
 
   const result = await configFetchPromise;
-  configFetchPromise = null; // 请求完成后重置
+  configFetchPromise = null; // Reset after the request completes
   return result;
 }
 
 /**
  * Gets the unified API base URL
- * 优先级：运行时环境变量 > 构建时环境变量 > 默认值
+ * Priority: runtime env > build-time env > default
  */
 function getApiBaseUrl(): string {
-  // 1. 优先使用运行时环境变量（服务端）
+  // 1. Prefer runtime environment variables on the server
   const runtimeApiUrl = getRuntimeEnv('NEXT_PUBLIC_API_BASE_URL');
   if (runtimeApiUrl) {
     return runtimeApiUrl;
   }
 
-  // 2. 客户端使用默认值，会在运行时动态更新
+  // 2. Clients fall back to the build value and update dynamically later
   return process.env.NEXT_PUBLIC_API_BASE_URL || 'http://localhost:8081';
 }
 
 /**
- * 获取动态API基础URL（客户端使用）
+ * Gets the dynamic API base URL (client-side)
  */
 export async function getDynamicApiBaseUrl(): Promise<string> {
   if (typeof window === 'undefined') {
-    // 服务端直接返回
+    // Server can return immediately
     return getApiBaseUrl();
   } else {
-    // 客户端动态获取
+    // Client fetches it dynamically
     return getClientApiBaseUrl();
   }
 }

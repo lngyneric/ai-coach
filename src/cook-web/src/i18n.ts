@@ -40,7 +40,7 @@ const detectedBrowserLanguage =
 
 export const browserLanguage = normalizeLanguage(detectedBrowserLanguage);
 
-// 确保在客户端环境下初始化
+// Ensure initialization only happens in the browser
 if (typeof window !== 'undefined') {
   i18n
     .use(Backend)

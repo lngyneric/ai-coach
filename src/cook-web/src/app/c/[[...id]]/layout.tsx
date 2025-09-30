@@ -45,7 +45,8 @@ const initializeEnvData = async (): Promise<void> => {
       });
       if (res.ok) {
         const data = await res.json();
-        await updateCourseId(data?.courseId || '');
+
+        // await updateCourseId(data?.courseId || '');
         await updateAppId(data?.wechatAppId || '');
         await updateAlwaysShowLessonTree(data?.alwaysShowLessonTree || 'false');
         await updateUmamiWebsiteId(data?.umamiWebsiteId || '');
@@ -250,11 +251,22 @@ export default function ChatLayout({
     isPreviewMode,
   ]);
 
+  const userLanguage = userInfo?.language;
+
   useEffect(() => {
-    if (!envDataInitialized) return;
+    if (!envDataInitialized) {
+      return;
+    }
+
+    // FIX: if userLanguage is set, use userLanguage
+    if (userLanguage) {
+      i18n.changeLanguage(userLanguage);
+      return;
+    }
+
     i18n.changeLanguage(language);
     updateLanguage(language);
-  }, [language, envDataInitialized, updateLanguage, i18n]);
+  }, [envDataInitialized, i18n, language, updateLanguage, userLanguage]);
 
   useEffect(() => {
     if (!envDataInitialized) return;

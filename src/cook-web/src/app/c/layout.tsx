@@ -15,7 +15,7 @@ export default function ChatLayout({
   children: React.ReactNode;
 }) {
   useEffect(() => {
-    // 在客户端运行时安装插件
+    // Install plugins when running on the client
     if (typeof window !== 'undefined' && window['shifuPlugins']) {
       for (const plugin of window['shifuPlugins']) {
         shifu.installPlugin(plugin);

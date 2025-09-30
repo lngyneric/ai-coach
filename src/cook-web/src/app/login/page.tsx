@@ -1,6 +1,6 @@
 'use client';
 
-import { useEffect, useState } from 'react';
+import { useEffect, useRef, useState, useCallback } from 'react';
 import { useRouter, useSearchParams } from 'next/navigation';
 import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/Tabs';
 import {
@@ -20,10 +20,13 @@ import LanguageSelect from '@/components/language-select';
 import { useTranslation } from 'react-i18next';
 import i18n, { browserLanguage, normalizeLanguage } from '@/i18n';
 import { environment } from '@/config/environment';
+import { useUserStore } from '@/store';
 
 export default function AuthPage() {
   const router = useRouter();
   const [authMode, setAuthMode] = useState<'login' | 'feedback'>('login');
+  const [isI18nReady, setIsI18nReady] = useState(false);
+  const { userInfo, isInitialized } = useUserStore();
 
   // Get login methods from environment configuration
   const enabledMethods = environment.loginMethodsEnabled;
@@ -35,7 +38,8 @@ export default function AuthPage() {
   const [loginMethod, setLoginMethod] = useState<'phone' | 'email'>(
     defaultMethod as 'phone' | 'email',
   );
-  const [language, setLanguage] = useState(browserLanguage);
+  const [language, setLanguage] = useState<string | null>(null);
+  const manualLanguageRef = useRef(false);
 
   const searchParams = useSearchParams();
   const handleAuthSuccess = () => {
@@ -56,11 +60,115 @@ export default function AuthPage() {
     setAuthMode('login');
   };
 
-  const { t } = useTranslation();
+  const { t, ready } = useTranslation();
 
   useEffect(() => {
-    i18n.changeLanguage(language);
-  }, [language]);
+    if (!isInitialized) {
+      return;
+    }
+
+    const preferred = userInfo?.language
+      ? normalizeLanguage(userInfo.language)
+      : null;
+    const nextLanguage = normalizeLanguage(preferred ?? browserLanguage);
+
+    if (!nextLanguage) {
+      return;
+    }
+
+    if (language === nextLanguage) {
+      manualLanguageRef.current = false;
+      return;
+    }
+
+    if (manualLanguageRef.current) {
+      return;
+    }
+
+    let isCancelled = false;
+
+    setIsI18nReady(false);
+
+    const applyLanguage = async () => {
+      try {
+        await i18n.changeLanguage(nextLanguage);
+        if (!isCancelled) {
+          setLanguage(nextLanguage);
+        }
+      } catch (error) {
+        console.error('Failed to change language', error);
+      }
+    };
+
+    applyLanguage();
+
+    return () => {
+      isCancelled = true;
+    };
+  }, [browserLanguage, isInitialized, language, userInfo]);
+
+  const handleManualLanguageChange = useCallback(
+    async (value: string) => {
+      const normalized = normalizeLanguage(value);
+      if (!normalized || normalized === language) {
+        return;
+      }
+
+      manualLanguageRef.current = true;
+      setIsI18nReady(false);
+
+      try {
+        await i18n.changeLanguage(normalized);
+        setLanguage(normalized);
+      } catch (error) {
+        console.error('Failed to change language', error);
+      }
+    },
+    [language],
+  );
+
+  // Monitor i18n ready state to prevent language flash
+  useEffect(() => {
+    if (!language) {
+      return;
+    }
+
+    const resolvedLanguage = i18n.resolvedLanguage ?? i18n.language;
+    const hasBundle = i18n.hasResourceBundle(language, 'translation');
+
+    if (!ready || resolvedLanguage !== language) {
+      return;
+    }
+
+    if (hasBundle) {
+      setIsI18nReady(true);
+    }
+  }, [language, ready]);
+
+  // Show loading state until translations are ready
+  if (!isI18nReady || !language) {
+    return (
+      <div className='min-h-screen flex items-center justify-center bg-gray-50 dark:bg-gray-900'>
+        <div className='w-full max-w-md space-y-2'>
+          <div className='flex flex-col items-center'>
+            <Image
+              className='dark:invert'
+              src={logoHorizontal}
+              alt='AI-Shifu'
+              width={180}
+              height={40}
+              priority
+            />
+          </div>
+          <Card>
+            <CardContent className='flex items-center justify-center py-8'>
+              <div className='animate-spin rounded-full h-8 w-8 border-b-2 border-primary'></div>
+            </CardContent>
+          </Card>
+        </div>
+      </div>
+    );
+  }
   return (
     <div className='min-h-screen flex items-center justify-center bg-gray-50 dark:bg-gray-900 p-4'>
       <div className='w-full max-w-md space-y-2'>
@@ -78,7 +186,7 @@ export default function AuthPage() {
             <div className='absolute top-0 right-0'>
               <LanguageSelect
                 language={language}
-                onSetLanguage={value => setLanguage(normalizeLanguage(value))}
+                onSetLanguage={handleManualLanguageChange}
                 variant='login'
               />
             </div>

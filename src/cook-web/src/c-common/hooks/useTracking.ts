@@ -112,7 +112,7 @@ export const useTracking = () => {
       try {
         const { data: scriptInfo } = await getScriptInfo(scriptId);
 
-        // 是否体验课
+        // Check whether this script is part of a trial lesson
         if (!scriptInfo?.is_trial_lesson) {
           return;
         }

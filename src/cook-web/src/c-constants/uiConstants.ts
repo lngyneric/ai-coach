@@ -1,8 +1,9 @@
 /**
- * 整体框架布局有四种类型。
- * 1: 左侧与右侧分离，Pc
- * 2: 左侧重叠在右侧上层, pad 模式
- * 10: 手机端 mobile 模式
+ * Frame layout presets:
+ * 1: Separate left and right panels (desktop)
+ * 2: Left panel overlays the right panel (tablet)
+ * 3: Dense tablet layout
+ * 10: Mobile layout
  */
 export const FRAME_LAYOUT_PC = 1;
 export const FRAME_LAYOUT_PAD = 2;
@@ -10,7 +11,7 @@ export const FRAME_LAYOUT_PAD_INTENSIVE = 3;
 export const FRAME_LAYOUT_MOBILE = 10;
 
 /**
- * 整体框架布局主要通过外侧容器的宽度设置
+ * Layout selection is primarily based on the outer container width
  */
 export const FRAME_LAYOUT_PC_WIDTH = 1080;
 export const FRAME_LAYOUT_PAD_INTENSIVE_WIDTH = 800;
@@ -36,7 +37,7 @@ export const calcFrameLayout = selector => {
 };
 
 /**
- * 主题
+ * Theme options
  */
 export const THEME_LIGHT = 'light';
 export const THEME_DARK = 'dark';
@@ -50,7 +51,7 @@ export const inWechat = () => {
   return isWeixin;
 };
 
-// 微信登录跳转
+// Redirect to the WeChat login flow
 export const wechatLogin = ({
   appId,
   redirectUrl = '',

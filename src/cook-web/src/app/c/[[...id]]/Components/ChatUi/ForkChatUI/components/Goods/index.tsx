@@ -36,7 +36,7 @@ export interface GoodsProps extends React.HTMLAttributes<GoodsRef> {
 
 export const Goods = React.forwardRef<GoodsRef, GoodsProps>((props, ref) => {
   const {
-    // 通用
+    // Common props
     className,
     type,
     img,
@@ -51,11 +51,11 @@ export const Goods = React.forwardRef<GoodsRef, GoodsProps>((props, ref) => {
     action,
     children,
 
-    // 商品
+    // Goods-specific props
     originalPrice,
     meta,
 
-    // 订单
+    // Order-specific props
     status,
     ...other
   } = props;

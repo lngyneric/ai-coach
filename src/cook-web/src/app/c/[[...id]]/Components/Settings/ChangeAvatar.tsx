@@ -29,7 +29,7 @@ export const ChangeAvatar = ({ className, image, onChange }) => {
 
   const onAvatarSettingModalOk = useCallback(
     async ({ img }) => {
-      const { data: imgUrl } = await uploadAvatar({ avatar: img });
+      const imgUrl = await uploadAvatar({ avatar: img });
       onChange?.({ dataUrl: imgUrl });
       setImg(imgUrl);
       setModalOpen(false);
@@ -77,11 +77,13 @@ export const ChangeAvatar = ({ className, image, onChange }) => {
             onChange={onAvatarUploadChange}
             accept='.png,.jpg,.jpeg,.bmp,.webp'
           />
+          {/* BUGFIX: 修复编辑按钮尺寸以匹配设计要求 */}
+          {/* 原来是40x40，根据UI设计调整为16x16 */}
           <Image
             className={styles.editIcon}
             src={iconEditAvatar2x.src}
-            width={40}
-            height={40}
+            width={16}
+            height={16}
             alt=''
           />
         </div>

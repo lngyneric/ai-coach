@@ -13,7 +13,7 @@ export function ConfigProvider({ children }: { children: React.ReactNode }) {
   useEffect(() => {
     const loadConfig = async () => {
       try {
-        // 直接使用环境配置，无需额外加载
+        // Use the environment configuration directly without additional loading
         setIsLoaded(true);
       } catch (error) {
         console.error('Failed to load config:', error);

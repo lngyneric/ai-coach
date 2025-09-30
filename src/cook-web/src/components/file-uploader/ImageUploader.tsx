@@ -50,7 +50,7 @@ const ImageUploader: React.FC<ImageUploaderProps> = ({ value, onChange }) => {
     }
   };
 
-  // 修改uploadImage函数中加载图片后的处理
+  // Handle post-upload logic inside the uploadImage function
   const uploadImage = async (file: File) => {
     setIsUploading(true);
     try {

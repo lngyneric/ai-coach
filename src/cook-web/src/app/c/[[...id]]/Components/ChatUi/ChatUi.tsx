@@ -5,12 +5,12 @@ import { cn } from '@/lib/utils';
 import { useShallow } from 'zustand/react/shallow';
 import { useTranslation } from 'react-i18next';
 
-import { AppContext } from '@/c-components/AppContext';
-import ChatComponents from './ChatComponents';
+import ChatComponents from './NewChatComp';
 import UserSettings from '../Settings/UserSettings';
 import { FRAME_LAYOUT_MOBILE } from '@/c-constants/uiConstants';
 import GlobalInfoButton from './GlobalInfoButton';
 import { useSystemStore } from '@/c-store/useSystemStore';
+import { useUiLayoutStore } from '@/c-store';
 
 /**
  * 聊天区的整体画布
@@ -28,7 +28,7 @@ export const ChatUi = ({
   chapterUpdate,
   updateSelectedLesson,
 }) => {
-  const { frameLayout } = useContext(AppContext);
+  const { frameLayout } = useUiLayoutStore(state => state);
   const { skip, updateSkip, previewMode } = useSystemStore(
     useShallow(state => ({
       skip: state.skip,
@@ -55,9 +55,11 @@ export const ChatUi = ({
           lessonId={lessonId}
           lessonUpdate={lessonUpdate}
           onGoChapter={onGoChapter}
-          className={styles.chatComponents}
+          className={cn(
+            styles.chatComponents,
+            showUserSettings ? styles.chatComponentsHidden : '',
+          )}
           onPurchased={onPurchased}
-          onMobileSettingClick={onMobileSettingClick}
           chapterUpdate={chapterUpdate}
           updateSelectedLesson={updateSelectedLesson}
         />

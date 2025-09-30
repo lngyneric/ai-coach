@@ -23,7 +23,7 @@ export const useCourseStore = create<
     },
     purchased: false,
     changePurchased: purchased => set(() => ({ purchased })),
-    // 用于重置章节
+    // Used for resetting a chapter
     resetedChapterId: null,
     updateResetedChapterId: resetedChapterId =>
       set(() => ({ resetedChapterId })),
