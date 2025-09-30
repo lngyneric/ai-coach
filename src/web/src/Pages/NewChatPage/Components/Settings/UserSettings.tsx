@@ -133,7 +133,7 @@ export const UserSettings = ({
         setBirth(v.value);
       }
     });
-    setDynFormData(respData.filter((v) => (!fixed_keys.includes(v.key) && !hidden_keys.includes(v.key))));
+    setDynFormData(respData.profiles.filter((v) => (!fixed_keys.includes(v.key) && !hidden_keys.includes(v.key))));
   }, []);
 
 

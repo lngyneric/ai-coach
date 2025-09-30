@@ -12,6 +12,7 @@ import { shifu } from 'Service/Shifu';
 import { getUserProfile, updateUserProfile } from 'Api/user';
 import { LANGUAGE_DICT } from 'constants/userConstants';
 import { useTracking, EVENT_NAMES } from 'common/hooks/useTracking';
+import { useEnvStore } from 'stores/envStore';
 
 
 const MainMenuModal = ({
@@ -43,6 +44,7 @@ const MainMenuModal = ({
   };
 
   const { trackEvent } = useTracking();
+  const courseId = useEnvStore((state) => state.courseId);
 
   const languageDrowdownMeus = {
     items: languages.map((lang) => ({
@@ -50,15 +52,14 @@ const MainMenuModal = ({
       label: lang.label,
     })),
     onClick: async ({ key }) => {
-
       const languageData = LANGUAGE_DICT[key];
 
       if (languageData) {
-        const { data } = await getUserProfile();
-        const languageSetting = data.find((item) => item.key === 'language');
+        const { profiles } = (await getUserProfile(courseId)).data;
+        const languageSetting = profiles.find((item) => item.key === 'language');
         if (languageSetting) {
           languageSetting.value = languageData;
-          await updateUserProfile(data.profiles);
+          await updateUserProfile(profiles, courseId);
         }
       }
       i18n.changeLanguage(key);
@@ -105,6 +106,7 @@ const MainMenuModal = ({
     <PopupModal
       open={open}
       onClose={onClose}
+      style={{}}
       wrapStyle={{ ...style }}
       className={classNames(className, styles.mainMenuModalWrapper, mobileStyle && styles.mobile)}
     >
@@ -159,7 +161,7 @@ const MainMenuModal = ({
                 >
                   {languages.find((lang) => lang.value === i18n.language)
                     ?.label || '请选择'}{' '}
-                  {<DownOutlined className={style.langDownIcon} />}
+                  <DownOutlined />
                 </div>
               </Dropdown>
             </div>
