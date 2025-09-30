@@ -310,7 +310,17 @@ def verify_sms_code(
                 .first()
             )
         elif user_id != user_info.user_id and course_id is not None:
-            new_profiles = get_user_profile_labels(app, user_id, course_id)
+            new_profiles_dto = get_user_profile_labels(app, user_id, course_id)
+            new_profiles = [
+                {
+                    "key": profile.key,
+                    "value": profile.value,
+                    "label": profile.label,
+                    "type": profile.type,
+                    "items": profile.items,
+                }
+                for profile in new_profiles_dto.profiles
+            ]
             update_user_profile_with_lable(
                 app, user_info.user_id, new_profiles, False, course_id
             )
@@ -406,7 +416,17 @@ def verify_mail_code(
                 .first()
             )
         elif user_id != user_info.user_id and course_id is not None:
-            new_profiles = get_user_profile_labels(app, user_id, course_id)
+            new_profiles_dto = get_user_profile_labels(app, user_id, course_id)
+            new_profiles = [
+                {
+                    "key": profile.key,
+                    "value": profile.value,
+                    "label": profile.label,
+                    "type": profile.type,
+                    "items": profile.items,
+                }
+                for profile in new_profiles_dto.profiles
+            ]
             update_user_profile_with_lable(
                 app, user_info.user_id, new_profiles, False, course_id
             )
