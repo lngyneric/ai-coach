@@ -139,6 +139,7 @@ export default function ChatPage() {
     updateChapterStatus,
     getChapterByLesson,
     onTryLessonSelect,
+    getNextLessonId,
   } = useLessonTree();
 
   const [currentLanguage, setCurrentLanguage] = useState(i18n.language);
@@ -225,7 +226,8 @@ export default function ChatPage() {
   );
 
   const onGoChapter = async id => {
-    updateChapterId(id);
+    // updateChapterId(id);
+    updateLessonId(id);
   };
 
   const onChapterUpdate = useCallback(
@@ -425,6 +427,7 @@ export default function ChatPage() {
             chapterUpdate={onChapterUpdate}
             userSettingBasicInfo={userSettingBasicInfo}
             updateSelectedLesson={updateSelectedLesson}
+            getNextLessonId={getNextLessonId}
           />
         ) : null}
 

@@ -5,14 +5,27 @@
   box-sizing: border-box;
 }
 .chatComponents :global(.content-render) {
-  margin: 16px 0;
+  margin: 12px 0;
+}
+.chatComponents :global(.content-render-theme) {
+  position: relative;
+}
+.chatComponents :global(.long-press-overlay) {
+  position: absolute;
+  top: 0;
+  left: 0;
+  right: 0;
+  bottom: 0;
+  background-color: rgba(148, 163, 184, 0.12);
+  pointer-events: none;
+  z-index: 1;
 }
 .chatComponents :global(.lucide-send) {
   width: 1.2rem;
   height: 1.2rem;
 }
 .chatComponents :global(#chat-box-bottom) {
-  height: 40px;
+  height: 80px;
   width: 100%;
 }
 .chatComponents :global(.MessageContainer) {
@@ -186,6 +199,12 @@
   :global(.Message.left)
   :global(.Bubble) {
   margin-right: 0;
+}
+.chatComponents.mobile :global(.content-render-theme) {
+  -moz-user-select: none;
+  user-select: none;
+  -webkit-user-select: none;
+  -webkit-touch-callout: none;
 }
 .chatComponents .messageContentOperation {
   display: flex;

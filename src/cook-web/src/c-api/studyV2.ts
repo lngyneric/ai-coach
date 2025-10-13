@@ -7,9 +7,13 @@ import { useSystemStore } from '@/c-store/useSystemStore';
 import { useUserStore } from '@/store/useUserStore';
 
 // ===== Constants  Types for shared literals =====
+// record history block type
 export const BLOCK_TYPE = {
   CONTENT: 'content',
   INTERACTION: 'interaction',
+  ASK: 'ask',
+  ANSWER: 'answer',
+  ERROR: 'error_message',
 } as const;
 export type BlockType = (typeof BLOCK_TYPE)[keyof typeof BLOCK_TYPE];
 
@@ -34,12 +38,15 @@ export const PREVIEW_MODE = {
 } as const;
 export type PreviewMode = (typeof PREVIEW_MODE)[keyof typeof PREVIEW_MODE];
 
+// run sse output type
 export const SSE_OUTPUT_TYPE = {
   CONTENT: 'content',
   BREAK: 'break',
+  ASK: 'ask',
   TEXT_END: 'text_end',
   INTERACTION: 'interaction',
   OUTLINE_ITEM_UPDATE: 'outline_item_update',
+  VARIABLE_UPDATE: 'variable_update',
   PROFILE_UPDATE: 'update_user_info', // TODO: update user_info
 } as const;
 export type SSE_OUTPUT_TYPE =
@@ -48,7 +55,7 @@ export type SSE_OUTPUT_TYPE =
 export const SYS_INTERACTION_TYPE = {
   PAY: '_sys_pay',
   LOGIN: '_sys_login',
-  NEXT_CHAPTER: '_sys_next_chapter', // TODO: wait for backend to support
+  NEXT_CHAPTER: '_sys_next_chapter',
 } as const;
 export type SysInteractionType =
   (typeof SYS_INTERACTION_TYPE)[keyof typeof SYS_INTERACTION_TYPE];
@@ -126,7 +133,7 @@ export const getRunMessage = (
   source.addEventListener('message', event => {
     try {
       const response = JSON.parse(event.data);
-      console.log('====sse response====', response);
+      console.log('[SSE response]', response);
       if (onMessage) {
         onMessage(response);
       }
@@ -134,12 +141,34 @@ export const getRunMessage = (
       console.log(e);
     }
   });
+
   source.addEventListener('error', e => {
     console.error('[SSE error]', e);
   });
+
   source.addEventListener('open', () => {
     console.log('[SSE connection opened]');
   });
+
+  // sse.js may not support 'close' event, use readystatechange instead
+  source.addEventListener('readystatechange', () => {
+    console.log('[SSE readystatechange]', source.readyState);
+    // readyState: 0=CONNECTING, 1=OPEN, 2=CLOSED
+    if (source.readyState === 2) {
+      console.log('[SSE connection closed via readystatechange]');
+    }
+  });
+
+  // Attempt standard close event (may not trigger)
+  source.addEventListener('close', () => {
+    console.log('[SSE connection closed via close event]');
+  });
+
+  // Add abort event listener (if supported)
+  source.addEventListener('abort', () => {
+    console.log('[SSE connection aborted]');
+  });
+
   source.stream();
 
   return source;

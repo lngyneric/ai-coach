@@ -16,19 +16,16 @@
   width: 32px;
   height: 32px;
   border-radius: 50%;
-  background: transparent;
+  background: rgba(0, 0, 0, 0);
   transition: all 0.2s ease;
-
-  &:hover {
-    color: #666;
-    border-color: #bbb;
-  }
 }
-
+.globalInfoButton:hover {
+  color: #666;
+  border-color: #bbb;
+}
 .rowIcon {
   width: 1.1em;
 }
-
 .policyInfo {
   font-size: 0.8em;
   max-width: 280px;
@@ -36,24 +33,20 @@
   border-top: 1px solid var(--color-8);
   padding-left: 13px;
   padding-right: 13px;
-
-  .policyInfoRow {
-    margin-top: 0.5em;
-  }
-
-  .miitLink,
-  .miitLink:visited {
-    text-decoration: none;
-    color: #1890ff;
-  }
-
-  .gonganRow {
-    display: flex;
-    align-items: center;
-
-    .beianIcon {
-      width: 0.9em;
-      margin-right: 0.2em;
-    }
-  }
+}
+.policyInfo .policyInfoRow {
+  margin-top: 0.5em;
+}
+.policyInfo .miitLink,
+.policyInfo .miitLink:visited {
+  text-decoration: none;
+  color: #1890ff;
+}
+.policyInfo .gonganRow {
+  display: flex;
+  align-items: center;
+}
+.policyInfo .gonganRow .beianIcon {
+  width: 0.9em;
+  margin-right: 0.2em;
 }

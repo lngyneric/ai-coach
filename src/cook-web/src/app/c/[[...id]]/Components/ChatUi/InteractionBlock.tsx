@@ -1,10 +1,21 @@
-import React, { useState, useMemo } from 'react';
+import React, { useState, useMemo, useRef } from 'react';
 import { ThumbsUp, ThumbsDown } from 'lucide-react';
 import { cn } from '@/lib/utils';
 import type { LikeStatus } from '@/c-api/studyV2';
 import { postGeneratedContentAction, LIKE_STATUS } from '@/c-api/studyV2';
 import { RefreshCcw } from 'lucide-react';
-
+import { useTranslation } from 'react-i18next';
+import Image from 'next/image';
+import AskIcon from '@/c-assets/newchat/light/icon_ask.svg';
+import './InteractionBlock.scss';
+import {
+  Dialog,
+  DialogContent,
+  DialogHeader,
+  DialogTitle,
+  DialogDescription,
+  DialogFooter,
+} from '@/components/ui/Dialog';
 type Size = 'sm' | 'md' | 'lg';
 
 export interface InteractionBlockProps {
@@ -15,14 +26,9 @@ export interface InteractionBlockProps {
   disabled?: boolean;
   size?: Size;
   className?: string;
+  onToggleAskExpanded?: (generated_block_bid: string) => void;
   onRefresh?: (generated_block_bid: string) => void;
 }
-
-const sizeMap: Record<Size, number> = {
-  sm: 16,
-  md: 20,
-  lg: 24,
-};
 
 /**
  * InteractionBlock
@@ -36,10 +42,13 @@ export default function InteractionBlock({
   disabled = false,
   className,
   onRefresh,
+  onToggleAskExpanded,
 }: InteractionBlockProps) {
+  const { t } = useTranslation();
   const [status, setStatus] = useState<LikeStatus>(
     (like_status as LikeStatus) ?? LIKE_STATUS.NONE,
   );
+  const [showRegenerateDialog, setShowRegenerateDialog] = useState(false);
 
   const isLike = status === LIKE_STATUS.LIKE;
   const isDislike = status === LIKE_STATUS.DISLIKE;
@@ -49,7 +58,7 @@ export default function InteractionBlock({
       display: 'inline-flex',
       alignItems: 'center',
       justifyContent: 'center',
-      width: 28,
+      width: 14,
       height: 14,
       cursor: disabled ? 'not-allowed' : 'pointer',
     }),
@@ -61,7 +70,7 @@ export default function InteractionBlock({
       display: 'inline-flex',
       alignItems: 'center',
       justifyContent: 'center',
-      width: 28,
+      width: 14,
       height: 14,
       cursor: disabled ? 'not-allowed' : 'pointer',
     }),
@@ -73,7 +82,7 @@ export default function InteractionBlock({
       display: 'inline-flex',
       alignItems: 'center',
       justifyContent: 'center',
-      width: 28,
+      width: 14,
       height: 14,
       cursor: disabled ? 'not-allowed' : 'pointer',
     }),
@@ -109,61 +118,124 @@ export default function InteractionBlock({
     });
   };
 
-  return (
-    <div
-      className={cn(['interaction-block'], className)}
-      style={{ display: 'flex', alignItems: 'center', paddingLeft: 20 }}
-    >
-      <button
-        type='button'
-        aria-label='Like'
-        aria-pressed={isLike}
-        disabled={disabled || readonly}
-        onClick={onLike}
-        title='Like'
-        style={likeBtnStyle}
-      >
-        <ThumbsUp
-          size={14}
-          className={cn(
-            isLike ? 'text-blue-500' : 'text-gray-400',
-            'w-5',
-            'h-5',
-          )}
-        />
-      </button>
+  const handleChangeAskPanel = () => {
+    onToggleAskExpanded?.(generated_block_bid);
+  };
 
-      <button
-        type='button'
-        aria-label='Dislike'
-        aria-pressed={isDislike}
-        disabled={disabled || readonly}
-        onClick={onDislike}
-        title='Dislike'
-        style={dislikeBtnStyle}
-      >
-        <ThumbsDown
-          size={14}
+  const handleRefreshClick = () => {
+    if (disabled || readonly) return;
+    setShowRegenerateDialog(true);
+  };
+
+  const handleConfirmRegenerate = () => {
+    setShowRegenerateDialog(false);
+    onRefresh?.(generated_block_bid);
+  };
+
+  return (
+    <div className={cn(['interaction-block'], className)}>
+      <div style={{ display: 'flex', alignItems: 'center', gap: '16px' }}>
+        <button
+          onClick={handleChangeAskPanel}
+          type='button'
           className={cn(
-            isDislike ? 'text-blue-500' : 'text-gray-400',
-            'w-5',
-            'h-5',
+            'ask-button',
+            'inline-flex items-center justify-center',
+            'text-white font-medium',
+            'transition-colors',
+            'disabled:opacity-50 disabled:cursor-not-allowed',
           )}
-        />
-      </button>
-      <button
-        type='button'
-        aria-label='Refresh'
-        aria-pressed={false}
-        style={refreshBtnStyle}
-        disabled={disabled || readonly}
-        onClick={() => onRefresh?.(generated_block_bid)}
+          disabled={disabled || readonly}
+        >
+          <Image
+            src={AskIcon.src}
+            alt='ask'
+            width={14}
+            height={14}
+          />
+          <span>{t('chat.ask')}</span>
+        </button>
+        <button
+          type='button'
+          aria-label='Refresh'
+          aria-pressed={false}
+          style={refreshBtnStyle}
+          disabled={disabled || readonly}
+          onClick={handleRefreshClick}
+        >
+          <RefreshCcw
+            size={14}
+            className={cn('text-gray-400', 'w-5', 'h-5')}
+          />
+        </button>
+        <button
+          type='button'
+          aria-label='Like'
+          aria-pressed={isLike}
+          disabled={disabled || readonly}
+          onClick={onLike}
+          title='Like'
+          style={likeBtnStyle}
+        >
+          <ThumbsUp
+            size={14}
+            className={cn(
+              isLike ? 'text-blue-500' : 'text-gray-400',
+              'w-5',
+              'h-5',
+            )}
+          />
+        </button>
+
+        <button
+          type='button'
+          aria-label='Dislike'
+          aria-pressed={isDislike}
+          disabled={disabled || readonly}
+          onClick={onDislike}
+          title='Dislike'
+          style={dislikeBtnStyle}
+        >
+          <ThumbsDown
+            size={14}
+            className={cn(
+              isDislike ? 'text-blue-500' : 'text-gray-400',
+              'w-5',
+              'h-5',
+            )}
+          />
+        </button>
+      </div>
+
+      <Dialog
+        open={showRegenerateDialog}
+        onOpenChange={setShowRegenerateDialog}
       >
-        <RefreshCcw
-          size={14}
-          className={cn('text-gray-400', 'w-5', 'h-5')}
-        />
-      </button>
+        <DialogContent className='sm:max-w-md'>
+          <DialogHeader>
+            <DialogTitle>{t('chat.regenerateConfirmTitle')}</DialogTitle>
+            <DialogDescription>
+              {t('chat.regenerateConfirmDescription')}
+            </DialogDescription>
+          </DialogHeader>
+          <DialogFooter className='flex gap-2 sm:gap-2'>
+            <button
+              type='button'
+              onClick={() => setShowRegenerateDialog(false)}
+              className='px-4 py-2 text-sm font-medium text-gray-700 bg-white border border-gray-300 rounded-md hover:bg-gray-50'
+            >
+              {t('common.cancel')}
+            </button>
+            <button
+              type='button'
+              onClick={handleConfirmRegenerate}
+              className='px-4 py-2 text-sm font-medium text-white bg-primary rounded-md hover:bg-primary-lighter'
+            >
+              {t('common.ok')}
+            </button>
+          </DialogFooter>
+        </DialogContent>
+      </Dialog>
     </div>
   );
 }
