@@ -732,7 +732,9 @@ class RunScriptContextV2:
                         if not self._is_paid:
                             yield RunMarkdownFlowDTO(
                                 outline_bid=run_script_info.outline_bid,
-                                generated_block_bid=generated_block.generated_block_bid,
+                                generated_block_bid=generated_block.generated_block_bid
+                                if generated_block
+                                else "",
                                 type=GeneratedType.INTERACTION,
                                 content=block.content,
                             )
@@ -755,7 +757,9 @@ class RunScriptContextV2:
                         else:
                             yield RunMarkdownFlowDTO(
                                 outline_bid=run_script_info.outline_bid,
-                                generated_block_bid=generated_block.generated_block_bid,
+                                generated_block_bid=generated_block.generated_block_bid
+                                if generated_block
+                                else "",
                                 type=GeneratedType.INTERACTION,
                                 content=block.content,
                             )
