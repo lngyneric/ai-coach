@@ -31,12 +31,20 @@ export const SSE_INPUT_TYPE = {
 export type SSE_INPUT_TYPE =
   (typeof SSE_INPUT_TYPE)[keyof typeof SSE_INPUT_TYPE];
 
-export const PREVIEW_MODE = {
-  COOK: 'cook',
-  PREVIEW: 'preview',
+// export const PREVIEW_MODE = {
+//   COOK: 'cook',
+//   PREVIEW: 'preview',
+//   NORMAL: 'normal',
+// } as const;
+// export type PreviewMode = (typeof PREVIEW_MODE)[keyof typeof PREVIEW_MODE];
+
+export const LEARNING_PERMISSION = {
   NORMAL: 'normal',
+  TRIAL: 'trial',
+  GUEST: 'guest',
 } as const;
-export type PreviewMode = (typeof PREVIEW_MODE)[keyof typeof PREVIEW_MODE];
+export type LearningPermission =
+  (typeof LEARNING_PERMISSION)[keyof typeof LEARNING_PERMISSION];
 
 // run sse output type
 export const SSE_OUTPUT_TYPE = {
@@ -46,6 +54,7 @@ export const SSE_OUTPUT_TYPE = {
   TEXT_END: 'text_end',
   INTERACTION: 'interaction',
   OUTLINE_ITEM_UPDATE: 'outline_item_update',
+  HEARTBEAT: 'heartbeat',
   VARIABLE_UPDATE: 'variable_update',
   PROFILE_UPDATE: 'update_user_info', // TODO: update user_info
 } as const;
@@ -78,7 +87,7 @@ export interface GetLessonStudyRecordParams {
   shifu_bid: string;
   outline_bid: string;
   // Optional preview mode flag
-  preview_mode?: PreviewMode;
+  preview_mode?: boolean;
 }
 
 export interface PostGeneratedContentActionParams {
@@ -99,10 +108,15 @@ export interface PostGeneratedContentActionData {
   action: LikeStatus;
 }
 
+export interface RunningResult {
+  is_running: boolean;
+  running_time: number;
+}
+
 export const getRunMessage = (
   shifu_bid: string,
   outline_bid: string,
-  preview_mode: PreviewMode = PREVIEW_MODE.NORMAL,
+  preview_mode: boolean,
   body: { input: Record<string, any> | string; [key: string]: any },
   onMessage: (data: any) => void,
 ) => {
@@ -146,27 +160,15 @@ export const getRunMessage = (
     console.error('[SSE error]', e);
   });
 
-  source.addEventListener('open', () => {
-    console.log('[SSE connection opened]');
-  });
-
   // sse.js may not support 'close' event, use readystatechange instead
   source.addEventListener('readystatechange', () => {
     console.log('[SSE readystatechange]', source.readyState);
     // readyState: 0=CONNECTING, 1=OPEN, 2=CLOSED
     if (source.readyState === 2) {
-      console.log('[SSE connection closed via readystatechange]');
+      console.log('[SSE connection close]');
+    } else if (source.readyState === 1) {
+      console.log('[SSE connection open]');
     }
-  });
-
-  // Attempt standard close event (may not trigger)
-  source.addEventListener('close', () => {
-    console.log('[SSE connection closed via close event]');
-  });
-
-  // Add abort event listener (if supported)
-  source.addEventListener('abort', () => {
-    console.log('[SSE connection aborted]');
   });
 
   source.stream();
@@ -175,17 +177,17 @@ export const getRunMessage = (
 };
 
 /**
- * 获取课程学习记录
+ * Fetch course study records
  * @param {*} lessonId
- *  shifu_bid : shifu_bid
-    outline_bid: 大纲bid
-    preview_mode: 是否为预览模式，可选值：　cook|preview|nomal ，为空时为normal
+ *  shifu_bid : shifu bid
+    outline_bid: outline bid
+    preview_mode: whether preview mode is enabled; possible values: cook | preview | normal (default is normal)
  * @returns
  */
 export const getLessonStudyRecord = async ({
   shifu_bid,
   outline_bid,
-  preview_mode = PREVIEW_MODE.NORMAL,
+  preview_mode = false,
 }: GetLessonStudyRecordParams): Promise<LessonStudyRecords> => {
   return request
     .get(
@@ -200,10 +202,10 @@ export const getLessonStudyRecord = async ({
 };
 
 /**
- * 点赞/点踩 生成内容
- * shifu_bid: shifu_bid
- * generated_block_bid: 生成内容bid
- * action: 动作 like|dislike|none
+ * Like or dislike generated content
+ * shifu_bid: shifu bid
+ * generated_block_bid: generated content bid
+ * action: action like | dislike | none
  * @param params
  * @returns
  */
@@ -215,3 +217,11 @@ export async function postGeneratedContentAction(
   // Use standard request wrapper; it will return response.data when code===0
   return request.post(url, params);
 }
+
+export const checkIsRunning = async (
+  shifu_bid: string,
+  outline_bid: string,
+): Promise<RunningResult> => {
+  const url = `/api/learn/shifu/${shifu_bid}/run/${outline_bid}`;
+  return request.get(url);
+};

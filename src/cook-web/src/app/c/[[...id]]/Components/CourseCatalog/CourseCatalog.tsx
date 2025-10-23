@@ -29,16 +29,11 @@ export const CourseCatalog = ({
     [id, onTrySelect],
   );
 
-  const onResetButtonClick = useCallback(e => {
-    e.stopPropagation();
-  }, []);
-
   const onTitleRowClick = useCallback(() => {
     onCollapse?.({ id });
   }, [id, onCollapse]);
 
   const { mobileStyle } = useContext(AppContext);
-
   return (
     <div
       className={cn(
@@ -83,6 +78,10 @@ export const CourseCatalog = ({
               status_value={e.status_value}
               // @ts-expect-error EXPECT
               selected={e.id === selectedLessonId}
+              // @ts-expect-error EXPECT
+              type={e.type}
+              // @ts-expect-error EXPECT
+              is_paid={e.is_paid}
               // @ts-expect-error EXPECT
               canLearning={e.canLearning}
               chapterId={id}

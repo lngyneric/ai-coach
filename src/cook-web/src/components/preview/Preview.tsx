@@ -24,7 +24,8 @@ const PreviewSettingsModal = () => {
   const [autoSkipEmptyFields, setAutoSkipEmptyFields] = useState(false);
 
   const handleStartPreview = async () => {
-    await actions.saveBlocks(currentShifu?.bid || '');
+    // await actions.saveBlocks(currentShifu?.bid || '');
+    await actions.saveMdflow();
     // Handle the start preview action
     const result = await api.previewShifu({
       shifu_bid: currentShifu?.bid || '',
@@ -74,7 +75,7 @@ const PreviewSettingsModal = () => {
           </DialogTitle>
         </DialogHeader>
 
-        <div>
+        {/* <div>
           <div className='flex items-center justify-end space-x-2 mt-4'>
             <span className='text-sm'>{t('preview.autoSkip')}</span>
             <Switch
@@ -82,7 +83,7 @@ const PreviewSettingsModal = () => {
               onCheckedChange={setAutoSkipEmptyFields}
             />
           </div>
-        </div>
+        </div> */}
 
         <DialogFooter>
           <Button

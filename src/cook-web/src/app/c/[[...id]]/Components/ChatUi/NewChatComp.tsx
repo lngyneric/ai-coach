@@ -17,13 +17,10 @@ import { AppContext } from '../AppContext';
 import { useChatComponentsScroll } from './ChatComponents/useChatComponentsScroll';
 import useAutoScroll from './useAutoScroll';
 import { useTracking } from '@/c-common/hooks/useTracking';
-import { useDisclosure } from '@/c-common/hooks/useDisclosure';
 import { useEnvStore } from '@/c-store/envStore';
 import { useUserStore } from '@/store';
+import { useCourseStore } from '@/c-store/useCourseStore';
 import { toast } from '@/hooks/useToast';
-import PayModal from '../Pay/PayModal';
-import PayModalM from '../Pay/PayModalM';
-import { PREVIEW_MODE } from '@/c-api/studyV2';
 import InteractionBlock from './InteractionBlock';
 import useChatLogicHook, {
   ChatContentItem,
@@ -32,6 +29,7 @@ import useChatLogicHook, {
 import AskBlock from './AskBlock';
 import InteractionBlockM from './InteractionBlockM';
 import ContentBlock from './ContentBlock';
+import { OnSendContentParams } from 'markdown-flow-ui';
 
 export const NewChatComponents = ({
   className,
@@ -43,7 +41,7 @@ export const NewChatComponents = ({
   chapterUpdate,
   updateSelectedLesson,
   getNextLessonId,
-  preview_mode = PREVIEW_MODE.NORMAL,
+  previewMode = false,
 }) => {
   const { trackEvent, trackTrailProgress } = useTracking();
   const { t } = useTranslation();
@@ -74,16 +72,23 @@ export const NewChatComponents = ({
     threshold: 120,
   });
 
-  const {
-    open: payModalOpen,
-    onOpen: onPayModalOpen,
-    onClose: onPayModalClose,
-  } = useDisclosure();
+  const { openPayModal, payModalResult } = useCourseStore(
+    useShallow(state => ({
+      openPayModal: state.openPayModal,
+      payModalResult: state.payModalResult,
+    })),
+  );
 
-  const onPayModalOk = () => {
-    onPurchased?.();
-    refreshUserInfo();
-  };
+  const onPayModalOpen = useCallback(() => {
+    openPayModal();
+  }, [openPayModal]);
+
+  useEffect(() => {
+    if (payModalResult === 'ok') {
+      onPurchased?.();
+      refreshUserInfo();
+    }
+  }, [onPurchased, payModalResult, refreshUserInfo]);
 
   const [mobileInteraction, setMobileInteraction] = useState({
     open: false,
@@ -106,7 +111,7 @@ export const NewChatComponents = ({
     outlineBid: lessonId,
     lessonId,
     chapterId,
-    previewMode: preview_mode,
+    previewMode,
     trackEvent,
     chatBoxBottomRef,
     trackTrailProgress,
@@ -222,7 +227,7 @@ export const NewChatComponents = ({
                 isExpanded={item.isAskExpanded}
                 shifu_bid={shifuBid}
                 outline_bid={lessonId}
-                preview_mode={preview_mode}
+                preview_mode={previewMode}
                 generated_block_bid={item.parent_block_bid || ''}
                 onToggleAskExpanded={toggleAskExpanded}
                 key={`${idx}-ask`}
@@ -286,24 +291,6 @@ export const NewChatComponents = ({
           onRefresh={onRefresh}
         />
       )}
-      {payModalOpen &&
-        (mobileStyle ? (
-          <PayModalM
-            open={payModalOpen}
-            onCancel={onPayModalClose}
-            onOk={onPayModalOk}
-            type={''}
-            payload={{}}
-          />
-        ) : (
-          <PayModal
-            open={payModalOpen}
-            onCancel={onPayModalClose}
-            onOk={onPayModalOk}
-            type={''}
-            payload={{}}
-          />
-        ))}
     </div>
   );
 };

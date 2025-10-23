@@ -118,13 +118,20 @@
     }
   },
   "chapterSetting": {
+    "chapterTitle": "Chapter Settings",
     "chapterType": "Chapter Type",
     "formalChapter": "Formal Chapter",
-    "hideChapter": "Hidden Chapter",
-    "isHidden": "Is Hidden",
-    "systemPrompt": "System Prompt",
-    "title": "Chapter Settings",
-    "trialChapter": "Trial Chapter"
+    "freeChapter": "Free",
+    "guestChapter": "Guest Access",
+    "hideChapter": "Hidden",
+    "isHidden": "Hidden?",
+    "learningPermission": "Learning Permission",
+    "paidChapter": "Paid",
+    "promptHint": "Within 1000 characters",
+    "systemPrompt": "Prompt",
+    "title": "Section Settings",
+    "trialChapter": "Trial Chapter",
+    "visibleChapter": "Visible"
   },
   "chat": {
     "ask": "Ask",
@@ -438,6 +445,11 @@
   },
   "shifu": {
     "aiBlock": "AI Block",
+    "creationArea": {
+      "description": "Describe the chapter you want, or leave it blank and let AI take the lead.",
+      "hint": "Default prompt goes here. Type / to discover more options.",
+      "title": "Creation Area"
+    },
     "debug": "Debug",
     "delete": "Delete",
     "newChapter": "Add Chapter",
@@ -453,8 +465,8 @@
     "inputKeywords": "Input Keywords",
     "keywords": "Keywords",
     "learningUrl": "Learning URL",
+    "limit20Characters": "Limited to 20 characters",
     "limit300Characters": "Limited to 300 characters",
-    "limit50Characters": "Limited to 50 characters",
     "number": "Number",
     "previewUrl": "Preview URL",
     "price": "Price",
@@ -474,6 +486,11 @@
     "shifuTemperatureMax": "Temperature cannot exceed 2",
     "shifuTemperatureMin": "Temperature cannot be less than 0",
     "supportedFormats": "Only JPG and PNG formats are supported",
+    "systemPrompt": "System Prompt",
+    "systemPromptHint": "Outline audience, tone, style, and essential context.",
+    "systemPromptMaxLength": "System prompt cannot exceed 300 characters",
+    "systemPromptPlaceholder": "Within 300 characters",
+    "temperatureHint": "Adjust within 0-2. Higher values encourage more creative output.",
     "title": "Course Settings",
     "upload": "Upload",
     "uploadFailed": "Upload failed, please try again later",

@@ -10,11 +10,10 @@ import { useTranslation } from 'react-i18next';
 import { Send, Maximize2, Minimize2, X } from 'lucide-react';
 import { ContentRender } from 'markdown-flow-ui';
 import {
+  checkIsRunning,
   getRunMessage,
   SSE_INPUT_TYPE,
   SSE_OUTPUT_TYPE,
-  PREVIEW_MODE,
-  type PreviewMode,
 } from '@/c-api/studyV2';
 import { fixMarkdownStream } from '@/c-utils/markdownUtils';
 import LoadingBar from './LoadingBar';
@@ -37,14 +36,14 @@ export interface AskBlockProps {
   isExpanded?: boolean;
   shifu_bid: string;
   outline_bid: string;
-  preview_mode?: PreviewMode;
+  preview_mode?: boolean;
   generated_block_bid: string;
   onToggleAskExpanded?: (generated_block_bid: string) => void;
 }
 
 /**
  * AskBlock
- * 追问区域组件，包含问答对话列表和自定义输入框，支持流式渲染
+ * Follow-up area component that contains the Q&A list and custom input box with streaming support
  */
 export default function AskBlock({
   askList = [],
@@ -52,7 +51,7 @@ export default function AskBlock({
   isExpanded = false,
   shifu_bid,
   outline_bid,
-  preview_mode = PREVIEW_MODE.NORMAL,
+  preview_mode = false,
   generated_block_bid,
   onToggleAskExpanded,
 }: AskBlockProps) {
@@ -80,7 +79,7 @@ export default function AskBlock({
     });
   }, [t]);
 
-  const handleSendCustomQuestion = useCallback(() => {
+  const handleSendCustomQuestion = useCallback(async () => {
     const question = inputRef.current?.value.trim() || '';
     if (isStreamingRef.current) {
       showOutputInProgressToast();
@@ -94,13 +93,18 @@ export default function AskBlock({
     if (!question) {
       return;
     }
+    const runningRes = await checkIsRunning(shifu_bid, outline_bid);
+    if (runningRes.is_running) {
+      showOutputInProgressToast();
+      return;
+    }
 
-    // 关闭之前的 SSE 连接
+    // Close any previous SSE connection
     sseRef.current?.close();
     setIsTypeFinished(false);
     setShowMobileDialog(true);
 
-    // 将新问题作为用户消息追加到列表末尾
+    // Append the new question as a user message at the end
     setDisplayList(prev => [
       ...prev,
       {
@@ -109,12 +113,12 @@ export default function AskBlock({
       },
     ]);
 
-    // 清空输入框
+    // Clear the input box
     if (inputRef.current) {
       inputRef.current.value = '';
     }
 
-    // 添加一个空的老师回复占位，准备接收流式内容
+    // Add an empty teacher reply placeholder to receive streaming content
     setDisplayList(prev => [
       ...prev,
       {
@@ -124,11 +128,11 @@ export default function AskBlock({
       },
     ]);
 
-    // 重置流式内容缓存
+    // Reset the streaming content buffer
     currentContentRef.current = '';
     isStreamingRef.current = true;
 
-    // 发起 SSE 请求
+    // Initiate the SSE request
     const source = getRunMessage(
       shifu_bid,
       outline_bid,
@@ -140,17 +144,20 @@ export default function AskBlock({
       },
       async response => {
         try {
-          setIsTypeFinished(false);
           console.log('SSE response:', response);
+          if (response.type === SSE_OUTPUT_TYPE.HEARTBEAT) {
+            return;
+          }
+          setIsTypeFinished(false);
 
           if (response.type === SSE_OUTPUT_TYPE.CONTENT) {
-            // 流式内容
+            // Streaming content
             const prevText = currentContentRef.current || '';
             const delta = fixMarkdownStream(prevText, response.content || '');
             const nextText = prevText + delta;
             currentContentRef.current = nextText;
 
-            // 更新最后一条老师消息的内容
+            // Update the content of the last teacher message
             setDisplayList(prev => {
               const newList = [...prev];
               const lastIndex = newList.length - 1;
@@ -173,7 +180,7 @@ export default function AskBlock({
           //   response.type === SSE_OUTPUT_TYPE.INTERACTION
           // )
           else {
-            // 流式结束
+            // Streaming finished
             console.log('SSE end, close sse:', response);
             isStreamingRef.current = false;
             setDisplayList(prev => {
@@ -199,7 +206,7 @@ export default function AskBlock({
       },
     );
 
-    // 添加错误和连接关闭的监听，确保状态被重置
+    // Add error and close listeners to ensure the state resets
     source.addEventListener('error', () => {
       console.log('SSE error');
       isStreamingRef.current = false;
@@ -245,7 +252,7 @@ export default function AskBlock({
     showOutputInProgressToast,
   ]);
 
-  // 决定显示哪些消息
+  // Decide which messages to display
   const messagesToShow = isExpanded ? displayList : displayList.slice(0, 1);
   // console.log('displayList:',isExpanded,messagesToShow);
 
@@ -375,7 +382,7 @@ export default function AskBlock({
                   defaultButtonText={''}
                   defaultInputText={''}
                   enableTypewriter={message.isStreaming === true}
-                  typingSpeed={60}
+                  typingSpeed={20}
                   readonly={true}
                   onTypeFinished={() => setIsTypeFinished(true)}
                 />

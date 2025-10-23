@@ -34,5 +34,37 @@ export const useCourseStore = create<
       // set({ chapterId: resetedChapterId });
       set({ resetedLessonId: resetedChapterId, lessonId: resetedChapterId });
     },
+    payModalOpen: false,
+    payModalState: {
+      type: '',
+      payload: {},
+    },
+    payModalResult: null,
+    openPayModal: (options = {}) => {
+      const { type = '', payload = {} } = options;
+      set(() => ({
+        payModalOpen: true,
+        payModalState: { type, payload },
+        payModalResult: null,
+      }));
+    },
+    closePayModal: () => {
+      set(() => ({ payModalOpen: false }));
+    },
+    setPayModalState: (state = {}) => {
+      set(current => ({
+        payModalState: {
+          type:
+            state.type !== undefined ? state.type : current.payModalState.type,
+          payload:
+            state.payload !== undefined
+              ? state.payload
+              : current.payModalState.payload,
+        },
+      }));
+    },
+    setPayModalResult: result => {
+      set(() => ({ payModalResult: result }));
+    },
   })),
 );

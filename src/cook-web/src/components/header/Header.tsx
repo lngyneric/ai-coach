@@ -2,6 +2,8 @@
 import React, { useState } from 'react';
 import { Button } from '@/components/ui/Button';
 import { useRouter } from 'next/navigation';
+import Link from 'next/link';
+
 import { useShifu } from '@/store';
 import Loading from '../loading';
 import { useAlert } from '@/components/ui/UseAlert';
@@ -24,7 +26,8 @@ const Header = () => {
   const publish = async () => {
     // TODO: publish
     // actions.publishScenario();
-    await actions.saveBlocks(currentShifu?.bid || '');
+    // await actions.saveBlocks(currentShifu?.bid || '');
+    await actions.saveMdflow();
     alert.showAlert({
       confirmText: t('header.confirm'),
       cancelText: t('header.cancel'),
@@ -32,7 +35,7 @@ const Header = () => {
       description: t('header.confirmPublishDescription'),
       async onConfirm() {
         setPublishing(true);
-        const reuslt = await api.publishShifu({
+        const result = await api.publishShifu({
           shifu_bid: currentShifu?.bid || '',
         });
         setPublishing(false);
@@ -44,33 +47,37 @@ const Header = () => {
             <div className='flex flex-col space-y-2'>
               <span>{t('header.publishSuccessDescription')}</span>
               <a
-                href={reuslt}
+                href={result}
                 target='_blank'
                 rel='noreferrer'
                 className='text-blue-500 hover:underline'
               >
-                {reuslt}
+                {result}
               </a>
             </div>
           ),
           onConfirm() {
-            window.open(reuslt, '_blank');
+            window.open(result, '_blank');
           },
         });
       },
     });
   };
   return (
-    <div className='flex items-center w-full h-14 px-2 py-2 bg-white border-b border-gray-200'>
+    <div className='flex items-center w-full h-16 px-2 py-2 bg-white border-b border-gray-200'>
       <div className='flex items-center space-x-4'>
-        <Button
-          variant='ghost'
-          size='icon'
-          className='h-9 w-9'
-          onClick={() => router.push('/')}
+        <Link
+          href={'/main'}
+          // className='flex items-center space-x-2 px-2 py-2 rounded-lg hover:bg-gray-100'
         >
-          <Home className='h-5 w-5' />
-        </Button>
+          <Button
+            variant='ghost'
+            size='icon'
+            className='h-9 w-9'
+          >
+            <Home className='h-5 w-5' />
+          </Button>
+        </Link>
 
         <div className='flex items-center'>
           {currentShifu?.avatar ? (
@@ -134,6 +141,7 @@ const Header = () => {
           size='sm'
           className='h-8 ml-1 bg-primary hover:bg-primary-lighter text-xs font-normal'
           onClick={publish}
+          disabled
         >
           {publishing && <Loading className='h-4 w-4 mr-1' />}
           {!publishing && <TrendingUp />}
