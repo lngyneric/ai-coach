@@ -2,7 +2,9 @@ import queue
 import threading
 import asyncio
 import inspect
-from typing import Generator, Union, AsyncGenerator
+import contextvars
+from asyncio import events as asyncio_events
+from typing import Generator, Union, AsyncGenerator, Callable, Awaitable, Any
 from enum import Enum
 from flaskr.service.learn.const import ROLE_STUDENT, ROLE_TEACHER
 from flaskr.service.shifu.consts import (
@@ -45,7 +47,10 @@ from flaskr.service.order.consts import (
     LEARN_STATUS_NOT_STARTED,
     LEARN_STATUS_LOCKED,
 )
-from flaskr.service.lesson.const import LESSON_TYPE_NORMAL
+from flaskr.service.shifu.consts import (
+    UNIT_TYPE_VALUE_TRIAL,
+    UNIT_TYPE_VALUE_NORMAL,
+)
 
 from flaskr.service.user.models import User
 from flaskr.service.shifu.struct_utils import find_node_with_parents
@@ -70,6 +75,7 @@ from flaskr.service.learn.llmsetting import LLMSettings
 from flaskr.service.learn.utils_v2 import init_generated_block
 from flaskr.service.learn.exceptions import PaidException
 from flaskr.i18n import _
+from flaskr.service.user.exceptions import UserNotLoginException
 
 context_local = threading.local()
 
@@ -157,7 +163,7 @@ class RUNLLMProvider(LLMProvider):
         system_prompt = self.system_prompt
 
         # Check if there's a system message
-
+        self.app.logger.info("stream invoke_llm begin")
         res = invoke_llm(
             self.app,
             self.trace_args["user_id"],
@@ -169,9 +175,15 @@ class RUNLLMProvider(LLMProvider):
             generation_name="run_llm",
             temperature=self.llm_settings.temperature,
         )
+        self.app.logger.info(f"stream invoke_llm res: {res}")
+        first_result = False
         for i in res:
             if i.result:
+                if not first_result:
+                    first_result = True
+                    self.app.logger.info(f"stream first result: {i.result}")
                 yield i.result
+        self.app.logger.info("stream invoke_llm end")
 
 
 class RunScriptContextV2:
@@ -179,16 +191,111 @@ class RunScriptContextV2:
     attend_id: str
     is_paid: bool
 
-    def _collect_async_generator(self, async_gen):
-        """Helper method to collect results from an async generator"""
+    def _collect_async_generator(self, async_gen_factory: Callable[[], AsyncGenerator]):
+        """Collect all items from an async generator produced by the factory.
 
-        async def _collect():
+        The factory is invoked inside the context that will drive the generator so
+        the async generator is always bound to the correct event loop.
+        """
+
+        if not callable(async_gen_factory):
+            raise TypeError(
+                "async_gen_factory must be a callable returning an async generator"
+            )
+
+        async def _consume(gen: AsyncGenerator):
             results = []
-            async for item in async_gen:
+            async for item in gen:
                 results.append(item)
             return results
 
-        return asyncio.run(_collect())
+        async def _runner():
+            gen = async_gen_factory()
+            if inspect.isawaitable(gen):
+                gen = await gen
+            if not inspect.isasyncgen(gen):
+                raise TypeError("async_gen_factory must return an async generator")
+            return await _consume(gen)
+
+        ctx = contextvars.copy_context()
+
+        def run_with_asyncio_run() -> list:
+            try:
+                return asyncio.run(ctx.run(_runner))
+            except RuntimeError as exc:
+                if "asyncio.run()" not in str(exc):
+                    raise
+                # Some runtimes (e.g., gevent) keep a loop marked as running even in fresh threads.
+                # Temporarily reset it so asyncio can manage its own loop lifecycle.
+                previous_loop = (
+                    asyncio_events._get_running_loop()
+                    if hasattr(asyncio_events, "_get_running_loop")
+                    else None
+                )
+                try:
+                    if hasattr(asyncio_events, "_set_running_loop"):
+                        asyncio_events._set_running_loop(None)
+                    return asyncio.run(ctx.run(_runner))
+                finally:
+                    if hasattr(asyncio_events, "_set_running_loop"):
+                        asyncio_events._set_running_loop(previous_loop)
+
+        # Check if we're already in an event loop
+        try:
+            asyncio.get_running_loop()
+        except RuntimeError:
+            # No loop running in this thread; execute directly.
+            return run_with_asyncio_run()
+        else:
+            # Loop is active; delegate to a worker thread so we don't block the loop thread.
+            import concurrent.futures
+
+            with concurrent.futures.ThreadPoolExecutor(max_workers=1) as executor:
+                future = executor.submit(run_with_asyncio_run)
+                return future.result()
+
+    def _run_async_in_safe_context(
+        self, coro_factory: Callable[[], Awaitable[Any] | Any]
+    ):
+        """Run an async coroutine safely regardless of surrounding event loops."""
+
+        if not callable(coro_factory):
+            raise TypeError("coro_factory must be a callable returning a coroutine")
+
+        ctx = contextvars.copy_context()
+
+        def run_with_asyncio_run():
+            result = ctx.run(coro_factory)
+            if not inspect.isawaitable(result):
+                return result
+            try:
+                return asyncio.run(result)
+            except RuntimeError as exc:
+                if "asyncio.run()" not in str(exc):
+                    raise
+                previous_loop = (
+                    asyncio_events._get_running_loop()
+                    if hasattr(asyncio_events, "_get_running_loop")
+                    else None
+                )
+                try:
+                    if hasattr(asyncio_events, "_set_running_loop"):
+                        asyncio_events._set_running_loop(None)
+                    return asyncio.run(ctx.run(coro_factory))
+                finally:
+                    if hasattr(asyncio_events, "_set_running_loop"):
+                        asyncio_events._set_running_loop(previous_loop)
+
+        try:
+            asyncio.get_running_loop()
+        except RuntimeError:
+            return run_with_asyncio_run()
+        else:
+            import concurrent.futures
+
+            with concurrent.futures.ThreadPoolExecutor(max_workers=1) as executor:
+                future = executor.submit(run_with_asyncio_run)
+                return future.result()
 
     preview_mode: bool
     _q: queue.Queue
@@ -229,7 +336,6 @@ class RunScriptContextV2:
         self._is_paid = is_paid
         self._preview_mode = preview_mode
         self._shifu_info = shifu_info
-
         self.shifu_ids = []
         self.outline_item_ids = []
         self.current_outline_item = None
@@ -255,15 +361,13 @@ class RunScriptContextV2:
             if item.children:
                 for child in item.children:
                     self._q.put(child)
-        self._current_attend = self._get_current_attend(self._outline_item_info.bid)
+        self._current_attend = None
         self._trace_args = {}
         self._trace_args["user_id"] = user_info.user_id
-        self._trace_args["session_id"] = self._current_attend.progress_record_bid
         self._trace_args["input"] = ""
         self._trace_args["name"] = self._outline_item_info.title
         self._trace = langfuse.trace(**self._trace_args)
         self._trace_args["output"] = ""
-
         context_local.current_context = self
 
     @staticmethod
@@ -286,13 +390,19 @@ class RunScriptContextV2:
             outline_item_info_db: Union[DraftOutlineItem, PublishedOutlineItem] = (
                 self._outline_model.query.filter(
                     self._outline_model.outline_item_bid == outline_bid,
-                ).first()
+                    self._outline_model.deleted == 0,
+                )
+                .order_by(self._outline_model.id.desc())
+                .first()
             )
             if not outline_item_info_db:
                 raise_error("LESSON.LESSON_NOT_FOUND_IN_COURSE")
-            if outline_item_info_db.type == LESSON_TYPE_NORMAL:
+            if outline_item_info_db.type == UNIT_TYPE_VALUE_NORMAL:
                 if (not self._is_paid) and (not self._preview_mode):
-                    raise_error("ORDER.COURSE_NOT_PAID")
+                    raise PaidException()
+            elif outline_item_info_db.type == UNIT_TYPE_VALUE_TRIAL:
+                if not self._user_info.mobile:
+                    raise UserNotLoginException()
             parent_path = find_node_with_parents(self._struct, outline_bid)
             attend_info = None
             for item in parent_path:
@@ -452,8 +562,9 @@ class RunScriptContextV2:
                             )
                         )
 
-        if self._current_attend.block_position >= len(
-            self._current_outline_item.children
+        if self._current_attend.block_position >= max(
+            len(self._current_outline_item.children),
+            self._current_outline_item.child_count,
         ):
             _mark_sub_node_completed(self._current_outline_item, res)
         if self._current_attend.status == LEARN_STATUS_NOT_STARTED:
@@ -583,6 +694,8 @@ class RunScriptContextV2:
             self.app, outline_item_id, self._preview_mode
         )
 
+        self.app.logger.info(f"outline_item_info: {outline_item_info.mdflow}")
+
         mddoc = MarkdownFlow(outline_item_info.mdflow)
         block_list = mddoc.get_all_blocks()
         self.app.logger.info(
@@ -621,16 +734,19 @@ class RunScriptContextV2:
         )
 
     def run_inner(self, app: Flask) -> Generator[RunMarkdownFlowDTO, None, None]:
+        self._current_attend = self._get_current_attend(self._outline_item_info.bid)
         app.logger.info(
             f"run_context.run {self._current_attend.block_position} {self._current_attend.status}"
         )
-        if not self._current_attend:
-            self._current_attend = self._get_current_attend(self._outline_item_info.bid)
+        self._trace_args["session_id"] = self._current_attend.progress_record_bid
         outline_updates = self._get_next_outline_item()
         if len(outline_updates) > 0:
             yield from self._render_outline_updates(outline_updates, new_chapter=False)
             db.session.flush()
             if self._current_attend.status != LEARN_STATUS_IN_PROGRESS:
+                app.logger.info(
+                    "current_attend.status != LEARN_STATUS_IN_PROGRESS To False"
+                )
                 self._can_continue = False
                 return
         run_script_info: RunScriptInfo = self._get_run_script_info(self._current_attend)
@@ -697,8 +813,11 @@ class RunScriptContextV2:
                 db.session.flush()
             return
         block = block_list[run_script_info.block_position]
+        app.logger.info(f"block: {block}")
+        app.logger.info(f"self._run_type: {self._run_type}")
         if self._run_type == RunType.INPUT:
             if block.block_type != BlockType.INTERACTION:
+                app.logger.info("block.block_type != BlockType.INTERACTION To OUTPUT")
                 self._can_continue = True
                 self._run_type = RunType.OUTPUT
                 self._current_attend.status = LEARN_STATUS_IN_PROGRESS
@@ -717,6 +836,19 @@ class RunScriptContextV2:
                 .order_by(LearnGeneratedBlock.id.desc())
                 .first()
             )
+            if not generated_block:
+                generated_block = init_generated_block(
+                    app,
+                    shifu_bid=run_script_info.attend.shifu_bid,
+                    outline_item_bid=run_script_info.outline_bid,
+                    progress_record_bid=run_script_info.attend.progress_record_bid,
+                    user_bid=self._user_info.user_id,
+                    block_type=BLOCK_TYPE_MDINTERACTION_VALUE,
+                    mdflow=block.content,
+                    block_index=run_script_info.block_position,
+                )
+                db.session.add(generated_block)
+                db.session.flush()
             if (
                 parsed_interaction.get("buttons")
                 and len(parsed_interaction.get("buttons")) > 0
@@ -760,9 +892,10 @@ class RunScriptContextV2:
                             self._can_continue = False
                             db.session.flush()
                             return
-
             generated_block.generated_content = self._input
             generated_block.role = ROLE_STUDENT
+            generated_block.position = run_script_info.block_position
+            generated_block.block_content_conf = block.content
             generated_block.status = 1
             db.session.flush()
             res = check_text_with_llm_response(
@@ -815,8 +948,8 @@ class RunScriptContextV2:
                 self._current_attend.block_position += 1
                 db.session.flush()
                 return
-            validate_result = asyncio.run(
-                mdflow.process(
+            validate_result = self._run_async_in_safe_context(
+                lambda: mdflow.process(
                     run_script_info.block_position,
                     ProcessMode.COMPLETE,
                     user_input=self._input,
@@ -969,6 +1102,7 @@ class RunScriptContextV2:
                 generated_content = ""
 
                 async def process_stream():
+                    app.logger.info(f"process_stream: {run_script_info.block_position}")
                     # Run in STREAM mode; mdflow.process may return a coroutine or an async generator
                     stream_or_result = mdflow.process(
                         run_script_info.block_position,
@@ -1009,7 +1143,7 @@ class RunScriptContextV2:
                         # Fallback: convert to string to avoid leaking object reprs
                         yield str(result) if result else ""
 
-                res = self._collect_async_generator(process_stream())
+                res = self._collect_async_generator(process_stream)
                 for i in res:
                     generated_content += i
                     yield RunMarkdownFlowDTO(
@@ -1041,11 +1175,22 @@ class RunScriptContextV2:
         try:
             yield from self.run_inner(app)
         except PaidException:
+            app.logger.info("PaidException")
+            self._can_continue = False
             yield RunMarkdownFlowDTO(
                 outline_bid=self._outline_item_info.bid,
-                generated_block_bid="",
+                generated_block_bid=generate_id(self.app),
                 type=GeneratedType.INTERACTION,
-                content=_("ORDER.CHECKOUT") + "//_sys_pay",
+                content=f"?[{_('ORDER.CHECKOUT')}//_sys_pay]",
+            )
+        except UserNotLoginException:
+            app.logger.info("UserNotLoginException")
+            self._can_continue = False
+            yield RunMarkdownFlowDTO(
+                outline_bid=self._outline_item_info.bid,
+                generated_block_bid=generate_id(self.app),
+                type=GeneratedType.INTERACTION,
+                content=f"?[{_('USER.LOGIN')}//_sys_login]",
             )
 
     def has_next(self) -> bool:
@@ -1067,15 +1212,28 @@ class RunScriptContextV2:
         ] = {o.id: o for o in outline_item_info_db}
         for id in outline_ids:
             outline_item_info = outline_item_info_map.get(id, None)
-            if outline_item_info and outline_item_info.llm_system_prompt:
+            if (
+                outline_item_info
+                and outline_item_info.llm_system_prompt
+                and outline_item_info.llm_system_prompt != ""
+            ):
+                self.app.logger.info(
+                    f"outline_item_info.llm_system_prompt: {outline_item_info.llm_system_prompt}"
+                )
                 return outline_item_info.llm_system_prompt
         shifu_info_db: Union[DraftShifu, PublishedShifu] = (
             self._shifu_model.query.filter(
                 self._shifu_model.id.in_(shifu_ids),
                 self._shifu_model.deleted == 0,
-            ).first()
+            )
+            .order_by(self._shifu_model.id.desc())
+            .first()
         )
+        self.app.logger.info(f"shifu_info_db: {shifu_info_db}")
         if shifu_info_db and shifu_info_db.llm_system_prompt:
+            self.app.logger.info(
+                f"shifu_info_db.llm_system_prompt: {shifu_info_db.llm_system_prompt}"
+            )
             return shifu_info_db.llm_system_prompt
         return None
 
@@ -1111,32 +1269,38 @@ class RunScriptContextV2:
         return self._get_default_llm_settings()
 
     def reload(self, app: Flask, reload_generated_block_bid: str):
-        generated_block: LearnGeneratedBlock = LearnGeneratedBlock.query.filter(
-            LearnGeneratedBlock.generated_block_bid == reload_generated_block_bid,
-        ).first()
-        self._can_continue = False
-        if generated_block:
-            if self._input_type != "ask":
-                app.logger.error(
-                    f"reload generated_block: {generated_block.id},block_position: {generated_block.position}"
-                )
-                LearnGeneratedBlock.query.filter(
-                    LearnGeneratedBlock.progress_record_bid
-                    == generated_block.progress_record_bid,
-                    LearnGeneratedBlock.outline_item_bid
-                    == generated_block.outline_item_bid,
-                    LearnGeneratedBlock.user_bid == self._user_info.user_id,
-                    LearnGeneratedBlock.id >= generated_block.id,
-                    LearnGeneratedBlock.position >= generated_block.position,
-                ).update(
-                    {
-                        LearnGeneratedBlock.status: 0,
-                    }
-                )
-                self._current_attend.block_position = generated_block.position
-                self._current_attend.status = LEARN_STATUS_IN_PROGRESS
-                db.session.flush()
-            else:
-                self._last_position = generated_block.position
-        yield from self.run(app)
+        with app.app_context():
+            generated_block: LearnGeneratedBlock = LearnGeneratedBlock.query.filter(
+                LearnGeneratedBlock.generated_block_bid == reload_generated_block_bid,
+            ).first()
+            current_attend = self._get_current_attend(generated_block.outline_item_bid)
+            self._can_continue = False
+            if generated_block:
+                if self._input_type != "ask":
+                    app.logger.info(
+                        f"reload generated_block: {generated_block.id},block_position: {generated_block.position}"
+                    )
+                    updated_blocks = LearnGeneratedBlock.query.filter(
+                        LearnGeneratedBlock.progress_record_bid
+                        == generated_block.progress_record_bid,
+                        LearnGeneratedBlock.outline_item_bid
+                        == generated_block.outline_item_bid,
+                        LearnGeneratedBlock.user_bid == self._user_info.user_id,
+                        LearnGeneratedBlock.id >= generated_block.id,
+                        LearnGeneratedBlock.position >= generated_block.position,
+                    ).all()
+                    for updated_block in updated_blocks:
+                        app.logger.info(
+                            f"updated_block: {updated_block.id}, {updated_block.position}"
+                        )
+                        updated_block.status = 0
+
+                    current_attend.block_position = generated_block.position
+                    current_attend.status = LEARN_STATUS_IN_PROGRESS
+                    db.session.commit()
+                else:
+                    self._last_position = generated_block.position
+        with app.app_context():
+            yield from self.run(app)
+            db.session.commit()
         return

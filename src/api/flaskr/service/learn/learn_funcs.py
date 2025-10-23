@@ -13,6 +13,7 @@ from flaskr.service.learn.learn_dtos import (
     LikeStatus,
     LearnOutlineItemsWithBannerInfoDTO,
     LearnBannerInfoDTO,
+    OutlineType,
 )
 from flaskr.service.shifu.models import (
     DraftShifu,
@@ -38,7 +39,6 @@ from flaskr.service.order.consts import (
 )
 import queue
 from flaskr.dao import db
-from flaskr.service.lesson.const import LESSON_TYPE_NORMAL
 from flaskr.service.shifu.consts import (
     BLOCK_TYPE_MDASK_VALUE,
     BLOCK_TYPE_MDCONTENT_VALUE,
@@ -63,6 +63,11 @@ from flaskr.service.profile.profile_manage import get_profile_item_definition_li
 from flaskr.service.shifu.block_to_mdflow_adapter import convert_block_to_mdflow
 from flaskr.service.shifu.dtos import BlockDTO
 from flaskr.service.shifu.adapter import generate_block_dto_from_model_internal
+from flaskr.service.shifu.consts import (
+    UNIT_TYPE_VALUE_TRIAL,
+    UNIT_TYPE_VALUE_NORMAL,
+    UNIT_TYPE_VALUE_GUEST,
+)
 
 STATUS_MAP = {
     LEARN_STATUS_LOCKED: LearnStatus.LOCKED,
@@ -96,6 +101,11 @@ def get_outline_item_tree(
     app: Flask, shifu_bid: str, user_bid: str, preview_mode: bool
 ) -> LearnOutlineItemsWithBannerInfoDTO:
     with app.app_context():
+        outline_type_map = {
+            UNIT_TYPE_VALUE_TRIAL: OutlineType.TRIAL,
+            UNIT_TYPE_VALUE_NORMAL: OutlineType.NORMAL,
+            UNIT_TYPE_VALUE_GUEST: OutlineType.GUEST,
+        }
         is_paid = preview_mode
         if preview_mode:
             outline_item_model = DraftOutlineItem
@@ -115,22 +125,19 @@ def get_outline_item_tree(
             )
             if not shifu:
                 raise_error("SHIFU.SHIFU_NOT_FOUND")
-            if shifu.price == 0:
-                is_paid = True
-            else:
-                buy_record = (
-                    Order.query.filter(
-                        Order.user_bid == user_bid,
-                        Order.shifu_bid == shifu_bid,
-                        Order.status == ORDER_STATUS_SUCCESS,
-                    )
-                    .order_by(Order.id.desc())
-                    .first()
+            buy_record = (
+                Order.query.filter(
+                    Order.user_bid == user_bid,
+                    Order.shifu_bid == shifu_bid,
+                    Order.status == ORDER_STATUS_SUCCESS,
                 )
-                if not buy_record:
-                    is_paid = False
-                else:
-                    is_paid = True
+                .order_by(Order.id.desc())
+                .first()
+            )
+            if not buy_record:
+                is_paid = False
+            else:
+                is_paid = True
         struct = (
             struct_model.query.filter(
                 struct_model.shifu_bid == shifu_bid, struct_model.deleted == 0
@@ -178,19 +185,18 @@ def get_outline_item_tree(
                 outline_item.outline_item_bid, None
             )
             if not progress_record:
-                if is_paid:
-                    status = LEARN_STATUS_NOT_STARTED
-                elif outline_item.type == LESSON_TYPE_NORMAL:
-                    status = LEARN_STATUS_LOCKED
-                else:
-                    status = LEARN_STATUS_NOT_STARTED
+                status = LEARN_STATUS_NOT_STARTED
             else:
                 status = progress_record.status
+                if status == LEARN_STATUS_LOCKED:
+                    status = LEARN_STATUS_NOT_STARTED
             outline_item_info = LearnOutlineItemInfoDTO(
                 bid=outline_item.outline_item_bid,
                 position=outline_item.position,
                 title=outline_item.title,
-                status=STATUS_MAP.get(status, LearnStatus.LOCKED),
+                status=STATUS_MAP.get(status, LearnStatus.NOT_STARTED),
+                type=outline_type_map.get(outline_item.type, OutlineType.NORMAL),
+                is_paid=is_paid,
                 children=[],
             )
             if item.children:
@@ -290,6 +296,7 @@ def get_learn_record(
                 records=[],
                 interaction="",
             )
+        app.logger.info(f"progress_record: {progress_record.progress_record_bid}")
         generated_blocks: list[LearnGeneratedBlock] = (
             LearnGeneratedBlock.query.filter(
                 LearnGeneratedBlock.user_bid == user_bid,
@@ -304,10 +311,6 @@ def get_learn_record(
             .all()
         )
 
-        sorted_generated_blocks = sorted(
-            generated_blocks,
-            key=lambda x: (0, x.position, x.id) if x.position >= 0 else (1, 0, x.id),
-        )
         records: list[GeneratedBlockDTO] = []
         interaction = ""
         BLOCK_TYPE_MAP = {
@@ -332,16 +335,14 @@ def get_learn_record(
             -1: LikeStatus.DISLIKE,
             0: LikeStatus.NONE,
         }
-        block_ids = [
-            generated_block.block_bid for generated_block in sorted_generated_blocks
-        ]
+        block_ids = [generated_block.block_bid for generated_block in generated_blocks]
         blocks = block_model.query.filter(
             block_model.block_bid.in_(block_ids), block_model.deleted == 0
         ).all()
         block_map: dict[str, Union[DraftBlock, PublishedBlock]] = {
             i.block_bid: i for i in blocks
         }
-        for generated_block in sorted_generated_blocks:
+        for generated_block in generated_blocks:
             block_type = BLOCK_TYPE_MAP.get(generated_block.type, BlockType.CONTENT)
             if block_type == BlockType.ASK and generated_block.role == ROLE_TEACHER:
                 block_type = BlockType.ANSWER

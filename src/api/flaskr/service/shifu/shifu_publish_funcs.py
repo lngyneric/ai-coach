@@ -40,9 +40,13 @@ from flaskr.service.shifu.consts import (
     ASK_MODE_ENABLE,
     BLOCK_TYPE_CONTENT_VALUE,
 )
+from markdown_flow import (
+    MarkdownFlow,
+    BlockType,
+)
 
 
-def preview_shifu_draft(app, user_id: str, shifu_id: str, variables: dict, skip: bool):
+def preview_shifu_draft(app, user_id: str, shifu_id: str, variables: dict):
     """
     Preview shifu draft
     Args:
@@ -57,14 +61,7 @@ def preview_shifu_draft(app, user_id: str, shifu_id: str, variables: dict, skip:
         if not shifu_draft:
             raise_error("SHIFU.SHIFU_NOT_FOUND")
 
-        return (
-            get_config("WEB_URL")
-            + "/c/"
-            + shifu_id
-            + "?preview=true"
-            + "&skip="
-            + str(skip).lower()
-        )
+        return get_config("WEB_URL") + "/c/" + shifu_id + "?preview=true"
 
 
 def publish_shifu_draft(app, user_id: str, shifu_id: str):
@@ -100,6 +97,7 @@ def publish_shifu_draft(app, user_id: str, shifu_id: str):
         shifu_published.price = shifu_draft.price
         shifu_published.updated_user_bid = user_id
         shifu_published.updated_at = now_time
+        shifu_published.llm_system_prompt = shifu_draft.llm_system_prompt
         db.session.add(shifu_published)
         db.session.flush()
         outline_tree = build_outline_tree(app, shifu_id)
@@ -133,8 +131,14 @@ def publish_shifu_draft(app, user_id: str, shifu_id: str):
             outline_item.content = draft_outline_item.content
             db.session.add(outline_item)
             db.session.flush()
+            markdown_flow = MarkdownFlow(draft_outline_item.content)
+            blocks = markdown_flow.get_all_blocks()
             outline_item_history_item = HistoryItem(
-                bid=node.outline_id, id=outline_item.id, type="outline", children=[]
+                bid=node.outline_id,
+                id=outline_item.id,
+                type="outline",
+                children=[],
+                child_count=len(blocks),
             )
             history_item.children.append(outline_item_history_item)
             if node.children and len(node.children) > 0:
@@ -329,15 +333,28 @@ def _generate_summaries(
 
     for chapter in outline_tree.outline_items:
         for section in chapter.children:
-            section_blocks = all_blocks.get(section.bid, [])
-            content_blocks = [
-                block
-                for block in section_blocks
-                if block.type == BLOCK_TYPE_CONTENT_VALUE
-            ]
-            now_lesson_script_prompts = "".join(
-                json.loads(block.content)["content"] for block in content_blocks
-            )
+            outline_item = outline_item_map.get(section.bid)
+            now_lesson_script_prompts = ""
+            if outline_item and bool(outline_item.content):
+                app.logger.info(
+                    f"outline_item: {outline_item.outline_item_bid} has mdflow content,make summary from mdflow"
+                )
+                mdflow = MarkdownFlow(outline_item.content)
+                blocks = mdflow.get_all_blocks()
+                for block in blocks:
+                    if block.block_type == BlockType.CONTENT:
+                        now_lesson_script_prompts += "\n" + block.content
+            else:
+                section_blocks = all_blocks.get(section.bid, [])
+                app.logger.info(f"section_blocks: {len(section_blocks)}")
+                content_blocks = [
+                    block
+                    for block in section_blocks
+                    if block.type == BLOCK_TYPE_CONTENT_VALUE
+                ]
+                now_lesson_script_prompts = "".join(
+                    json.loads(block.content)["content"] for block in content_blocks
+                )
 
             final_prompt = summary_prompt_template.format(
                 all_script_content=now_lesson_script_prompts

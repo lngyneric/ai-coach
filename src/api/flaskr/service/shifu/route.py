@@ -40,7 +40,7 @@ from .funcs import (
 from flaskr.route.common import make_common_response
 from flaskr.framework.plugin.inject import inject
 from flaskr.service.common.models import raise_param_error, raise_error
-from .consts import UNIT_TYPE_TRIAL
+from .consts import UNIT_TYPE_GUEST
 from functools import wraps
 from enum import Enum
 
@@ -354,6 +354,7 @@ def register_shifu_routes(app: Flask, path_prefix="/api/shifu"):
         shifu_model = request.get_json().get("model")
         shifu_price = request.get_json().get("price")
         shifu_temperature = request.get_json().get("temperature")
+        shifu_system_prompt = request.get_json().get("system_prompt", None)
         return make_common_response(
             save_shifu_draft_info(
                 app,
@@ -366,6 +367,7 @@ def register_shifu_routes(app: Flask, path_prefix="/api/shifu"):
                 shifu_model,
                 shifu_temperature,
                 shifu_price,
+                shifu_system_prompt,
             )
         )
 
@@ -473,9 +475,6 @@ def register_shifu_routes(app: Flask, path_prefix="/api/shifu"):
                     variables:
                         type: object
                         description: variables
-                    skip:
-                        type: boolean
-                        description: skip
         responses:
             200:
                 description: preview shifu success
@@ -495,9 +494,8 @@ def register_shifu_routes(app: Flask, path_prefix="/api/shifu"):
         """
         user_id = request.user.user_id
         variables = request.get_json().get("variables")
-        skip = request.get_json().get("skip", False)
         return make_common_response(
-            preview_shifu_draft(app, user_id, shifu_bid, variables, skip)
+            preview_shifu_draft(app, user_id, shifu_bid, variables)
         )
 
     @app.route(path_prefix + "/shifus/<shifu_bid>/outlines/reorder", methods=["PATCH"])
@@ -578,7 +576,7 @@ def register_shifu_routes(app: Flask, path_prefix="/api/shifu"):
                         description: outline description
                     type:
                         type: string
-                        description: outline type (normal,trial)
+                        description: outline type (normal,trial,guest)
                     system_prompt:
                         type: string
                         description: outline system prompt
@@ -609,7 +607,7 @@ def register_shifu_routes(app: Flask, path_prefix="/api/shifu"):
         parent_bid = request.get_json().get("parent_bid")
         name = request.get_json().get("name")
         description = request.get_json().get("description", "")
-        type = request.get_json().get("type", UNIT_TYPE_TRIAL)
+        type = request.get_json().get("type", UNIT_TYPE_GUEST)
         index = request.get_json().get("index", None)
         system_prompt = request.get_json().get("system_prompt", None)
         is_hidden = request.get_json().get("is_hidden", False)
@@ -662,7 +660,7 @@ def register_shifu_routes(app: Flask, path_prefix="/api/shifu"):
                         description: outline is hidden
                     type:
                         type: string
-                        description: unit type (normal,trial)
+                        description: unit type (normal,trial,guest)
         responses:
             200:
                 description: modify outline success
@@ -686,7 +684,7 @@ def register_shifu_routes(app: Flask, path_prefix="/api/shifu"):
         index = request.get_json().get("index")
         system_prompt = request.get_json().get("system_prompt", None)
         is_hidden = request.get_json().get("is_hidden", False)
-        type = request.get_json().get("type", UNIT_TYPE_TRIAL)
+        type = request.get_json().get("type", UNIT_TYPE_GUEST)
         return make_common_response(
             modify_unit(
                 app,
@@ -863,7 +861,7 @@ def register_shifu_routes(app: Flask, path_prefix="/api/shifu"):
 
     @app.route(
         path_prefix + "/shifus/<shifu_bid>/outlines/<outline_bid>/mdflow/parse",
-        methods=["GET"],
+        methods=["POST"],
     )
     @ShifuTokenValidation(ShifuPermission.VIEW)
     def parse_mdflow_api(shifu_bid: str, outline_bid: str):
@@ -876,7 +874,15 @@ def register_shifu_routes(app: Flask, path_prefix="/api/shifu"):
             - name: outline_bid
               type: string
               required: true
-
+            - in: body
+              name: body
+              required: true
+              schema:
+                type: object
+                properties:
+                    data:
+                        type: string
+                        description: mdflow
         responses:
             200:
                 description: parse mdflow success
@@ -894,7 +900,10 @@ def register_shifu_routes(app: Flask, path_prefix="/api/shifu"):
                                     type: object
                                     $ref: "#/components/schemas/MdflowDTOParseResult"
         """
-        return make_common_response(parse_shifu_mdflow(app, shifu_bid, outline_bid))
+        data = request.get_json().get("data", None)
+        return make_common_response(
+            parse_shifu_mdflow(app, shifu_bid, outline_bid, data)
+        )
 
     @app.route(
         path_prefix + "/shifus/<shifu_bid>/outlines/<outline_bid>/mdflow/run",

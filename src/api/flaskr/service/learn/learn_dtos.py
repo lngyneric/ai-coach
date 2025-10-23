@@ -15,6 +15,16 @@ class LearnStatus(Enum):
 
 
 @register_schema_to_swagger
+class OutlineType(Enum):
+    NORMAL = "normal"
+    TRIAL = "trial"
+    GUEST = "guest"
+
+    def __json__(self):
+        return self.value
+
+
+@register_schema_to_swagger
 class GeneratedType(Enum):
     CONTENT = "content"
     BREAK = "break"
@@ -192,6 +202,8 @@ class LearnOutlineItemInfoDTO(BaseModel):
     position: str = Field(..., description="outline position", required=False)
     title: str = Field(..., description="outline title", required=False)
     status: LearnStatus = Field(..., description="outline status", required=False)
+    type: OutlineType = Field(..., description="outline type", required=False)
+    is_paid: bool = Field(..., description="outline is paid", required=False)
     children: list["LearnOutlineItemInfoDTO"] = Field(
         ..., description="outline children", required=False
     )
@@ -202,10 +214,18 @@ class LearnOutlineItemInfoDTO(BaseModel):
         position: str,
         title: str,
         status: LearnStatus,
+        type: OutlineType,
+        is_paid: bool,
         children: list["LearnOutlineItemInfoDTO"],
     ):
         super().__init__(
-            bid=bid, position=position, title=title, status=status, children=children
+            bid=bid,
+            position=position,
+            title=title,
+            status=status,
+            children=children,
+            type=type,
+            is_paid=is_paid,
         )
 
     def __json__(self):
@@ -214,7 +234,9 @@ class LearnOutlineItemInfoDTO(BaseModel):
             "position": self.position,
             "title": self.title,
             "status": self.status.value,
+            "is_paid": self.is_paid,
             "children": self.children,
+            "type": self.type.value,
         }
 
 
@@ -338,4 +360,23 @@ class LearnRecordDTO(BaseModel):
         return {
             "records": self.records,
             "interaction": self.interaction,
+        }
+
+
+@register_schema_to_swagger
+class RunStatusDTO(BaseModel):
+    is_running: bool = Field(..., description="is running", required=False)
+    running_time: int = Field(..., description="running time", required=False)
+
+    def __init__(
+        self,
+        is_running: bool,
+        running_time: int,
+    ):
+        super().__init__(is_running=is_running, running_time=running_time)
+
+    def __json__(self):
+        return {
+            "is_running": self.is_running,
+            "running_time": self.running_time,
         }
