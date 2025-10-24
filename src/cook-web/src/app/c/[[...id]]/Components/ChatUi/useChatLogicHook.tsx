@@ -277,24 +277,24 @@ function useChatLogicHook({
         sseParams,
         async response => {
           if (response.type === SSE_OUTPUT_TYPE.HEARTBEAT) {
-            // if (!isEnd) {
-            //   currentBlockIdRef.current = 'loading';
-            //   setTrackedContentList(prev => {
-            //     const hasLoading = prev.some(
-            //       item => item.generated_block_bid === 'loading',
-            //     );
-            //     if (hasLoading) {
-            //       return prev;
-            //     }
-            //     const placeholderItem: ChatContentItem = {
-            //       generated_block_bid: 'loading',
-            //       content: '',
-            //       customRenderBar: () => <LoadingBar />,
-            //       type: ChatContentItemType.CONTENT,
-            //     };
-            //     return [...prev, placeholderItem];
-            //   });
-            // }
+            if (!isEnd) {
+              currentBlockIdRef.current = 'loading';
+              setTrackedContentList(prev => {
+                const hasLoading = prev.some(
+                  item => item.generated_block_bid === 'loading',
+                );
+                if (hasLoading) {
+                  return prev;
+                }
+                const placeholderItem: ChatContentItem = {
+                  generated_block_bid: 'loading',
+                  content: '',
+                  customRenderBar: () => <LoadingBar />,
+                  type: ChatContentItemType.CONTENT,
+                };
+                return [...prev, placeholderItem];
+              });
+            }
             return;
           }
           try {
@@ -973,23 +973,25 @@ function useChatLogicHook({
         // Add interaction blocks - use captured value instead of ref
         const lastItem = updatedList[updatedList.length - 1];
         const gid = lastItem.generated_block_bid;
-
-        updatedList.push({
-          parent_block_bid: gid,
-          generated_block_bid: '',
-          content: '',
-          like_status: LIKE_STATUS.NONE,
-          type: ChatContentItemType.LIKE_STATUS,
-        });
+        if (lastItem.type !== ChatContentItemType.INTERACTION) {
+          updatedList.push({
+            parent_block_bid: gid,
+            generated_block_bid: '',
+            content: '',
+            like_status: LIKE_STATUS.NONE,
+            type: ChatContentItemType.LIKE_STATUS,
+          });
+        }
         if (interactionBlockToAdd) {
           updatedList.push(interactionBlockToAdd);
         } else {
-          // sseRef.current?.close();
-          // console.log('close.......');
-          // runRef.current?.({
-          //   input: '',
-          //   input_type: SSE_INPUT_TYPE.NORMAL,
-          // });
+          if (lastItem.type !== ChatContentItemType.INTERACTION) {
+            sseRef.current?.close();
+            runRef.current?.({
+              input: '',
+              input_type: SSE_INPUT_TYPE.NORMAL,
+            });
+          }
         }
 
         return updatedList;
