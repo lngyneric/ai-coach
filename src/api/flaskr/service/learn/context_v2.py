@@ -790,6 +790,7 @@ class RunScriptContextV2:
         if len(outline_updates) > 0:
             yield from self._render_outline_updates(outline_updates, new_chapter=False)
             db.session.flush()
+            self._current_attend = self._get_current_attend(self._outline_item_info.bid)
             if self._current_attend.status != LEARN_STATUS_IN_PROGRESS:
                 app.logger.info(
                     "current_attend.status != LEARN_STATUS_IN_PROGRESS To False"
