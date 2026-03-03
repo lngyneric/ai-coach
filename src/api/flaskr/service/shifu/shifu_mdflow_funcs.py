@@ -12,7 +12,6 @@ from flaskr.service.shifu.shifu_history_manager import (
     save_outline_history,
     get_shifu_draft_meta,
     get_shifu_draft_revision,
-    get_shifu_draft_log,
     mask_contact_identifier,
 )
 from flaskr.service.profile.profile_manage import (
@@ -58,7 +57,7 @@ LESSON_HISTORY_MAX_VERSIONS = 500
 LESSON_HISTORY_MAX_DAYS = 180
 
 
-def _cleanup_outline_history_versions(
+def cleanup_outline_history_versions(
     app: Flask,
     shifu_bid: str,
     outline_bid: str,
@@ -67,9 +66,12 @@ def _cleanup_outline_history_versions(
 ) -> None:
     """
     Keep outline version history bounded:
-    - keep at most `keep_versions` latest non-deleted versions
-    - keep at most `keep_days` days of non-deleted versions
-    The latest version is always preserved.
+    - trim to around `keep_versions` latest non-deleted versions
+    - trim to around `keep_days` days of non-deleted versions
+    To keep outline-level revision stable for metadata-only updates, this
+    cleanup always preserves both the latest version and the current
+    content-anchor version. Therefore, actual retained rows can exceed strict
+    limits by protected anchor rows.
     """
     latest_version = (
         DraftOutlineItem.query.filter(
@@ -84,32 +86,41 @@ def _cleanup_outline_history_versions(
         return
 
     latest_id = int(latest_version.id)
+    latest_content = latest_version.content or ""
+    content_anchor_version = latest_version
+    for version in _query_outline_versions(shifu_bid, outline_bid):
+        if version.id == latest_version.id:
+            continue
+        if (version.content or "") != latest_content:
+            break
+        content_anchor_version = version
+    protected_ids = {latest_id, int(content_anchor_version.id)}
+
     cutoff_time = datetime.now() - timedelta(days=max(1, keep_days))
     to_mark_deleted_ids: set[int] = set()
 
     # Trim by age.
-    expired_ids = (
-        DraftOutlineItem.query.filter(
-            DraftOutlineItem.shifu_bid == shifu_bid,
-            DraftOutlineItem.outline_item_bid == outline_bid,
-            DraftOutlineItem.deleted == 0,
-            DraftOutlineItem.updated_at < cutoff_time,
-            DraftOutlineItem.id != latest_id,
-        )
-        .with_entities(DraftOutlineItem.id)
-        .all()
+    expired_query = DraftOutlineItem.query.filter(
+        DraftOutlineItem.shifu_bid == shifu_bid,
+        DraftOutlineItem.outline_item_bid == outline_bid,
+        DraftOutlineItem.deleted == 0,
+        DraftOutlineItem.updated_at < cutoff_time,
     )
+    if protected_ids:
+        expired_query = expired_query.filter(~DraftOutlineItem.id.in_(protected_ids))
+    expired_ids = expired_query.with_entities(DraftOutlineItem.id).all()
     to_mark_deleted_ids.update(int(item.id) for item in expired_ids)
 
     # Trim by max count.
+    overflow_query = DraftOutlineItem.query.filter(
+        DraftOutlineItem.shifu_bid == shifu_bid,
+        DraftOutlineItem.outline_item_bid == outline_bid,
+        DraftOutlineItem.deleted == 0,
+    )
+    if protected_ids:
+        overflow_query = overflow_query.filter(~DraftOutlineItem.id.in_(protected_ids))
     overflow_ids = (
-        DraftOutlineItem.query.filter(
-            DraftOutlineItem.shifu_bid == shifu_bid,
-            DraftOutlineItem.outline_item_bid == outline_bid,
-            DraftOutlineItem.deleted == 0,
-            DraftOutlineItem.id != latest_id,
-        )
-        .order_by(DraftOutlineItem.id.desc())
+        overflow_query.order_by(DraftOutlineItem.id.desc())
         .offset(max(1, keep_versions) - 1)
         .with_entities(DraftOutlineItem.id)
         .all()
@@ -127,6 +138,23 @@ def _cleanup_outline_history_versions(
     )
 
 
+def _cleanup_outline_history_versions(
+    app: Flask,
+    shifu_bid: str,
+    outline_bid: str,
+    keep_versions: int = LESSON_HISTORY_MAX_VERSIONS,
+    keep_days: int = LESSON_HISTORY_MAX_DAYS,
+) -> None:
+    """Backward-compatible alias for tests and internal callers."""
+    cleanup_outline_history_versions(
+        app,
+        shifu_bid,
+        outline_bid,
+        keep_versions=keep_versions,
+        keep_days=keep_days,
+    )
+
+
 def save_shifu_mdflow(
     app: Flask,
     user_id: str,
@@ -139,28 +167,34 @@ def save_shifu_mdflow(
     Save shifu mdflow
     """
     with app.app_context():
-        lock_latest = isinstance(base_revision, int)
-        latest_log = get_shifu_draft_log(app, shifu_bid, for_update=lock_latest)
-        latest_revision = int(latest_log.id) if latest_log else 0
-        updated_user_bid = latest_log.updated_user_bid if latest_log else ""
-        if (
-            isinstance(base_revision, int)
-            and base_revision >= 0
-            and latest_revision > base_revision
-            and (not updated_user_bid or updated_user_bid != user_id)
-        ):
-            return {"conflict": True, "meta": get_shifu_draft_meta(app, shifu_bid)}
-
-        outline_item: DraftOutlineItem = (
-            DraftOutlineItem.query.filter(
-                DraftOutlineItem.shifu_bid == shifu_bid,
-                DraftOutlineItem.outline_item_bid == outline_bid,
-            )
-            .order_by(DraftOutlineItem.id.desc())
-            .first()
-        )
+        lock_latest = isinstance(base_revision, int) and base_revision >= 0
+        outline_query = DraftOutlineItem.query.filter(
+            DraftOutlineItem.shifu_bid == shifu_bid,
+            DraftOutlineItem.outline_item_bid == outline_bid,
+        ).order_by(DraftOutlineItem.id.desc())
+        if lock_latest:
+            outline_query = outline_query.with_for_update()
+        outline_item: DraftOutlineItem = outline_query.first()
         if not outline_item:
             raise_error("server.shifu.outlineItemNotFound")
+        if outline_item.deleted == 1:
+            return {
+                "conflict": True,
+                "meta": get_shifu_draft_meta(app, shifu_bid, outline_bid),
+            }
+
+        if lock_latest:
+            latest_meta = get_shifu_draft_meta(app, shifu_bid, outline_bid)
+            if int(latest_meta.get("deleted", 0) or 0) == 1:
+                return {"conflict": True, "meta": latest_meta}
+            latest_revision = int(latest_meta.get("revision", 0) or 0)
+            updated_user_bid = (latest_meta.get("updated_user") or {}).get(
+                "user_bid"
+            ) or ""
+            if latest_revision > base_revision and (
+                not updated_user_bid or updated_user_bid != user_id
+            ):
+                return {"conflict": True, "meta": latest_meta}
         # create new version
         new_outline: DraftOutlineItem = outline_item.clone()
         new_outline.content = content
@@ -189,7 +223,7 @@ def save_shifu_mdflow(
                 )
                 if not exist_variable:
                     add_profile_item_quick(app, shifu_bid, variable, user_id)
-            new_revision = save_outline_history(
+            save_outline_history(
                 app,
                 user_id,
                 shifu_bid,
@@ -197,17 +231,18 @@ def save_shifu_mdflow(
                 new_outline.id,
                 len(blocks),
             )
-            _cleanup_outline_history_versions(
+            cleanup_outline_history_versions(
                 app,
                 shifu_bid,
                 outline_bid,
             )
             db.session.commit()
+            new_revision = int(new_outline.id)
         return {
             "conflict": False,
             "new_revision": new_revision
             if new_revision is not None
-            else get_shifu_draft_revision(app, shifu_bid),
+            else get_shifu_draft_revision(app, shifu_bid, outline_bid),
         }
 
 
@@ -452,13 +487,13 @@ def restore_shifu_mdflow_history_version(
         if target_content == current_content:
             return {
                 "restored": False,
-                "new_revision": get_shifu_draft_revision(app, shifu_bid),
+                "new_revision": get_shifu_draft_revision(app, shifu_bid, outline_bid),
             }
 
         effective_base_revision = (
             base_revision
             if isinstance(base_revision, int) and base_revision >= 0
-            else get_shifu_draft_revision(app, shifu_bid)
+            else get_shifu_draft_revision(app, shifu_bid, outline_bid)
         )
         result = save_shifu_mdflow(
             app,
