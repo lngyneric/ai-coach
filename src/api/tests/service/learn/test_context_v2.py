@@ -23,6 +23,7 @@ if not hasattr(dao, "redis_client"):
     dao.redis_client = None
 
 from flaskr.service.learn.context_v2 import (
+    MdflowContextV2,
     RunScriptContextV2,
     RunScriptPreviewContextV2,
 )
@@ -175,6 +176,38 @@ class StreamTtsGateTests(unittest.TestCase):
         ctx._preview_mode = True
         ctx._listen = True
         self.assertFalse(ctx._should_stream_tts())
+
+
+class MdflowContextCompatibilityTests(unittest.TestCase):
+    def test_init_ignores_visual_mode_when_api_missing(self):
+        class FakeMarkdownFlow:
+            def __init__(self, *args, **kwargs):
+                self.args = args
+                self.kwargs = kwargs
+
+            def set_output_language(self, *_args, **_kwargs):
+                return self
+
+        with patch("flaskr.service.learn.context_v2.MarkdownFlow", FakeMarkdownFlow):
+            context = MdflowContextV2(document="doc", visual_mode=False)
+
+        self.assertIsInstance(context._mdflow, FakeMarkdownFlow)
+
+    def test_init_calls_visual_mode_when_api_exists(self):
+        class FakeMarkdownFlow:
+            def __init__(self, *args, **kwargs):
+                self.visual_mode = None
+
+            def set_visual_mode(self, visual_mode):
+                self.visual_mode = visual_mode
+
+            def set_output_language(self, *_args, **_kwargs):
+                return self
+
+        with patch("flaskr.service.learn.context_v2.MarkdownFlow", FakeMarkdownFlow):
+            context = MdflowContextV2(document="doc", visual_mode=False)
+
+        self.assertFalse(context._mdflow.visual_mode)
 
 
 class PreviewResolveLlmSettingsTests(unittest.TestCase):
