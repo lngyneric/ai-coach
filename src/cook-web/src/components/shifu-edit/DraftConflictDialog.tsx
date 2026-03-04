@@ -12,29 +12,25 @@ interface DraftConflictDialogProps {
   open: boolean;
   phone?: string;
   onRefresh: () => void;
-  onCancel: () => void;
 }
 
 const DraftConflictDialog = ({
   open,
   phone,
   onRefresh,
-  onCancel,
 }: DraftConflictDialogProps) => {
   const { t } = useTranslation();
   const displayPhone =
     phone || t('module.shifuSetting.draftConflictUnknownUser');
 
   return (
-    <Dialog
-      open={open}
-      onOpenChange={nextOpen => {
-        if (!nextOpen) {
-          onCancel();
-        }
-      }}
-    >
-      <DialogContent className='sm:max-w-md'>
+    <Dialog open={open}>
+      <DialogContent
+        className='sm:max-w-md'
+        showClose={false}
+        onEscapeKeyDown={event => event.preventDefault()}
+        onInteractOutside={event => event.preventDefault()}
+      >
         <DialogHeader>
           <DialogTitle>
             {t('module.shifuSetting.draftConflictTitle')}
