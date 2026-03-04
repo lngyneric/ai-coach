@@ -19,6 +19,7 @@ import {
   DraftMeta,
   MdflowHistoryItem,
   MdflowHistoryListResult,
+  MdflowHistoryVersionDetail,
   MdflowHistoryRestoreResult,
 } from '../types/shifu';
 import api from '@/api';
@@ -590,6 +591,32 @@ export const ShifuProvider = ({
     [],
   );
 
+  const loadMdflowHistoryVersionDetail = useCallback(
+    async (shifuId: string, outlineId: string, versionId: number) => {
+      if (!shifuId || !outlineId || versionId <= 0) {
+        return null;
+      }
+      const timezone =
+        typeof window !== 'undefined' &&
+        typeof Intl !== 'undefined' &&
+        Intl.DateTimeFormat
+          ? Intl.DateTimeFormat().resolvedOptions().timeZone
+          : '';
+      try {
+        return (await api.getMdflowHistoryVersionDetail({
+          shifu_bid: shifuId,
+          outline_bid: outlineId,
+          version_id: versionId,
+          ...(timezone ? { timezone } : {}),
+        })) as MdflowHistoryVersionDetail;
+      } catch (error) {
+        console.error('Failed to load mdflow history version detail', error);
+        return null;
+      }
+    },
+    [],
+  );
+
   const restoreMdflowHistory = useCallback(
     async (
       shifuId: string,
@@ -628,7 +655,11 @@ export const ShifuProvider = ({
     [baseRevision, loadDraftMeta],
   );
 
-  const loadChapters = async (shifuId: string) => {
+  const loadChapters = async (
+    shifuId: string,
+    options?: { autoSelectFirstLesson?: boolean },
+  ) => {
+    const autoSelectFirstLesson = options?.autoSelectFirstLesson ?? true;
     try {
       setIsLoading(true);
       setError(null);
@@ -638,7 +669,7 @@ export const ShifuProvider = ({
       ]);
       setCurrentShifu(normalizeShifuDetail(shifuInfo) as Shifu | null);
       const list = remapOutlineTree(chaptersData);
-      if (list.length > 0) {
+      if (autoSelectFirstLesson && list.length > 0) {
         // Find the first lesson to select by default
         const firstLesson = list.find(
           chapter => chapter.children && chapter.children.length > 0,
@@ -652,6 +683,15 @@ export const ShifuProvider = ({
           await loadMdflow(firstLesson.bid, shifuId);
           // await loadBlocks(firstLesson.bid, shifuId);
         }
+      } else if (!autoSelectFirstLesson) {
+        debouncedAutoSaveRef.current.cancel();
+        internalSetCurrentNode(null);
+        setMdflow('');
+        currentMdflow.current = '';
+        setBaseRevision(null);
+        setLatestDraftMeta(null);
+        setHasDraftConflict(false);
+        setAutosavePaused(false);
       }
       setChapters(list);
       buildOutlineTree(list);
@@ -2025,6 +2065,7 @@ export const ShifuProvider = ({
       saveMdflow,
       loadDraftMeta,
       loadMdflowHistory,
+      loadMdflowHistoryVersionDetail,
       restoreMdflowHistory,
       setBaseRevision,
       setLatestDraftMeta,

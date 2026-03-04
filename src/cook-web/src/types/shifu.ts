@@ -86,6 +86,7 @@ export interface ProfileItemDefinition {
 export interface DraftMeta {
   revision: number;
   updated_at?: string | null;
+  deleted?: number;
   updated_user?: {
     user_bid?: string;
     phone?: string;
@@ -104,9 +105,19 @@ export interface MdflowHistoryListResult {
   items: MdflowHistoryItem[];
 }
 
+export interface MdflowHistoryVersionDetail {
+  version_id: number;
+  content: string;
+  updated_at?: string | null;
+  updated_at_display?: string | null;
+  updated_user_bid?: string;
+  updated_user_name?: string;
+}
+
 export interface MdflowHistoryRestoreResult {
   restored: boolean;
   new_revision?: number;
+  lesson_deleted?: boolean;
 }
 
 export interface ShifuState {
@@ -171,7 +182,10 @@ export interface ShifuActions {
   addChapter: (chapter: Outline) => void;
   addRootOutline: (settings: LessonCreationSettings) => Promise<void>;
   loadShifu: (shifuId: string, options?: { silent?: boolean }) => Promise<void>;
-  loadChapters: (shifuId: string) => Promise<void>;
+  loadChapters: (
+    shifuId: string,
+    options?: { autoSelectFirstLesson?: boolean },
+  ) => Promise<void>;
   createChapter: (chapter: Omit<Outline, 'chapter_id'>) => Promise<void>;
   setChapters: (chapters: Outline[]) => void;
   setFocusId: (id: string) => void;
@@ -240,6 +254,11 @@ export interface ShifuActions {
     outlineId: string,
     limit?: number,
   ) => Promise<MdflowHistoryItem[]>;
+  loadMdflowHistoryVersionDetail: (
+    shifuId: string,
+    outlineId: string,
+    versionId: number,
+  ) => Promise<MdflowHistoryVersionDetail | null>;
   restoreMdflowHistory: (
     shifuId: string,
     outlineId: string,
