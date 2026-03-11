@@ -58,7 +58,7 @@ export const NewChatComponents = ({
   updateSelectedLesson,
   getNextLessonId,
   previewMode = false,
-  isNavOpen = false,
+  onListenPlayerVisibilityChange,
 }) => {
   const { trackEvent, trackTrailProgress } = useTracking();
   const { t } = useTranslation();
@@ -249,6 +249,13 @@ export const NewChatComponents = ({
     showOutputInProgressToast,
     onPayModalOpen,
   });
+
+  useEffect(() => {
+    if (isListenModeActive && !isLoading) {
+      return;
+    }
+    onListenPlayerVisibilityChange?.(false);
+  }, [isListenModeActive, isLoading, onListenPlayerVisibilityChange]);
 
   const listenModeItems = useMemo(() => {
     if (!isListenModeActive || !mobileStyle) {
@@ -580,6 +587,7 @@ export const NewChatComponents = ({
               previewMode={previewMode}
               onRequestAudioForBlock={requestAudioForBlock}
               onSend={memoizedOnSend}
+              onPlayerVisibilityChange={onListenPlayerVisibilityChange}
             />
           )
         ) : (
