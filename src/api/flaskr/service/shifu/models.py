@@ -1,0 +1,904 @@
+"""
+Shifu models
+
+This module contains models for shifu.
+
+Author: yfge
+Date: 2025-08-07
+"""
+
+from sqlalchemy import (
+    Column,
+    String,
+    Integer,
+    TIMESTAMP,
+    DECIMAL,
+    Text,
+    SmallInteger,
+    DateTime,
+    UniqueConstraint,
+    Index,
+)
+from sqlalchemy.dialects.mysql import BIGINT, LONGTEXT
+from sqlalchemy.sql import func
+from ...dao import db
+from .consts import ASK_MODE_DEFAULT
+from flaskr.util.compare import compare_decimal
+
+
+class ResourceType:
+    CHAPTER = 9001
+    SECTION = 9002
+    BLOCK = 9003
+
+
+class FavoriteScenario(db.Model):
+    """
+    Favorite scenario
+    """
+
+    __tablename__ = "scenario_favorite"
+    id = Column(BIGINT, primary_key=True, autoincrement=True)
+    scenario_id = Column(
+        String(36), nullable=False, default="", comment="Scenario UUID"
+    )
+    user_id = Column(String(36), nullable=False, default="", comment="User UUID")
+    status = Column(Integer, nullable=False, default=0, comment="Status")
+    created_at = Column(
+        TIMESTAMP, nullable=False, default=func.now(), comment="Creation time"
+    )
+    updated_at = Column(
+        TIMESTAMP,
+        nullable=False,
+        default=func.now(),
+        onupdate=func.now(),
+        comment="Update time",
+    )
+
+
+class ScenarioResource(db.Model):
+    """
+    Scenario resource
+    """
+
+    __tablename__ = "scenario_resource"
+    id = Column(BIGINT, primary_key=True, autoincrement=True)
+    resource_resource_id = Column(
+        String(36), nullable=False, default="", comment="Resource UUID", index=True
+    )
+    scenario_id = Column(
+        String(36), nullable=False, default="", comment="Scenario UUID", index=True
+    )
+    chapter_id = Column(
+        String(36), nullable=False, default="", comment="Chapter UUID", index=True
+    )
+    resource_type = Column(Integer, nullable=False, default=0, comment="Resource type")
+    resource_id = Column(
+        String(36), nullable=False, default="", comment="Resource UUID", index=True
+    )
+    is_deleted = Column(Integer, nullable=False, default=0, comment="Is deleted")
+    created_at = Column(
+        TIMESTAMP, nullable=False, default=func.now(), comment="Creation time"
+    )
+
+
+class AiCourseAuth(db.Model):
+    """
+    Ai course auth
+    """
+
+    __tablename__ = "ai_course_auth"
+    id = Column(BIGINT, primary_key=True, autoincrement=True)
+    course_auth_id = Column(
+        String(36),
+        nullable=False,
+        default="",
+        comment="course_auth_id UUID",
+        index=True,
+    )
+    course_id = Column(String(36), nullable=False, default="", comment="course_id UUID")
+    user_id = Column(String(36), nullable=False, default="", comment="User UUID")
+    # 1 read 2 write 3 delete 4 publish
+    auth_type = Column(String(255), nullable=False, default="[]", comment="auth_info")
+    status = Column(Integer, nullable=False, default=0, comment="Status")
+    created_at = Column(
+        TIMESTAMP, nullable=False, default=func.now(), comment="Creation time"
+    )
+    updated_at = Column(
+        TIMESTAMP,
+        nullable=False,
+        default=func.now(),
+        onupdate=func.now(),
+        comment="Update time",
+    )
+
+
+# per-user archive status for a shifu
+class ShifuUserArchive(db.Model):
+    """
+    Per-user archive state for a shifu
+    """
+
+    __tablename__ = "shifu_user_archives"
+    __table_args__ = (
+        UniqueConstraint(
+            "shifu_bid",
+            "user_bid",
+            name="uk_shifu_user_archive_bid_user",
+        ),
+    )
+
+    id = Column(BIGINT, primary_key=True, autoincrement=True)
+    shifu_bid = Column(
+        String(32),
+        nullable=False,
+        index=True,
+        default="",
+        comment="Shifu business identifier",
+    )
+    user_bid = Column(
+        String(32),
+        nullable=False,
+        index=True,
+        default="",
+        comment="User business identifier",
+    )
+    archived = Column(
+        SmallInteger,
+        nullable=False,
+        default=0,
+        comment="Archive flag: 0=active, 1=archived",
+    )
+    archived_at = Column(
+        DateTime,
+        nullable=True,
+        comment="Archived timestamp",
+    )
+    created_at = Column(
+        DateTime, nullable=False, default=func.now(), comment="Creation timestamp"
+    )
+    updated_at = Column(
+        DateTime,
+        nullable=False,
+        default=func.now(),
+        comment="Last update timestamp",
+        onupdate=func.now(),
+    )
+
+
+# draft shifu's model
+class DraftShifu(db.Model):
+    """
+    Shifu draft shifu
+    """
+
+    __tablename__ = "shifu_draft_shifus"
+    id = Column(BIGINT, primary_key=True, autoincrement=True)
+    shifu_bid = Column(
+        String(32),
+        nullable=False,
+        index=True,
+        default="",
+        comment="Shifu business identifier",
+    )
+    title = Column(String(100), nullable=False, default="", comment="Shifu title")
+    keywords = Column(
+        String(100), nullable=False, default="", comment="Associated keywords"
+    )
+    description = Column(
+        String(500), nullable=False, default="", comment="Shifu description"
+    )
+    avatar_res_bid = Column(
+        String(32),
+        nullable=False,
+        default="",
+        comment="Avatar resource business identifier",
+    )
+    llm = Column(String(100), nullable=False, default="", comment="LLM model name")
+    llm_temperature = Column(
+        DECIMAL(10, 2),
+        nullable=False,
+        default=0,
+        comment="LLM temperature parameter",
+    )
+    llm_system_prompt = Column(
+        Text,
+        nullable=False,
+        default="",
+        comment="LLM system prompt",
+    )
+    ask_enabled_status = Column(
+        SmallInteger,
+        nullable=False,
+        default=ASK_MODE_DEFAULT,
+        comment="Ask agent status: 5101=default, 5102=disabled, 5103=enabled",
+    )
+    ask_llm = Column(
+        String(100),
+        nullable=False,
+        default="",
+        comment="Ask agent LLM model",
+    )
+    ask_llm_temperature = Column(
+        DECIMAL(10, 2),
+        nullable=False,
+        default=0.0,
+        comment="Ask agent LLM temperature",
+    )
+    ask_llm_system_prompt = Column(
+        Text,
+        nullable=False,
+        default="",
+        comment="Ask agent LLM system prompt",
+    )
+    ask_provider_config = Column(
+        Text,
+        nullable=False,
+        default="{}",
+        comment='Ask provider config JSON, e.g. {"provider":"llm","mode":"provider_then_llm","config":{}}',
+    )
+    price = Column(DECIMAL(10, 2), nullable=False, default=0, comment="Shifu price")
+
+    # TTS Configuration
+    tts_enabled = Column(
+        SmallInteger,
+        nullable=False,
+        default=0,
+        comment="TTS enabled: 0=disabled, 1=enabled",
+    )
+    tts_provider = Column(
+        String(32),
+        nullable=False,
+        default="",
+        comment="TTS provider: minimax, volcengine, volcengine_http, baidu, aliyun",
+    )
+    tts_model = Column(
+        String(64),
+        nullable=False,
+        default="",
+        comment="TTS model/resource ID (e.g., seed-tts-1.0, seed-tts-2.0, speech-01-turbo)",
+    )
+    tts_voice_id = Column(
+        String(64),
+        nullable=False,
+        default="",
+        comment="TTS voice ID",
+    )
+    tts_speed = Column(
+        DECIMAL(6, 2),
+        nullable=False,
+        default=1.0,
+        comment="TTS speech speed (provider-specific range)",
+    )
+    tts_pitch = Column(
+        SmallInteger,
+        nullable=False,
+        default=0,
+        comment="TTS pitch adjustment (provider-specific range)",
+    )
+    tts_emotion = Column(
+        String(32),
+        nullable=False,
+        default="",
+        comment="TTS emotion setting",
+    )
+
+    # Language Output Configuration
+    use_learner_language = Column(
+        SmallInteger,
+        nullable=False,
+        default=0,
+        comment="Use learner language for output: 0=disabled (default), 1=enabled",
+    )
+
+    deleted = Column(
+        SmallInteger,
+        nullable=False,
+        default=0,
+        comment="Deletion flag: 0=active, 1=deleted",
+    )
+    created_at = Column(
+        DateTime, nullable=False, default=func.now(), comment="Creation timestamp"
+    )
+    created_user_bid = Column(
+        String(32),
+        nullable=False,
+        index=True,
+        default="",
+        comment="Creator user business identifier",
+    )
+    updated_at = Column(
+        DateTime,
+        nullable=False,
+        default=func.now(),
+        comment="Last update timestamp",
+        onupdate=func.now(),
+    )
+    updated_user_bid = Column(
+        String(32),
+        nullable=False,
+        index=True,
+        default="",
+        comment="Last updater user business identifier",
+    )
+
+    def clone(self):
+        return DraftShifu(
+            shifu_bid=self.shifu_bid,
+            title=self.title,
+            keywords=self.keywords,
+            description=self.description,
+            avatar_res_bid=self.avatar_res_bid,
+            llm=self.llm,
+            llm_temperature=self.llm_temperature,
+            llm_system_prompt=self.llm_system_prompt,
+            ask_enabled_status=self.ask_enabled_status,
+            ask_llm=self.ask_llm,
+            ask_llm_temperature=self.ask_llm_temperature,
+            ask_llm_system_prompt=self.ask_llm_system_prompt,
+            ask_provider_config=self.ask_provider_config,
+            price=self.price,
+            tts_enabled=self.tts_enabled,
+            tts_provider=self.tts_provider,
+            tts_model=self.tts_model,
+            tts_voice_id=self.tts_voice_id,
+            tts_speed=self.tts_speed,
+            tts_pitch=self.tts_pitch,
+            tts_emotion=self.tts_emotion,
+            use_learner_language=self.use_learner_language,
+            deleted=self.deleted,
+            created_at=self.created_at,
+            created_user_bid=self.created_user_bid,
+            updated_at=self.updated_at,
+            updated_user_bid=self.updated_user_bid,
+        )
+
+    def eq(self, other):
+        return (
+            self.shifu_bid == other.shifu_bid
+            and self.title == other.title
+            and self.keywords == other.keywords
+            and self.description == other.description
+            and self.avatar_res_bid == other.avatar_res_bid
+            and self.llm == other.llm
+            and compare_decimal(self.llm_temperature, other.llm_temperature)
+            and self.llm_system_prompt == other.llm_system_prompt
+            and self.ask_enabled_status == other.ask_enabled_status
+            and self.ask_llm == other.ask_llm
+            and compare_decimal(self.ask_llm_temperature, other.ask_llm_temperature)
+            and self.ask_llm_system_prompt == other.ask_llm_system_prompt
+            and self.ask_provider_config == other.ask_provider_config
+            and compare_decimal(self.price, other.price)
+            and self.tts_enabled == other.tts_enabled
+            and self.tts_provider == other.tts_provider
+            and self.tts_model == other.tts_model
+            and self.tts_voice_id == other.tts_voice_id
+            and compare_decimal(self.tts_speed, other.tts_speed)
+            and self.tts_pitch == other.tts_pitch
+            and self.tts_emotion == other.tts_emotion
+            and self.use_learner_language == other.use_learner_language
+        )
+
+    def get_str_to_check(self):
+        return f"{self.title} {self.keywords} {self.description} {self.llm_system_prompt} {self.ask_llm_system_prompt}"
+
+
+class DraftOutlineItem(db.Model):
+    __tablename__ = "shifu_draft_outline_items"
+    __table_args__ = (
+        Index(
+            "ix_shifu_draft_outline_items_shifu_outline_deleted_id",
+            "shifu_bid",
+            "outline_item_bid",
+            "deleted",
+            "id",
+        ),
+        {"comment": "Draft outline item version records"},
+    )
+    id = Column(BIGINT, primary_key=True, autoincrement=True)
+    outline_item_bid = Column(
+        String(32),
+        nullable=False,
+        index=True,
+        default="",
+        comment="Outline item business identifier",
+    )
+    shifu_bid = Column(
+        String(32),
+        nullable=False,
+        index=True,
+        default="",
+        comment="Shifu business identifier",
+    )
+    title = Column(
+        String(100),
+        nullable=False,
+        default="",
+        comment="Outline item title",
+    )
+    type = Column(
+        SmallInteger,
+        nullable=False,
+        default=0,
+        comment="Outline item type: 401=trial, 402=normal",
+    )
+    hidden = Column(
+        SmallInteger,
+        nullable=False,
+        default=0,
+        comment="Hidden flag: 0=visible, 1=hidden",
+    )
+    parent_bid = Column(
+        String(32),
+        nullable=False,
+        index=True,
+        default="",
+        comment="Parent outline item business identifier",
+    )
+    position = Column(
+        String(10),
+        nullable=False,
+        index=True,
+        default="",
+        comment="Position in outline",
+    )
+    prerequisite_item_bids = Column(
+        String(500),
+        nullable=False,
+        default="",
+        comment="Prerequisite outline item business identifiers",
+    )
+    llm = Column(String(100), nullable=False, default="", comment="LLM model name")
+    llm_temperature = Column(
+        DECIMAL(10, 2),
+        nullable=False,
+        default=0,
+        comment="LLM temperature parameter",
+    )
+    llm_system_prompt = Column(
+        Text, nullable=False, default="", comment="LLM system prompt"
+    )
+    ask_enabled_status = Column(
+        SmallInteger,
+        nullable=False,
+        default=ASK_MODE_DEFAULT,
+        comment="Ask agent status: 5101=default, 5102=disabled, 5103=enabled",
+    )
+    ask_llm = Column(
+        String(100), nullable=False, default="", comment="Ask agent LLM model"
+    )
+    ask_llm_temperature = Column(
+        DECIMAL(10, 2),
+        nullable=False,
+        default=0.0,
+        comment="Ask mode LLM temperature",
+    )
+    ask_llm_system_prompt = Column(
+        Text, nullable=False, default="", comment="Ask mode LLM system prompt"
+    )
+    content = Column(Text, nullable=False, default="", comment="MarkdownFlow content")
+    deleted = Column(
+        SmallInteger,
+        nullable=False,
+        default=0,
+        comment="Deletion flag: 0=active, 1=deleted",
+    )
+    created_at = Column(
+        DateTime, nullable=False, default=func.now(), comment="Creation timestamp"
+    )
+    created_user_bid = Column(
+        String(32),
+        nullable=False,
+        default="",
+        comment="Creator user business identifier",
+    )
+    updated_at = Column(
+        DateTime,
+        nullable=False,
+        default=func.now(),
+        comment="Last update timestamp",
+        onupdate=func.now(),
+    )
+    updated_user_bid = Column(
+        String(32),
+        nullable=False,
+        default="",
+        comment="Last updater user business identifier",
+    )
+
+    def clone(self):
+        return DraftOutlineItem(
+            outline_item_bid=self.outline_item_bid,
+            shifu_bid=self.shifu_bid,
+            title=self.title,
+            parent_bid=self.parent_bid,
+            position=self.position,
+            prerequisite_item_bids=self.prerequisite_item_bids,
+            llm=self.llm,
+            llm_temperature=self.llm_temperature,
+            llm_system_prompt=self.llm_system_prompt,
+            ask_enabled_status=self.ask_enabled_status,
+            ask_llm=self.ask_llm,
+            ask_llm_temperature=self.ask_llm_temperature,
+            ask_llm_system_prompt=self.ask_llm_system_prompt,
+            content=self.content,
+            type=self.type,
+            hidden=self.hidden,
+            deleted=self.deleted,
+            created_at=self.created_at,
+            created_user_bid=self.created_user_bid,
+            updated_at=self.updated_at,
+            updated_user_bid=self.updated_user_bid,
+        )
+
+    def eq(self, other):
+        return (
+            self.outline_item_bid == other.outline_item_bid
+            and self.shifu_bid == other.shifu_bid
+            and self.title == other.title
+            and self.parent_bid == other.parent_bid
+            and self.position == other.position
+            and self.prerequisite_item_bids == other.prerequisite_item_bids
+            and self.llm == other.llm
+            and self.type == other.type
+            and self.hidden == other.hidden
+            and compare_decimal(self.llm_temperature, other.llm_temperature)
+            and self.llm_system_prompt == other.llm_system_prompt
+            and self.ask_enabled_status == other.ask_enabled_status
+            and self.ask_llm == other.ask_llm
+            and compare_decimal(self.ask_llm_temperature, other.ask_llm_temperature)
+            and self.ask_llm_system_prompt == other.ask_llm_system_prompt
+            and self.content == other.content
+        )
+
+    def get_str_to_check(self):
+        return f"{self.title} {self.llm_system_prompt} {self.ask_llm_system_prompt}"
+
+
+class LogDraftStruct(db.Model):
+    __tablename__ = "shifu_log_draft_structs"
+    id = Column(BIGINT, primary_key=True, autoincrement=True)
+    struct_bid = Column(
+        String(32),
+        nullable=False,
+        index=True,
+        unique=True,
+        default="",
+        comment="Content business identifier",
+    )
+    shifu_bid = Column(
+        String(32),
+        nullable=False,
+        index=True,
+        default="",
+        comment="Shifu business identifier",
+    )
+    struct = Column(
+        LONGTEXT, nullable=False, default="", comment="JSON serialized shifu struct"
+    )
+    deleted = Column(
+        SmallInteger,
+        nullable=False,
+        default=0,
+        comment="Deletion flag: 0=active, 1=deleted",
+    )
+    created_at = Column(
+        DateTime, nullable=False, default=func.now(), comment="Creation timestamp"
+    )
+    created_user_bid = Column(
+        String(32),
+        nullable=False,
+        default="",
+        comment="Creator user business identifier",
+    )
+    updated_at = Column(
+        DateTime,
+        nullable=False,
+        default=func.now(),
+        comment="Last update timestamp",
+        onupdate=func.now(),
+    )
+    updated_user_bid = Column(
+        String(32),
+        nullable=False,
+        default="",
+        comment="Last updater user business identifier",
+    )
+
+
+# published shifu's model
+class PublishedShifu(db.Model):
+    __tablename__ = "shifu_published_shifus"
+    id = Column(BIGINT, primary_key=True, autoincrement=True)
+    shifu_bid = Column(
+        String(32),
+        nullable=False,
+        index=True,
+        default="",
+        comment="Shifu business identifier",
+    )
+    title = Column(String(100), nullable=False, default="", comment="Shifu title")
+    keywords = Column(
+        String(100), nullable=False, default="", comment="Associated keywords"
+    )
+    description = Column(
+        String(500), nullable=False, default="", comment="Shifu description"
+    )
+    avatar_res_bid = Column(
+        String(32),
+        nullable=False,
+        default="",
+        comment="Avatar resource business identifier",
+    )
+    llm = Column(String(100), nullable=False, default="", comment="LLM model name")
+    llm_temperature = Column(
+        DECIMAL(10, 2), nullable=False, default=0, comment="LLM temperature parameter"
+    )
+    llm_system_prompt = Column(
+        Text, nullable=False, default="", comment="LLM system prompt"
+    )
+    ask_enabled_status = Column(
+        SmallInteger,
+        nullable=False,
+        default=ASK_MODE_DEFAULT,
+        comment="Ask agent status: 5101=default, 5102=disabled, 5103=enabled",
+    )
+    ask_llm = Column(
+        String(100), nullable=False, default="", comment="Ask agent LLM model"
+    )
+    ask_llm_temperature = Column(
+        DECIMAL(10, 2), nullable=False, default=0.0, comment="Ask agent LLM temperature"
+    )
+    ask_llm_system_prompt = Column(
+        Text, nullable=False, default="", comment="Ask agent LLM system prompt"
+    )
+    ask_provider_config = Column(
+        Text,
+        nullable=False,
+        default="{}",
+        comment='Ask provider config JSON, e.g. {"provider":"llm","mode":"provider_then_llm","config":{}}',
+    )
+    price = Column(DECIMAL(10, 2), nullable=False, default=0, comment="Shifu price")
+
+    # TTS Configuration
+    tts_enabled = Column(
+        SmallInteger,
+        nullable=False,
+        default=0,
+        comment="TTS enabled: 0=disabled, 1=enabled",
+    )
+    tts_provider = Column(
+        String(32),
+        nullable=False,
+        default="",
+        comment="TTS provider: minimax, volcengine, volcengine_http, baidu, aliyun",
+    )
+    tts_model = Column(
+        String(64),
+        nullable=False,
+        default="",
+        comment="TTS model/resource ID (e.g., seed-tts-1.0, seed-tts-2.0, speech-01-turbo)",
+    )
+    tts_voice_id = Column(
+        String(64),
+        nullable=False,
+        default="",
+        comment="TTS voice ID",
+    )
+    tts_speed = Column(
+        DECIMAL(6, 2),
+        nullable=False,
+        default=1.0,
+        comment="TTS speech speed (provider-specific range)",
+    )
+    tts_pitch = Column(
+        SmallInteger,
+        nullable=False,
+        default=0,
+        comment="TTS pitch adjustment (provider-specific range)",
+    )
+    tts_emotion = Column(
+        String(32),
+        nullable=False,
+        default="",
+        comment="TTS emotion setting",
+    )
+
+    # Language Output Configuration
+    use_learner_language = Column(
+        SmallInteger,
+        nullable=False,
+        default=0,
+        comment="Use learner language for output: 0=disabled (default), 1=enabled",
+    )
+
+    deleted = Column(
+        SmallInteger,
+        nullable=False,
+        default=0,
+        comment="Deletion flag: 0=active, 1=deleted",
+    )
+    created_at = Column(
+        DateTime, nullable=False, default=func.now(), comment="Creation timestamp"
+    )
+    created_user_bid = Column(
+        String(32),
+        nullable=False,
+        index=True,
+        default="",
+        comment="Creator user business identifier",
+    )
+    updated_at = Column(
+        DateTime,
+        nullable=False,
+        default=func.now(),
+        comment="Last update timestamp",
+        onupdate=func.now(),
+    )
+    updated_user_bid = Column(
+        String(32),
+        nullable=False,
+        default="",
+        comment="Last updater user business identifier",
+    )
+
+
+class PublishedOutlineItem(db.Model):
+    __tablename__ = "shifu_published_outline_items"
+    id = Column(BIGINT, primary_key=True, autoincrement=True)
+    outline_item_bid = Column(
+        String(32),
+        nullable=False,
+        index=True,
+        default="",
+        comment="Outline item business identifier",
+    )
+    shifu_bid = Column(
+        String(32),
+        nullable=False,
+        index=True,
+        default="",
+        comment="Shifu business identifier",
+    )
+    title = Column(
+        String(100), nullable=False, default="", comment="Outline item title"
+    )
+    type = Column(
+        SmallInteger,
+        nullable=False,
+        default=0,
+        comment="Outline item type: 401=trial, 402=normal",
+    )
+    hidden = Column(
+        SmallInteger,
+        nullable=False,
+        default=0,
+        comment="Hidden flag: 0=visible, 1=hidden",
+    )
+    parent_bid = Column(
+        String(32),
+        nullable=False,
+        default="",
+        comment="Parent outline item business identifier",
+    )
+    position = Column(
+        String(10), nullable=False, default="", comment="Outline position"
+    )
+    prerequisite_item_bids = Column(
+        String(500),
+        nullable=False,
+        default="",
+        comment="Prerequisite outline item business identifiers",
+    )
+    llm = Column(String(100), nullable=False, default="", comment="LLM model name")
+    llm_temperature = Column(
+        DECIMAL(10, 2),
+        nullable=False,
+        default=0,
+        comment="LLM temperature parameter",
+    )
+    llm_system_prompt = Column(
+        Text, nullable=False, default="", comment="LLM system prompt"
+    )
+    ask_enabled_status = Column(
+        SmallInteger,
+        nullable=False,
+        default=ASK_MODE_DEFAULT,
+        comment="Ask agent status: 5101=default, 5102=disabled, 5103=enabled",
+    )
+    ask_llm = Column(
+        String(100), nullable=False, default="", comment="Ask agent LLM model"
+    )
+    ask_llm_temperature = Column(
+        DECIMAL(10, 2),
+        nullable=False,
+        default=0.0,
+        comment="Ask agent LLM temperature",
+    )
+    ask_llm_system_prompt = Column(
+        Text, nullable=False, default="", comment="Ask agent LLM system prompt"
+    )
+    content = Column(Text, nullable=False, default="", comment="MarkdownFlow content")
+    deleted = Column(
+        SmallInteger,
+        nullable=False,
+        default=0,
+        comment="Deletion flag: 0=active, 1=deleted",
+    )
+    created_at = Column(
+        DateTime, nullable=False, default=func.now(), comment="Creation timestamp"
+    )
+    created_user_bid = Column(
+        String(32),
+        nullable=False,
+        index=True,
+        default="",
+        comment="Creator user business identifier",
+    )
+    updated_at = Column(
+        DateTime,
+        nullable=False,
+        default=func.now(),
+        comment="Last update timestamp",
+        onupdate=func.now(),
+    )
+    updated_user_bid = Column(
+        String(32),
+        nullable=False,
+        default="",
+        comment="Last updater user business identifier",
+    )
+
+
+class LogPublishedStruct(db.Model):
+    __tablename__ = "shifu_log_published_structs"
+    id = Column(BIGINT, primary_key=True, autoincrement=True)
+    struct_bid = Column(
+        String(32),
+        nullable=False,
+        index=True,
+        unique=True,
+        default="",
+        comment="Content business identifier",
+    )
+    shifu_bid = Column(
+        String(32),
+        nullable=False,
+        index=True,
+        default="",
+        comment="Shifu business identifier",
+    )
+    struct = Column(
+        LONGTEXT,
+        nullable=False,
+        default="",
+        comment="JSON serialized struct of published shifu",
+    )
+    deleted = Column(
+        SmallInteger,
+        nullable=False,
+        default=0,
+        comment="Deletion flag: 0=active, 1=deleted",
+    )
+    created_at = Column(
+        DateTime, nullable=False, default=func.now(), comment="Creation timestamp"
+    )
+    created_user_bid = Column(
+        String(32),
+        nullable=False,
+        default="",
+        comment="Creator user business identifier",
+    )
+    updated_at = Column(
+        DateTime,
+        nullable=False,
+        default=func.now(),
+        comment="Last update timestamp",
+        onupdate=func.now(),
+    )
+    updated_user_bid = Column(
+        String(32),
+        nullable=False,
+        default="",
+        comment="Last updater user business identifier",
+    )

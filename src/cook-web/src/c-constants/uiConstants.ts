@@ -1,0 +1,93 @@
+/**
+ * Frame layout presets:
+ * 1: Separate left and right panels (desktop)
+ * 2: Left panel overlays the right panel (tablet)
+ * 3: Dense tablet layout
+ * 10: Mobile layout
+ */
+export const FRAME_LAYOUT_PC = 1;
+export const FRAME_LAYOUT_PAD = 2;
+export const FRAME_LAYOUT_PAD_INTENSIVE = 3;
+export const FRAME_LAYOUT_MOBILE = 10;
+
+/**
+ * Layout selection is primarily based on the outer container width
+ */
+export const FRAME_LAYOUT_PC_WIDTH = 1080;
+export const FRAME_LAYOUT_PAD_INTENSIVE_WIDTH = 800;
+export const FRAME_LAYOUT_MOBILE_WIDTH = 480;
+
+const MOBILE_USER_AGENT_PATTERN =
+  /Android|webOS|iPhone|iPod|BlackBerry|IEMobile|Opera Mini|Mobile/i;
+const TABLET_USER_AGENT_PATTERN = /iPad|Tablet/i;
+
+const isMobileUserAgent = () => {
+  if (typeof navigator === 'undefined') {
+    return false;
+  }
+
+  const userAgent = navigator.userAgent ?? '';
+
+  return (
+    MOBILE_USER_AGENT_PATTERN.test(userAgent) ||
+    TABLET_USER_AGENT_PATTERN.test(userAgent)
+  );
+};
+
+export const calcFrameLayout = selector => {
+  const elem = document.querySelector(selector);
+  if (!elem) {
+    return FRAME_LAYOUT_PC;
+  }
+
+  if (isMobileUserAgent()) {
+    return FRAME_LAYOUT_MOBILE;
+  }
+
+  const w = elem.clientWidth;
+
+  if (w > FRAME_LAYOUT_PC_WIDTH) {
+    return FRAME_LAYOUT_PC;
+  } else if (w > FRAME_LAYOUT_PAD_INTENSIVE_WIDTH) {
+    return FRAME_LAYOUT_PAD;
+  } else {
+    return FRAME_LAYOUT_PAD_INTENSIVE;
+  }
+};
+
+/**
+ * Theme options
+ */
+export const THEME_LIGHT = 'light';
+export const THEME_DARK = 'dark';
+
+export const inWechat = () => {
+  const ua = navigator.userAgent.toLowerCase();
+  // @ts-expect-error EXPECT
+  const isWXWork = ua.match(/wxwork/i) === 'wxwork';
+  const isWeixin = !isWXWork && /MicroMessenger/i.test(ua);
+
+  return isWeixin;
+};
+
+export const inMiniProgram = () => {
+  if (typeof navigator === 'undefined') return false;
+  return /miniprogram/i.test(navigator.userAgent);
+};
+
+// Redirect to the WeChat login flow
+export const wechatLogin = ({
+  appId,
+  redirectUrl = '',
+  scope = 'snsapi_base',
+  state = '',
+}) => {
+  const _redirectUrl = encodeURIComponent(redirectUrl || window.location.href);
+  const url = `https://open.weixin.qq.com/connect/oauth2/authorize?appid=${appId}&redirect_uri=${_redirectUrl}&response_type=code&scope=${scope}&state=${state}#wechat_redirect`;
+  window.location.assign(url);
+};
+
+/**
+ * Maximum character length for titles (Shifu name, Chapter name, Lesson name)
+ */
+export const TITLE_MAX_LENGTH = 100;

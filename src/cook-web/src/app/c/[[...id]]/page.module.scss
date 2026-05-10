@@ -1,0 +1,38 @@
+.newChatPage {
+  --mobile-chat-header-height: 44px;
+  width: 100%;
+  min-height: calc(var(--app-viewport-block-unit, 1dvh) * 100);
+  display: flex;
+  font-size: var(--font-size-4);
+  font-weight: var(--font-weight-4-1);
+  color: var(--font-color-main);
+
+  .chatMobileHeader {
+    position: sticky;
+    top: 0;
+    z-index: 20;
+    flex: 0 0 var(--mobile-chat-header-height);
+    flex-shrink: 0;
+    min-height: var(--mobile-chat-header-height);
+    max-height: var(--mobile-chat-header-height);
+  }
+
+  &.listenMode {
+    height: calc(var(--app-viewport-block-unit, 1dvh) * 100);
+    min-height: calc(var(--app-viewport-block-unit, 1dvh) * 100);
+    overflow: hidden;
+
+    .chatMobileHeader {
+      position: static;
+      top: auto;
+      flex: 0 0 var(--mobile-chat-header-height);
+      flex-shrink: 0;
+      min-height: var(--mobile-chat-header-height);
+      max-height: var(--mobile-chat-header-height);
+    }
+  }
+
+  &.previewMode {
+    --mobile-chat-header-height: 84px;
+  }
+}

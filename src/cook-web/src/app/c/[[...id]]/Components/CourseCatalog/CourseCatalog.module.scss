@@ -1,0 +1,83 @@
+.courseCatalog {
+  margin-top: 10px;
+
+  &.mobile {
+    .titleRow {
+      .rightSection {
+        .resetButton {
+          display: flex;
+        }
+      }
+    }
+  }
+
+  &:hover {
+    .titleRow {
+      .rightSection {
+        .resetButton {
+          display: flex;
+        }
+      }
+    }
+  }
+
+  &.collapse {
+    .sectionList {
+      height: 0;
+      overflow: hidden;
+    }
+  }
+
+  .titleRow {
+    display: flex;
+    flex-flow: row nowrap;
+    align-items: center;
+    justify-content: space-between;
+    cursor: pointer;
+    height: 24px;
+    overflow: hidden;
+    color: var(--base-sidebar-foreground, #0a0a0a);
+    text-overflow: ellipsis;
+    font-family: var(--font-font-sans, Geist);
+    font-size: var(--text-sm-font-size, 14px);
+    font-style: normal;
+    font-weight: var(--font-weight-medium, 500);
+    line-height: 100%; /* 14px */
+
+    .collapseBtn {
+      width: 16px;
+      transition: transform 0.2s ease-in;
+    }
+
+    .leftSection {
+      flex: 1 1 0;
+      overflow: hidden;
+      display: flex;
+      align-items: center;
+
+      .leftSectionText {
+        display: inline-block;
+        max-width: 100%;
+        overflow: hidden;
+        text-overflow: ellipsis;
+        white-space: nowrap;
+        vertical-align: middle;
+      }
+    }
+    .rightSection {
+      flex: 0 0 auto;
+      display: flex;
+      flex-flow: row nowrap;
+      align-items: center;
+
+      .resetButton {
+        margin: 0 6px;
+        display: none;
+      }
+    }
+  }
+
+  .sectionList {
+    padding-top: 10px;
+  }
+}

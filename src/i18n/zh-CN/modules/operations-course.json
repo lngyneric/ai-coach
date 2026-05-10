@@ -1,0 +1,332 @@
+{
+  "__namespace__": "module.operationsCourse",
+  "actions": {
+    "transferCreator": "转移创作者"
+  },
+  "coursePromptDialog": {
+    "copy": "复制",
+    "copyFailed": "复制课程提示词失败",
+    "copySuccess": "已复制课程提示词",
+    "empty": "暂无课程提示词",
+    "title": "课程提示词"
+  },
+  "detail": {
+    "back": "返回课程列表",
+    "basicInfo": "基础信息",
+    "boolean": {
+      "no": "否",
+      "yes": "是"
+    },
+    "chapterType": {
+      "chapter": "章",
+      "lesson": "节"
+    },
+    "chapters": "课程章节",
+    "chaptersTable": {
+      "chapterId": "章节ID",
+      "contentDetail": "内容详情",
+      "contentStatus": "内容状态",
+      "detailAction": "详情",
+      "empty": "暂无章节数据",
+      "followUpCount": "追问数",
+      "learningPermission": "学习权限",
+      "modifier": "修改者",
+      "name": "章节名称",
+      "position": "序号",
+      "ratingCount": "评分次数",
+      "ratingScore": "评分",
+      "type": "类型",
+      "updatedAt": "更新时间",
+      "visibility": "可见性"
+    },
+    "contentDetailDialog": {
+      "copy": "复制",
+      "copyFailed": "复制失败",
+      "copySuccess": "已复制内容详情",
+      "empty": "暂无内容",
+      "sections": {
+        "content": "课程内容",
+        "systemPrompt": "系统提示词"
+      },
+      "sources": {
+        "chapter": "来源：章提示词",
+        "course": "来源：课程提示词",
+        "lesson": "来源：节提示词"
+      },
+      "title": "内容详情"
+    },
+    "contentStatus": {
+      "empty": "无",
+      "has": "有",
+      "unknown": "未知"
+    },
+    "fields": {
+      "courseId": "课程ID",
+      "courseName": "课程名",
+      "createdAt": "创建时间",
+      "creator": "创作者",
+      "status": "状态",
+      "updatedAt": "更新时间"
+    },
+    "followUps": {
+      "back": "返回课程详情",
+      "drawer": {
+        "currentRecordHint": "按“被追问的原始输出 -> 本次追问 -> 本次系统回答”的顺序阅读",
+        "fields": {
+          "chapter": "章节",
+          "currentAnswer": "本次系统回答",
+          "currentFollowUp": "本次追问",
+          "followUpTime": "追问时间",
+          "nickname": "昵称",
+          "sourceOutput": "被追问的原始输出",
+          "turnIndex": "追问轮次",
+          "user": "用户",
+          "userId": "用户 ID"
+        },
+        "sections": {
+          "basicInfo": "基础信息",
+          "currentRecord": "本次追问详情",
+          "timeline": "上下文时间线"
+        },
+        "sourceUnavailable": "暂无法定位对应原始输出",
+        "timeline": {
+          "current": "当前轮次",
+          "student": "学员",
+          "teacher": "系统"
+        },
+        "title": "追问详情"
+      },
+      "emptyValue": "--",
+      "filters": {
+        "chapterKeyword": "章/节搜索",
+        "chapterKeywordPlaceholder": "章/节标题",
+        "followUpTime": "追问时间",
+        "lessonKeyword": "节搜索",
+        "lessonKeywordPlaceholder": "节标题",
+        "reset": "重置",
+        "resultCount": "共 {count} 条",
+        "search": "查询",
+        "timePlaceholder": "追问开始/结束时间",
+        "userKeyword": "用户搜索",
+        "userKeywordPlaceholder": "手机号 / 邮箱 / 昵称",
+        "userKeywordPlaceholderEmail": "邮箱 / 昵称",
+        "userKeywordPlaceholderPhone": "手机号 / 昵称"
+      },
+      "openMetric": "查看追问数据",
+      "summary": {
+        "followUpCount": "追问总数",
+        "latestFollowUpAt": "最近追问时间",
+        "lessonCount": "涉及节数",
+        "scopeHint": "以下统计基于当前筛选结果",
+        "userCount": "追问用户数"
+      },
+      "table": {
+        "action": "操作",
+        "chapter": "章节",
+        "content": "追问内容",
+        "createdAt": "追问时间",
+        "detailAction": "查看详情",
+        "empty": "暂无追问数据",
+        "lesson": "节",
+        "title": "追问列表",
+        "turnIndex": "追问轮次",
+        "user": "用户"
+      },
+      "title": "追问数据",
+      "turnIndex": "第 {count} 次",
+      "turnIndexHelp": "追问轮次按同一学习记录中的追问时间顺序排序"
+    },
+    "learningPermission": {
+      "free": "免费",
+      "guest": "免登录",
+      "paid": "付费",
+      "unknown": "未知"
+    },
+    "metrics": "数据概览",
+    "metricsLabels": {
+      "followUpCount": "追问数",
+      "learnerCount": "学习人数",
+      "orderAmount": "实收总额（含兑换码）",
+      "orderCount": "订单数",
+      "ratingScore": "评分",
+      "visitCount30d": "近30天访问人数"
+    },
+    "orders": {
+      "openMetric": "查看订单数据"
+    },
+    "ratings": {
+      "back": "返回课程详情",
+      "emptyValue": "--",
+      "filters": {
+        "chapterKeyword": "章/节搜索",
+        "chapterKeywordPlaceholder": "章/节标题",
+        "commentStatus": "评语",
+        "commentStatusAll": "全部",
+        "commentStatusCommented": "仅看有评语",
+        "lessonKeyword": "节搜索",
+        "lessonKeywordPlaceholder": "节标题",
+        "mode": "学习模式",
+        "modeAll": "全部模式",
+        "ratingTime": "评分时间",
+        "reset": "重置",
+        "resultCount": "共 {count} 条",
+        "score": "评分",
+        "scoreAll": "全部评分",
+        "search": "查询",
+        "sortBy": "排序",
+        "sortByLatest": "最新优先",
+        "sortByLowScore": "低分优先",
+        "timePlaceholder": "评分开始/结束时间",
+        "userKeyword": "用户搜索",
+        "userKeywordPlaceholderEmail": "邮箱 / 昵称",
+        "userKeywordPlaceholderPhone": "手机号 / 昵称"
+      },
+      "modes": {
+        "listen": "听课",
+        "read": "阅读"
+      },
+      "openMetric": "查看评分数据",
+      "scoreValue": "{count}分",
+      "summary": {
+        "averageScore": "平均评分",
+        "latestRatedAt": "最近评分时间",
+        "ratingCount": "评分次数",
+        "scopeHint": "以下统计基于当前筛选结果",
+        "userCount": "评分用户数"
+      },
+      "table": {
+        "chapter": "章节",
+        "comment": "评语",
+        "empty": "暂无评分数据",
+        "guestUser": "游客",
+        "lesson": "节",
+        "mode": "学习模式",
+        "ratedAt": "评分时间",
+        "score": "评分",
+        "title": "评分列表",
+        "user": "用户"
+      },
+      "title": "评分数据"
+    },
+    "title": "课程详情",
+    "userLearningStatus": {
+      "completed": "已完成",
+      "learning": "学习中",
+      "notStarted": "未开始"
+    },
+    "userRole": {
+      "creator": "创作者",
+      "normal": "普通用户",
+      "operator": "运营者",
+      "student": "学员"
+    },
+    "users": "用户数据",
+    "usersCount": "共 {count} 课程用户",
+    "usersDescription": "查看课程相关用户的学习进度、付费情况与最近活跃时间。",
+    "usersFilters": {
+      "all": "全部",
+      "learningStatus": "学习状态",
+      "paymentPaid": "已付费",
+      "paymentStatus": "是否付费",
+      "paymentUnpaid": "未付费",
+      "userKeyword": "用户搜索",
+      "userKeywordPlaceholder": "输入手机号 / 邮箱 / 昵称",
+      "userKeywordPlaceholderEmail": "输入邮箱 / 昵称",
+      "userKeywordPlaceholderPhone": "输入手机号 / 昵称",
+      "userRole": "用户身份"
+    },
+    "usersTable": {
+      "account": "手机号 / 邮箱",
+      "accountEmail": "邮箱",
+      "accountPhone": "手机号",
+      "action": "操作",
+      "detailAction": "详情",
+      "empty": "暂无用户数据",
+      "isPaid": "是否付费",
+      "joinedAt": "加入课程时间",
+      "lastLearnedAt": "最近学习时间",
+      "lastLoginAt": "最近登录时间",
+      "learningProgress": "学习进度",
+      "learningStatus": "学习状态",
+      "nickname": "昵称",
+      "totalPaidAmount": "累计付费金额",
+      "userId": "用户ID",
+      "userRole": "用户身份"
+    },
+    "visibility": {
+      "hidden": "隐藏",
+      "visible": "显示"
+    }
+  },
+  "emptyList": "暂无课程",
+  "filters": {
+    "courseId": "课程ID",
+    "courseName": "课程名称",
+    "createdAt": "创建时间",
+    "creator": "创建者",
+    "creatorEmailOrUserBid": "邮箱或用户ID",
+    "creatorMobileOrUserBid": "手机号或用户ID",
+    "endTime": "结束日期",
+    "startTime": "开始日期",
+    "status": "状态"
+  },
+  "overview": {
+    "activeFilter": "快捷筛选",
+    "metrics": {
+      "createdLast7d": "近7天新增课程",
+      "draftCourses": "草稿课程",
+      "learningActive30d": "近30天有学习课程",
+      "ordered30d": "近30天有订单课程",
+      "publishedCourses": "已发布课程",
+      "totalCourses": "课程总数"
+    },
+    "title": "数据概览",
+    "tooltips": {
+      "createdLast7d": "近7天新建课程数",
+      "draftCourses": "从未发布课程数",
+      "learningActive30d": "近30天有学习课程数",
+      "ordered30d": "近30天有成交课程数",
+      "publishedCourses": "至少发布过一次的课程数",
+      "totalCourses": "课程总数"
+    }
+  },
+  "statusLabels": {
+    "published": "已发布",
+    "unknown": "未知",
+    "unpublished": "未发布"
+  },
+  "table": {
+    "action": "操作",
+    "courseId": "课程ID",
+    "courseName": "课程名",
+    "coursePrompt": "课程提示词",
+    "createdAt": "创建时间",
+    "creator": "创建者",
+    "detailAction": "详情",
+    "model": "模型",
+    "modifier": "修改者",
+    "price": "价格",
+    "status": "状态",
+    "updatedAt": "更新时间"
+  },
+  "title": "课程管理",
+  "transferCreatorDialog": {
+    "confirm": "确认转移",
+    "confirmDescriptionCourseSuffix": "课程的创作者从",
+    "confirmDescriptionPrefix": "将",
+    "confirmDescriptionTargetPrefix": "转移到",
+    "confirmTitle": "确认转移创作者",
+    "contactPlaceholderEmail": "请输入目标创作者邮箱",
+    "contactPlaceholderPhone": "请输入目标创作者手机号",
+    "contactType": "联系方式类型",
+    "contactTypeEmail": "邮箱",
+    "contactTypePhone": "手机号",
+    "currentCreator": "当前创作者",
+    "description": "仅更换创作者，课程内容、配置和共享权限均保持不变。",
+    "identifier": "目标创作者",
+    "identifierRequired": "请输入合法的目标创作者联系方式",
+    "sameCreator": "目标联系方式已属于当前创作者",
+    "submitSuccess": "创作者转移成功",
+    "title": "转移创作者"
+  }
+}

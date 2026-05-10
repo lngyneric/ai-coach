@@ -1,0 +1,198 @@
+.courseSection {
+  display: flex;
+  flex-flow: row nowrap;
+
+  &.mobile {
+    .textArea {
+      position: static;
+
+      .rightSection {
+        position: static;
+        transform: none;
+        opacity: 1;
+        pointer-events: auto;
+        margin-left: 6px;
+
+        .resetButton {
+          display: flex;
+        }
+      }
+    }
+  }
+
+  &:first-child {
+    .iconWrapper {
+      .topLine {
+        background-color: transparent;
+      }
+    }
+  }
+
+  &:last-child {
+    .iconWrapper {
+      .bottomLine {
+        background-color: transparent;
+      }
+    }
+  }
+
+  &.selected {
+    .textArea {
+      border-radius: var(--border-radius-rounded-md, 8px);
+      background: #e5e5e5;
+
+      .courseTitle {
+        display: block;
+        overflow: hidden;
+        color: #0a0a0a;
+        font-size: var(--text-sm-font-size, 14px);
+        font-style: normal;
+        font-weight: 600;
+        line-height: 20px;
+        max-width: 100%;
+        word-break: break-word;
+        overflow-wrap: anywhere;
+        hyphens: auto;
+        white-space: normal;
+      }
+    }
+  }
+
+  &.available:hover {
+    cursor: pointer;
+
+    .textArea {
+      .resetButton {
+        display: flex;
+      }
+    }
+  }
+
+  &.unavailable {
+    .textArea {
+      .courseTitle {
+        color: var(--color-9);
+      }
+    }
+  }
+
+  .iconWrapper {
+    width: 16px;
+    display: flex;
+    flex-flow: column nowrap;
+    align-items: center;
+    flex: 0 0 auto;
+
+    &.small {
+      .icon {
+        width: 4px;
+      }
+    }
+
+    .topLine {
+      width: 1px;
+      background-color: var(--color-9);
+      flex: 1 1 auto;
+    }
+
+    .icon {
+      padding: 5px 0;
+      width: 100%;
+      flex: 0 0 auto;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      line-height: 0;
+
+      .smallIcon {
+        width: 4px;
+        height: 4px;
+        border-radius: 50%;
+        background: var(--color-9);
+      }
+
+      .bigIcon {
+        width: 12px;
+        height: 12px;
+      }
+    }
+
+    .bottomLine {
+      flex: 1 1 auto;
+      width: 1px;
+      background-color: var(--color-9);
+    }
+  }
+
+  .textArea {
+    margin-left: 4px;
+    padding: 8px 8px;
+    border-radius: 8px;
+    flex: 1 0 0;
+    display: flex;
+    flex-flow: row nowrap;
+    align-items: center;
+    justify-content: space-between;
+    position: relative;
+
+    .leftSection {
+      flex: 1 1 0;
+      display: flex;
+      align-items: center;
+      &.notPaid {
+        .courseTitle {
+          color: rgba(10, 10, 10, 0.45);
+        }
+      }
+      .courseTitle {
+        display: inline-block;
+        overflow: hidden;
+        color: var(--base-sidebar-foreground, #0a0a0a);
+        font-size: var(--text-sm-font-size, 14px);
+        font-style: normal;
+        font-weight: var(--font-weight-normal, 400);
+        line-height: 20px;
+        max-width: 100%;
+        word-break: break-word;
+        overflow-wrap: anywhere;
+        hyphens: auto;
+        white-space: normal;
+      }
+    }
+
+    .rightSection {
+      flex: 0 0 auto;
+      display: flex;
+      flex-flow: row nowrap;
+      align-items: center;
+      position: absolute;
+      top: 50%;
+      right: 8px;
+      transform: translateY(-50%);
+      opacity: 0;
+      pointer-events: none;
+      transition:
+        opacity 0.2s ease,
+        transform 0.2s ease;
+
+      .resetButton {
+        margin: 0;
+        display: flex;
+        pointer-events: auto;
+      }
+    }
+  }
+
+  &:not(.mobile).available:hover,
+  &:not(.mobile).available:focus-within {
+    cursor: pointer;
+
+    .textArea {
+      .rightSection {
+        opacity: 1;
+        pointer-events: auto;
+        transform: translate(-4px, -50%);
+      }
+    }
+  }
+}

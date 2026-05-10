@@ -1,0 +1,59 @@
+ARG SRC_ROOT=src
+ARG API_SRC=${SRC_ROOT}/api
+ARG I18N_SRC=${SRC_ROOT}/i18n
+
+FROM python:3.11 AS base
+
+# Re-declare build args within this stage for COPY path expansion
+ARG SRC_ROOT
+ARG API_SRC
+ARG I18N_SRC
+
+ENV PIP_DISABLE_PIP_VERSION_CHECK=1 \
+    PIP_DEFAULT_TIMEOUT=120 \
+    PIP_RETRIES=10 \
+    PIP_NO_CACHE_DIR=1
+
+# ensure /etc/apt/sources.list exists and change APT source to aliyun mirror
+RUN if [ -f /etc/apt/sources.list ]; then \
+    sed -i 's|http://deb.debian.org/debian|http://mirrors.aliyun.com/debian|g' /etc/apt/sources.list; \
+    sed -i 's|http://security.debian.org/debian-security|http://mirrors.aliyun.com/debian-security|g' /etc/apt/sources.list; \
+    apt-get update && \
+    apt-get install -y python3-pip && \
+    apt-get clean && \
+    rm -rf /var/lib/apt/lists/*; \
+    else \
+    echo "No sources.list found!"; \
+    fi
+
+WORKDIR /app
+
+COPY ${API_SRC}/requirements.txt ./requirements.txt
+RUN python -m pip install --upgrade "pip<25" setuptools wheel
+RUN python -m pip install -r requirements.txt
+
+COPY ${API_SRC} ./
+COPY ${I18N_SRC} /app/i18n
+
+FROM python:3.11-slim
+
+ENV SHARED_I18N_ROOT=/app/i18n
+
+# Install FFmpeg for audio processing (pydub dependency)
+RUN apt-get update && \
+    apt-get install -y --no-install-recommends ffmpeg && \
+    apt-get clean && \
+    rm -rf /var/lib/apt/lists/*
+
+COPY --from=base /usr/local/lib/python3.11/site-packages /usr/local/lib/python3.11/site-packages
+COPY --from=base /usr/local/bin/celery /usr/local/bin/celery
+COPY --from=base /usr/local/bin/flask /usr/local/bin/flask
+COPY --from=base /usr/local/bin/gunicorn /usr/local/bin/gunicorn
+
+WORKDIR /app
+
+COPY --from=base /app /app
+
+EXPOSE 5800
+
+CMD gunicorn -k gevent -w 4 -b 0.0.0.0:5800 "app:app" --timeout 300 --log-level info --access-logfile /var/log/app.log --capture-output

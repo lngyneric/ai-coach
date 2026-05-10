@@ -1,0 +1,192 @@
+# See https://help.github.com/articles/ignoring-files/ for more about ignoring files.
+
+###############################################################################
+# Global/OS specific ignores
+###############################################################################
+# macOS
+.DS_Store
+
+# Windows
+Thumbs.db
+ehthumbs.db
+Desktop.ini
+
+###############################################################################
+# Editor/IDE ignores
+###############################################################################
+# VS Code
+.vscode/
+
+# JetBrains IDEs (PyCharm, IntelliJ, etc)
+.idea/
+.spyderproject
+.spyproject
+.ropeproject
+
+###############################################################################
+# Node.js ignores
+###############################################################################
+# Dependencies
+node_modules/
+/.pnp
+.pnp.js
+
+# Logs
+npm-debug.log*
+yarn-debug.log*
+yarn-error.log*
+
+# Build output
+/build
+
+# Package managers
+pnpm-lock.yaml
+
+###############################################################################
+# Python ignores
+###############################################################################
+# Byte-compiled / optimized / DLL files
+__pycache__/
+*.py[cod]
+*$py.class
+
+# C extensions
+*.so
+
+# Distribution / packaging
+.Python
+build/
+develop-eggs/
+dist/
+downloads/
+eggs/
+.eggs/
+lib64/
+parts/
+sdist/
+var/
+wheels/
+share/python-wheels/
+*.egg-info/
+.installed.cfg
+*.egg
+MANIFEST
+
+# PyInstaller
+*.manifest
+*.spec
+
+# Installer logs
+pip-log.txt
+pip-delete-this-directory.txt
+
+# Unit test / coverage reports
+htmlcov/
+.tox/
+.nox/
+.coverage
+.coverage.*
+.cache
+nosetests.xml
+coverage.xml
+*.cover
+*.py,cover
+.hypothesis/
+.pytest_cache/
+cover/
+/coverage
+
+# Translations
+*.mo
+*.pot
+
+# Jupyter
+.ipynb_checkpoints
+profile_default/
+ipython_config.py
+
+# Virtual environments
+.env
+.venv
+env/
+venv/
+ENV/
+env.bak/
+venv.bak/
+
+# Type checking
+.mypy_cache/
+.dmypy.json
+dmypy.json
+.pyre/
+.pytype/
+
+# Cython
+cython_debug/
+
+# PEP 582
+__pypackages__/
+
+# Package managers
+#.python-version
+#poetry.lock
+#Pipfile.lock
+.pdm.toml
+
+###############################################################################
+# Web frameworks
+###############################################################################
+# Django
+*.log
+local_settings.py
+db.sqlite3
+db.sqlite3-journal
+
+# Flask
+instance/
+.webassets-cache
+
+# Other
+.scrapy
+docs/_build/
+.pybuilder/
+target/
+celerybeat-schedule
+celerybeat.pid
+*.sage.py
+/site
+
+###############################################################################
+# Project specific ignores
+###############################################################################
+# Environment files
+.env.local
+.env.development.local
+.env.test.local
+.env.production.local
+.env.dev-local
+
+# Development files
+dev.sh
+dev.http
+
+# Cook module
+src/cook/test*
+src/cook/codesifu-demo.db
+src/cook/auth_config.yml
+src/cook-web/.next/
+src/cook-web/next-env.d.ts
+
+# Docker data directories
+docker/cook_data/
+docker/mysql_data/
+docker/redis_data/
+docker/milvus_data/
+
+# Logs
+src/api/logs/
+
+###############################################################################
+# Never ignore these files (exceptions to above rules)
+###############################################################################
+!src/api/tests

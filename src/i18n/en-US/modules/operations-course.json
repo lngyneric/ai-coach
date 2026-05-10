@@ -1,0 +1,332 @@
+{
+  "__namespace__": "module.operationsCourse",
+  "actions": {
+    "transferCreator": "Transfer creator"
+  },
+  "coursePromptDialog": {
+    "copy": "Copy",
+    "copyFailed": "Failed to copy course prompt",
+    "copySuccess": "Course prompt copied",
+    "empty": "No course prompt",
+    "title": "Course Prompt"
+  },
+  "detail": {
+    "back": "Back to list",
+    "basicInfo": "Basic Info",
+    "boolean": {
+      "no": "No",
+      "yes": "Yes"
+    },
+    "chapterType": {
+      "chapter": "Ch.",
+      "lesson": "Sec."
+    },
+    "chapters": "Chapters",
+    "chaptersTable": {
+      "chapterId": "Chapter ID",
+      "contentDetail": "Detail",
+      "contentStatus": "Content",
+      "detailAction": "Detail",
+      "empty": "No chapter data",
+      "followUpCount": "Ask",
+      "learningPermission": "Access",
+      "modifier": "Modifier",
+      "name": "Chapter",
+      "position": "Position",
+      "ratingCount": "Ratings",
+      "ratingScore": "Rating",
+      "type": "Type",
+      "updatedAt": "Updated",
+      "visibility": "Visibility"
+    },
+    "contentDetailDialog": {
+      "copy": "Copy",
+      "copyFailed": "Copy failed",
+      "copySuccess": "Copied content detail",
+      "empty": "No content",
+      "sections": {
+        "content": "Course Content",
+        "systemPrompt": "System Prompt"
+      },
+      "sources": {
+        "chapter": "Source: chapter prompt",
+        "course": "Source: course prompt",
+        "lesson": "Source: lesson prompt"
+      },
+      "title": "Content Detail"
+    },
+    "contentStatus": {
+      "empty": "Empty",
+      "has": "Has",
+      "unknown": "Unknown"
+    },
+    "fields": {
+      "courseId": "Course ID",
+      "courseName": "Course Name",
+      "createdAt": "Created At",
+      "creator": "Creator",
+      "status": "Status",
+      "updatedAt": "Updated At"
+    },
+    "followUps": {
+      "back": "Back to course detail",
+      "drawer": {
+        "currentRecordHint": "Read in order: original output -> current follow-up -> current system answer.",
+        "fields": {
+          "chapter": "Chapter / Lesson",
+          "currentAnswer": "Current System Answer",
+          "currentFollowUp": "Current Follow-up",
+          "followUpTime": "Follow-up Time",
+          "nickname": "Nickname",
+          "sourceOutput": "Original Output",
+          "turnIndex": "Turn",
+          "user": "User",
+          "userId": "User ID"
+        },
+        "sections": {
+          "basicInfo": "Basic Info",
+          "currentRecord": "Current Follow-up Detail",
+          "timeline": "Timeline"
+        },
+        "sourceUnavailable": "Unable to locate the original output for this historical record.",
+        "timeline": {
+          "current": "Current Turn",
+          "student": "Student",
+          "teacher": "System"
+        },
+        "title": "Follow-up Detail"
+      },
+      "emptyValue": "--",
+      "filters": {
+        "chapterKeyword": "Chapter / Lesson Search",
+        "chapterKeywordPlaceholder": "Chapter / Lesson Title",
+        "followUpTime": "Follow-up Time",
+        "lessonKeyword": "Lesson Search",
+        "lessonKeywordPlaceholder": "Lesson Title",
+        "reset": "Reset",
+        "resultCount": "{count, plural, one {# result} other {# results}}",
+        "search": "Search",
+        "timePlaceholder": "Follow-up Start / End Time",
+        "userKeyword": "User Search",
+        "userKeywordPlaceholder": "Phone / Email / Nickname",
+        "userKeywordPlaceholderEmail": "Email / Nickname",
+        "userKeywordPlaceholderPhone": "Phone / Nickname"
+      },
+      "openMetric": "Open follow-up data",
+      "summary": {
+        "followUpCount": "Follow-ups",
+        "latestFollowUpAt": "Latest Follow-up",
+        "lessonCount": "Lessons",
+        "scopeHint": "These summary metrics reflect the current filtered result set.",
+        "userCount": "Users"
+      },
+      "table": {
+        "action": "Action",
+        "chapter": "Chapter",
+        "content": "Follow-up Content",
+        "createdAt": "Follow-up Time",
+        "detailAction": "View Detail",
+        "empty": "No follow-up data",
+        "lesson": "Lesson",
+        "title": "Follow-up List",
+        "turnIndex": "Turn",
+        "user": "User"
+      },
+      "title": "Follow-up Data",
+      "turnIndex": "Turn {count}",
+      "turnIndexHelp": "Turn order is based on follow-up time within the same learning record."
+    },
+    "learningPermission": {
+      "free": "Free",
+      "guest": "No Login",
+      "paid": "Paid",
+      "unknown": "Unknown"
+    },
+    "metrics": "Metrics",
+    "metricsLabels": {
+      "followUpCount": "Ask",
+      "learnerCount": "Learners",
+      "orderAmount": "Collected Revenue (Incl. Coupon Codes)",
+      "orderCount": "Orders",
+      "ratingScore": "Rating",
+      "visitCount30d": "Visitors (30d)"
+    },
+    "orders": {
+      "openMetric": "Open order data"
+    },
+    "ratings": {
+      "back": "Back to course detail",
+      "emptyValue": "--",
+      "filters": {
+        "chapterKeyword": "Chapter / Lesson Search",
+        "chapterKeywordPlaceholder": "Chapter / Lesson Title",
+        "commentStatus": "Comment",
+        "commentStatusAll": "All",
+        "commentStatusCommented": "With Comment",
+        "lessonKeyword": "Lesson Search",
+        "lessonKeywordPlaceholder": "Lesson Title",
+        "mode": "Learning Mode",
+        "modeAll": "All Modes",
+        "ratingTime": "Rating Time",
+        "reset": "Reset",
+        "resultCount": "{count, plural, one {# result} other {# results}}",
+        "score": "Rating",
+        "scoreAll": "All Ratings",
+        "search": "Search",
+        "sortBy": "Sort",
+        "sortByLatest": "Latest First",
+        "sortByLowScore": "Lowest Rating First",
+        "timePlaceholder": "Rating Start / End Time",
+        "userKeyword": "User Search",
+        "userKeywordPlaceholderEmail": "Email / Nickname",
+        "userKeywordPlaceholderPhone": "Phone / Nickname"
+      },
+      "modes": {
+        "listen": "Listen",
+        "read": "Read"
+      },
+      "openMetric": "Open rating data",
+      "scoreValue": "{count}-star",
+      "summary": {
+        "averageScore": "Average Rating",
+        "latestRatedAt": "Latest Rating",
+        "ratingCount": "Ratings",
+        "scopeHint": "These summary metrics reflect the current filtered result set.",
+        "userCount": "Users"
+      },
+      "table": {
+        "chapter": "Chapter",
+        "comment": "Comment",
+        "empty": "No rating data",
+        "guestUser": "Guest",
+        "lesson": "Lesson",
+        "mode": "Mode",
+        "ratedAt": "Rating Time",
+        "score": "Rating",
+        "title": "Rating List",
+        "user": "User"
+      },
+      "title": "Rating Data"
+    },
+    "title": "Course Detail",
+    "userLearningStatus": {
+      "completed": "Completed",
+      "learning": "Learning",
+      "notStarted": "Not Started"
+    },
+    "userRole": {
+      "creator": "Creator",
+      "normal": "General User",
+      "operator": "Operator",
+      "student": "Student"
+    },
+    "users": "Users",
+    "usersCount": "{count} course users",
+    "usersDescription": "Review course-related users, their learning progress, payment status, and recent activity.",
+    "usersFilters": {
+      "all": "All",
+      "learningStatus": "Learning Status",
+      "paymentPaid": "Paid",
+      "paymentStatus": "Payment",
+      "paymentUnpaid": "Unpaid",
+      "userKeyword": "User Search",
+      "userKeywordPlaceholder": "Search by phone, email, or nickname",
+      "userKeywordPlaceholderEmail": "Search by email or nickname",
+      "userKeywordPlaceholderPhone": "Search by phone or nickname",
+      "userRole": "User Role"
+    },
+    "usersTable": {
+      "account": "Phone / Email",
+      "accountEmail": "Email",
+      "accountPhone": "Phone",
+      "action": "Action",
+      "detailAction": "Detail",
+      "empty": "No user data",
+      "isPaid": "Paid",
+      "joinedAt": "Joined",
+      "lastLearnedAt": "Last Learned",
+      "lastLoginAt": "Last Login",
+      "learningProgress": "Progress",
+      "learningStatus": "Learning Status",
+      "nickname": "Nickname",
+      "totalPaidAmount": "Paid Amount",
+      "userId": "User ID",
+      "userRole": "User Role"
+    },
+    "visibility": {
+      "hidden": "Hidden",
+      "visible": "Visible"
+    }
+  },
+  "emptyList": "No courses",
+  "filters": {
+    "courseId": "Course ID",
+    "courseName": "Course Name",
+    "createdAt": "Created At",
+    "creator": "Creator",
+    "creatorEmailOrUserBid": "Email or user ID",
+    "creatorMobileOrUserBid": "Mobile or user ID",
+    "endTime": "End Date",
+    "startTime": "Start Date",
+    "status": "Status"
+  },
+  "overview": {
+    "activeFilter": "Quick Filter",
+    "metrics": {
+      "createdLast7d": "New Courses (7d)",
+      "draftCourses": "Draft Courses",
+      "learningActive30d": "Courses with Learning (30d)",
+      "ordered30d": "Courses with Orders (30d)",
+      "publishedCourses": "Published Courses",
+      "totalCourses": "Total Courses"
+    },
+    "title": "Overview",
+    "tooltips": {
+      "createdLast7d": "Courses created in last 7 days",
+      "draftCourses": "Never published courses",
+      "learningActive30d": "Courses with learning in last 30 days",
+      "ordered30d": "Courses with paid orders in last 30 days",
+      "publishedCourses": "Courses published at least once",
+      "totalCourses": "Total courses"
+    }
+  },
+  "statusLabels": {
+    "published": "Published",
+    "unknown": "Unknown",
+    "unpublished": "Unpublished"
+  },
+  "table": {
+    "action": "Action",
+    "courseId": "Course ID",
+    "courseName": "Course Name",
+    "coursePrompt": "Course Prompt",
+    "createdAt": "Created At",
+    "creator": "Creator",
+    "detailAction": "Detail",
+    "model": "Model",
+    "modifier": "Modifier",
+    "price": "Price",
+    "status": "Status",
+    "updatedAt": "Updated At"
+  },
+  "title": "Course Management",
+  "transferCreatorDialog": {
+    "confirm": "Transfer",
+    "confirmDescriptionCourseSuffix": " from",
+    "confirmDescriptionPrefix": "Transfer the creator of",
+    "confirmDescriptionTargetPrefix": "to",
+    "confirmTitle": "Confirm Creator Transfer",
+    "contactPlaceholderEmail": "Enter target creator email",
+    "contactPlaceholderPhone": "Enter target creator mobile",
+    "contactType": "Contact Type",
+    "contactTypeEmail": "Email",
+    "contactTypePhone": "Mobile",
+    "currentCreator": "Current Creator",
+    "description": "Only the course creator changes. Course content, configuration, and shared permissions stay unchanged.",
+    "identifier": "Target Creator",
+    "identifierRequired": "Please enter a valid target creator contact",
+    "sameCreator": "The target contact already belongs to the current creator",
+    "submitSuccess": "Creator transferred",
+    "title": "Transfer Creator"
+  }
+}

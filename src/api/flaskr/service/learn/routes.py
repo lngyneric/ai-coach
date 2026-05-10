@@ -1,0 +1,999 @@
+import json
+import uuid
+
+from flask import Flask, Response, request, stream_with_context
+from pydantic import ValidationError
+
+from flaskr.dao import db
+from flaskr.framework.plugin.inject import inject
+from flaskr.route.common import make_common_response, bypass_token_validation
+from flaskr.service.billing.admission import admit_creator_usage
+from flaskr.service.common.models import raise_param_error
+from flaskr.service.learn.learn_funcs import (
+    get_shifu_info,
+    get_outline_item_tree,
+    handle_reaction,
+    reset_learn_record,
+    get_generated_content,
+    stream_generated_block_audio,
+    stream_preview_tts_audio,
+)
+from flaskr.service.learn.listen_elements import get_listen_element_record
+from flaskr.service.learn.lesson_feedback import (
+    submit_lesson_feedback,
+    list_lesson_feedbacks,
+)
+from flaskr.service.learn.preview_permissions import (
+    require_shifu_preview_permission,
+    resolve_preview_request_user,
+)
+from flaskr.service.metering.consts import (
+    BILL_USAGE_SCENE_PREVIEW,
+    BILL_USAGE_SCENE_PROD,
+)
+from flaskr.service.shifu.demo_courses import is_builtin_demo_shifu
+from flaskr.service.shifu.models import DraftOutlineItem, PublishedOutlineItem
+from flaskr.service.shifu.utils import get_shifu_creator_bid
+from flaskr.service.common import raise_error
+from flaskr.service.learn.runscript_v2 import run_script, get_run_status
+from flaskr.service.learn.learn_dtos import PlaygroundPreviewRequest
+from flaskr.service.learn.context_v2 import RunScriptPreviewContextV2
+from flaskr.service.learn.learn_dtos import RunElementSSEMessageDTO
+from flaskr.util import generate_id
+from flaskr.common.shifu_context import with_shifu_context, get_shifu_context_snapshot
+
+
+def _normalize_user_input(value):
+    if value is None:
+        return None
+    if isinstance(value, dict):
+        normalized = {}
+        for key, raw in value.items():
+            if raw is None:
+                continue
+            if isinstance(raw, list):
+                cleaned = [str(item) for item in raw if item is not None]
+            else:
+                cleaned = [str(raw)]
+            if cleaned:
+                normalized[str(key)] = cleaned
+        return normalized or None
+    if isinstance(value, list):
+        cleaned = [str(item) for item in value if item is not None]
+        return {"user_input": cleaned} if cleaned else None
+    return {"user_input": [str(value)]}
+
+
+def _to_sse_data_line(message) -> str:
+    payload = message.__json__() if hasattr(message, "__json__") else message
+    return "data: " + json.dumps(payload, ensure_ascii=False) + "\n\n"
+
+
+def _is_generator_close_error(exc: RuntimeError) -> bool:
+    return str(exc) == "generator ignored GeneratorExit"
+
+
+def _stream_sse_response(
+    app: Flask,
+    *,
+    message_iter_factory,
+    close_log: str,
+    error_log: str,
+    error_event_factory=None,
+    terminal_event_factory=None,
+) -> Response:
+    def event_stream():
+        try:
+            for message in message_iter_factory():
+                yield _to_sse_data_line(message)
+        except GeneratorExit:
+            app.logger.info(close_log)
+            raise
+        except Exception as exc:
+            app.logger.error(error_log, exc_info=True)
+            if error_event_factory is None:
+                raise
+            yield _to_sse_data_line(error_event_factory(exc))
+            if terminal_event_factory is not None:
+                yield _to_sse_data_line(terminal_event_factory())
+
+    return Response(
+        stream_with_context(event_stream()),
+        headers={"Cache-Control": "no-cache"},
+        mimetype="text/event-stream",
+    )
+
+
+def _stream_passthrough_response(
+    app: Flask,
+    *,
+    message_iter_factory,
+    close_log: str,
+    error_log: str,
+) -> Response:
+    def event_stream():
+        try:
+            yield from message_iter_factory()
+        except GeneratorExit:
+            app.logger.info(close_log)
+            raise
+        except RuntimeError as exc:
+            if _is_generator_close_error(exc):
+                app.logger.info(close_log)
+                return
+            app.logger.error(error_log, exc_info=True)
+            raise
+        except Exception:
+            app.logger.error(error_log, exc_info=True)
+            raise
+
+    return Response(
+        stream_with_context(event_stream()),
+        headers={"Cache-Control": "no-cache"},
+        mimetype="text/event-stream",
+    )
+
+
+@inject
+def register_learn_routes(app: Flask, path_prefix: str = "/api/learn") -> Flask:
+    """
+    register learn routes
+    """
+    app.logger.info(f"register learn routes {path_prefix}")
+    preview_service = RunScriptPreviewContextV2(app)
+
+    def _require_shifu_owner(shifu_bid: str) -> str:
+        """Ensure current user is the owner of the specified shifu."""
+        user_bid = request.user.user_id
+        if not getattr(request.user, "is_creator", False):
+            raise_error("server.shifu.noPermission")
+        context_snapshot = get_shifu_context_snapshot()
+        creator_bid = (context_snapshot or {}).get("shifu_creator_bid") or ""
+        if not creator_bid:
+            creator_bid = get_shifu_creator_bid(app, shifu_bid) or ""
+        if not creator_bid:
+            raise_error("server.shifu.shifuNotFound")
+        if creator_bid != user_bid:
+            raise_error("server.shifu.noPermission")
+        return user_bid
+
+    def _ensure_outline_belongs_to_shifu(shifu_bid: str, outline_bid: str) -> None:
+        """Validate that outline belongs to the specified shifu."""
+        in_draft = (
+            db.session.query(DraftOutlineItem.id)
+            .filter(
+                DraftOutlineItem.shifu_bid == shifu_bid,
+                DraftOutlineItem.outline_item_bid == outline_bid,
+                DraftOutlineItem.deleted == 0,
+            )
+            .first()
+        )
+        if in_draft:
+            return
+        in_published = (
+            db.session.query(PublishedOutlineItem.id)
+            .filter(
+                PublishedOutlineItem.shifu_bid == shifu_bid,
+                PublishedOutlineItem.outline_item_bid == outline_bid,
+                PublishedOutlineItem.deleted == 0,
+            )
+            .first()
+        )
+        if not in_published:
+            raise_error("server.shifu.lessonNotFoundInCourse")
+
+    def _admit_creator_usage_for_shifu(shifu_bid: str, usage_scene: int) -> None:
+        if is_builtin_demo_shifu(app, shifu_bid):
+            return None
+        admit_creator_usage(
+            app,
+            shifu_bid=shifu_bid,
+            usage_scene=usage_scene,
+        )
+
+    @app.route(path_prefix + "/shifu/<shifu_bid>", methods=["GET"])
+    @bypass_token_validation
+    @with_shifu_context()
+    def get_shifu_api(shifu_bid: str):
+        """
+        get shifu
+        ---
+        tags:
+            - learn
+        parameters:
+            - name: shifu_bid
+              type: string
+              required: true
+            - in: query
+              name: preview_mode
+              type: string
+              required: false
+        responses:
+            200:
+                description: get shifu success
+                content:
+                    application/json:
+                        schema:
+                            properties:
+                                code:
+                                    type: integer
+                                    description: code
+                                message:
+                                    type: string
+                                    description: message
+                                data:
+                                    type: object
+                                    $ref: "#/components/schemas/LearnShifuInfoDTO"
+        """
+        preview_mode = request.args.get("preview_mode", "False")
+        app.logger.info(
+            f"get shifu, shifu_bid: {shifu_bid}, preview_mode: {preview_mode}"
+        )
+        preview_mode = True if preview_mode.lower() == "true" else False
+        if preview_mode:
+            user = resolve_preview_request_user(app)
+            require_shifu_preview_permission(app, user.user_id, shifu_bid)
+        return make_common_response(get_shifu_info(app, shifu_bid, preview_mode))
+
+    @app.route(path_prefix + "/shifu/<shifu_bid>/outline-item-tree", methods=["GET"])
+    @with_shifu_context()
+    def get_outline_item_tree_api(shifu_bid: str):
+        """
+        get outline item tree
+        ---
+        tags:
+            - learn
+        parameters:
+            - in: query
+              name: preview_mode
+              type: string
+              required: false
+        responses:
+            200:
+                description: get outline item tree success
+                content:
+                    application/json:
+                        schema:
+                            properties:
+                                code:
+                                    type: integer
+                                    description: code
+                                message:
+                                    type: string
+                                    description: message
+                                data:
+                                    type: array
+                                    items:
+                                        $ref: "#/components/schemas/LearnOutlineItemInfoDTO"
+        """
+        preview_mode = request.args.get("preview_mode", "False")
+        app.logger.info(
+            f"get outline item tree, shifu_bid: {shifu_bid}, preview_mode: {preview_mode}"
+        )
+        preview_mode = True if preview_mode.lower() == "true" else False
+        user_bid = request.user.user_id
+        if preview_mode:
+            require_shifu_preview_permission(app, user_bid, shifu_bid)
+        return make_common_response(
+            get_outline_item_tree(app, shifu_bid, user_bid, preview_mode)
+        )
+
+    @app.route(path_prefix + "/shifu/<shifu_bid>/run/<outline_bid>", methods=["PUT"])
+    @with_shifu_context()
+    def run_outline_item_api(shifu_bid: str, outline_bid: str):
+        """
+        run the MarkdownFlow of the outline
+        ---
+        tags:
+            - learn
+        parameters:
+            - name: shifu_bid
+              type: string
+              required: true
+            - name: outline_bid
+              type: string
+              required: true
+            - in: body
+              name: body
+              required: true
+              schema:
+                type: object
+                properties:
+                    input:
+                        type: object
+                        required: true
+                    input_type:
+                        type: string
+                        required: false
+                    listen:
+                        type: boolean
+                        required: false
+                        description: Whether to enable segmented listen-mode TTS during learning (default: false)
+                    reload_generated_block_bid:
+                        type: string
+                        required: false
+            - in: query
+              name: preview_mode
+              type: string
+              required: false
+        responses:
+            200:
+                description: run the MarkdownFlow of the outline success
+                content:
+                    text/event-stream:
+                        schema:
+                            $ref: "#/components/schemas/RunElementSSEMessageDTO"
+        """
+        user_bid = request.user.user_id
+        payload = request.get_json() or {}
+        input = payload.get("input", None)
+        input_type = payload.get("input_type", None)
+        reload_generated_block_bid = payload.get("reload_generated_block_bid", None)
+        reload_element_bid = payload.get("reload_element_bid", None)
+        listen_raw = payload.get("listen", False)
+        if isinstance(listen_raw, str):
+            listen = listen_raw.strip().lower() == "true"
+        elif listen_raw is None:
+            listen = False
+        else:
+            listen = bool(listen_raw)
+        preview_mode = request.args.get("preview_mode", "False")
+        app.logger.info(
+            f"run outline item, shifu_bid: {shifu_bid}, outline_bid: {outline_bid}, preview_mode: {preview_mode}, listen: {listen}"
+        )
+        preview_mode = True if preview_mode.lower() == "true" else False
+        if preview_mode:
+            require_shifu_preview_permission(app, user_bid, shifu_bid)
+        _admit_creator_usage_for_shifu(
+            shifu_bid,
+            BILL_USAGE_SCENE_PREVIEW if preview_mode else BILL_USAGE_SCENE_PROD,
+        )
+        shifu_context_snapshot = get_shifu_context_snapshot()
+        return _stream_passthrough_response(
+            app,
+            message_iter_factory=lambda: run_script(
+                app=app,
+                shifu_bid=shifu_bid,
+                outline_bid=outline_bid,
+                user_bid=user_bid,
+                input=input,
+                input_type=input_type,
+                reload_generated_block_bid=reload_generated_block_bid,
+                reload_element_bid=reload_element_bid,
+                listen=listen,
+                preview_mode=preview_mode,
+                shifu_context_snapshot=shifu_context_snapshot,
+            ),
+            close_log="client closed learn runtime stream early",
+            error_log="run outline item failed",
+        )
+
+    @app.route(
+        path_prefix + "/shifu/<shifu_bid>/preview/<outline_bid>",
+        methods=["POST"],
+    )
+    @with_shifu_context()
+    def preview_outline_block_api(shifu_bid: str, outline_bid: str):
+        """
+        preview a specific outline block
+        ---
+        tags:
+            - learn
+        parameters:
+            - name: shifu_bid
+              type: string
+              required: true
+            - name: outline_bid
+              type: string
+              required: true
+            - in: body
+              name: body
+              required: true
+              schema:
+                type: object
+                properties:
+                    content:
+                        type: string
+                        required: true
+                        description: Markdown-Flow document content (legacy alias: prompt)
+                    block_index:
+                        type: integer
+                        required: true
+                        description: block index to preview
+                    context:
+                        type: array
+                        required: false
+                        description: chat context forwarded to LLM
+                        items:
+                            type: object
+                    document_prompt:
+                        type: string
+                        required: false
+                        description: document prompt
+                    variables:
+                        type: object
+                        required: false
+                        description: variables
+                    user_input:
+                        type: object
+                        required: false
+                        description: user input map (legacy alias: input)
+                    interaction_prompt:
+                        type: string
+                        required: false
+                        description: override interaction render prompt
+                    interaction_error_prompt:
+                        type: string
+                        required: false
+                        description: override interaction error prompt
+                    model:
+                        type: string
+                        required: false
+                        description: override LLM model
+                    temperature:
+                        type: number
+                        required: false
+                        description: override LLM temperature (0.0-2.0)
+                    visual_mode:
+                        type: boolean
+                        required: false
+                        description: Whether to enable MarkdownFlow visual mode for preview (default: false)
+        responses:
+            200:
+                description: stream preview block success
+                content:
+                    text/event-stream:
+                        schema:
+                            type: string
+                            example: 'data: {"type":"element","event_type":"element","content":{"element_type":"text","content":"..."}}'
+        """
+        payload = request.get_json(silent=True) or {}
+        normalized_user_input = payload.get("user_input")
+        if normalized_user_input is None and "input" in payload:
+            normalized_user_input = _normalize_user_input(payload.get("input"))
+        visual_mode_raw = payload.get("visual_mode", False)
+        if isinstance(visual_mode_raw, str):
+            visual_mode = visual_mode_raw.strip().lower() == "true"
+        elif visual_mode_raw is None:
+            visual_mode = False
+        else:
+            visual_mode = bool(visual_mode_raw)
+        block_index = payload.get("block_index")
+        if block_index is None:
+            block_index = payload.get("blockIndex")
+        preview_payload = {
+            "content": payload.get("content") or payload.get("prompt"),
+            "block_index": block_index,
+            "context": payload.get("context"),
+            "variables": payload.get("variables"),
+            "user_input": normalized_user_input,
+            "document_prompt": payload.get("document_prompt"),
+            "interaction_prompt": payload.get("interaction_prompt"),
+            "interaction_error_prompt": payload.get("interaction_error_prompt"),
+            "model": payload.get("model"),
+            "temperature": payload.get("temperature"),
+            "visual_mode": visual_mode,
+        }
+        try:
+            preview_request = PlaygroundPreviewRequest(**preview_payload)
+        except ValidationError as exc:
+            raise_param_error(str(exc))
+
+        user_bid = request.user.user_id
+        session_id = (
+            request.headers.get("Session-Id") or f"preview-{uuid.uuid4().hex[:8]}"
+        )
+        app.logger.info(
+            "preview outline block, shifu_bid: %s, outline_bid: %s, user_bid: %s, block_index: %s, visual_mode: %s",
+            shifu_bid,
+            outline_bid,
+            user_bid,
+            preview_request.block_index,
+            visual_mode,
+        )
+        require_shifu_preview_permission(app, user_bid, shifu_bid)
+        _admit_creator_usage_for_shifu(
+            shifu_bid,
+            BILL_USAGE_SCENE_PREVIEW,
+        )
+
+        return _stream_sse_response(
+            app,
+            message_iter_factory=lambda: preview_service.stream_preview(
+                preview_request=preview_request,
+                shifu_bid=shifu_bid,
+                outline_bid=outline_bid,
+                user_bid=user_bid,
+                session_id=session_id,
+            ),
+            close_log="client closed preview stream early",
+            error_log="preview outline block failed",
+            error_event_factory=lambda exc: RunElementSSEMessageDTO(
+                type="error",
+                event_type="error",
+                generated_block_bid=generate_id(app),
+                is_terminal=False,
+                content=str(exc),
+            ),
+            terminal_event_factory=lambda: RunElementSSEMessageDTO(
+                type="done",
+                event_type="done",
+                generated_block_bid=None,
+                is_terminal=True,
+                content="",
+            ),
+        )
+
+    @app.route(
+        path_prefix + "/shifu/<shifu_bid>/run/<outline_bid>",
+        methods=["GET"],
+    )
+    @with_shifu_context()
+    def get_run_status_api(shifu_bid: str, outline_bid: str):
+        """
+        get run status
+        ---
+        tags:
+            - learn
+        parameters:
+            - name: shifu_bid
+              type: string
+              required: true
+            - name: outline_bid
+              type: string
+              required: true
+        responses:
+            200:
+                description: get run status success
+                content:
+                    application/json:
+                        schema:
+                            properties:
+                                code:
+                                    type: integer
+                                    description: code
+                                message:
+                                    type: string
+                                    description: message
+                                data:
+                                    type: object
+                                    $ref: "#/components/schemas/RunStatusDTO"
+        """
+        user_bid = request.user.user_id
+        return make_common_response(
+            get_run_status(app, shifu_bid, outline_bid, user_bid)
+        )
+
+    @app.route(
+        path_prefix + "/shifu/<shifu_bid>/records/<outline_bid>", methods=["GET"]
+    )
+    @with_shifu_context()
+    def get_record_api(shifu_bid: str, outline_bid: str):
+        """
+        get learn records of the outline
+        ---
+        tags:
+            - learn
+        parameters:
+            - name: shifu_bid
+              type: string
+              required: true
+            - name: outline_bid
+              type: string
+              required: true
+            - name: preview_mode
+              type: boolean
+              required: false
+            - name: include_non_navigable
+              type: boolean
+              required: false
+              description: include persisted non-navigable events replay
+        responses:
+            200:
+                description: get learn records of the outline success
+                content:
+                    application/json:
+                        schema:
+                            properties:
+                                code:
+                                    type: integer
+                                    description: code
+                                message:
+                                    type: string
+                                    description: message
+                                data:
+                                    $ref: "#/components/schemas/LearnElementRecordDTO"
+
+        """
+        preview_mode = request.args.get("preview_mode", "False")
+        include_non_navigable = request.args.get("include_non_navigable", "False")
+        app.logger.info(
+            f"get learn element record, shifu_bid: {shifu_bid}, outline_bid: {outline_bid}, preview_mode: {preview_mode}"
+        )
+        preview_mode = True if preview_mode.lower() == "true" else False
+        include_non_navigable = (
+            True if include_non_navigable.lower() == "true" else False
+        )
+        user_bid = request.user.user_id
+        if preview_mode:
+            require_shifu_preview_permission(app, user_bid, shifu_bid)
+        return make_common_response(
+            get_listen_element_record(
+                app,
+                shifu_bid,
+                outline_bid,
+                user_bid,
+                preview_mode,
+                include_non_navigable=include_non_navigable,
+            )
+        )
+
+    @app.route(
+        path_prefix + "/shifu/<shifu_bid>/records/<outline_bid>", methods=["DELETE"]
+    )
+    @with_shifu_context()
+    def delete_record_api(shifu_bid: str, outline_bid: str):
+        """
+        reset the record of the outline
+        ---
+        tags:
+            - learn
+        parameters:
+            - name: shifu_bid
+              type: string
+              required: true
+            - name: outline_bid
+              type: string
+              required: true
+        responses:
+            200:
+                description: reset the record of the outline success
+                content:
+                    application/json:
+                        schema:
+                            properties:
+                                code:
+                                    type: integer
+                                    description: code
+                                message:
+                                    type: string
+                                    description: message
+
+        """
+        user_bid = request.user.user_id
+        return make_common_response(
+            reset_learn_record(app, shifu_bid, outline_bid, user_bid)
+        )
+
+    @app.route(
+        path_prefix + "/shifu/<shifu_bid>/lesson-feedback/<outline_bid>",
+        methods=["POST"],
+    )
+    @with_shifu_context()
+    def submit_lesson_feedback_api(shifu_bid: str, outline_bid: str):
+        """
+        submit lesson feedback
+        ---
+        tags:
+            - learn
+        parameters:
+            - name: shifu_bid
+              type: string
+              required: true
+            - name: outline_bid
+              type: string
+              required: true
+            - in: body
+              name: body
+              required: true
+              schema:
+                type: object
+                properties:
+                    score:
+                        type: integer
+                        required: true
+                    comment:
+                        type: string
+                        required: false
+                    mode:
+                        type: string
+                        required: false
+                        description: read or listen
+        responses:
+            200:
+                description: submit lesson feedback success
+                content:
+                    application/json:
+                        schema:
+                            properties:
+                                code:
+                                    type: integer
+                                message:
+                                    type: string
+                                data:
+                                    type: object
+        """
+        user_bid = request.user.user_id
+        _ensure_outline_belongs_to_shifu(shifu_bid, outline_bid)
+        payload = request.get_json(silent=True) or {}
+        if not isinstance(payload, dict):
+            raise_param_error("body")
+        return make_common_response(
+            submit_lesson_feedback(
+                app,
+                user_bid=user_bid,
+                shifu_bid=shifu_bid,
+                outline_bid=outline_bid,
+                score=payload.get("score"),
+                comment=payload.get("comment"),
+                mode=payload.get("mode"),
+            )
+        )
+
+    @app.route(path_prefix + "/shifu/<shifu_bid>/lesson-feedbacks", methods=["GET"])
+    @with_shifu_context()
+    def list_lesson_feedbacks_api(shifu_bid: str):
+        """
+        list lesson feedbacks for a course (teacher/authoring side)
+        ---
+        tags:
+            - learn
+        parameters:
+            - name: shifu_bid
+              type: string
+              required: true
+            - in: query
+              name: outline_bid
+              type: string
+              required: false
+            - in: query
+              name: page_index
+              type: integer
+              required: false
+            - in: query
+              name: page_size
+              type: integer
+              required: false
+        """
+        _require_shifu_owner(shifu_bid)
+        page_index_raw = request.args.get("page_index", "1")
+        page_size_raw = request.args.get("page_size", "20")
+        try:
+            page_index = int(page_index_raw)
+        except ValueError:
+            raise_param_error("page_index")
+        try:
+            page_size = int(page_size_raw)
+        except ValueError:
+            raise_param_error("page_size")
+        if page_index < 1:
+            raise_param_error("page_index")
+        if page_size < 1:
+            raise_param_error("page_size")
+        return make_common_response(
+            list_lesson_feedbacks(
+                app,
+                shifu_bid=shifu_bid,
+                outline_bid=request.args.get("outline_bid"),
+                page_index=page_index,
+                page_size=page_size,
+            )
+        )
+
+    @app.route(
+        path_prefix
+        + "/shifu/<shifu_bid>/generated-contents/<generated_block_bid>/<action>",
+        methods=["POST"],
+    )
+    @with_shifu_context()
+    def generate_content_api(shifu_bid: str, generated_block_bid: str, action: str):
+        """
+        generate the content of the generated block
+        ---
+        tags:
+            - learn
+        parameters:
+            - name: shifu_bid
+              type: string
+              required: true
+            - name: generated_block_bid
+              type: string
+              required: true
+            - name: action
+              type: string
+              required: true
+        responses:
+            200:
+                description: generate the content of the generated block success
+                content:
+                    application/json:
+                        schema:
+                            code:
+                                    type: integer
+                                    description: code
+                            message:
+                                    type: string
+                                    description: message
+        """
+        user_bid = request.user.user_id
+        app.logger.info(
+            f"generate content, shifu_bid: {shifu_bid}, generated_block_bid: {generated_block_bid}, action: {action}"
+        )
+        return make_common_response(
+            handle_reaction(app, shifu_bid, user_bid, generated_block_bid, action)
+        )
+
+    @app.route(
+        path_prefix + "/shifu/<shifu_bid>/generated-contents/<generated_block_bid>",
+        methods=["GET"],
+    )
+    @with_shifu_context()
+    def get_generated_content_api(shifu_bid: str, generated_block_bid: str):
+        """
+        get the content of the generated block
+        ---
+        tags:
+            - learn
+        parameters:
+            - name: shifu_bid
+              type: string
+              required: true
+            - name: generated_block_bid
+              type: string
+              required: true
+        responses:
+            200:
+                description: get the content of the generated block success
+                content:
+                    application/json:
+                        schema:
+                            properties:
+                                code:
+                                    type: integer
+                                    description: code
+                                message:
+                                    type: string
+                                    description: message
+                                data:
+                                    $ref: "#/components/schemas/GeneratedInfoDTO"
+        """
+        user_bid = request.user.user_id
+        preview_mode = request.args.get("preview_mode", "False")
+        app.logger.info(
+            f"get generated content, shifu_bid: {shifu_bid}, generated_block_bid: {generated_block_bid}, preview_mode: {preview_mode}"
+        )
+        preview_mode = preview_mode.lower() == "true"
+        if preview_mode:
+            require_shifu_preview_permission(app, user_bid, shifu_bid)
+        return make_common_response(
+            get_generated_content(
+                app, shifu_bid, generated_block_bid, user_bid, preview_mode
+            )
+        )
+
+    @app.route(
+        path_prefix + "/shifu/<shifu_bid>/generated-blocks/<generated_block_bid>/tts",
+        methods=["POST"],
+    )
+    @with_shifu_context()
+    def synthesize_generated_block_audio_api(shifu_bid: str, generated_block_bid: str):
+        """
+        Synthesize audio for a generated block (C-end, persisted)
+        ---
+        tags:
+            - learn
+        parameters:
+            - name: shifu_bid
+              type: string
+              required: true
+            - name: generated_block_bid
+              type: string
+              required: true
+            - in: query
+              name: preview_mode
+              type: string
+              required: false
+            - in: query
+              name: listen
+              type: string
+              required: false
+              description: Whether to enable listen-mode segmented TTS (default: false)
+        responses:
+            200:
+                description: stream synthesized audio
+                content:
+                    text/event-stream:
+                        schema:
+                            type: string
+                            example: 'data: {"type":"element","content":{"event_type":"element","element_bid":"el_demo_patch","is_new":false,"target_element_bid":"el_demo","audio_segments":[{"segment_index":0,"audio_data":"...","duration_ms":123,"is_final":false}]}}'
+        """
+        user_bid = request.user.user_id
+        preview_mode = request.args.get("preview_mode", "False")
+        preview_mode = preview_mode.lower() == "true"
+        listen = request.args.get("listen", "False")
+        listen = listen.lower() == "true"
+        if preview_mode:
+            require_shifu_preview_permission(app, user_bid, shifu_bid)
+        # TTS is gated by billing admission, but it should not consume a second
+        # creator runtime slot alongside the active learn stream.
+        _admit_creator_usage_for_shifu(
+            shifu_bid,
+            BILL_USAGE_SCENE_PREVIEW if preview_mode else BILL_USAGE_SCENE_PROD,
+        )
+
+        return _stream_sse_response(
+            app,
+            message_iter_factory=lambda: stream_generated_block_audio(
+                app,
+                shifu_bid=shifu_bid,
+                generated_block_bid=generated_block_bid,
+                user_bid=user_bid,
+                preview_mode=preview_mode,
+                listen=listen,
+            ),
+            close_log="client closed tts stream early",
+            error_log="synthesize generated block audio failed",
+        )
+
+    @app.route(path_prefix + "/shifu/<shifu_bid>/tts/preview", methods=["POST"])
+    @with_shifu_context()
+    def synthesize_preview_tts_audio_api(shifu_bid: str):
+        """
+        Synthesize audio for an arbitrary text (editor preview, not persisted)
+        ---
+        tags:
+            - learn
+        parameters:
+            - name: shifu_bid
+              type: string
+              required: true
+            - in: query
+              name: preview_mode
+              type: string
+              required: false
+        requestBody:
+            required: true
+            content:
+                application/json:
+                    schema:
+                        type: object
+                        properties:
+                            text:
+                                type: string
+                                description: Text to synthesize
+        responses:
+            200:
+                description: stream preview audio
+                content:
+                    text/event-stream:
+                        schema:
+                            type: string
+                            example: 'data: {"type":"audio_complete","content":{"audio_url":"...","audio_bid":"...","duration_ms":1234}}'
+        """
+        user_bid = request.user.user_id
+        payload = request.get_json(silent=True) or {}
+        text = payload.get("text") or ""
+        preview_mode = request.args.get("preview_mode", "False")
+        preview_mode = preview_mode.lower() == "true"
+        require_shifu_preview_permission(app, user_bid, shifu_bid)
+        # Preview TTS reuses the same creator admission gate without claiming an
+        # extra runtime slot, so authors can preview audio during an active run.
+        _admit_creator_usage_for_shifu(
+            shifu_bid,
+            BILL_USAGE_SCENE_PREVIEW if preview_mode else BILL_USAGE_SCENE_PROD,
+        )
+
+        return _stream_sse_response(
+            app,
+            message_iter_factory=lambda: stream_preview_tts_audio(
+                app,
+                shifu_bid=shifu_bid,
+                user_bid=user_bid,
+                text=text,
+                preview_mode=preview_mode,
+            ),
+            close_log="client closed preview tts stream early",
+            error_log="preview tts stream failed",
+        )
+
+    return app

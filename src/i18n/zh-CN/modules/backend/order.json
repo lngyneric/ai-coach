@@ -1,0 +1,30 @@
+{
+  "__namespace__": "server.order",
+  "__flat__": {
+    "checkout": "去支付",
+    "courseNotPaid": "课程未购买，请先购买课程",
+    "emailAlreadyActivated": "邮箱 {email} 已开通过该课程",
+    "learnStatusBranch": "分支",
+    "learnStatusCompleted": "已完成",
+    "learnStatusInProgress": "正在学",
+    "learnStatusLocked": "未解锁",
+    "learnStatusNotStarted": "可学习",
+    "learnStatusRefund": "退款",
+    "learnStatusReset": "重置",
+    "learnStatusUnavailable": "不可用",
+    "mobileAlreadyActivated": "手机号 {mobile} 已开通过该课程",
+    "orderHasPaid": "订单已经支付",
+    "orderNotFound": "没有找到订单",
+    "orderRefundError": "退款失败",
+    "orderStatusError": "当前订单状态不支持此操作",
+    "orderStatusInit": "未发起支付",
+    "orderStatusRefund": "退款",
+    "orderStatusSuccess": "购买成功",
+    "orderStatusTimeout": "已过期",
+    "orderStatusToBePaid": "待支付",
+    "payItemBasePrice": "基础价格",
+    "payItemCoupon": "优惠",
+    "payItemProduct": "商品",
+    "payItemPromotion": "活动"
+  }
+}

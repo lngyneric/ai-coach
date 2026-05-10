@@ -1,0 +1,86 @@
+{
+  "version": "1.0",
+  "exported_at": "2025-11-29T07:44:57.671990",
+  "shifu": {
+    "shifu_bid": "f199b2107c6a415199d2432bfc1b737d",
+    "title": "⭐️点击这里开始⭐️",
+    "keywords": "",
+    "description": "完成你的第一个师傅！",
+    "avatar_res_bid": "76eb74b5f99a4d7186aa8ead40a1f9d4",
+    "llm": "",
+    "llm_temperature": 0.3,
+    "llm_system_prompt": "",
+    "ask_enabled_status": 5101,
+    "ask_llm": "",
+    "ask_llm_temperature": 0.0,
+    "ask_llm_system_prompt": "",
+    "price": 0.5
+  },
+  "outline_items": [
+    {
+      "outline_item_bid": "85bf8e2578954c8899016cf1f4a94a64",
+      "title": "这里修改章名称",
+      "type": 400,
+      "hidden": 0,
+      "parent_bid": "",
+      "position": "01",
+      "prerequisite_item_bids": "",
+      "llm": "",
+      "llm_temperature": 0.3,
+      "llm_system_prompt": "",
+      "ask_enabled_status": 5101,
+      "ask_llm": "",
+      "ask_llm_temperature": 0.3,
+      "ask_llm_system_prompt": "",
+      "content": ""
+    },
+    {
+      "outline_item_bid": "aa9f3fa5d8934543ae6e4569bdf35c7c",
+      "title": "请修改节名称",
+      "type": 400,
+      "hidden": 0,
+      "parent_bid": "85bf8e2578954c8899016cf1f4a94a64",
+      "position": "0101",
+      "prerequisite_item_bids": "",
+      "llm": "",
+      "llm_temperature": 0.3,
+      "llm_system_prompt": "",
+      "ask_enabled_status": 5101,
+      "ask_llm": "",
+      "ask_llm_temperature": 0.3,
+      "ask_llm_system_prompt": "",
+      "content": "!===\n\n🎉 欢迎使用 AI 师傅！！🎉\n你只需要给到内容， AI 师傅会做千人千面的讲解。\n\n👉第一步：请在这里写下任意的讲解要求。\n比如：讲解金字塔原理\n \n👉第二步： 请点击 **预览课程** 查看效果。\n\n👉第三步：回到上一级 **师傅** 主界面，查看 [AI 师傅创作指导课](https://app.ai-shifu.cn/c/3aab99292889400f9f3c935a45ab2b0e)，了解如何使用AI 师傅进行创作。\n\n\n现在让我们开始吧！！\n请删除这里所有内容，写一个你想要讲述的内容吧。\n\n!==="
+    }
+  ],
+  "structure": {
+    "bid": "f199b2107c6a415199d2432bfc1b737d",
+    "id": 311,
+    "type": "shifu",
+    "children": [
+      {
+        "bid": "85bf8e2578954c8899016cf1f4a94a64",
+        "id": 5031,
+        "type": "outline",
+        "children": [
+          {
+            "bid": "aa9f3fa5d8934543ae6e4569bdf35c7c",
+            "id": 6381,
+            "type": "outline",
+            "children": [
+              {
+                "bid": "67ed328b678541aba7053bd4a678ce55",
+                "id": 11461,
+                "type": "block",
+                "children": [],
+                "child_count": 0
+              }
+            ],
+            "child_count": 1
+          }
+        ],
+        "child_count": 0
+      }
+    ],
+    "child_count": 0
+  }
+}
