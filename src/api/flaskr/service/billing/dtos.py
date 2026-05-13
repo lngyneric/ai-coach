@@ -649,6 +649,7 @@ class RuntimeConfigDTO(BillingBaseDTO):
     googleOauthRedirect: str
     homeUrl: str
     contactUsUrl: str
+    brandName: str
     currencySymbol: str
     legalUrls: RuntimeLegalUrlsDTO
     genMdfApiUrl: str

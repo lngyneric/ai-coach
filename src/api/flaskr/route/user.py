@@ -796,6 +796,60 @@ def register_user_handler(app: Flask, path_prefix: str) -> Flask:
         )
         return make_common_response(auth_result.token)
 
+    # -------- WeCom OAuth routes --------
+
+    @app.route(path_prefix + "/oauth/wecom", methods=["GET"])
+    @bypass_token_validation
+    def wecom_oauth_start():
+        metadata = {}
+        redirect_uri = request.args.get("redirect_uri")
+        if redirect_uri:
+            metadata["redirect_uri"] = redirect_uri
+        login_context = request.args.get("login_context")
+        if login_context:
+            metadata["login_context"] = login_context
+        provider = get_provider("wecom")
+        result = provider.begin_oauth(app, metadata)
+        return make_common_response(result)
+
+    @app.route(path_prefix + "/oauth/wecom/callback", methods=["GET"])
+    @bypass_token_validation
+    @optional_token_validation
+    def wecom_oauth_callback():
+        provider = get_provider("wecom")
+        current_user = getattr(request, "user", None)
+        current_user_id = None
+        if current_user is not None:
+            current_user_id = getattr(current_user, "user_id", None)
+
+        callback_request = OAuthCallbackRequest(
+            state=request.args.get("state"),
+            code=request.args.get("code"),
+            raw_request_args=request.args.to_dict(flat=True),
+            current_user_id=current_user_id,
+        )
+        try:
+            auth_result = provider.handle_oauth_callback(app, callback_request)
+            db.session.commit()
+        except Exception:
+            db.session.rollback()
+            raise
+        run_post_auth_extensions(
+            app,
+            PostAuthContext(
+                user_id=auth_result.user.user_id,
+                source="wecom",
+                login_context=auth_result.metadata.get("login_context"),
+                created_new_user=bool(auth_result.is_new_user),
+                creator_granted_now=bool(
+                    auth_result.metadata.get("creator_granted_now")
+                ),
+                language=auth_result.metadata.get("language")
+                or getattr(auth_result.user, "language", None),
+            ),
+        )
+        return make_common_response(auth_result.token)
+
     # -------- Password login routes --------
 
     @app.route(path_prefix + "/login_password", methods=["POST"])
@@ -839,6 +893,57 @@ def register_user_handler(app: Flask, path_prefix: str) -> Flask:
             ),
         )
         return make_common_response(auth_result.token)
+
+    # -------- Employee AAD login routes --------
+
+    @app.route(path_prefix + "/login_employee", methods=["POST"])
+    @bypass_token_validation
+    def login_employee():
+        """
+        Login with employee number + password via internal AAD server
+        ---
+        tags:
+            - user
+        """
+        employee_no = request.get_json().get("employeeNo", None)
+        password = request.get_json().get("password", None)
+        language = request.get_json().get("language", None)
+        if language:
+            try:
+                set_language(language)
+            except Exception:
+                pass
+        if not employee_no:
+            raise_param_error("employeeNo")
+        if not password:
+            raise_param_error("password")
+        provider = get_provider("employee")
+        vr = VerificationRequest(identifier=employee_no, code=password)
+        auth_result = provider.verify(app, vr)
+        db.session.commit()
+        run_post_auth_extensions(
+            app,
+            PostAuthContext(
+                user_id=auth_result.user.user_id,
+                source="employee",
+                login_context=None,
+                created_new_user=bool(auth_result.is_new_user),
+                creator_granted_now=bool(
+                    auth_result.metadata.get("creator_granted_now")
+                ),
+                language=language or getattr(auth_result.user, "language", None),
+            ),
+        )
+        resp = make_response(make_common_response(auth_result.token))
+        resp.content_type = "application/json"
+        resp.set_cookie(
+            "token",
+            auth_result.token.token,
+            httponly=False,
+            samesite="Lax",
+            path="/",
+        )
+        return resp
 
     @app.route(path_prefix + "/set_password", methods=["POST"])
     def set_password():

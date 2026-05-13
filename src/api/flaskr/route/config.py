@@ -158,6 +158,7 @@ def register_config_handler(app: Flask, path_prefix: str) -> Flask:
             googleOauthRedirect=build_google_oauth_callback_url(),
             homeUrl=home_url,
             contactUsUrl=contact_us_url,
+            brandName=get_config("BRAND_NAME", "AI-Shifu"),
             currencySymbol=get_config("CURRENCY_SYMBOL", "¥"),
             legalUrls=legal_urls,
             genMdfApiUrl=get_config("GEN_MDF_API_URL", ""),

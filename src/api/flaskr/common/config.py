@@ -272,8 +272,39 @@ ENV_VARS: Dict[str, EnvVar] = {
         name="LOGIN_METHODS_ENABLED",
         default="phone",
         description="""Login methods exposed to users.
-Values: "phone" | "email" | "google" combinations (comma-separated)
+Values: "phone" | "email" | "google" | "employee" combinations (comma-separated)
 Default: "phone".""",
+        group="frontend",
+    ),
+    "AAD_AUTH_URL": EnvVar(
+        name="AAD_AUTH_URL",
+        default="",
+        description="Base URL of the internal AAD authentication server for employee login",
+        group="auth",
+    ),
+    "AAD_AUTH_TIMEOUT": EnvVar(
+        name="AAD_AUTH_TIMEOUT",
+        default=10,
+        type=int,
+        description="HTTP timeout (seconds) for AAD server requests",
+        group="auth",
+    ),
+    "WECOM_CORP_ID": EnvVar(
+        name="WECOM_CORP_ID",
+        default="",
+        description="企业微信 CorpID for OAuth and API access",
+        group="auth",
+    ),
+    "WECOM_SECRET": EnvVar(
+        name="WECOM_SECRET",
+        default="",
+        description="企业微信应用 Secret for API access",
+        group="auth",
+    ),
+    "BRAND_NAME": EnvVar(
+        name="BRAND_NAME",
+        default="AI-Shifu",
+        description="Brand name displayed in page titles and UI labels",
         group="frontend",
     ),
     "STRIPE_ENABLED": EnvVar(

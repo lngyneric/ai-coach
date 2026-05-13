@@ -30,6 +30,8 @@ from flaskr.api.tts.volcengine_provider import VolcengineTTSProvider
 from flaskr.api.tts.volcengine_http_provider import VolcengineHttpTTSProvider
 from flaskr.api.tts.baidu_provider import BaiduTTSProvider
 from flaskr.api.tts.aliyun_provider import AliyunTTSProvider
+from flaskr.api.tts.edge_provider import EdgeTTSProvider
+from flaskr.api.tts.baidu_translate_provider import BaiduTranslateTTSProvider
 from flaskr.api.tts.aliyun_nls_token import is_aliyun_nls_token_configured
 
 
@@ -42,6 +44,8 @@ _PROVIDER_REGISTRY = {
     "volcengine_http": VolcengineHttpTTSProvider,
     "baidu": BaiduTTSProvider,
     "aliyun": AliyunTTSProvider,
+    "edge": EdgeTTSProvider,
+    "baidu_translate": BaiduTranslateTTSProvider,
 }
 _PROVIDER_PRIORITY = (
     "minimax",
@@ -49,6 +53,8 @@ _PROVIDER_PRIORITY = (
     "volcengine_http",
     "baidu",
     "aliyun",
+    "edge",
+    "baidu_translate",
 )
 
 # Provider instances (lazy initialized)

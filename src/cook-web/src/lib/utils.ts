@@ -14,6 +14,11 @@ export const redirectToHomeUrlIfRootPath = (homeUrl?: string): boolean => {
   const normalizedPath = pathname === '/' ? '/' : pathname.replace(/\/+$/, '');
   const shouldRedirect = normalizedPath === '/' || normalizedPath === '/c';
 
+  // Avoid redirect loop: skip if current path already matches homeUrl
+  if (shouldRedirect && normalizedPath === homeUrl) {
+    return false;
+  }
+
   if (shouldRedirect) {
     window.location.replace(homeUrl);
     return true;

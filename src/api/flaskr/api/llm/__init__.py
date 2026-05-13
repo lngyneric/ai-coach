@@ -440,10 +440,11 @@ def _reload_gemini_params(model_id: str, temperature: float) -> Dict[str, Any]:
 
 def _reload_ark_params(model_id: str, temperature: float) -> Dict[str, Any]:
     # doubao-seed models support thinking parameter, pass via extra_body for LiteLLM
-    return {
-        "temperature": temperature,
-        "extra_body": {"thinking": {"type": "disabled"}},
-    }
+    # Coding models (ark-code-*) do not support the thinking parameter
+    params: Dict[str, Any] = {"temperature": temperature}
+    if "code" not in model_id.lower():
+        params["extra_body"] = {"thinking": {"type": "disabled"}}
+    return params
 
 
 def _reload_silicon_params(model_id: str, temperature: float) -> Dict[str, Any]:
@@ -541,9 +542,10 @@ LITELLM_PROVIDER_CONFIGS: List[ProviderConfig] = [
     ProviderConfig(
         key="ark",
         api_key_env="ARK_API_KEY",
+        base_url_env="ARK_BASE_URL",
         default_base_url="https://ark.cn-beijing.volces.com/api/v3",
         prefix="ark/",
-        config_hint="ARK_API_KEY",
+        config_hint="ARK_API_KEY,ARK_BASE_URL",
         custom_llm_provider="openai",
         reload_params=_reload_ark_params,
     ),

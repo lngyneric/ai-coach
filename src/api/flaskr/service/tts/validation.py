@@ -13,6 +13,8 @@ SUPPORTED_TTS_PROVIDERS = {
     "volcengine_http",
     "baidu",
     "aliyun",
+    "edge",
+    "baidu_translate",
 }
 PROVIDERS_REQUIRING_MODEL = {"minimax", "volcengine"}
 

@@ -12,13 +12,14 @@ services:
     env_file:
       - ./.env
     environment:
-      OBSERVABILITY_TRACES_ENABLED: "true"
-      OTEL_EXPORTER_OTLP_ENDPOINT: http://ai-shifu-otel-collector:4318
+      OBSERVABILITY_TRACES_ENABLED: "false"
       OTEL_SERVICE_NAME: ai-shifu-api-dev
-      INTERNAL_METRICS_PATH: /internal/metrics
-      INTERNAL_OBSERVABILITY_HEALTH_PATH: /internal/observability/health
       LOGIN_METHODS_ENABLED: phone
       DEFAULT_LOGIN_METHOD: phone
+      WECOM_CORP_ID: ${WECOM_CORP_ID:-}
+      WECOM_SECRET: ${WECOM_SECRET:-}
+      BRAND_NAME: ${BRAND_NAME:-AI-Shifu}
+      AAD_AUTH_URL: ${AAD_AUTH_URL:-}
       CAPTCHA_CODE_OVERRIDE: "0000"
       REDIS_HOST: ai-shifu-redis
       REDIS_PORT: 6379
@@ -33,7 +34,6 @@ services:
       - ./storage:/app/storage
     depends_on:
       - ai-shifu-mysql
-      - ai-shifu-otel-collector
       - ai-shifu-redis
 
   ai-shifu-celery-worker-dev:
@@ -98,6 +98,7 @@ services:
       - NODE_OPTIONS=--max-old-space-size=2048
       - NEXT_PUBLIC_LOGIN_METHODS_ENABLED=phone
       - NEXT_PUBLIC_DEFAULT_LOGIN_METHOD=phone
+      - NEXT_PUBLIC_BRAND_NAME=${BRAND_NAME:-AI-Shifu}
     depends_on:
       - ai-shifu-api-dev
     volumes:

@@ -5,7 +5,7 @@
     "checkCodeExpired": "Image captcha expired",
     "emailSendFailed": "Email send failed",
     "emailSendTooFrequent": "Emails sent too frequently",
-    "emailVerificationSubject": "AI-Shifu: Your Verification Code",
+    "emailVerificationSubject": "sysmex: Your Verification Code",
     "googleOAuthStateInvalid": "Google login has expired or is invalid, please try again.",
     "invalidCredentials": "Incorrect password",
     "ipBanned": "Requests from this IP are temporarily blocked",
