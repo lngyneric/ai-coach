@@ -18,6 +18,8 @@
 | `docs/design-docs/primary-surface-rules.md` | Primary Surface Rules Completion | `design-doc` | `implemented` | `repo` | `2026-04-17` | `true` |
 | `docs/engineering-baseline.md` | Engineering Baseline | `root-doc` | `reference` | `repo` | `2026-04-17` | `true` |
 | `docs/exec-plans/active/agent-first-harness-phase-2.md` | Agent-First Harness Phase 2 | `exec-plan-active` | `active` | `repo` | `-` | `true` |
+| `docs/exec-plans/active/employee-aad-auth.md` | Employee AAD Authentication | `exec-plan-active` | `active` | `repo` | `-` | `true` |
+| `docs/exec-plans/active/wecom-h5-learner.md` | WeCom H5 Learner Integration | `exec-plan-active` | `active` | `repo` | `-` | `true` |
 | `docs/exec-plans/completed/agent-first-harness-migration.md` | Agent-First Harness Migration | `exec-plan-completed` | `completed` | `repo` | `-` | `true` |
 | `docs/exec-plans/tech-debt-tracker.md` | Tech Debt Tracker | `exec-plan-support` | `active` | `repo` | `2026-04-17` | `true` |
 | `docs/generated/harness-gardening-summary.md` | Harness Gardening Summary | `generated-doc` | `reference` | `repo` | `2026-04-17` | `true` |
