@@ -1,0 +1,63 @@
+{
+  "version": 1,
+  "name": "ai-shifu-course-creator",
+  "displayName": "AI-Shifu Course Creator",
+  "description": "Full lifecycle AI course authoring: segment raw material, generate interactive MarkdownFlow lessons, deploy, publish, preview, and analyze learner analytics.",
+  "entrypoint": "SKILL.md",
+  "trigger": {
+    "patterns": [
+      "AI-Shifu",
+      "AI师傅",
+      "MarkdownFlow",
+      "Teaching Prompt",
+      "Course Prompt",
+      "course create",
+      "course authoring",
+      "course analytics",
+      "课件生成",
+      "课程创作",
+      "create.*course",
+      "generate.*lesson",
+      "publish.*course",
+      "import.*course",
+      "deploy.*course",
+      "学习人数",
+      "完成率",
+      "卡课节"
+    ],
+    "skills": [
+      "ai-shifu-course-creator"
+    ],
+    "autoActivate": true
+  },
+  "runtime": {
+    "language": "python3",
+    "scripts": {
+      "cli": "scripts/shifu-cli.py",
+      "mdfProxy": "scripts/mdf-proxy.py"
+    },
+    "env": {
+      "required": ["SHIFU_BASE_URL", "SHIFU_TOKEN"],
+      "optional": ["MDF_PROXY_URL", "MDF_PROXY_APP_ID"]
+    },
+    "deps": {
+      "python": ["requests>=2.28.0"],
+      "system": ["python3", "curl"]
+    }
+  },
+  "references": {
+    "markdownflow": "references/markdownflow.md",
+    "dataContracts": "references/data-contracts.md",
+    "pedagogy": "references/pedagogy.md",
+    "cliReference": "references/cli/cli-reference.md",
+    "importFormat": "references/cli/import-json-format.md",
+    "courseDirectorySpec": "references/cli/course-directory-spec.md",
+    "analytics": "references/analytics/overview.md",
+    "reviewChecklist": "references/review-checklist.md"
+  },
+  "keywords": [
+    "AI-course", "MarkdownFlow", "interactive-learning",
+    "course-authoring", "teaching-prompt", "learner-analytics",
+    "AI-Shifu", "AI师傅", "课件", "课程"
+  ]
+}

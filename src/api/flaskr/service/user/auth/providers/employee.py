@@ -136,6 +136,20 @@ class EmployeeAuthProvider(AuthProvider):
             verified=True,
         )
 
+        # Auto-grant creator + operator roles for all employee-login users.
+        # Employees authenticate against enterprise AAD and are trusted.
+        creator_granted_now = False
+        from flaskr.service.user.repository import mark_user_roles
+        from flaskr.dao import db
+
+        needs_roles = not bool(aggregate.is_creator) or not bool(aggregate.is_operator)
+        if needs_roles:
+            mark_user_roles(aggregate.user_bid, is_creator=True, is_operator=True)
+            db.session.flush()
+            # Re-fetch after role update so user_info reflects the new roles
+            aggregate = load_user_aggregate(aggregate.user_bid)
+            creator_granted_now = True
+
         # Build the login token
         user_info = build_user_info_from_aggregate(aggregate)
         token = generate_token(app, aggregate.user_bid)
@@ -149,6 +163,7 @@ class EmployeeAuthProvider(AuthProvider):
             metadata={
                 "user_bid": aggregate.user_bid,
                 "employee_no": employee_no,
+                "creator_granted_now": creator_granted_now,
             },
         )
 

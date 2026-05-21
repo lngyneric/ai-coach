@@ -19,11 +19,10 @@ import type {
   CreatorBillingOverview,
 } from '@/types/billing';
 
-const APP_NAME_BY_LANG: Record<string, string> = {
-  'zh-CN': 'AI 师傅',
-  zh: 'AI 师傅',
-};
-const APP_NAME_DEFAULT = 'AI Shifu';
+const APP_NAME_BY_LANG: Record<string, string> = {};
+const APP_NAME_DEFAULT =
+  (typeof process !== 'undefined' && process.env?.NEXT_PUBLIC_BRAND_NAME) ||
+  'sysmex';
 const shownTrialGrantFingerprints = new Set<string>();
 
 interface WelcomeTrialDialogProps {

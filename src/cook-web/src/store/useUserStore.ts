@@ -253,10 +253,14 @@ export const useUserStore = create<
             return;
           }
 
-          // Determine if user is authenticated based on mobile number or email
-          const isAuthenticated = !!(
-            normalizedUserInfo?.mobile || normalizedUserInfo?.email
-          );
+          // Determine if user is authenticated.
+          // A token that was already non-faked (real login, e.g. employee login)
+          // must stay non-faked even when the user info lacks mobile/email.
+          // Guest tokens (faked=true) are upgraded only when user info includes
+          // identifiable fields such as mobile or email.
+          const isAuthenticated =
+            !tokenData.faked ||
+            !!(normalizedUserInfo?.mobile || normalizedUserInfo?.email);
           tokenTool.set({
             token: latestTokenData.token || initialToken,
             faked: !isAuthenticated,

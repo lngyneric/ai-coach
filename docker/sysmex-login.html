@@ -80,8 +80,12 @@
 
   <script>
     (function() {
+      // Detect path prefix from current URL (e.g. /HR or empty for direct access)
+      var m = window.location.pathname.match(/^(\/HR|\/hr)(?=\/|$)/i);
+      var bp = m ? m[1] : '';
+
       var url = new URL(window.location.href);
-      var redirect = url.searchParams.get('redirect') || '/';
+      var redirect = url.searchParams.get('redirect') || (bp ? bp + '/' : '/');
 
       var errorBox = document.getElementById('errorBox');
       var submitBtn = document.getElementById('submitBtn');
@@ -101,7 +105,7 @@
         submitBtn.disabled = true;
         spinner.style.display = 'block';
 
-        fetch('/api/user/login_employee', {
+        fetch(bp + '/api/user/login_employee', {
           method: 'POST',
           headers: { 'Content-Type': 'application/json' },
           body: JSON.stringify({ employeeNo: employeeNo, password: password })
@@ -117,10 +121,11 @@
               localStorage.setItem('token_faked', '0');
             }
             // Role-based redirect
+            var defaultHome = bp ? bp + '/' : '/';
             var target = redirect;
-            if (target === '/' && userInfo) {
+            if (target === defaultHome && userInfo) {
               if (userInfo.is_creator || userInfo.is_operator) {
-                target = '/admin';
+                target = bp + '/admin';
               }
             }
             window.location.href = target;

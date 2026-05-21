@@ -2001,6 +2001,45 @@ def register_shifu_routes(app: Flask, path_prefix="/api/shifu"):
         db.session.commit()
         return make_common_response({"removed": True})
 
+    @app.route(
+        path_prefix + "/shifus/<shifu_bid>/permissions/check",
+        methods=["GET"],
+    )
+    @ShifuTokenValidation(ShifuPermission.VIEW)
+    def check_shifu_permissions_api(shifu_bid: str):
+        """Debug: check effective permissions for a user on this shifu."""
+        user_id = request.args.get("user_id", "").strip()
+        if not user_id:
+            raise_param_error("user_id")
+
+        is_owner = get_shifu_creator_bid(app, shifu_bid) == user_id
+        if is_owner:
+            return make_common_response({
+                "user_id": user_id,
+                "is_owner": True,
+                "permissions": ["view", "edit", "publish"],
+            })
+
+        auth = AiCourseAuth.query.filter(
+            AiCourseAuth.course_id == shifu_bid,
+            AiCourseAuth.user_id == user_id,
+            AiCourseAuth.status == 1,
+        ).first()
+
+        perms = []
+        if auth:
+            try:
+                raw = json.loads(auth.auth_type)
+                perms = raw if isinstance(raw, list) else [raw]
+            except Exception:
+                perms = []
+
+        return make_common_response({
+            "user_id": user_id,
+            "is_owner": False,
+            "permissions": perms,
+        })
+
     @app.route(path_prefix + "/shifus", methods=["PUT"])
     @ShifuTokenValidation(ShifuPermission.VIEW, is_creator=True)
     def create_shifu_api():

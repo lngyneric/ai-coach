@@ -15,7 +15,6 @@ import { PhoneLogin } from '@/components/auth/PhoneLogin';
 import { EmailLogin } from '@/components/auth/EmailLogin';
 import { FeedbackForm } from '@/components/auth/FeedbackForm';
 import Image, { type StaticImageData } from 'next/image';
-import logoHorizontal from '@/c-assets/logos/ai-shifu-logo-horizontal.png';
 import LanguageSelect from '@/components/language-select';
 import { useTranslation } from 'react-i18next';
 import i18n, { browserLanguage, normalizeLanguage } from '@/i18n';
@@ -29,6 +28,10 @@ import { useUserStore } from '@/store';
 import { useEnvStore } from '@/c-store';
 import { EnvStoreState } from '@/c-types/store';
 
+const brandName = typeof process !== 'undefined' && process.env?.NEXT_PUBLIC_BRAND_NAME
+  ? process.env.NEXT_PUBLIC_BRAND_NAME
+  : 'sysmex';
+
 type LoginMethod = 'phone' | 'email' | 'google' | 'password';
 
 export default function AuthPage() {
@@ -37,7 +40,7 @@ export default function AuthPage() {
   const [isI18nReady, setIsI18nReady] = useState(false);
   const userInfo = useUserStore(state => state.userInfo);
   const [logoSrc, setLogoSrc] = useState<string | StaticImageData>(
-    environment.logoWideUrl || logoHorizontal,
+    environment.logoWideUrl || '',
   );
 
   const logoWideUrl = useEnvStore((state: EnvStoreState) => state.logoWideUrl);
@@ -49,7 +52,7 @@ export default function AuthPage() {
   );
 
   useEffect(() => {
-    setLogoSrc(logoWideUrl || environment.logoWideUrl || logoHorizontal);
+    setLogoSrc(logoWideUrl || environment.logoWideUrl || '');
   }, [logoWideUrl]);
 
   const normalizedMethods = useMemo(() => {
@@ -366,7 +369,7 @@ export default function AuthPage() {
   );
 
   const shouldShowTabs = availableMethods.length > 1;
-  const resolvedLogo = logoSrc || logoHorizontal;
+  const resolvedLogo = logoSrc || '';
 
   // Show loading state until translations are ready
   if (!isI18nReady || !language) {
@@ -374,14 +377,18 @@ export default function AuthPage() {
       <div className='min-h-screen flex items-center justify-center bg-gray-50 dark:bg-gray-900'>
         <div className='w-full max-w-md space-y-2'>
           <div className='flex flex-col items-center'>
-            <Image
-              className='dark:invert'
-              src={resolvedLogo}
-              alt='AI-Shifu'
-              width={180}
-              height={40}
-              priority
-            />
+            {resolvedLogo ? (
+              <Image
+                className='dark:invert'
+                src={resolvedLogo}
+                alt={brandName}
+                width={180}
+                height={40}
+                priority
+              />
+            ) : (
+              <h1 className='text-2xl font-bold tracking-tight'>{brandName}</h1>
+            )}
           </div>
           <Card>
             <CardContent className='flex items-center justify-center py-8'>
@@ -406,16 +413,20 @@ export default function AuthPage() {
           data-testid='login-page'
         >
           <div className='flex flex-col items-center relative'>
-            <h2 className='flex items-center font-semibold pb-2 w-full justify-center'>
-              <Image
-                className='dark:invert'
-                src={resolvedLogo}
-                alt='AI-Shifu'
-                width={180}
-                height={40}
-                priority
-              />
-            </h2>
+            <div className='flex items-center font-semibold pb-2 w-full justify-center'>
+              {resolvedLogo ? (
+                <Image
+                  className='dark:invert'
+                  src={resolvedLogo}
+                  alt={brandName}
+                  width={180}
+                  height={40}
+                  priority
+                />
+              ) : (
+                <h1 className='text-2xl font-bold tracking-tight'>{brandName}</h1>
+              )}
+            </div>
             <div className='absolute top-0 right-0 z-10'>
               <LanguageSelect
                 language={language}

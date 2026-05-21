@@ -1260,7 +1260,7 @@ const OperationsPage = () => {
 
   if (error) {
     return (
-      <div className='h-full p-0'>
+      <div className="p-0">
         <ErrorDisplay
           errorCode={error.code || 0}
           errorMessage={error.message}
@@ -1274,10 +1274,10 @@ const OperationsPage = () => {
 
   return (
     <div
-      className='h-full p-0'
+      className='min-h-0 p-0'
       data-testid='admin-operations-page'
     >
-      <div className='max-w-7xl mx-auto h-full overflow-hidden flex flex-col'>
+      <div className='max-w-7xl mx-auto min-h-0 flex flex-col'>
         <div
           className='mb-5'
           data-testid='admin-operations-header'

@@ -987,7 +987,7 @@ export default function AdminOperationUsersPage() {
 
   if (error) {
     return (
-      <div className='h-full p-0'>
+      <div className="p-0">
         <ErrorDisplay
           errorCode={error.code || 0}
           errorMessage={error.message}
@@ -1004,9 +1004,9 @@ export default function AdminOperationUsersPage() {
   }
 
   return (
-    <div className='h-full p-0'>
+    <div className="p-0">
       <TooltipProvider delayDuration={150}>
-        <div className='max-w-7xl mx-auto h-full overflow-hidden flex flex-col'>
+        <div className='max-w-7xl mx-auto flex flex-col'>
           <div className='mb-5'>
             <h1 className='text-2xl font-semibold text-gray-900'>
               {tOperationsUsers('title')}

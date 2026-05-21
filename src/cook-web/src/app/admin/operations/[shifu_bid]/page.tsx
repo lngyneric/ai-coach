@@ -1301,7 +1301,7 @@ export default function AdminOperationCourseDetailPage() {
 
   if (error && !loading) {
     return (
-      <div className='h-full p-0'>
+      <div className="p-0">
         <ErrorDisplay
           errorCode={error.code || 500}
           errorMessage={error.message}

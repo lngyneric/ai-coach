@@ -8,7 +8,6 @@ import {
 } from '@/c-utils/urlUtils';
 import Loading from '@/components/loading';
 import { useUserStore } from '@/store';
-import type { AuthResult } from '@/lib/api';
 
 const ShifuRoot = dynamic(() => import('@/components/shifu-root'), {
   ssr: false,
@@ -27,7 +26,6 @@ export default function Page({ params }: { params: Promise<WeComLearnPageParams>
   const router = useRouter();
   const [authReady, setAuthReady] = useState(false);
   const [error, setError] = useState<string | null>(null);
-  const setUser = useUserStore(state => state.setUserInfo);
 
   const code = searchParams.get('code');
   const state = searchParams.get('state');

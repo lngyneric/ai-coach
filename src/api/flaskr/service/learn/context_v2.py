@@ -2309,6 +2309,7 @@ class RunScriptContextV2:
             if not getattr(generated_block, "id", None):
                 db.session.add(generated_block)
             db.session.flush()
+            db.session.commit()  # persist interaction block immediately
 
         if self._input_type == "ask":
             if self._last_position == -1:
@@ -3258,6 +3259,7 @@ class RunScriptContextV2:
                 self._current_attend.status = LEARN_STATUS_IN_PROGRESS
                 self._current_attend.block_position = next_block_position
                 db.session.flush()
+                db.session.commit()  # persist progress at every block boundary
 
         progress_record = self._current_attend
         outline_updates = self._get_next_outline_item()

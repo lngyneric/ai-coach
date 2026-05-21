@@ -869,7 +869,7 @@ export default function AdminOperationUserDetailPage() {
 
   if (detailError) {
     return (
-      <div className='h-full p-0'>
+      <div className="p-0">
         <ErrorDisplay
           errorCode={detailError.code || 0}
           errorMessage={detailError.message}

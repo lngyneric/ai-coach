@@ -550,7 +550,7 @@ export default function LearnOrdersTab() {
 
   if (error) {
     return (
-      <div className='h-full p-0'>
+      <div className="p-0">
         <ErrorDisplay
           errorCode={error.code || 0}
           errorMessage={error.message}
@@ -563,7 +563,7 @@ export default function LearnOrdersTab() {
   }
 
   return (
-    <div className='h-full p-0'>
+    <div className="p-0">
       <TooltipProvider delayDuration={150}>
         <div className='mx-auto flex h-full max-w-7xl flex-col overflow-hidden'>
           <div className='mb-5 rounded-xl border border-border bg-white p-4 shadow-sm transition-all'>

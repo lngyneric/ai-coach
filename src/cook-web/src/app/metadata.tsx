@@ -1,6 +1,6 @@
 import { Metadata, Viewport } from 'next';
 
-const brandName = process.env.NEXT_PUBLIC_BRAND_NAME || 'AI-Shifu';
+const brandName = process.env.NEXT_PUBLIC_BRAND_NAME || 'sysmex';
 
 export const metadata: Metadata = {
   title: brandName,

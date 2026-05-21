@@ -436,7 +436,7 @@ const ScriptManagementPage = () => {
 
   if (error) {
     return (
-      <div className='h-full p-0'>
+      <div className="p-0">
         <ErrorDisplay
           errorCode={error.code || 0}
           errorMessage={error.message}
@@ -489,8 +489,8 @@ const ScriptManagementPage = () => {
           </AlertDialogFooter>
         </AlertDialogContent>
       </AlertDialog>
-      <div className='h-full p-0'>
-        <div className='max-w-7xl mx-auto h-full overflow-hidden flex flex-col'>
+      <div className="p-0">
+        <div className='max-w-7xl mx-auto flex flex-col'>
           <div className='mb-3'>
             <h1 className='text-2xl font-semibold text-gray-900'>
               {t('common.core.shifu')}

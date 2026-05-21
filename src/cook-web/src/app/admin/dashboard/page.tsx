@@ -332,7 +332,7 @@ export default function AdminDashboardEntryPage() {
 
   if (error && !loading && total === 0) {
     return (
-      <div className='h-full p-0'>
+      <div className="p-0">
         <ErrorDisplay
           errorCode={error.code || 500}
           errorMessage={error.message}
@@ -343,8 +343,8 @@ export default function AdminDashboardEntryPage() {
   }
 
   return (
-    <div className='h-full p-0'>
-      <div className='h-full overflow-hidden flex flex-col'>
+    <div className="p-0">
+      <div className='flex flex-col'>
         <div className='flex flex-col gap-3 md:flex-row md:items-center md:justify-between mb-5'>
           <h1 className='text-2xl font-semibold text-gray-900'>
             {t('module.dashboard.title')}
