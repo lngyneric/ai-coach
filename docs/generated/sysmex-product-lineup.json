@@ -1,0 +1,407 @@
+{
+  "source": "希森美康全系列仪器型号清单 (豆包AI生成)",
+  "version": "1.0.0",
+  "last_updated": "2026-06-03",
+  "product_lines": {
+    "hematology": {
+      "name_cn": "血液分析（Hematology）",
+      "name_en": "Hematology",
+      "total_models": 13,
+      "current": [
+        {
+          "model": "DI-60",
+          "description": "全自动血细胞形态涂片染色机，配套血常规流水线制片"
+        },
+        {
+          "model": "KX-21 Series",
+          "description": "三分类全自动血常规，基层医院主力机型"
+        },
+        {
+          "model": "pocH-Series",
+          "description": "便携/小型五分类系列，门诊、社区常用"
+        },
+        {
+          "model": "XS-Series",
+          "description": "中端紧凑型五分类，中小型检验科标配"
+        },
+        {
+          "model": "XP-Series",
+          "description": "经济型五分类，基层民营医院常用"
+        },
+        {
+          "model": "XN-L Series",
+          "description": "XN轻量化五分类机型，适配中小型实验室"
+        },
+        {
+          "model": "XN-10/XN-20/XN-V",
+          "description": "旗舰级XN系列进口原版五分类，流水线单机主力"
+        },
+        {
+          "model": "XR-1000/XR-1500/XR-2000",
+          "description": "XR进口全自动血细胞分析仪"
+        }
+      ],
+      "china_localized": [
+        {
+          "model": "XN-10/XN-20/XN-V\\_C",
+          "description": "国产本土化定制版XN（C=China），国内医院大批量装机"
+        },
+        {
+          "model": "XR-1000/XR-1500/XR-2000\\_C",
+          "description": "XR系列国产定制版，国内专属型号"
+        }
+      ],
+      "legacy": [
+        {
+          "model": "K-4500",
+          "description": "早期五分类全自动血球分析仪，经典进口老机型"
+        },
+        {
+          "model": "XT-Series",
+          "description": "前代高端五分类，XN上市前主力机型"
+        },
+        {
+          "model": "XE-Series",
+          "description": "经典初代高端五分类，行业标杆老机型"
+        }
+      ]
+    },
+    "coagulation": {
+      "name_cn": "凝血分析（Coagulation）",
+      "name_en": "Coagulation",
+      "total_models": 13,
+      "current": [
+        {
+          "model": "CA-7000 / CA-8000",
+          "description": "进口高端全自动凝血分析仪"
+        },
+        {
+          "model": "CN-3000 / CN-6000",
+          "description": "希森美康中国本土化国产凝血初代机型"
+        },
+        {
+          "model": "CN-3500 / CN-6500",
+          "description": "希森美康中国本土化国产凝血升级款，国内主流机型"
+        },
+        {
+          "model": "CS-1300",
+          "description": "新一代全自动化凝血流水线机型"
+        },
+        {
+          "model": "CS-1600",
+          "description": "新一代全自动化凝血流水线机型"
+        },
+        {
+          "model": "CS-2000i / CS-2100i",
+          "description": "新一代全自动化凝血流水线机型，i为迭代优化款"
+        },
+        {
+          "model": "CS-2400 / CS-2500",
+          "description": "新一代全自动化凝血流水线机型"
+        },
+        {
+          "model": "CS-5100",
+          "description": "新一代全自动化凝血流水线机型"
+        }
+      ],
+      "china_localized": [],
+      "legacy": [
+        {
+          "model": "CA-101 / CA-104",
+          "description": "进口老款半自动/全自动凝血分析仪"
+        },
+        {
+          "model": "CA-1500",
+          "description": "进口老款全自动凝血分析仪"
+        },
+        {
+          "model": "CA-50",
+          "description": "进口老款半自动凝血分析仪"
+        },
+        {
+          "model": "CA-500 Series",
+          "description": "进口老款全自动凝血分析仪系列"
+        },
+        {
+          "model": "CA-600 Series",
+          "description": "进口老款全自动凝血分析仪系列"
+        }
+      ]
+    },
+    "urinalysis": {
+      "name_cn": "尿液分析（Urinalysis）",
+      "name_en": "Urinalysis",
+      "total_models": 9,
+      "current": [
+        {
+          "model": "UC-3500",
+          "description": "原装进口全自动尿液干化学分析仪，覆盖尿常规10项/11项/14项干化学检测"
+        },
+        {
+          "model": "UF-3000 / UF-4000 / UF-5000",
+          "description": "原装进口全自动尿沉渣有形成分分析仪，覆盖不同检测通量需求"
+        },
+        {
+          "model": "UN-Series",
+          "description": "尿液分析配套设备系列，覆盖尿液样本前处理、质控、存储等辅助检测环节"
+        },
+        {
+          "model": "UF-1000i / UF-500i",
+          "description": "UF系列中端/经济型全自动尿沉渣分析仪，i为迭代优化款，适配基层检验科"
+        },
+        {
+          "model": "UD-10",
+          "description": "全自动尿液样本处理设备，用于尿液样本的离心、制片、染色等前处理环节"
+        },
+        {
+          "model": "UC-1100",
+          "description": "经济型全自动尿液干化学分析仪，适配基层医院、门诊的常规尿常规检测"
+        }
+      ],
+      "china_localized": [
+        {
+          "model": "UC-3500C",
+          "description": "UC-3500对应中国本土化定制版本（C=China），国内医院主流装机机型"
+        },
+        {
+          "model": "UF-3000 / UF-4000 / UF-5000C",
+          "description": "UF系列对应中国本土化定制版本，国内三甲医院检验科主流机型"
+        }
+      ],
+      "legacy": [
+        {
+          "model": "UF-1500",
+          "description": "UF系列经典款全自动尿沉渣分析仪，前代主流机型，覆盖基层医院常规检测"
+        }
+      ]
+    },
+    "immunoassay": {
+      "name_cn": "免疫分析（Immunology）",
+      "name_en": "Immunoassay",
+      "total_models": 5,
+      "current": [
+        {
+          "model": "HISCL-5000",
+          "description": "原装进口全自动化学发光免疫分析仪，高速流水线级机型"
+        },
+        {
+          "model": "HISCL-800",
+          "description": "小型紧凑型进口化学发光设备，适配中小型检验科"
+        }
+      ],
+      "china_localized": [
+        {
+          "model": "HISCL-5000C",
+          "description": "国产定制版（C=China），国内本地化生产机型"
+        },
+        {
+          "model": "HISCL-2000iC",
+          "description": "国产中端机型，i代表迭代优化款，国内基层/分院常用"
+        },
+        {
+          "model": "HISCL-800C",
+          "description": "HISCL-800对应国产本土化版本"
+        }
+      ],
+      "legacy": []
+    },
+    "flow_cytometry": {
+      "name_cn": "流式细胞术（FCM(S-Corp)）",
+      "name_en": "Flow Cytometry",
+      "total_models": 3,
+      "current": [
+        {
+          "model": "CyFlow WA",
+          "description": "Sysmex合作型流式细胞分析仪，用于临床淋巴细胞、体液细胞分型检测"
+        },
+        {
+          "model": "PS-10",
+          "description": "便携式流式/颗粒计数配套设备，Sysmex体外诊断小型FCM设备"
+        },
+        {
+          "model": "XF-1600",
+          "description": "希森美康原厂流式体液分析仪，聚焦尿液、脑脊液等有形成分流式检测"
+        }
+      ],
+      "china_localized": [],
+      "legacy": []
+    },
+    "life_science": {
+      "name_cn": "生命科学（Life Science）",
+      "name_en": "Life Science",
+      "total_models": 3,
+      "current": [
+        {
+          "model": "RD Series",
+          "description": "Sysmex生命科学领域RD系列全品类设备，覆盖科研级细胞分析、分子诊断相关核心仪器"
+        },
+        {
+          "model": "RP-10",
+          "description": "生命科学领域配套检测设备，多用于细胞样本前处理、配套检测分析等辅助场景"
+        }
+      ],
+      "china_localized": [
+        {
+          "model": "RD-100iC",
+          "description": "RD系列国产定制化机型（C=China），i代表硬件与软件迭代优化款"
+        }
+      ],
+      "legacy": []
+    },
+    "others": {
+      "name_cn": "其他临床设备（Others）",
+      "name_en": "Others",
+      "total_models": 8,
+      "current": [
+        {
+          "model": "BX-3010",
+          "description": "全自动尿沉渣分析仪，用于尿液有形成分的自动化识别与计数"
+        },
+        {
+          "model": "BX-4000",
+          "description": "高端全自动尿沉渣分析仪，升级款机型，提升检测通量与识别准确率"
+        },
+        {
+          "model": "HLC-723 G11",
+          "description": "全自动糖化血红蛋白分析仪，G11为迭代升级型号，用于糖尿病相关糖化血红蛋白精准检测"
+        },
+        {
+          "model": "HLC-723 G8",
+          "description": "HLC-723系列基础款糖化血红蛋白分析仪，适配基层医院、内分泌科门诊常规检测"
+        },
+        {
+          "model": "PU-Series",
+          "description": "尿液分析配套设备系列，覆盖尿液干化学、尿沉渣配套前处理等辅助检测设备"
+        },
+        {
+          "model": "PA-990PRO",
+          "description": "高端全自动特定蛋白分析仪，PRO为专业升级款，用于炎症、肾病、心血管等相关特定蛋白检测"
+        },
+        {
+          "model": "PA-900/600/800",
+          "description": "PA系列基础款/中端款全自动特定蛋白分析仪，覆盖不同检测通量需求"
+        }
+      ],
+      "china_localized": [
+        {
+          "model": "BM6010/C",
+          "description": "全自动生化分析仪，C为中国本土化定制版本"
+        }
+      ],
+      "legacy": []
+    },
+    "lab_system": {
+      "name_cn": "实验室全流程设备与系统（System）",
+      "name_en": "Lab System",
+      "total_models": 24,
+      "current": [],
+      "china_localized": [
+        {
+          "model": "HISCL Transportation SystemC",
+          "description": "HISCL系列免疫分析仪配套样本传输系统，C为中国定制版"
+        },
+        {
+          "model": "LU-10C",
+          "description": "实验室自动化配套设备，用于样本加载/卸载，C为中国定制版"
+        },
+        {
+          "model": "SP-50C",
+          "description": "实验室自动化配套设备，用于样本处理/分装，C为中国定制版"
+        },
+        {
+          "model": "TS-10C",
+          "description": "实验室自动化配套设备，用于样本传输/分拣，C为中国定制版"
+        }
+      ],
+      "legacy": [],
+      "system_components": [
+        {
+          "model": "AlphaN",
+          "description": "希森美康高端全自动生化分析系统，适配大型医院中心实验室高通量检测需求"
+        },
+        {
+          "model": "CF-60",
+          "description": "实验室自动化配套设备，用于样本前处理/离心等环节"
+        },
+        {
+          "model": "CF-70",
+          "description": "实验室自动化配套设备，用于样本前处理/离心等环节"
+        },
+        {
+          "model": "RU-20 / RU-21",
+          "description": "实验室自动化配套设备，用于样本处理/传输等环节"
+        },
+        {
+          "model": "CN T.S.",
+          "description": "CN系列凝血分析仪配套测试系统/耗材系统"
+        },
+        {
+          "model": "CV-11",
+          "description": "实验室自动化配套设备，用于样本处理/验证等环节"
+        },
+        {
+          "model": "CV-01 / CV-10",
+          "description": "实验室自动化配套设备，用于样本处理/验证等环节"
+        },
+        {
+          "model": "CV-10",
+          "description": "实验室自动化配套设备，用于样本处理/验证等环节"
+        },
+        {
+          "model": "HST",
+          "description": "希森美康实验室自动化流水线系统，用于样本全流程自动化处理"
+        },
+        {
+          "model": "LU-10",
+          "description": "实验室自动化配套设备，用于样本加载/卸载"
+        },
+        {
+          "model": "SP-1000i",
+          "description": "实验室自动化配套设备，用于样本处理/分装，i为迭代优化款"
+        },
+        {
+          "model": "SP-10",
+          "description": "实验室自动化配套设备，用于样本处理/分装"
+        },
+        {
+          "model": "SP-50",
+          "description": "实验室自动化配套设备，用于样本处理/分装"
+        },
+        {
+          "model": "ST-10 / ST-11 / ST-12",
+          "description": "实验室自动化配套设备，用于样本存储/归档"
+        },
+        {
+          "model": "TS-10",
+          "description": "实验室自动化配套设备，用于样本传输/分拣"
+        },
+        {
+          "model": "SA-90",
+          "description": "实验室自动化配套设备，用于样本分析/处理"
+        },
+        {
+          "model": "U-WAM / UDM",
+          "description": "尿液分析配套自动化系统，用于尿液样本全流程自动化处理"
+        },
+        {
+          "model": "XN-2800",
+          "description": "XN系列旗舰级高端全自动五分类血细胞分析仪，适配三甲医院中心实验室"
+        },
+        {
+          "model": "XN-3000 / XN-3100",
+          "description": "XN系列中端全自动五分类血细胞分析仪，适配二级医院、门诊检验科"
+        },
+        {
+          "model": "XN-9000 / XN-9100",
+          "description": "XN系列超高端全自动五分类血细胞分析仪，流水线级专属机型"
+        }
+      ]
+    }
+  },
+  "summary": {
+    "total_product_lines": 9,
+    "total_models": 79,
+    "china_localized_count": 39,
+    "note": "C=China表示中国本土化定制版本，国内医院主流装机。i=迭代优化款。"
+  }
+}
