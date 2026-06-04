@@ -1,89 +1,138 @@
-# docker-compose.yml pins services to a tested release for reproducible deployments.
-# Use docker-compose.latest.yml if you prefer to track the :latest container tags.
-x-environment: &default-env
-  SQLALCHEMY_DATABASE_URI: mysql://root:ai-shifu@ai-shifu-mysql:3306/ai-shifu?charset=utf8mb4
-  SECRET_KEY: ai-shifu
-  UNIVERSAL_VERIFICATION_CODE: 1024
-  MIN_SHIFU_PRICE: "0"
-  REDIS_HOST: ai-shifu-redis
-  REDIS_PORT: 6379
-  SKIP_LOAD_DOTENV: "1"
-  CELERY_BROKER_URL: redis://ai-shifu-redis:6379/0
-  CELERY_RESULT_BACKEND: redis://ai-shifu-redis:6379/1
 services:
+  ai-shifu-training-api:
+    container_name: ai-shifu-training-api
+    image: python:3.11-slim
+    command: python3 /app/training-api.py 8803
+    volumes:
+      - ./training-api.py:/app/training-api.py
+      - ./training-dashboard.html:/app/training-dashboard.html
+      - /var/run/docker.sock:/var/run/docker.sock
+    restart: always
+    network_mode: host
   ai-shifu-api:
     container_name: ai-shifu-api
-    # Use latest for development, check releases for specific versions
-    # Available versions: https://hub.docker.com/u/aishifu or https://github.com/ai-shifu/ai-shifu/releases
-    image: aishifu/ai-shifu-api:v2.0.0
-    entrypoint: ["sh", "-c", "until timeout 1 bash -c 'cat < /dev/null > /dev/tcp/ai-shifu-mysql/3306'; do sleep 1; done && flask db upgrade && flask console update_demo_shifu && exec gunicorn -w 4 -b 0.0.0.0:5800 'app:app' --timeout 300 --log-level debug --access-logfile /var/log/app.log --capture-output"]
-    working_dir: /app
-    env_file:
-      - ./.env
-    environment: *default-env
-    volumes:
-      - ./storage:/app/storage
     depends_on:
-      - ai-shifu-mysql
-      - ai-shifu-redis
-  ai-shifu-celery-worker:
-    container_name: ai-shifu-celery-worker
-    image: aishifu/ai-shifu-api:v2.0.0
-    entrypoint: ["sh", "-c", "until timeout 1 bash -c 'cat < /dev/null > /dev/tcp/ai-shifu-mysql/3306'; do sleep 1; done && until timeout 1 bash -c 'cat < /dev/null > /dev/tcp/ai-shifu-redis/6379'; do sleep 1; done && exec python -m celery -A celery_app:celery_app worker --loglevel info"]
-    working_dir: /app
+    - ai-shifu-mysql
+    - ai-shifu-redis
+    entrypoint:
+    - sh
+    - -c
+    - until timeout 1 bash -c 'cat < /dev/null > /dev/tcp/ai-shifu-mysql/3306'; do
+      sleep 1; done && flask db upgrade && flask console update_demo_shifu && exec
+      gunicorn -w 4 -b 0.0.0.0:5800 'app:app' --timeout 300 --log-level debug --access-logfile
+      /var/log/app.log --capture-output
     env_file:
-      - ./.env
-    environment: *default-env
+    - ./.env
+    environment:
+      CELERY_BROKER_URL: redis://ai-shifu-redis:6379/0
+      CELERY_RESULT_BACKEND: redis://ai-shifu-redis:6379/1
+      HTTPS_PROXY: http://172.18.0.1:7897
+      HTTP_PROXY: http://172.18.0.1:7897
+      MIN_SHIFU_PRICE: '0'
+      PAYMENT_CHANNELS_ENABLED: ''
+      NO_PROXY: ai-shifu-mysql,ai-shifu-redis,ai-shifu-cook-web,ai-shifu-api,ai-shifu-nginx,localhost,127.0.0.1,.local
+      REDIS_HOST: ai-shifu-redis
+      REDIS_PORT: 6379
+      SECRET_KEY: ai-shifu
+      SKIP_LOAD_DOTENV: '1'
+      SQLALCHEMY_DATABASE_URI: mysql://root:ai-shifu@ai-shifu-mysql:3306/ai-shifu?charset=utf8mb4
+      UNIVERSAL_VERIFICATION_CODE: 1024
+    image: aishifu/ai-shifu-api:v2.0.1
     volumes:
-      - ./storage:/app/storage
-    depends_on:
-      - ai-shifu-mysql
-      - ai-shifu-redis
+    - ./storage:/app/storage
+    working_dir: /app
   ai-shifu-celery-beat:
     container_name: ai-shifu-celery-beat
-    image: aishifu/ai-shifu-api:v2.0.0
-    entrypoint: ["sh", "-c", "until timeout 1 bash -c 'cat < /dev/null > /dev/tcp/ai-shifu-mysql/3306'; do sleep 1; done && until timeout 1 bash -c 'cat < /dev/null > /dev/tcp/ai-shifu-redis/6379'; do sleep 1; done && exec python -m celery -A celery_app:celery_app beat --loglevel info"]
-    working_dir: /app
-    env_file:
-      - ./.env
-    environment: *default-env
-    volumes:
-      - ./storage:/app/storage
     depends_on:
-      - ai-shifu-mysql
-      - ai-shifu-redis
+    - ai-shifu-mysql
+    - ai-shifu-redis
+    entrypoint:
+    - sh
+    - -c
+    - until timeout 1 bash -c 'cat < /dev/null > /dev/tcp/ai-shifu-mysql/3306'; do
+      sleep 1; done && until timeout 1 bash -c 'cat < /dev/null > /dev/tcp/ai-shifu-redis/6379';
+      do sleep 1; done && exec python -m celery -A celery_app:celery_app beat --loglevel
+      info
+    env_file:
+    - ./.env
+    environment: &id001
+      CELERY_BROKER_URL: redis://ai-shifu-redis:6379/0
+      CELERY_RESULT_BACKEND: redis://ai-shifu-redis:6379/1
+      MIN_SHIFU_PRICE: '0'
+      REDIS_HOST: ai-shifu-redis
+      REDIS_PORT: 6379
+      SECRET_KEY: ai-shifu
+      SKIP_LOAD_DOTENV: '1'
+      SQLALCHEMY_DATABASE_URI: mysql://root:ai-shifu@ai-shifu-mysql:3306/ai-shifu?charset=utf8mb4
+      UNIVERSAL_VERIFICATION_CODE: 1024
+    image: aishifu/ai-shifu-api:v2.0.1
+    volumes:
+    - ./storage:/app/storage
+    working_dir: /app
+  ai-shifu-celery-worker:
+    container_name: ai-shifu-celery-worker
+    depends_on:
+    - ai-shifu-mysql
+    - ai-shifu-redis
+    entrypoint:
+    - sh
+    - -c
+    - until timeout 1 bash -c 'cat < /dev/null > /dev/tcp/ai-shifu-mysql/3306'; do
+      sleep 1; done && until timeout 1 bash -c 'cat < /dev/null > /dev/tcp/ai-shifu-redis/6379';
+      do sleep 1; done && exec python -m celery -A celery_app:celery_app worker --loglevel
+      info
+    env_file:
+    - ./.env
+    environment: *id001
+    image: aishifu/ai-shifu-api:v2.0.1
+    volumes:
+    - ./storage:/app/storage
+    working_dir: /app
   ai-shifu-cook-web:
+    command:
+    - npm
+    - start
     container_name: ai-shifu-cook-web
-    image: aishifu/ai-shifu-cook-web:v2.0.0
-    command: ["npm", "start"]
-    working_dir: /app
+    depends_on:
+    - ai-shifu-api
     env_file:
-      - ./.env
+    - ./.env
     environment:
-      - I18N_ROOT=/app/i18n
-    depends_on:
-      - ai-shifu-api
-  ai-shifu-nginx:
-    container_name: ai-shifu-nginx
-    image: nginx:latest
-    ports:
-      - "8080:8080"
-    depends_on:
-      - ai-shifu-api
-      - ai-shifu-cook-web
-    restart: always
-    volumes:
-      - ./nginx.conf:/etc/nginx/nginx.conf
+    - I18N_ROOT=/app/i18n
+    image: aishifu/ai-shifu-cook-web:v2.0.1
+    working_dir: /app
   ai-shifu-mysql:
     container_name: ai-shifu-mysql
     environment:
-      MYSQL_ROOT_PASSWORD: ai-shifu
       MYSQL_DATABASE: ai-shifu
+      MYSQL_ROOT_PASSWORD: ai-shifu
     image: mysql:8.0
+    ports:
+    - 127.0.0.1:3306:3306
     volumes:
-      - ./mysql_data:/var/lib/mysql
+    - ./mysql_data:/var/lib/mysql
+  ai-shifu-nginx:
+    container_name: ai-shifu-nginx
+    depends_on:
+    - ai-shifu-api
+    - ai-shifu-cook-web
+    image: nginx:latest
+    ports:
+    - 8080:8080
+    - 443:443
+    - 80:80
+    restart: always
+    volumes:
+    - ./nginx.conf:/etc/nginx/nginx.conf
+    - ./default.conf:/etc/nginx/conf.d/default.conf
+    - ./certs:/etc/nginx/certs:ro
+    - ./course-entry.html:/usr/share/nginx/html/course-entry.html:ro
+    - ./sysmex-login.html:/usr/share/nginx/html/sysmex-login.html:ro
+    - ./ivd-knowledge-tree.html:/usr/share/nginx/html/ivd-knowledge-tree.html:ro
+    - ./d3.v7.min.js:/usr/share/nginx/html/d3.v7.min.js:ro
   ai-shifu-redis:
     container_name: ai-shifu-redis
     image: redis:7-alpine
     volumes:
-      - ./redis_data:/data
+    - ./redis_data:/data
+x-environment: *id001
