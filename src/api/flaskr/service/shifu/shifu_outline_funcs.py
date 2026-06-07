@@ -280,6 +280,9 @@ def create_outline(
             app, user_id, shifu_id, outline_bid, new_outline.id, parent_id, max_index
         )
         db.session.commit()
+        from flaskr.service.learn.learn_funcs import invalidate_outline_tree_cache
+
+        invalidate_outline_tree_cache(shifu_id)
 
         return SimpleOutlineDto(
             bid=outline_bid,
@@ -371,6 +374,9 @@ def reorder_outline_tree(
             cleanup_outline_history_versions(app, shifu_id, outline_bid)
         save_outline_tree_history(app, user_id, shifu_id, history_infos)
         db.session.commit()
+        from flaskr.service.learn.learn_funcs import invalidate_outline_tree_cache
+
+        invalidate_outline_tree_cache(shifu_id)
         return True
 
 
@@ -494,6 +500,9 @@ def modify_unit(
             )
             cleanup_outline_history_versions(app, existing_unit.shifu_bid, unit_id)
             db.session.commit()
+            from flaskr.service.learn.learn_funcs import invalidate_outline_tree_cache
+
+            invalidate_outline_tree_cache(existing_unit.shifu_bid)
 
         return OutlineDto(
             bid=existing_unit.outline_item_bid,
@@ -580,4 +589,7 @@ def delete_unit(app, user_id: str, unit_id: str):
             cleanup_outline_history_versions(app, unit_to_delete.shifu_bid, item_id)
         delete_outline_history(app, user_id, unit_to_delete.shifu_bid, unit_id)
         db.session.commit()
+        from flaskr.service.learn.learn_funcs import invalidate_outline_tree_cache
+
+        invalidate_outline_tree_cache(unit_to_delete.shifu_bid)
         return True

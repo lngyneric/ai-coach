@@ -223,6 +223,9 @@ def save_shifu_mdflow(
                 outline_bid,
             )
             db.session.commit()
+            from flaskr.service.learn.learn_funcs import invalidate_outline_tree_cache
+
+            invalidate_outline_tree_cache(shifu_bid)
             new_revision = int(new_outline.id)
         return {
             "conflict": False,

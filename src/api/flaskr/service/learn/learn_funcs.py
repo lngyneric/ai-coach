@@ -82,6 +82,7 @@ from flaskr.service.order.consts import (
 )
 import queue
 from flaskr.dao import db
+from flaskr.common.cache_provider import cache
 from flaskr.service.learn.const import CONTEXT_INTERACTION_NEXT
 from flaskr.service.learn.lesson_feedback import (
     build_lesson_feedback_interaction_md,
@@ -110,6 +111,53 @@ STATUS_MAP = {
 }
 
 logger = logging.getLogger(__name__)
+
+OUTLINE_TREE_CACHE_TTL = 300  # 5 minutes
+OUTLINE_TREE_CACHE_PREFIX = "query:outline_tree:"
+
+
+def _outline_tree_cache_key(shifu_bid: str, preview_mode: bool) -> str:
+    mode = "draft" if preview_mode else "published"
+    return f"{OUTLINE_TREE_CACHE_PREFIX}{shifu_bid}:{mode}"
+
+
+def invalidate_outline_tree_cache(shifu_bid: str):
+    """Invalidate outline tree cache for both draft and published modes."""
+    for mode in ("draft", "published"):
+        cache.delete(f"{OUTLINE_TREE_CACHE_PREFIX}{shifu_bid}:{mode}")
+    logger.info("Invalidated outline tree cache for shifu %s", shifu_bid)
+
+
+def _serialize_outline_items(items: list) -> list[dict]:
+    """Serialize outline item DB records to plain dicts for caching."""
+    return [
+        {
+            "id": item.id,
+            "outline_item_bid": item.outline_item_bid,
+            "title": item.title,
+            "position": item.position,
+            "type": item.type,
+            "hidden": item.hidden,
+            "parent_bid": item.parent_bid,
+        }
+        for item in items
+    ]
+
+
+def _deserialize_outline_items(data: list[dict], model_class):
+    """Deserialize cached outline item dicts back to lightweight objects."""
+    items = []
+    for d in data:
+        item = model_class()
+        item.id = d["id"]
+        item.outline_item_bid = d["outline_item_bid"]
+        item.title = d["title"]
+        item.position = d["position"]
+        item.type = d["type"]
+        item.hidden = d["hidden"]
+        item.parent_bid = d["parent_bid"]
+        items.append(item)
+    return items
 
 
 def _is_access_gate_interaction(
@@ -247,32 +295,64 @@ def get_outline_item_tree(
                 is_paid = False
             else:
                 is_paid = True
-        struct = (
-            struct_model.query.filter(
-                struct_model.shifu_bid == shifu_bid, struct_model.deleted == 0
+
+        # ── Try cache: static outline structure ──
+        cache_key = _outline_tree_cache_key(shifu_bid, preview_mode)
+        cached = cache.get(cache_key)
+        if cached is not None:
+            import json as _json
+
+            cached_data = _json.loads(cached)
+            struct = HistoryItem.from_json(cached_data["struct_json"])
+            outline_items_dbs = _deserialize_outline_items(
+                cached_data["outline_items"], outline_item_model
             )
-            .order_by(struct_model.id.desc())
-            .first()
-        )
-        if not struct:
-            raise_error("server.shifu.shifuStructNotFound")
-        struct = HistoryItem.from_json(struct.struct)
-        outline_items: list[HistoryItem] = []
-        q = queue.Queue()
-        q.put(struct)
-        while not q.empty():
-            item: HistoryItem = q.get()
-            if item.type == "outline":
-                outline_items.append(item)
-            if item.children:
-                for child in item.children:
-                    q.put(child)
-        outline_items_ids = [i.id for i in outline_items]
-        outline_items_bids = [i.bid for i in outline_items]
-        outline_items_dbs = outline_item_model.query.filter(
-            outline_item_model.id.in_(outline_items_ids),
-            outline_item_model.deleted == 0,
-        ).all()
+            outline_items_bids = cached_data["outline_items_bids"]
+        else:
+            # ── Cache miss: run static queries ──
+            struct = (
+                struct_model.query.filter(
+                    struct_model.shifu_bid == shifu_bid, struct_model.deleted == 0
+                )
+                .order_by(struct_model.id.desc())
+                .first()
+            )
+            if not struct:
+                raise_error("server.shifu.shifuStructNotFound")
+            struct_json_str = struct.struct
+            struct = HistoryItem.from_json(struct_json_str)
+            outline_items: list[HistoryItem] = []
+            q = queue.Queue()
+            q.put(struct)
+            while not q.empty():
+                item: HistoryItem = q.get()
+                if item.type == "outline":
+                    outline_items.append(item)
+                if item.children:
+                    for child in item.children:
+                        q.put(child)
+            outline_items_ids = [i.id for i in outline_items]
+            outline_items_bids = [i.bid for i in outline_items]
+            outline_items_dbs = outline_item_model.query.filter(
+                outline_item_model.id.in_(outline_items_ids),
+                outline_item_model.deleted == 0,
+            ).all()
+            # Write to cache
+            import json as _json
+
+            cache_data = {
+                "struct_json": struct_json_str,
+                "outline_items": _serialize_outline_items(outline_items_dbs),
+                "outline_items_bids": outline_items_bids,
+            }
+            cache.set(cache_key, _json.dumps(cache_data), ttl=OUTLINE_TREE_CACHE_TTL)
+            logger.info(
+                "Cached outline tree for shifu %s (mode=%s)",
+                shifu_bid,
+                "draft" if preview_mode else "published",
+            )
+
+        # ── Always query per-user dynamic data (progress) ──
         progress_records = LearnProgressRecord.query.filter(
             LearnProgressRecord.user_bid == user_bid,
             LearnProgressRecord.shifu_bid == shifu_bid,

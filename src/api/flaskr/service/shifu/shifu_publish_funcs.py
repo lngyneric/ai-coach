@@ -9,6 +9,7 @@ Date: 2025-08-07
 
 from flaskr.service.shifu.shifu_draft_funcs import get_latest_shifu_draft
 from flaskr.service.common import raise_error
+from flaskr.service.learn.learn_funcs import invalidate_outline_tree_cache
 from flaskr.dao import db
 from flaskr.service.shifu.models import (
     PublishedShifu,
@@ -205,6 +206,7 @@ def publish_shifu_draft(
         shifu_log_published_struct.created_at = now_time
         db.session.add(shifu_log_published_struct)
         db.session.commit()
+        invalidate_outline_tree_cache(shifu_id)
         parent_shifu_context = get_shifu_context_snapshot()
         if sync_summary:
             _run_summary_with_error_handling(app, shifu_id, parent_shifu_context)
