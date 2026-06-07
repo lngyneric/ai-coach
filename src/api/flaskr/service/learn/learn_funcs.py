@@ -345,7 +345,7 @@ def get_outline_item_tree(
                 "outline_items": _serialize_outline_items(outline_items_dbs),
                 "outline_items_bids": outline_items_bids,
             }
-            cache.set(cache_key, _json.dumps(cache_data), ttl=OUTLINE_TREE_CACHE_TTL)
+            cache.set(cache_key, _json.dumps(cache_data), ex=OUTLINE_TREE_CACHE_TTL)
             logger.info(
                 "Cached outline tree for shifu %s (mode=%s)",
                 shifu_bid,
