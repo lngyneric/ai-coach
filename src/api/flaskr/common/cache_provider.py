@@ -292,7 +292,13 @@ class FallbackCacheProvider:
             return fallback_fn(*args, **kwargs)
 
     def get(self, key: str):
-        return self._call("get", key)
+        try:
+            val = self._primary.get(key)
+        except Exception:
+            val = None
+        if val is not None:
+            return val
+        return self._fallback.get(key)
 
     def getex(self, key: str, ex: Optional[int] = None, px: Optional[int] = None):
         return self._call("getex", key, ex=ex, px=px)
