@@ -1,5 +1,6 @@
 import json
 import uuid
+import base64
 
 from flask import Flask, Response, request, stream_with_context
 from pydantic import ValidationError
@@ -994,6 +995,68 @@ def register_learn_routes(app: Flask, path_prefix: str = "/api/learn") -> Flask:
             ),
             close_log="client closed preview tts stream early",
             error_log="preview tts stream failed",
+        )
+
+    @app.route(path_prefix + "/tts/sse", methods=["POST"])
+    @bypass_token_validation
+    def volcengine_tts_sse_api():
+        """
+        Volcengine TTS SSE streaming.
+        ---
+        tags:
+            - learn
+        parameters:
+            - in: body
+              name: body
+              required: true
+              schema:
+                type: object
+                properties:
+                    text:
+                        type: string
+                        required: true
+                    voice:
+                        type: string
+                        required: false
+        responses:
+            200:
+                description: SSE stream
+                content:
+                    text/event-stream:
+                        schema:
+                            type: string
+        """
+        json_data = request.get_json() or {}
+        text = json_data.get("text", "").strip()
+        if not text:
+            raise_param_error("text")
+        voice = json_data.get("voice", "BV700_V2_streaming")
+
+        from flaskr.api.tts.volcengine_http_provider import VolcengineHttpTTSProvider
+        from flaskr.api.tts.base import VoiceSettings, AudioSettings
+
+        provider = VolcengineHttpTTSProvider()
+        vs = VoiceSettings(voice_id=voice, speed=1.0, pitch=1.0)
+        audio_settings = AudioSettings(format="mp3", sample_rate=24000)
+
+        def generate():
+            try:
+                result = provider.synthesize(text, voice_settings=vs, audio_settings=audio_settings)
+                b64_data = base64.b64encode(result.audio_data).decode()
+                yield f"data: {b64_data}\n\n"
+                yield "data: [DONE]\n\n"
+            except Exception as e:
+                import traceback
+                logger.error("TTS SSE error: %s", traceback.format_exc())
+                yield f"data: [ERROR] {e}\n\n"
+
+        return Response(
+            stream_with_context(generate()),
+            mimetype="text/event-stream",
+            headers={
+                "Cache-Control": "no-cache",
+                "X-Accel-Buffering": "no",
+            },
         )
 
     return app

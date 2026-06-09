@@ -266,4 +266,3 @@ async def _edge_synthesize(text: str, voice: str) -> bytes:
             break
 
     writer.close()
-    return audio

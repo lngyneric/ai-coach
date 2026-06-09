@@ -12,7 +12,8 @@ API Reference:
 import uuid
 import logging
 import threading
-from typing import Optional, List
+import queue
+from typing import Optional, List, Generator
 
 from flaskr.common.config import get_config
 from flaskr.common.log import AppLoggerProxy
@@ -555,3 +556,144 @@ class VolcengineTTSProvider(BaseTTSProvider):
             voices=VOLCENGINE_VOICES,
             emotions=VOLCENGINE_EMOTIONS,
         )
+
+
+def stream_volcengine_tts(
+    text: str,
+    voice: str = "BV700_V2_streaming",
+) -> list[bytes]:
+    """Synthesize TTS via Volcengine WebSocket and return all audio chunks."""
+    from flaskr.api.tts.base import VoiceSettings, AudioSettings
+
+    provider = VolcengineTTSProvider()
+    vs = VoiceSettings(voice_id=voice, speed=1.0, pitch=0)
+    audio_settings = AudioSettings(format="mp3", sample_rate=24000)
+
+    result = provider.synthesize(text, voice_settings=vs, audio_settings=audio_settings)
+    return result.audio_data
+
+
+def stream_volcengine_tts_chunks(
+    text: str,
+    voice: str = "BV700_V2_streaming",
+) -> Generator[bytes, None, None]:
+    """Synthesize TTS via Volcengine WebSocket, yielding per-chunk audio.
+
+    Uses queue.Queue to bridge websocket callback → generator.
+    Each ``yield`` is one audio frame from the TTS stream.
+    """
+    import time as _time
+    import json
+    import websocket as _ws
+    from flaskr.api.tts.volcengine_protocol import VolcengineProtocol, Event, MessageType
+    from flaskr.common.config import get_config
+
+    # Resolve resource_id from voice
+    voice_resource_map = {}
+    for v in VOLCENGINE_VOICES:
+        voice_resource_map[v["value"]] = v.get("resource_id", "seed-tts-1.0")
+    resource_id = voice_resource_map.get(voice, "seed-tts-1.0")
+
+    app_key = get_config("VOLCENGINE_TTS_APP_KEY") or ""
+    access_key = get_config("VOLCENGINE_TTS_ACCESS_KEY") or ""
+    if not app_key or not access_key:
+        raise ValueError("Volcengine TTS credentials not configured")
+
+    result_queue: "queue.Queue[bytes | Exception | str]" = queue.Queue()
+    session_finished = threading.Event()
+    connect_id = str(uuid.uuid4())
+    session_id = str(uuid.uuid4()).replace("-", "")
+    protocol = VolcengineProtocol()
+
+    def on_message(ws, message):
+        try:
+            if isinstance(message, bytes):
+                frame = protocol.decode_frame(message)
+                if frame.event == Event.CONNECTION_STARTED:
+                    result_queue.put("CONNECTED")
+                elif frame.event == Event.CONNECTION_FAILED:
+                    result_queue.put(RuntimeError(f"Connection failed: {frame.payload}"))
+                    session_finished.set()
+                elif frame.event == Event.TTS_RESPONSE:
+                    if frame.payload and isinstance(frame.payload, bytes):
+                        result_queue.put(frame.payload)
+                elif frame.event == Event.SESSION_FINISHED:
+                    session_finished.set()
+                elif frame.event == Event.SESSION_FAILED:
+                    result_queue.put(RuntimeError(f"Session failed: {frame.payload}"))
+                    session_finished.set()
+                elif frame.message_type == MessageType.ERROR_INFORMATION:
+                    result_queue.put(RuntimeError(f"Error: {frame.payload}"))
+                    session_finished.set()
+        except Exception as e:
+            result_queue.put(e)
+            session_finished.set()
+
+    def on_error(ws, error):
+        result_queue.put(RuntimeError(str(error)))
+        session_finished.set()
+
+    def on_close(ws, close_status_code, close_msg):
+        session_finished.set()
+
+    headers = {
+        "X-Api-App-Key": app_key,
+        "X-Api-Access-Key": access_key,
+        "X-Api-Resource-Id": resource_id,
+        "X-Api-Connect-Id": connect_id,
+    }
+
+    ws = _ws.WebSocketApp(
+        VOLCENGINE_TTS_WS_URL,
+        header=headers,
+        on_message=on_message,
+        on_error=on_error,
+        on_close=on_close,
+    )
+
+    ws_thread = threading.Thread(target=ws.run_forever, daemon=True)
+    ws_thread.start()
+
+    try:
+        conn_result = result_queue.get(timeout=10)
+        if isinstance(conn_result, Exception):
+            raise conn_result
+
+        # StartSession — note: session_id first, then speaker(voice), model=resource_id
+        ws.send(
+            protocol.encode_start_session(session_id, voice,
+                                           audio_format="mp3", sample_rate=24000,
+                                           model=resource_id),
+            opcode=_ws.ABNF.OPCODE_BINARY,
+        )
+        _time.sleep(0.5)
+
+        # TaskRequest + FinishSession
+        ws.send(
+            protocol.encode_task_request(session_id, text),
+            opcode=_ws.ABNF.OPCODE_BINARY,
+        )
+        ws.send(
+            protocol.encode_finish_session(session_id),
+            opcode=_ws.ABNF.OPCODE_BINARY,
+        )
+
+        while not session_finished.is_set():
+            try:
+                item = result_queue.get(timeout=0.3)
+                if isinstance(item, Exception):
+                    raise item
+                if isinstance(item, bytes):
+                    yield item
+            except queue.Empty:
+                continue
+
+    except queue.Empty:
+        raise TimeoutError("TTS synthesis timed out")
+    finally:
+        try:
+            ws.send(protocol.encode_finish_connection(), opcode=_ws.ABNF.OPCODE_BINARY)
+        except Exception:
+            pass
+        ws.close()
+        ws_thread.join(timeout=5)
