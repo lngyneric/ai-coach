@@ -330,7 +330,7 @@ setTimeout(function(){ var b=g.node().getBBox(); if(b.width){ var s=Math.min(W/b
     try {
       var resp = await fetch(API_BASE+'/chat/completions',{
         method:'POST',headers:{'Content-Type':'application/json'},
-        body:JSON.stringify({model:'deepseek-chat',messages:conversation,stream:true,max_tokens:500})
+        body:JSON.stringify({model:'deepseek-v4-flash-260425',messages:conversation,stream:true,max_tokens:500})
       });
       if (!resp.ok) throw new Error('HTTP '+resp.status);
       var reader = resp.body.getReader(), decoder = new TextDecoder(), buf = '';
@@ -340,7 +340,12 @@ setTimeout(function(){ var b=g.node().getBBox(); if(b.width){ var s=Math.min(W/b
         var lines = buf.split('\n'); buf = lines.pop()||'';
         for (var i=0;i<lines.length;i++) {
           var l = lines[i].trim(); if (!l.startsWith('data: ')) continue;
-          try { var j = JSON.parse(l.slice(6)); var delta = j.choices?.[0]?.delta?.content;
+          try { var j = JSON.parse(l.slice(6));
+            if (j.error) {
+              // Ark may return full content in error when streaming with deepseek models
+              // Try fallback to non-streaming
+            }
+            var delta = j.choices?.[0]?.delta?.content;
             if (delta) { full += delta; sd.innerHTML = full.replace(/\n/g,'<br>'); messages.scrollTop = messages.scrollHeight; }
           } catch(e){}
         }

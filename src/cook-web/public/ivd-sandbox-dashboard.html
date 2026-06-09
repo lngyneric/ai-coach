@@ -433,10 +433,11 @@ function renderResults(r) {
 }
 
 function renderChart(r) {
-  const svg = d3.select('#chart');
-  svg.selectAll('*').remove();
+  const container = d3.select('#chart');
+  container.selectAll('*').remove();
   const W = document.getElementById('chart').clientWidth || 800, H = 280;
-  const margin = {top:20, right:80, bottom:40, left:50};
+  const svg = container.append('svg').attr('width', W).attr('height', H);
+  const margin = {top:40, right:80, bottom:40, left:50};
   const w = W - margin.left - margin.right, h = H - margin.top - margin.bottom;
 
   const g = svg.append('g').attr('transform', `translate(${margin.left},${margin.top})`);
@@ -482,7 +483,7 @@ function renderChart(r) {
     .call(d3.axisBottom(xScale).tickFormat(d => d)).selectAll('text')
     .attr('fill', 'var(--muted)').attr('font-size', '10px');
   // Y axis
-  g.append('g').call(d3.axisLeft(yScale).ticks(5).tickFormat(d => d+'%'))
+  g.append('g').call(d3.axisLeft(yScale).ticks(5).tickFormat(d => d+''))
     .selectAll('text').attr('fill', 'var(--muted)').attr('font-size', '10px');
   g.selectAll('.domain, line').attr('stroke', 'var(--border)');
 
@@ -500,7 +501,10 @@ function renderChart(r) {
   // Title
   svg.append('text').attr('x', W/2).attr('y', 12).attr('text-anchor', 'middle')
     .attr('fill', 'var(--text)').attr('font-size', '12px').attr('font-weight', '600')
-    .text(`最佳方案「${best.name}」— 分产品线收入趋势 (基准=100)`);
+    .text(`最佳方案「${best.name}」— 分产品线收入趋势`);
+  svg.append('text').attr('x', W/2).attr('y', 28).attr('text-anchor', 'middle')
+    .attr('fill', 'var(--muted)').attr('font-size', '10px')
+    .text('纵轴 = 各产品线以2024年为基准100的收入指数 · 堆叠高度 = 总收入规模');
 }
 
 function renderScenarios(r) {
