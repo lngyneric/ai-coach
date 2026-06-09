@@ -1,0 +1,94 @@
+{
+  "session_files": 16,
+  "total_calls": 5687,
+  "total_tokens": 1393155315,
+  "total_input": 11095295,
+  "total_output": 2232948,
+  "total_cache_read": 1379827072,
+  "total_cache_create": 0,
+  "grand_total_usd": 314.54,
+  "grand_total_cny": 2265.0,
+  "models": {
+    "deepseek-v4-pro": {
+      "calls": 5591,
+      "input": 10899992,
+      "output": 2188970,
+      "cache_read": 1375520512,
+      "cache_create": 0,
+      "cost": 314.42
+    },
+    "deepseek-v4-flash": {
+      "calls": 96,
+      "input": 195303,
+      "output": 43978,
+      "cache_read": 4306560,
+      "cache_create": 0,
+      "cost": 0.12
+    }
+  },
+  "daily": {
+    "2026-05-16": {
+      "calls": 126,
+      "input": 408868,
+      "output": 50981,
+      "cache_read": 5078912,
+      "cost": 314.53612705
+    },
+    "2026-05-17": {
+      "calls": 671,
+      "input": 1147666,
+      "output": 276442,
+      "cache_read": 46151552,
+      "cost": 314.53612705
+    },
+    "2026-05-18": {
+      "calls": 1274,
+      "input": 1483998,
+      "output": 501991,
+      "cache_read": 370612480,
+      "cost": 314.53612705
+    },
+    "2026-05-19": {
+      "calls": 343,
+      "input": 724967,
+      "output": 160462,
+      "cache_read": 39340416,
+      "cost": 314.53612705
+    },
+    "2026-05-21": {
+      "calls": 380,
+      "input": 938181,
+      "output": 167220,
+      "cache_read": 70563840,
+      "cost": 314.53612705
+    },
+    "2026-05-22": {
+      "calls": 1117,
+      "input": 1819771,
+      "output": 378345,
+      "cache_read": 272899456,
+      "cost": 314.53612705
+    },
+    "2026-05-23": {
+      "calls": 743,
+      "input": 830791,
+      "output": 272273,
+      "cache_read": 163068288,
+      "cost": 314.53612705
+    },
+    "2026-05-24": {
+      "calls": 287,
+      "input": 1182570,
+      "output": 113903,
+      "cache_read": 90718976,
+      "cost": 314.53612705
+    },
+    "2026-05-25": {
+      "calls": 746,
+      "input": 2558483,
+      "output": 311331,
+      "cache_read": 321393152,
+      "cost": 314.53612705
+    }
+  }
+}
