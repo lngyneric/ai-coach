@@ -161,6 +161,7 @@ body{font-family:-apple-system,BlinkMacSystemFont,"Segoe UI",Roboto,"PingFang SC
         <div class="tabs">
           <div class="tab active" onclick="switchView('chart',this)">📈 收入趋势</div>
           <div class="tab" onclick="switchView('compare',this)">📋 方案对比</div>
+          <div class="tab" onclick="switchView('log',this)">📝 推导日志</div>
           <div class="tab" onclick="switchView('advice',this)">💡 策略建议</div>
         </div>
       </div>
@@ -173,6 +174,10 @@ body{font-family:-apple-system,BlinkMacSystemFont,"Segoe UI",Roboto,"PingFang SC
       <!-- Advice View -->
       <div id="view-advice" style="display:none">
         <div id="suggestions"></div>
+      </div>
+      <!-- Log View -->
+      <div id="view-log" style="display:none">
+        <div id="derivationLog"></div>
       </div>
     </div>
   </div>
@@ -320,7 +325,13 @@ function generateScenarios(goal) {
     key_assumptions: ['集采范围扩大','渠道投入维持或收缩','新业务暂缓'],
     milestones: ['2026: 稳住核心产品份额','2027: 应对集采降价','2028: 完成低效产品线退出'],
     risks: ['市场份额流失','新业务跟不上竞品'],
-    signals: ['📉 低: 新业务投入','⚠️ 风险: 集采冲击利润']
+    signals: ['📉 低: 新业务投入','⚠️ 风险: 集采冲击利润'],
+    log: [
+      `参数: 集采=${document.getElementById('caizhaoScope').value}, 竞争=${params.comp}, 渠道=${params.channel}, 技术=${params.tech}, 国产替代=${params.local}`,
+      `基值调整系数: baseAdj=${s1Adj.toFixed(2)} (集采${baseIdx===0?'温和':(baseIdx===1?'中等':'极限')})`,
+      `推导逻辑: 集采冲击→收入下调${Math.round((1-s1Adj)*100)}% → 渠道投入${params.channel<=2?'收缩':'维持'} → 新业务暂缓`,
+      `可信度评估: 与S2偏差${Math.round(Math.abs(1-s1Adj)*100)}% ${Math.abs(1-s1Adj)<=0.2?'≤20%阈值 → 高可信':'>20%阈值 → 中可信'}`
+    ]
   });
 
   // S2: 基准 (最可能)
@@ -339,7 +350,13 @@ function generateScenarios(goal) {
     key_assumptions: ['凝血2027进入集采','渠道适度扩张','分子POCT开始贡献收入'],
     milestones: ['2026: XR+凝血旗舰装机加速','2027: 知微分子POCT入院','2028: 新业务贡献5%营收'],
     risks: ['凝血集采降价超预期','免疫竞争加剧'],
-    signals: ['📈 中: 血栓四项推广','📈 高: XR装机目标','⚠️ 风险: 免疫是最大短板']
+    signals: ['📈 中: 血栓四项推广','📈 高: XR装机目标','⚠️ 风险: 免疫是最大短板'],
+    log: [
+      `参数: 集采=${document.getElementById('caizhaoScope').value}, 竞争=${params.comp}, 渠道=${params.channel}, 技术=${params.tech}, 国产替代=${params.local}`,
+      `基值调整系数: baseAdj=${s2Adj.toFixed(2)} | 渠道加成=${(1+(ch-3)*0.02).toFixed(2)} | 技术加成=${(1+(t-3)*0.015).toFixed(2)}`,
+      `推导逻辑: 基准S2模型(x1.0) → 集采调整(x${s2Adj.toFixed(2)}) → 渠道乘数(x${(1+(ch-3)*0.02).toFixed(2)}) → 技术乘数(x${(1+(t-3)*0.015).toFixed(2)})`,
+      `可信度评估: 偏差最小路径 → 默认基准情景 → 可信度最高`
+    ]
   });
 
   // S3: 激进
@@ -358,7 +375,13 @@ function generateScenarios(goal) {
     key_assumptions: ['集采温和推进','渠道+技术双投入','新业务快速落地'],
     milestones: ['2026: 大举扩张销售团队','2027: 新业务线规模贡献','2028: 免疫市场份额回升'],
     risks: ['投入过大影响利润率','新业务不及预期','竞品激烈反制'],
-    signals: ['📈 高: 全产品线增长','📈 高: 新业务突破','⚠️ 风险: 现金流压力']
+    signals: ['📈 高: 全产品线增长','📈 高: 新业务突破','⚠️ 风险: 现金流压力'],
+    log: [
+      `参数: 集采=${document.getElementById('caizhaoScope').value}, 竞争=${params.comp}, 渠道=${params.channel}, 技术=${params.tech}, 国产替代=${params.local}`,
+      `基值调整系数: s3Adj=${s3Adj.toFixed(2)} (渠道+技术双投入) | 年度递加: +0.05/年`,
+      `推导逻辑: 基准S2模型 → 渠道扩张(x${(1+(ch-3)*0.04).toFixed(2)}) → 技术领先(x${(1+(t-3)*0.03).toFixed(2)}) → 逐年递加+5%`,
+      `可信度评估: 需要${ch>=4?'渠道':'竞争'}和${t>=4?'技术':'集采'}同时有利 → 综合概率低`
+    ]
   });
 
   // S4: 极限 (仅高压时生成)
@@ -376,7 +399,13 @@ function generateScenarios(goal) {
       key_assumptions: ['集采全面覆盖','国产替代加速','渠道重构'],
       milestones: ['2026: 免疫业务触底','2027: 凝血价格体系重塑','2028: 完成业务重组'],
       risks: ['收入下滑超过15%','渠道商大量退出'],
-      signals: ['📉 低: 全线承压','⚠️ 风险: 组织重构需求']
+      signals: ['📉 低: 全线承压','⚠️ 风险: 组织重构需求'],
+        log: [
+          `参数: 集采=${document.getElementById('caizhaoScope').value}, 竞争=${params.comp}, 渠道=${params.channel}, 技术=${params.tech}, 国产替代=${params.local}`,
+          `基值调整系数: 0.75 | 逐年递减: -5%/年`,
+          `推导逻辑: 全面集采(-25%基准) → 逐年递减效应(-5%/年) → 仅核心产品保留利润`,
+          `可信度评估: 触发条件为国产替代≥高或集采=极限 → 边界场景可信度低`
+        ]
     });
   }
 
@@ -394,6 +423,7 @@ function renderResults(r) {
   renderChart(r);
   renderScenarios(r);
   renderAdvice(r);
+  renderDerivationLog(r);
   document.getElementById('resultSummary').textContent =
     `共 ${r.scenarios.length} 个方案 · ${r.generated_at}`;
 }
@@ -557,10 +587,75 @@ function renderAdvice(r) {
   container.innerHTML = html;
 }
 
+function renderDerivationLog(r) {
+  const container = document.getElementById('derivationLog');
+  let html = `<div style="font-size:13px;margin-bottom:12px">📝 推导过程日志 — 每个方案的结果来源说明</div>`;
+  html += `<div style="font-size:11px;color:var(--muted);margin-bottom:12px;padding:8px 12px;background:var(--bg3);border-radius:6px">`;
+  html += `生成时间: ${r.generated_at} · 输入参数: 集采=${r.parmas.caizhao} · `;
+  html += `竞争=${r.parmas.comp}/5 · 渠道=${r.parmas.channel}/5 · 技术=${r.parmas.tech}/5 · 国产替代=${r.parmas.local}/5`;
+  html += `</div>`;
+
+  r.scenarios.sort((a,b) => b.confidence - a.confidence).forEach(s => {
+    const badgeCls = s.confidence >= 0.7 ? 'conf-high' : (s.confidence >= 0.45 ? 'conf-mid' : 'conf-low');
+    html += `<div class="scenario" style="margin-bottom:10px">
+      <div class="scenario-header">
+        <span class="scenario-name">${s.name}</span>
+        <span><span class="confidence-badge ${badgeCls}">${s.label}</span> · 概率${s.chance}</span>
+      </div>`;
+    
+    if (s.log && s.log.length) {
+      html += `<table style="width:100%;font-size:11px;border-collapse:collapse">
+        <tr><td style="padding:4px 8px;background:var(--bg3);width:120px;font-weight:600">输入参数</td>
+            <td style="padding:4px 8px">${s.log[0]}</td></tr>
+        <tr><td style="padding:4px 8px;background:var(--bg3);font-weight:600">调整系数</td>
+            <td style="padding:4px 8px">${s.log[1]}</td></tr>
+        <tr><td style="padding:4px 8px;background:var(--bg3);font-weight:600">推导逻辑</td>
+            <td style="padding:4px 8px">${s.log[2]}</td></tr>
+        <tr><td style="padding:4px 8px;background:var(--bg3);font-weight:600">可信度评估</td>
+            <td style="padding:4px 8px">${s.log[3]}</td></tr>
+      </table>`;
+    }
+
+    html += `<div style="font-size:10px;color:var(--muted);margin-top:6px">关键假设: ${s.key_assumptions.join(' · ')}</div>`;
+    html += `<div style="font-size:10px;color:var(--muted)">风险: ${s.risks.join(' · ')}</div>`;
+    html += `<details style="margin-top:6px"><summary style="font-size:11px;cursor:pointer;color:var(--accent)">📊 查看分产品线数据</summary>`;
+    html += `<table style="width:100%;font-size:10px;border-collapse:collapse;margin-top:4px">
+      <tr><th style="padding:4px;border:1px solid var(--border);background:var(--bg2)">产品线</th>
+          <th style="padding:4px;border:1px solid var(--border);background:var(--bg2)">2024A</th>
+          <th style="padding:4px;border:1px solid var(--border);background:var(--bg2)">2025E</th>
+          <th style="padding:4px;border:1px solid var(--border);background:var(--bg2)">2026E</th>
+          <th style="padding:4px;border:1px solid var(--border);background:var(--bg2)">2027E</th>
+          <th style="padding:4px;border:1px solid var(--border);background:var(--bg2)">2028E</th>
+          <th style="padding:4px;border:1px solid var(--border);background:var(--bg2)">CAGR</th></tr>`;
+    s.data.forEach(d => {
+      const vals = d.values;
+      const last = vals[vals.length-1] || 0;
+      const cagr = last > 0 ? ((Math.pow(last/100, 1/4)-1)*100).toFixed(1) : '-';
+      html += `<tr><td style="padding:3px 6px;border:1px solid var(--border)">${d.name}</td>`;
+      vals.forEach(v => {
+        html += `<td style="padding:3px 6px;border:1px solid var(--border);text-align:center">${v||'-'}</td>`;
+      });
+      html += `<td style="padding:3px 6px;border:1px solid var(--border);text-align:center">${cagr}%</td></tr>`;
+    });
+    html += `</table></details>`;
+
+    html += `</div>`;
+  });
+
+  html += `<div style="margin-top:12px;padding:10px;background:var(--bg3);border-radius:6px;font-size:11px">
+    <strong>ℹ️ 可信度评估标准：</strong><br>
+    • <span class="confidence-badge conf-high">高 (≥70%)</span> — 与S2基准偏差≤20%，参数在历史波动范围内<br>
+    • <span class="confidence-badge conf-mid">中 (45-70%)</span> — 需1-2个非基准假设同时成立<br>
+    • <span class="confidence-badge conf-low">低 (<40%)</span> — 需多个小概率事件同时发生
+  </div>`;
+
+  container.innerHTML = html;
+}
+
 function switchView(view, el) {
   document.querySelectorAll('.tab').forEach(t => t.classList.remove('active'));
   el.classList.add('active');
-  ['chart','compare','advice'].forEach(v => {
+  ['chart','compare','advice','log'].forEach(v => {
     document.getElementById(`view-${v}`).style.display = v === view ? 'block' : 'none';
   });
   if (view === 'chart') setTimeout(() => renderChart(results), 50);
