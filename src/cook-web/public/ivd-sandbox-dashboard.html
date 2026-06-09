@@ -88,6 +88,8 @@ body{font-family:-apple-system,BlinkMacSystemFont,"Segoe UI",Roboto,"PingFang SC
 .comp-table .best{background:rgba(34,197,94,0.15)}
 /* Prompt box */
 .prompt-box{background:var(--bg3);border:1px solid var(--border);border-radius:8px;padding:12px;font-family:monospace;font-size:11px;line-height:1.6;color:var(--muted);margin-top:8px;white-space:pre-wrap;max-height:200px;overflow-y:auto}
+.doc-link{display:inline-flex;align-items:center;gap:4px;padding:3px 10px;border:1px solid var(--border);border-radius:6px;background:var(--bg2);color:var(--accent);font-size:11px;cursor:pointer;text-decoration:none;transition:all 0.2s}
+.doc-link:hover{border-color:var(--accent);background:rgba(96,165,250,0.1)}
 @media (max-width:700px){.flex{flex-direction:column}.grid{grid-template-columns:1fr}}
 </style>
 </head>
@@ -96,6 +98,7 @@ body{font-family:-apple-system,BlinkMacSystemFont,"Segoe UI",Roboto,"PingFang SC
   <h1>🏰 IVD 沙盘推演</h1>
   <span class="sub">Sysmex China 2026-2028 | 策略推导仪表盘</span>
   <span style="margin-left:auto;display:flex;gap:8px;align-items:center">
+    <a class="doc-link" href="ivd-sandbox-model-docs.html" title="模型参数说明文档">📖 模型文档</a>
     <span style="font-size:11px;color:var(--muted)" id="statusLabel">就绪</span>
     <button class="btn btn-sm" onclick="toggleTheme()" id="themeBtn">☀️</button>
   </span>
