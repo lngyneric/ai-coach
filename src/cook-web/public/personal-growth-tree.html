@@ -1,0 +1,365 @@
+<!DOCTYPE html>
+<html lang="zh-CN" data-theme="dark">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>个人能力提升图谱 — sysmex</title>
+<script src="d3.v7.min.js"></script>
+<style>
+:root {
+  --bg: #0f172a; --bg2: #1e293b; --text: #e2e8f0; --muted: #94a3b8;
+  --border: #334155; --accent: #60a5fa; --tooltip-bg: rgba(15,23,42,0.98);
+  --legend-bg: rgba(15,23,42,0.9); --header-bg: rgba(15,23,42,0.96);
+  --btn-bg: #1e293b; --btn-text: #94a3b8; --btn-active-bg: #2563eb;
+  --gap-btn-border: #f59e0b; --gap-btn-text: #f59e0b; --gap-btn-active: #d97706;
+  --node-text: #cbd5e1;
+}
+[data-theme="light"] {
+  --bg: #f8fafc; --bg2: #e2e8f0; --text: #1e293b; --muted: #64748b;
+  --border: #cbd5e1; --accent: #2563eb; --tooltip-bg: rgba(255,255,255,0.98);
+  --legend-bg: rgba(255,255,255,0.95); --header-bg: rgba(248,250,252,0.96);
+  --btn-bg: #e2e8f0; --btn-text: #475569; --btn-active-bg: #2563eb;
+  --gap-btn-border: #d97706; --gap-btn-text: #d97706; --gap-btn-active: #d97706;
+  --node-text: #334155;
+}
+*{margin:0;padding:0;box-sizing:border-box}
+body{font-family:-apple-system,BlinkMacSystemFont,"Segoe UI",Roboto,"PingFang SC","Microsoft YaHei",sans-serif;background:var(--bg);color:var(--text);height:100vh;overflow:hidden;transition:background 0.3s,color 0.3s}
+#header{position:fixed;top:0;left:0;right:0;height:52px;background:var(--header-bg);backdrop-filter:blur(12px);border-bottom:1px solid var(--border);display:flex;align-items:center;padding:0 16px;z-index:100;gap:10px}
+#header h1{font-size:16px;font-weight:600;background:linear-gradient(135deg,var(--accent),#a78bfa);-webkit-background-clip:text;-webkit-text-fill-color:transparent}
+#header .sub{font-size:11px;color:var(--muted)}
+#views{display:flex;gap:4px;margin-left:auto}
+#views button,.ctrl,#themeBtn,#langBtn{padding:5px 10px;border:1px solid var(--border);border-radius:6px;background:var(--btn-bg);color:var(--btn-text);font-size:11px;cursor:pointer;transition:all 0.2s;white-space:nowrap}
+#views button:hover,.ctrl:hover{border-color:var(--accent);color:var(--text)}
+#views button.active,.ctrl.active{background:var(--btn-active-bg);border-color:var(--btn-active-bg);color:#fff}
+.ctrl.gap{border-color:var(--gap-btn-border);color:var(--gap-btn-text)}
+.ctrl.gap.active{background:var(--gap-btn-active);color:#fff}
+#controls{display:flex;gap:4px;margin-left:6px}
+.legend{position:fixed;bottom:20px;left:20px;background:var(--legend-bg);border:1px solid var(--border);border-radius:10px;padding:14px;z-index:100;font-size:11px;max-width:220px}
+.legend-item{display:flex;align-items:center;gap:6px;margin:3px 0}
+.legend-color{width:12px;height:12px;border-radius:50%;flex-shrink:0}
+.legend-line{width:20px;height:2px;flex-shrink:0}
+#tooltip{position:fixed;background:var(--tooltip-bg);border:1px solid var(--border);border-radius:12px;padding:16px 20px;max-width:420px;z-index:200;pointer-events:auto;display:none;box-shadow:0 8px 32px rgba(0,0,0,0.5);font-size:12px;line-height:1.5}
+#tooltip h3{font-size:14px;margin-bottom:4px}
+.tag{display:inline-block;padding:2px 7px;border-radius:4px;font-size:10px;margin:2px}
+.course-link{display:block;padding:6px 10px;margin:4px 0;background:var(--bg2);border:1px solid var(--border);border-radius:6px;color:var(--accent);text-decoration:none;font-size:11px;transition:all 0.2s;white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
+.course-link:hover{background:var(--btn-active-bg);border-color:var(--accent);color:#fff}
+.course-section{margin-top:10px;border-top:1px solid var(--border);padding-top:8px}
+.course-section .label{font-size:10px;color:var(--muted);margin-bottom:4px;font-weight:600}
+svg{width:100%;height:100vh}
+.link{fill:none}
+.node circle{cursor:pointer}
+.node text{font-size:10px;fill:var(--node-text);pointer-events:none;text-shadow:0 1px 3px rgba(0,0,0,0.5);font-weight:500}
+#stats{position:fixed;top:60px;right:20px;z-index:100;font-size:10px;color:var(--muted);text-align:right;line-height:1.6}
+/* Chat */
+#chat-panel{
+  position:fixed;bottom:0;right:20px;width:420px;max-width:100vw;height:520px;max-height:70vh;z-index:300;
+  background:var(--bg);border:1px solid var(--border);border-radius:16px 16px 0 0;
+  box-shadow:0 -4px 32px rgba(0,0,0,0.5);display:flex;flex-direction:column;
+  transition:transform 0.3s ease;transform:translateY(100%);
+}
+#chat-panel.open{transform:translateY(0)}
+#chat-header{display:flex;align-items:center;justify-content:space-between;padding:12px 16px;border-bottom:1px solid var(--border);background:var(--bg2);border-radius:16px 16px 0 0;cursor:pointer}
+#chat-header h2{font-size:14px;margin:0;display:flex;align-items:center;gap:8px}
+#chat-close{background:none;border:none;color:var(--muted);font-size:20px;cursor:pointer;padding:0 4px;min-height:auto}
+#chat-close:hover{color:var(--text)}
+#chat-messages{flex:1;overflow-y:auto;padding:16px;display:flex;flex-direction:column;gap:12px}
+.chat-msg{max-width:85%;padding:10px 14px;border-radius:12px;font-size:13px;line-height:1.6;word-wrap:break-word}
+.chat-msg.user{align-self:flex-end;background:var(--btn-active-bg);color:#fff;border-bottom-right-radius:4px}
+.chat-msg.assistant{align-self:flex-start;background:var(--bg2);color:var(--text);border-bottom-left-radius:4px}
+.chat-msg.system{align-self:center;background:transparent;color:var(--muted);font-size:11px;text-align:center;max-width:100%}
+.chat-msg.streaming{border-left:2px solid var(--accent);animation:pulse 1.5s infinite}
+@keyframes pulse{0%,100%{opacity:1}50%{opacity:0.6}}
+#chat-input-area{padding:12px 16px;border-top:1px solid var(--border);display:flex;gap:8px}
+#chat-input{flex:1;background:var(--bg2);border:1px solid var(--border);border-radius:8px;padding:10px 14px;color:var(--text);font-size:13px;resize:none;min-height:44px;max-height:100px;font-family:inherit}
+#chat-input::placeholder{color:var(--muted)}
+#chat-send{padding:10px 16px;background:var(--btn-active-bg);border:none;border-radius:8px;color:#fff;font-size:13px;cursor:pointer;min-height:44px;white-space:nowrap}
+#chat-send:disabled{opacity:0.5;cursor:not-allowed}
+.stage-card{background:var(--bg2);border:1px solid var(--border);border-radius:8px;padding:8px 10px;margin:4px 0;font-size:11px;cursor:pointer;transition:all 0.2s}
+.stage-card:hover{border-color:var(--accent)}
+.stage-num{display:inline-block;background:var(--btn-active-bg);color:#fff;border-radius:50%;width:20px;height:20px;text-align:center;line-height:20px;font-size:10px;margin-right:6px}
+.stage-name{font-weight:600}
+.stage-desc{color:var(--muted);font-size:10px;margin-top:2px}
+@media (max-width:500px){#chat-panel{width:100%;right:0;height:60vh;border-radius:16px 16px 0 0}#navRole{max-width:70px}}
+</style>
+</head>
+<body>
+<div id="header">
+  <h1 id="mainTitle">🧠 个人能力提升</h1>
+  <span class="sub" id="subTitle">sysmex — AI时代个人成长知识体系</span><span class="sub" id="countLabel" style="margin-left:8px"></span>
+  <div id="views">
+    <button class="active" onclick="setView('all')" id="view-all">📋 全部</button>
+    <button onclick="setView('technical')" id="view-technical">🤖 AI与技术</button>
+    <button onclick="setView('product')" id="view-product">📊 产品与效能</button>
+    <button onclick="setView('technical')" id="view-technical">🔬 技术</button>
+    <button onclick="setView('product')" id="view-sales">👔 销售</button>
+  </div>
+  <div id="controls">
+    <button class="ctrl gap" onclick="toggleGaps()" id="gapBtn">🔍 缺口</button>
+    <button class="ctrl" onclick="resetView()">🔄 重置</button>
+  </div>
+  <span style="color:var(--muted);font-size:11px;margin-left:12px">|</span>
+  <select id="navRole" onchange="window.switchNavRole(this.value)" style="background:var(--btn-bg);border:1px solid var(--border);border-radius:6px;color:var(--text);padding:4px 8px;font-size:11px;min-height:30px;cursor:pointer">
+    <option value="technical">🔧 技术</option>
+    <option value="lab">🧑‍💻 知识工作者</option>
+    <option value="lab">🔬 检验</option>
+  </select>
+  <button class="ctrl" onclick="window.showLearningPlan()" style="font-size:10px">📋 带教计划</button>
+  <button class="ctrl" onclick="window.askGuidance()" style="font-size:10px">🎯 学习指引</button>
+  <button id="langBtn" onclick="toggleLang()" title="语言">🌐</button>
+  <button id="themeBtn" onclick="toggleTheme()" title="主题">☀️</button>
+</div>
+<div id="tooltip"></div>
+<div class="legend">
+  <div style="font-weight:600;margin-bottom:4px">节点</div>
+  <div class="legend-item"><div class="legend-color" style="background:#22c55e"></div> 已有课程</div>
+  <div class="legend-item"><div class="legend-color" style="background:#ef4444;border:2px dashed #ef4444"></div> 课程缺口</div>
+  <div class="legend-item"><div class="legend-color" style="background:#f59e0b;border:2px dashed #f59e0b"></div> 优先创建</div>
+  <div class="legend-item"><div class="legend-color" style="background:#f97316"></div> 销售节点</div>
+  <hr style="border-color:var(--border);margin:5px 0">
+  <div class="legend-item"><div class="legend-line" style="background:#3b82f6"></div> 前置</div>
+  <div class="legend-item"><div class="legend-line" style="background:#a78bfa"></div> 延伸</div>
+  <div class="legend-item"><div class="legend-line" style="background:#10b981"></div> 并行</div>
+</div>
+<div id="stats"></div>
+<div id="graph"></div>
+<div id="chat-panel">
+  <div id="chat-header"><h2 id="chat-title">💬 AI 检验助手</h2><button id="chat-close" onclick="window.closeAIChat()">×</button></div>
+  <div id="chat-messages"><div class="chat-msg system">点击知识图谱节点开始情景对话</div></div>
+  <div id="chat-input-area"><textarea id="chat-input" placeholder="输入问题..." rows="1"></textarea><button id="chat-send">发送</button></div>
+</div>
+<script>
+const TREE = {"subject":"personal-growth","name":"个人能力提升 — AI时代知识体系","description":"面向AI时代的个人能力发展知识图谱，涵盖AI智能体开发、AI产品思维、企业数字化转型、知识管理、个人效能和学习方法论六大领域","target_roles":["AI产品经理","企业数字化转型负责人","知识工作者","AI开发者","产品经理","个人效能追求者"],"version":"1.0.0","domains":[{"id":"ai-agent","name":"AI 智能体开发","color":"#6366f1","description":"Claude/ChatGPT等AI智能体的搭建、记忆系统、工具调用、工作流设计","nodes":[{"id":"agent-fundamentals","name":"AI智能体基础认知","difficulty":1,"estimated_hours":3,"prerequisites":[],"extends":["agent-memory","agent-tools","agent-workflow"],"parallel":[],"courses":[{"shifu_bid":"89a08c1164cf48bd869aa2beade052ec","title":"AI 师傅教学引导","description":"如何用 AI 师傅平台里进行教学的引导","keywords":"","lesson_count":0,"lesson_titles":[],"lessons":[]}],"metadata":{"phase":"入门","skills":["AI基础概念","Prompt工程基础","AI工具认知"],"sysmex_relevance":"high"}},{"id":"agent-memory","name":"智能体记忆系统","difficulty":2,"estimated_hours":4,"prerequisites":["agent-fundamentals"],"extends":["agent-advanced"],"parallel":["agent-tools"],"courses":[{"shifu_bid":"8066d09ce27c434bbf400f17334b704a","title":"给Claude智能体做记忆：12步搭建最小记忆系统","description":"","keywords":"","lesson_count":12,"lesson_titles":[],"lessons":[]}],"metadata":{"phase":"专业","skills":["记忆系统设计","上下文管理","状态持久化"],"sysmex_relevance":"high"}},{"id":"agent-tools","name":"智能体工具与函数调用","difficulty":2,"estimated_hours":3,"prerequisites":["agent-fundamentals"],"extends":["agent-advanced"],"parallel":["agent-memory"],"courses":[],"metadata":{"phase":"专业","skills":["Tool Use","Function Calling","MCP协议","API集成"],"sysmex_relevance":"high"}},{"id":"agent-workflow","name":"智能体工作流设计","difficulty":3,"estimated_hours":4,"prerequisites":["agent-fundamentals"],"extends":["agent-advanced"],"parallel":[],"courses":[],"metadata":{"phase":"高级","skills":["多Agent协作","工作流编排","异常处理"],"sysmex_relevance":"high"}},{"id":"agent-advanced","name":"高级智能体架构","difficulty":4,"estimated_hours":5,"prerequisites":["agent-memory","agent-tools","agent-workflow"],"extends":[],"parallel":[],"courses":[],"metadata":{"phase":"进阶","skills":["多模态Agent","自主决策","安全与对齐"],"sysmex_relevance":"high"}}]},{"id":"ai-product","name":"AI 产品思维","color":"#f59e0b","description":"AI产品经理能力模型、面试知识体系、AI产品设计方法论","nodes":[{"id":"ai-product-fundamentals","name":"AI产品经理基础","difficulty":1,"estimated_hours":3,"prerequisites":[],"extends":["ai-product-interview","ai-product-design"],"parallel":["agent-fundamentals"],"courses":[{"shifu_bid":"bc5d971618f3480c90bf49c856154957","title":"AI-Shifu Creation Guide","description":"How to create on the AI-Shifu platform","keywords":"","lesson_count":0,"lesson_titles":[],"lessons":[]}],"metadata":{"phase":"入门","skills":["AI产品思维","用户需求分析","产品规划"],"sysmex_relevance":"high"}},{"id":"ai-product-interview","name":"AI产品经理面试","difficulty":2,"estimated_hours":4,"prerequisites":["ai-product-fundamentals"],"extends":["ai-product-advanced"],"parallel":["ai-product-design"],"courses":[{"shifu_bid":"91860e8124b24ee49c6bfecfb494af82","title":"AI产品经理面试知识体系通识","description":"","keywords":"","lesson_count":0,"lesson_titles":[],"lessons":[]}],"metadata":{"phase":"专业","skills":["面试准备","案例分析","产品设计题"],"sysmex_relevance":"medium"}},{"id":"ai-product-design","name":"AI产品设计方法论","difficulty":2,"estimated_hours":3,"prerequisites":["ai-product-fundamentals"],"extends":["ai-product-advanced"],"parallel":["ai-product-interview"],"courses":[],"metadata":{"phase":"专业","skills":["AI功能设计","人机交互","效果评估"],"sysmex_relevance":"medium"}},{"id":"ai-product-advanced","name":"高级AI产品策略","difficulty":3,"estimated_hours":4,"prerequisites":["ai-product-interview","ai-product-design"],"extends":[],"parallel":[],"courses":[],"metadata":{"phase":"高级","skills":["商业化策略","增长模型","竞争分析"],"sysmex_relevance":"medium"}}]},{"id":"enterprise-digital","name":"企业数字化转型","color":"#3b82f6","description":"企业数字化架构、流程体系建设、AI落地方法论、组织变革","nodes":[{"id":"digital-fundamentals","name":"数字化基础认知","difficulty":1,"estimated_hours":2,"prerequisites":[],"extends":["enterprise-architecture","process-system"],"parallel":["ai-product-fundamentals"],"courses":[],"metadata":{"phase":"入门","skills":["数字化概念","技术趋势","行业分析"],"sysmex_relevance":"high"}},{"id":"enterprise-architecture","name":"企业数字化架构","difficulty":3,"estimated_hours":5,"prerequisites":["digital-fundamentals"],"extends":["ai-landing-methodology"],"parallel":["process-system"],"courses":[{"shifu_bid":"62bc9861aef74d768241d7148b3ebda5","title":"下一代企业数字化架构：系统CLI化、流程Skill化、员工Agent化","description":"系统阐述企业Agent落地的三层架构方法论","keywords":"","lesson_count":0,"lesson_titles":[],"lessons":[]}],"metadata":{"phase":"专业","skills":["CLI化","Skill化","Agent化","架构设计"],"sysmex_relevance":"high"}},{"id":"process-system","name":"流程体系建设","difficulty":2,"estimated_hours":3,"prerequisites":["digital-fundamentals"],"extends":["ai-landing-methodology"],"parallel":["enterprise-architecture"],"courses":[{"shifu_bid":"45543be849904548acff040fbf21f1df","title":"流程体系才是AI建设的锚点：企业智能化转型的底层方法论","description":"","keywords":"","lesson_count":0,"lesson_titles":[],"lessons":[]}],"metadata":{"phase":"专业","skills":["流程建模","流程优化","BPM"],"sysmex_relevance":"high"}},{"id":"ai-landing-methodology","name":"AI落地方法论","difficulty":3,"estimated_hours":4,"prerequisites":["enterprise-architecture","process-system"],"extends":[],"parallel":[],"courses":[],"metadata":{"phase":"高级","skills":["AI转型路径","ROI评估","组织变革"],"sysmex_relevance":"high"}}]},{"id":"knowledge-mgmt","name":"知识管理与第二大脑","color":"#10b981","description":"个人知识管理方法论、Obsidian等工具使用、知识体系构建","nodes":[{"id":"km-fundamentals","name":"知识管理基础","difficulty":1,"estimated_hours":2,"prerequisites":[],"extends":["obsidian-mastery","second-brain"],"parallel":["digital-fundamentals"],"courses":[],"metadata":{"phase":"入门","skills":["知识分类","信息管理","笔记方法论"],"sysmex_relevance":"medium"}},{"id":"obsidian-mastery","name":"Obsidian知识库搭建","difficulty":2,"estimated_hours":4,"prerequisites":["km-fundamentals"],"extends":["ai-knowledge-assistant"],"parallel":["second-brain"],"courses":[{"shifu_bid":"db0c0db6b2f845d0870abd3381844481","title":"从零搭建Obsidian知识库：让AI Agent从\"问答\"到\"执行\"","description":"","keywords":"","lesson_count":0,"lesson_titles":[],"lessons":[]}],"metadata":{"phase":"专业","skills":["Obsidian","双链笔记","插件生态","图谱视图"],"sysmex_relevance":"medium"}},{"id":"second-brain","name":"第二大脑方法论","difficulty":2,"estimated_hours":3,"prerequisites":["km-fundamentals"],"extends":["ai-knowledge-assistant"],"parallel":["obsidian-mastery"],"courses":[],"metadata":{"phase":"专业","skills":["PARA方法","GTD","渐进式总结","知识输出"],"sysmex_relevance":"low"}},{"id":"ai-knowledge-assistant","name":"AI辅助知识管理","difficulty":3,"estimated_hours":3,"prerequisites":["obsidian-mastery","second-brain"],"extends":[],"parallel":[],"courses":[],"metadata":{"phase":"高级","skills":["AI知识问答","自动摘要","知识图谱"],"sysmex_relevance":"medium"}}]},{"id":"personal-productivity","name":"个人效能与自动化","color":"#ec4899","description":"工作效率提升、自动化工具、工作流优化、时间管理","nodes":[{"id":"productivity-fundamentals","name":"效能基础原则","difficulty":1,"estimated_hours":2,"prerequisites":[],"extends":["automation-tools","workflow-design"],"parallel":["km-fundamentals"],"courses":[],"metadata":{"phase":"入门","skills":["时间管理","优先级排序","习惯养成"],"sysmex_relevance":"low"}},{"id":"automation-tools","name":"自动化工具与脚本","difficulty":2,"estimated_hours":3,"prerequisites":["productivity-fundamentals"],"extends":["personal-dashboard"],"parallel":["workflow-design"],"courses":[{"shifu_bid":"5e0e05bffa9d4b88b77c128c64e50179","title":"前台工作自动提醒系统","description":"","keywords":"","lesson_count":0,"lesson_titles":[],"lessons":[]}],"metadata":{"phase":"专业","skills":["自动化脚本","提醒系统","RPA"],"sysmex_relevance":"high"}},{"id":"workflow-design","name":"工作流设计与优化","difficulty":2,"estimated_hours":3,"prerequisites":["productivity-fundamentals"],"extends":["personal-dashboard"],"parallel":["automation-tools"],"courses":[],"metadata":{"phase":"专业","skills":["流程拆解","效率分析","瓶颈识别"],"sysmex_relevance":"medium"}},{"id":"personal-dashboard","name":"个人仪表盘与数据","difficulty":3,"estimated_hours":4,"prerequisites":["automation-tools","workflow-design"],"extends":[],"parallel":[],"courses":[],"metadata":{"phase":"高级","skills":["数据可视化","个人分析","OKR追踪"],"sysmex_relevance":"low"}}]},{"id":"learning-growth","name":"学习与成长方法论","color":"#8b5cf6","description":"学习路径规划、技能树构建、深度学习方法、知识体系搭建","nodes":[{"id":"learning-fundamentals","name":"学习科学基础","difficulty":1,"estimated_hours":2,"prerequisites":[],"extends":["skill-tree","deep-learning-methods"],"parallel":["productivity-fundamentals"],"courses":[],"metadata":{"phase":"入门","skills":["学习理论","认知科学","记忆原理"],"sysmex_relevance":"low"}},{"id":"skill-tree","name":"技能树构建与规划","difficulty":2,"estimated_hours":3,"prerequisites":["learning-fundamentals"],"extends":["knowledge-system"],"parallel":["deep-learning-methods"],"courses":[],"metadata":{"phase":"专业","skills":["技能诊断","路径规划","目标设定"],"sysmex_relevance":"medium"}},{"id":"deep-learning-methods","name":"深度学习法","difficulty":2,"estimated_hours":3,"prerequisites":["learning-fundamentals"],"extends":["knowledge-system"],"parallel":["skill-tree"],"courses":[],"metadata":{"phase":"专业","skills":["费曼学习法","主动回忆","间隔重复","刻意练习"],"sysmex_relevance":"low"}},{"id":"knowledge-system","name":"个人知识体系构建","difficulty":3,"estimated_hours":4,"prerequisites":["skill-tree","deep-learning-methods"],"extends":[],"parallel":[],"courses":[],"metadata":{"phase":"高级","skills":["知识体系设计","跨学科连接","知识输出"],"sysmex_relevance":"medium"}}]}],"cross_domain_relations":[{"source":"agent-fundamentals","target":"ai-product-fundamentals","type":"parallel"},{"source":"agent-memory","target":"obsidian-mastery","type":"parallel"},{"source":"enterprise-architecture","target":"ai-landing-methodology","type":"extends"},{"source":"process-system","target":"workflow-design","type":"extends"},{"source":"ai-knowledge-assistant","target":"agent-advanced","type":"parallel"},{"source":"knowledge-system","target":"second-brain","type":"extends"}],"learning_paths":{"ai_pm":{"name":"AI产品经理成长路径","description":"从0到1成为AI产品经理","stages":[{"name":"入门","credits":10,"nodes":["agent-fundamentals","ai-product-fundamentals","digital-fundamentals"]},{"name":"基础","credits":20,"nodes":["ai-product-interview","ai-product-design","agent-tools"]},{"name":"专业","credits":20,"nodes":["agent-memory","enterprise-architecture","process-system"]},{"name":"进阶","credits":15,"nodes":["ai-product-advanced","ai-landing-methodology","agent-advanced"]}]},"knowledge_worker":{"name":"知识工作者效能路径","description":"提升个人知识管理与工作效率","stages":[{"name":"入门","credits":10,"nodes":["km-fundamentals","productivity-fundamentals","learning-fundamentals"]},{"name":"基础","credits":20,"nodes":["obsidian-mastery","second-brain","automation-tools"]},{"name":"专业","credits":20,"nodes":["workflow-design","deep-learning-methods","skill-tree"]},{"name":"进阶","credits":15,"nodes":["ai-knowledge-assistant","personal-dashboard","knowledge-system"]}]},"ai_developer":{"name":"AI应用开发者路径","description":"掌握AI智能体开发与落地","stages":[{"name":"入门","credits":10,"nodes":["agent-fundamentals","digital-fundamentals"]},{"name":"基础","credits":20,"nodes":["agent-memory","agent-tools","agent-workflow"]},{"name":"专业","credits":20,"nodes":["ai-product-design","enterprise-architecture","process-system"]},{"name":"进阶","credits":15,"nodes":["agent-advanced","ai-landing-methodology","knowledge-system"]}]},"digital_leader":{"name":"数字化转型领导者路径","description":"企业数字化转型的策略与落地","stages":[{"name":"入门","credits":10,"nodes":["digital-fundamentals","learning-fundamentals"]},{"name":"基础","credits":20,"nodes":["enterprise-architecture","process-system","productivity-fundamentals"]},{"name":"专业","credits":20,"nodes":["ai-landing-methodology","agent-fundamentals","ai-product-fundamentals"]},{"name":"进阶","credits":15,"nodes":["ai-product-advanced","agent-advanced","knowledge-system"]}]}},"gap_analysis":{"nodes_without_courses":[],"priority_for_creation":["agent-tools","agent-workflow","agent-advanced","ai-product-design","ai-product-advanced","digital-fundamentals","ai-landing-methodology","km-fundamentals","second-brain","ai-knowledge-assistant","productivity-fundamentals","workflow-design","personal-dashboard","learning-fundamentals","skill-tree","deep-learning-methods","knowledge-system"]},"views":{"technical":"技术开发视图 — AI开发者/工程师","product":"产品管理视图 — AI产品经理/企业管理者","all":"全量视图"},"data_source":{"type":"database","tables":["shifu_published_shifus","shifu_published_outline_items"],"content_type":"课程结构+课程描述+关键词","note":"Teaching Prompt 由 AI-Shifu 引擎运行时动态生成","enriched_at":"2026-06-08"},"learning_paths_detail":{"sales":{"name":"销售","description":"占位（当前无销售方向课程）","stages":[],"total_credits":0},"technical":{"name":"AI产品经理","stages":[{"name":"第1阶段","required_credits":10,"nodes":["agent-fundamentals","ai-product-fundamentals","digital-fundamentals"],"desc":"了解AI智能体和AI产品基础概念"},{"name":"第2阶段","required_credits":15,"nodes":["ai-product-interview","ai-product-design","agent-tools"],"desc":"掌握AI产品经理核心能力和工具"},{"name":"第3阶段","required_credits":15,"nodes":["agent-memory","enterprise-architecture","process-system"],"desc":"深入智能体技术和企业架构"},{"name":"第4阶段","required_credits":10,"nodes":["ai-product-advanced","ai-landing-methodology","agent-advanced"],"desc":"达到高级产品策略和架构能力"}],"total_credits":50,"intro":"AI产品经理成长路径分4个阶段，共50学分。从AI基础认知到高级产品策略，系统掌握AI产品经理所需的知识体系。"},"lab":{"name":"知识工作者","stages":[{"name":"第1阶段","required_credits":10,"nodes":["km-fundamentals","productivity-fundamentals","learning-fundamentals"],"desc":"建立知识管理和个人效能基础"},{"name":"第2阶段","required_credits":15,"nodes":["obsidian-mastery","second-brain","automation-tools"],"desc":"掌握知识库构建和自动化工具"},{"name":"第3阶段","required_credits":15,"nodes":["workflow-design","deep-learning-methods","skill-tree"],"desc":"优化工作流和深度学习能力"},{"name":"第4阶段","required_credits":10,"nodes":["ai-knowledge-assistant","personal-dashboard","knowledge-system"],"desc":"构建AI辅助的知识体系"}],"total_credits":50,"intro":"知识工作者成长路径分4个阶段，共50学分。从知识管理基础到AI辅助的知识体系，实现个人效能的全面跃升。"}},"guided_prompts":{"sales":[{"trigger":"学习路径","prompt":"我想了解AI产品经理的学习路径，应该从哪里开始？"},{"trigger":"知识管理","prompt":"作为一个知识工作者，如何系统性地管理我的知识？"},{"trigger":"智能体","prompt":"如何搭建一个自己的AI智能体？"}],"technical":[{"trigger":"学习路径","prompt":"我想成为一名AI产品经理，需要掌握哪些核心能力？"},{"trigger":"智能体开发","prompt":"给Claude搭建记忆系统的关键步骤是什么？"},{"trigger":"企业架构","prompt":"企业数字化转型的三层架构具体是指什么？"}],"lab":[{"trigger":"学习路径","prompt":"如何规划自己的个人知识管理体系？"},{"trigger":"Obsidian","prompt":"从零开始搭建Obsidian知识库的关键步骤？"},{"trigger":"效率提升","prompt":"如何用自动化工具提升日常工作效能？"}]}};
+const NODES = [{"id":"agent-fundamentals","name":"AI智能体基础认知","domain":"AI 智能体开发","domain_id":"ai-agent","color":"#6366f1","difficulty":1,"hours":3,"has_course":true,"course_count":1,"courses":[{"shifu_bid":"89a08c1164cf48bd869aa2beade052ec","title":"AI 师傅教学引导","description":"如何用 AI 师傅平台里进行教学的引导","keywords":"","lesson_count":0,"lesson_titles":[],"lessons":[]}],"is_sales":false,"view":"technical","metadata":{"phase":"入门","skills":["AI基础概念","Prompt工程基础","AI工具认知"],"sysmex_relevance":"high"}},{"id":"agent-memory","name":"智能体记忆系统","domain":"AI 智能体开发","domain_id":"ai-agent","color":"#6366f1","difficulty":2,"hours":4,"has_course":true,"course_count":1,"courses":[{"shifu_bid":"8066d09ce27c434bbf400f17334b704a","title":"给Claude智能体做记忆：12步搭建最小记忆系统","description":"","keywords":"","lesson_count":12,"lesson_titles":[],"lessons":[]}],"is_sales":false,"view":"technical","metadata":{"phase":"专业","skills":["记忆系统设计","上下文管理","状态持久化"],"sysmex_relevance":"high"}},{"id":"agent-tools","name":"智能体工具与函数调用","domain":"AI 智能体开发","domain_id":"ai-agent","color":"#6366f1","difficulty":2,"hours":3,"has_course":false,"course_count":0,"courses":[],"is_sales":false,"view":"technical","metadata":{"phase":"专业","skills":["Tool Use","Function Calling","MCP协议","API集成"],"sysmex_relevance":"high"}},{"id":"agent-workflow","name":"智能体工作流设计","domain":"AI 智能体开发","domain_id":"ai-agent","color":"#6366f1","difficulty":3,"hours":4,"has_course":false,"course_count":0,"courses":[],"is_sales":false,"view":"technical","metadata":{"phase":"高级","skills":["多Agent协作","工作流编排","异常处理"],"sysmex_relevance":"high"}},{"id":"agent-advanced","name":"高级智能体架构","domain":"AI 智能体开发","domain_id":"ai-agent","color":"#6366f1","difficulty":4,"hours":5,"has_course":false,"course_count":0,"courses":[],"is_sales":false,"view":"technical","metadata":{"phase":"进阶","skills":["多模态Agent","自主决策","安全与对齐"],"sysmex_relevance":"high"}},{"id":"ai-product-fundamentals","name":"AI产品经理基础","domain":"AI 产品思维","domain_id":"ai-product","color":"#f59e0b","difficulty":1,"hours":3,"has_course":true,"course_count":1,"courses":[{"shifu_bid":"bc5d971618f3480c90bf49c856154957","title":"AI-Shifu Creation Guide","description":"How to create on the AI-Shifu platform","keywords":"","lesson_count":0,"lesson_titles":[],"lessons":[]}],"is_sales":false,"view":"technical","metadata":{"phase":"入门","skills":["AI产品思维","用户需求分析","产品规划"],"sysmex_relevance":"high"}},{"id":"ai-product-interview","name":"AI产品经理面试","domain":"AI 产品思维","domain_id":"ai-product","color":"#f59e0b","difficulty":2,"hours":4,"has_course":true,"course_count":1,"courses":[{"shifu_bid":"91860e8124b24ee49c6bfecfb494af82","title":"AI产品经理面试知识体系通识","description":"","keywords":"","lesson_count":0,"lesson_titles":[],"lessons":[]}],"is_sales":false,"view":"technical","metadata":{"phase":"专业","skills":["面试准备","案例分析","产品设计题"],"sysmex_relevance":"medium"}},{"id":"ai-product-design","name":"AI产品设计方法论","domain":"AI 产品思维","domain_id":"ai-product","color":"#f59e0b","difficulty":2,"hours":3,"has_course":false,"course_count":0,"courses":[],"is_sales":false,"view":"technical","metadata":{"phase":"专业","skills":["AI功能设计","人机交互","效果评估"],"sysmex_relevance":"medium"}},{"id":"ai-product-advanced","name":"高级AI产品策略","domain":"AI 产品思维","domain_id":"ai-product","color":"#f59e0b","difficulty":3,"hours":4,"has_course":false,"course_count":0,"courses":[],"is_sales":false,"view":"technical","metadata":{"phase":"高级","skills":["商业化策略","增长模型","竞争分析"],"sysmex_relevance":"medium"}},{"id":"digital-fundamentals","name":"数字化基础认知","domain":"企业数字化转型","domain_id":"enterprise-digital","color":"#3b82f6","difficulty":1,"hours":2,"has_course":false,"course_count":0,"courses":[],"is_sales":false,"view":"technical","metadata":{"phase":"入门","skills":["数字化概念","技术趋势","行业分析"],"sysmex_relevance":"high"}},{"id":"enterprise-architecture","name":"企业数字化架构","domain":"企业数字化转型","domain_id":"enterprise-digital","color":"#3b82f6","difficulty":3,"hours":5,"has_course":true,"course_count":1,"courses":[{"shifu_bid":"62bc9861aef74d768241d7148b3ebda5","title":"下一代企业数字化架构：系统CLI化、流程Skill化、员工Agent化","description":"系统阐述企业Agent落地的三层架构方法论","keywords":"","lesson_count":0,"lesson_titles":[],"lessons":[]}],"is_sales":false,"view":"technical","metadata":{"phase":"专业","skills":["CLI化","Skill化","Agent化","架构设计"],"sysmex_relevance":"high"}},{"id":"process-system","name":"流程体系建设","domain":"企业数字化转型","domain_id":"enterprise-digital","color":"#3b82f6","difficulty":2,"hours":3,"has_course":true,"course_count":1,"courses":[{"shifu_bid":"45543be849904548acff040fbf21f1df","title":"流程体系才是AI建设的锚点：企业智能化转型的底层方法论","description":"","keywords":"","lesson_count":0,"lesson_titles":[],"lessons":[]}],"is_sales":false,"view":"technical","metadata":{"phase":"专业","skills":["流程建模","流程优化","BPM"],"sysmex_relevance":"high"}},{"id":"ai-landing-methodology","name":"AI落地方法论","domain":"企业数字化转型","domain_id":"enterprise-digital","color":"#3b82f6","difficulty":3,"hours":4,"has_course":false,"course_count":0,"courses":[],"is_sales":false,"view":"technical","metadata":{"phase":"高级","skills":["AI转型路径","ROI评估","组织变革"],"sysmex_relevance":"high"}},{"id":"km-fundamentals","name":"知识管理基础","domain":"知识管理与第二大脑","domain_id":"knowledge-mgmt","color":"#10b981","difficulty":1,"hours":2,"has_course":false,"course_count":0,"courses":[],"is_sales":false,"view":"product","metadata":{"phase":"入门","skills":["知识分类","信息管理","笔记方法论"],"sysmex_relevance":"medium"}},{"id":"obsidian-mastery","name":"Obsidian知识库搭建","domain":"知识管理与第二大脑","domain_id":"knowledge-mgmt","color":"#10b981","difficulty":2,"hours":4,"has_course":true,"course_count":1,"courses":[{"shifu_bid":"db0c0db6b2f845d0870abd3381844481","title":"从零搭建Obsidian知识库：让AI Agent从\"问答\"到\"执行\"","description":"","keywords":"","lesson_count":0,"lesson_titles":[],"lessons":[]}],"is_sales":false,"view":"product","metadata":{"phase":"专业","skills":["Obsidian","双链笔记","插件生态","图谱视图"],"sysmex_relevance":"medium"}},{"id":"second-brain","name":"第二大脑方法论","domain":"知识管理与第二大脑","domain_id":"knowledge-mgmt","color":"#10b981","difficulty":2,"hours":3,"has_course":false,"course_count":0,"courses":[],"is_sales":false,"view":"product","metadata":{"phase":"专业","skills":["PARA方法","GTD","渐进式总结","知识输出"],"sysmex_relevance":"low"}},{"id":"ai-knowledge-assistant","name":"AI辅助知识管理","domain":"知识管理与第二大脑","domain_id":"knowledge-mgmt","color":"#10b981","difficulty":3,"hours":3,"has_course":false,"course_count":0,"courses":[],"is_sales":false,"view":"product","metadata":{"phase":"高级","skills":["AI知识问答","自动摘要","知识图谱"],"sysmex_relevance":"medium"}},{"id":"productivity-fundamentals","name":"效能基础原则","domain":"个人效能与自动化","domain_id":"personal-productivity","color":"#ec4899","difficulty":1,"hours":2,"has_course":false,"course_count":0,"courses":[],"is_sales":false,"view":"product","metadata":{"phase":"入门","skills":["时间管理","优先级排序","习惯养成"],"sysmex_relevance":"low"}},{"id":"automation-tools","name":"自动化工具与脚本","domain":"个人效能与自动化","domain_id":"personal-productivity","color":"#ec4899","difficulty":2,"hours":3,"has_course":true,"course_count":1,"courses":[{"shifu_bid":"5e0e05bffa9d4b88b77c128c64e50179","title":"前台工作自动提醒系统","description":"","keywords":"","lesson_count":0,"lesson_titles":[],"lessons":[]}],"is_sales":false,"view":"product","metadata":{"phase":"专业","skills":["自动化脚本","提醒系统","RPA"],"sysmex_relevance":"high"}},{"id":"workflow-design","name":"工作流设计与优化","domain":"个人效能与自动化","domain_id":"personal-productivity","color":"#ec4899","difficulty":2,"hours":3,"has_course":false,"course_count":0,"courses":[],"is_sales":false,"view":"product","metadata":{"phase":"专业","skills":["流程拆解","效率分析","瓶颈识别"],"sysmex_relevance":"medium"}},{"id":"personal-dashboard","name":"个人仪表盘与数据","domain":"个人效能与自动化","domain_id":"personal-productivity","color":"#ec4899","difficulty":3,"hours":4,"has_course":false,"course_count":0,"courses":[],"is_sales":false,"view":"product","metadata":{"phase":"高级","skills":["数据可视化","个人分析","OKR追踪"],"sysmex_relevance":"low"}},{"id":"learning-fundamentals","name":"学习科学基础","domain":"学习与成长方法论","domain_id":"learning-growth","color":"#8b5cf6","difficulty":1,"hours":2,"has_course":false,"course_count":0,"courses":[],"is_sales":false,"view":"product","metadata":{"phase":"入门","skills":["学习理论","认知科学","记忆原理"],"sysmex_relevance":"low"}},{"id":"skill-tree","name":"技能树构建与规划","domain":"学习与成长方法论","domain_id":"learning-growth","color":"#8b5cf6","difficulty":2,"hours":3,"has_course":false,"course_count":0,"courses":[],"is_sales":false,"view":"product","metadata":{"phase":"专业","skills":["技能诊断","路径规划","目标设定"],"sysmex_relevance":"medium"}},{"id":"deep-learning-methods","name":"深度学习法","domain":"学习与成长方法论","domain_id":"learning-growth","color":"#8b5cf6","difficulty":2,"hours":3,"has_course":false,"course_count":0,"courses":[],"is_sales":false,"view":"product","metadata":{"phase":"专业","skills":["费曼学习法","主动回忆","间隔重复","刻意练习"],"sysmex_relevance":"low"}},{"id":"knowledge-system","name":"个人知识体系构建","domain":"学习与成长方法论","domain_id":"learning-growth","color":"#8b5cf6","difficulty":3,"hours":4,"has_course":false,"course_count":0,"courses":[],"is_sales":false,"view":"product","metadata":{"phase":"高级","skills":["知识体系设计","跨学科连接","知识输出"],"sysmex_relevance":"medium"}}];
+const EDGES = [{"source":"agent-fundamentals","target":"agent-memory","type":"extends"},{"source":"agent-fundamentals","target":"agent-tools","type":"extends"},{"source":"agent-fundamentals","target":"agent-workflow","type":"extends"},{"source":"agent-memory","target":"agent-fundamentals","type":"prerequisites"},{"source":"agent-memory","target":"agent-advanced","type":"extends"},{"source":"agent-memory","target":"agent-tools","type":"parallel"},{"source":"agent-tools","target":"agent-fundamentals","type":"prerequisites"},{"source":"agent-tools","target":"agent-advanced","type":"extends"},{"source":"agent-tools","target":"agent-memory","type":"parallel"},{"source":"agent-workflow","target":"agent-fundamentals","type":"prerequisites"},{"source":"agent-workflow","target":"agent-advanced","type":"extends"},{"source":"agent-advanced","target":"agent-memory","type":"prerequisites"},{"source":"agent-advanced","target":"agent-tools","type":"prerequisites"},{"source":"agent-advanced","target":"agent-workflow","type":"prerequisites"},{"source":"ai-product-fundamentals","target":"ai-product-interview","type":"extends"},{"source":"ai-product-fundamentals","target":"ai-product-design","type":"extends"},{"source":"ai-product-fundamentals","target":"agent-fundamentals","type":"parallel"},{"source":"ai-product-interview","target":"ai-product-fundamentals","type":"prerequisites"},{"source":"ai-product-interview","target":"ai-product-advanced","type":"extends"},{"source":"ai-product-interview","target":"ai-product-design","type":"parallel"},{"source":"ai-product-design","target":"ai-product-fundamentals","type":"prerequisites"},{"source":"ai-product-design","target":"ai-product-advanced","type":"extends"},{"source":"ai-product-design","target":"ai-product-interview","type":"parallel"},{"source":"ai-product-advanced","target":"ai-product-interview","type":"prerequisites"},{"source":"ai-product-advanced","target":"ai-product-design","type":"prerequisites"},{"source":"digital-fundamentals","target":"enterprise-architecture","type":"extends"},{"source":"digital-fundamentals","target":"process-system","type":"extends"},{"source":"digital-fundamentals","target":"ai-product-fundamentals","type":"parallel"},{"source":"enterprise-architecture","target":"digital-fundamentals","type":"prerequisites"},{"source":"enterprise-architecture","target":"ai-landing-methodology","type":"extends"},{"source":"enterprise-architecture","target":"process-system","type":"parallel"},{"source":"process-system","target":"digital-fundamentals","type":"prerequisites"},{"source":"process-system","target":"ai-landing-methodology","type":"extends"},{"source":"process-system","target":"enterprise-architecture","type":"parallel"},{"source":"ai-landing-methodology","target":"enterprise-architecture","type":"prerequisites"},{"source":"ai-landing-methodology","target":"process-system","type":"prerequisites"},{"source":"km-fundamentals","target":"obsidian-mastery","type":"extends"},{"source":"km-fundamentals","target":"second-brain","type":"extends"},{"source":"km-fundamentals","target":"digital-fundamentals","type":"parallel"},{"source":"obsidian-mastery","target":"km-fundamentals","type":"prerequisites"},{"source":"obsidian-mastery","target":"ai-knowledge-assistant","type":"extends"},{"source":"obsidian-mastery","target":"second-brain","type":"parallel"},{"source":"second-brain","target":"km-fundamentals","type":"prerequisites"},{"source":"second-brain","target":"ai-knowledge-assistant","type":"extends"},{"source":"second-brain","target":"obsidian-mastery","type":"parallel"},{"source":"ai-knowledge-assistant","target":"obsidian-mastery","type":"prerequisites"},{"source":"ai-knowledge-assistant","target":"second-brain","type":"prerequisites"},{"source":"productivity-fundamentals","target":"automation-tools","type":"extends"},{"source":"productivity-fundamentals","target":"workflow-design","type":"extends"},{"source":"productivity-fundamentals","target":"km-fundamentals","type":"parallel"},{"source":"automation-tools","target":"productivity-fundamentals","type":"prerequisites"},{"source":"automation-tools","target":"personal-dashboard","type":"extends"},{"source":"automation-tools","target":"workflow-design","type":"parallel"},{"source":"workflow-design","target":"productivity-fundamentals","type":"prerequisites"},{"source":"workflow-design","target":"personal-dashboard","type":"extends"},{"source":"workflow-design","target":"automation-tools","type":"parallel"},{"source":"personal-dashboard","target":"automation-tools","type":"prerequisites"},{"source":"personal-dashboard","target":"workflow-design","type":"prerequisites"},{"source":"learning-fundamentals","target":"skill-tree","type":"extends"},{"source":"learning-fundamentals","target":"deep-learning-methods","type":"extends"},{"source":"learning-fundamentals","target":"productivity-fundamentals","type":"parallel"},{"source":"skill-tree","target":"learning-fundamentals","type":"prerequisites"},{"source":"skill-tree","target":"knowledge-system","type":"extends"},{"source":"skill-tree","target":"deep-learning-methods","type":"parallel"},{"source":"deep-learning-methods","target":"learning-fundamentals","type":"prerequisites"},{"source":"deep-learning-methods","target":"knowledge-system","type":"extends"},{"source":"deep-learning-methods","target":"skill-tree","type":"parallel"},{"source":"knowledge-system","target":"skill-tree","type":"prerequisites"},{"source":"knowledge-system","target":"deep-learning-methods","type":"prerequisites"},{"source":"agent-fundamentals","target":"ai-product-fundamentals","type":"parallel"},{"source":"agent-memory","target":"obsidian-mastery","type":"parallel"},{"source":"enterprise-architecture","target":"ai-landing-methodology","type":"extends"},{"source":"process-system","target":"workflow-design","type":"extends"},{"source":"ai-knowledge-assistant","target":"agent-advanced","type":"parallel"},{"source":"knowledge-system","target":"second-brain","type":"extends"},{"source":"workflow-design","target":"process-system","type":"prerequisites"},{"source":"second-brain","target":"knowledge-system","type":"prerequisites"}];
+
+const PRIORITY = TREE.gap_analysis ? TREE.gap_analysis.priority_for_creation : [];
+let currentView = "all";
+let showGaps = false;
+
+const nodeMap = {};
+NODES.forEach(function(n) { nodeMap[n.id] = n; });
+
+const W = window.innerWidth, H = window.innerHeight;
+const svg = d3.select("#graph").append("svg").attr("width",W).attr("height",H);
+const g = svg.append("g");
+const zoom = d3.zoom().scaleExtent([0.15,5]).on("zoom",function(e){ g.attr("transform",e.transform); });
+svg.call(zoom);
+
+const sim = d3.forceSimulation(NODES)
+  .force("link", d3.forceLink(EDGES).id(function(d){return d.id;}).distance(145))
+  .force("charge", d3.forceManyBody().strength(-650))
+  .force("center", d3.forceCenter(W/2,H/2))
+  .force("collision", d3.forceCollide(50));
+
+const link = g.append("g").selectAll("line").data(EDGES).join("line")
+  .attr("class","link")
+  .attr("stroke",function(d){return d.type==="prerequisites"?"#3b82f6":d.type==="extends"?"#a78bfa":"#10b981";})
+  .attr("stroke-width",1.6)
+  .attr("stroke-dasharray",function(d){return d.type==="parallel"?"5,4":"none";})
+  .attr("opacity",0.45);
+
+const node = g.append("g").selectAll("g").data(NODES).join("g")
+  .attr("class","node")
+  .call(d3.drag()
+    .on("start",function(e,d){if(!e.active)sim.alphaTarget(0.3).restart();d.fx=d.x;d.fy=d.y;})
+    .on("drag",function(e,d){d.fx=e.x;d.fy=e.y;})
+    .on("end",function(e,d){if(!e.active)sim.alphaTarget(0);d.fx=null;d.fy=null;}));
+
+node.append("circle")
+  .attr("r", function(d){if(d.course_count>=2)return 22;if(d.has_course)return 19;if(d.is_sales)return 14;if(PRIORITY.indexOf(d.id)>=0)return 15;return 13;})
+  .attr("fill", function(d){if(d.course_count>=2)return"#16a34a";if(d.has_course)return"#22c55e";if(d.is_sales)return"#f97316";if(PRIORITY.indexOf(d.id)>=0)return"#f59e0b";return"#ef4444";})
+  .attr("stroke", function(d){if(d.course_count>=2)return"#fbbf24";return d.color;})
+  .attr("stroke-dasharray",function(d){return d.has_course||d.is_sales?"none":"4,3";})
+  .attr("stroke-width",function(d){return d.course_count>=2?3.5:2.5;});
+
+node.append("text")
+  .text(function(d){return d.name.length>7?d.name.slice(0,6)+"…":d.name;})
+  .attr("text-anchor","middle").attr("dy",4)
+  .attr("font-size",function(d){return d.course_count>=2?12:d.has_course?11:10;})
+  .attr("font-weight",function(d){return d.course_count>=2?"700":"500";});
+
+node.filter(function(d){return d.has_course;}).append("text")
+  .attr("class","badge").attr("text-anchor","middle").attr("dy",-13)
+  .attr("font-size","9px").attr("font-weight","700")
+  .text(function(d){return d.course_count;});
+
+node.filter(function(d){return d.has_course;}).append("circle")
+  .attr("r",8).attr("fill","#fff").attr("opacity",0.9).attr("cy",-13);
+
+node.on("click", function(e, d) { window.openAIChat(d); });
+
+node.on("mouseover",function(e,d){
+  var tip = d3.select("#tooltip");
+  var stars = ""; for(var i=0;i<d.difficulty;i++)stars+="⭐";
+  var hasText = d.has_course ? "✅ "+d.course_count+"门课" : "⛔ 待创建";
+  var pri = (PRIORITY.indexOf(d.id)>=0) ? '<span class="tag" style="background:#f59e0b;color:#000">优先</span>' : "";
+  var vw = d.is_sales ? '<span class="tag" style="background:#f97316;color:#fff">销售</span>' : '<span class="tag" style="background:#3b82f6;color:#fff">技术</span>';
+  var m = d.metadata || {};
+  var models = (m.instrument_models && m.instrument_models.length) ? "<br><b>仪器:</b> "+m.instrument_models.slice(0,3).join(" / ") : "";
+  var courseHTML = "";
+  if (d.courses && d.courses.length > 0) {
+    courseHTML = '<div class="course-section"><div class="label">📚 关联课程 ('+d.courses.length+')</div>';
+    d.courses.forEach(function(c){
+      var t = c.title.length>35 ? c.title.slice(0,33)+"…" : c.title;
+      courseHTML += '<a class="course-link" href="'+window.location.origin+'/c/'+c.shifu_bid+'" target="_blank" title="'+c.title+'">📖 '+t+'</a>';
+    });
+    courseHTML += '</div>';
+  }
+  tip.html('<h3>'+d.name+' '+vw+'</h3>'+'<div style="color:var(--muted)">'+stars+' | '+(d.hours||"?")+'h | '+d.domain+'</div>'+'<div style="margin-top:6px">'+hasText+' '+pri+models+'</div>'+courseHTML)
+    .style("display","block").style("left",Math.min(e.clientX+16,W-440)+"px").style("top",Math.min(e.clientY-10,H-350)+"px");
+}).on("mouseout",function(){
+  setTimeout(function(){ var tip = d3.select("#tooltip"); if (!tip.node() || !tip.node().matches(':hover')) tip.style("display","none"); }, 200);
+});
+
+d3.select("#tooltip").on("mouseover",function(){d3.select(this).style("display","block");})
+  .on("mouseout",function(){d3.select(this).style("display","none");});
+
+function setView(v){ currentView=v; d3.selectAll("#views button").classed("active",false); d3.select("#view-"+v).classed("active",true); applyFilters(); }
+function toggleGaps(){ showGaps=!showGaps; d3.select("#gapBtn").classed("active",showGaps); applyFilters(); }
+function resetView(){ svg.transition().duration(500).call(zoom.transform,d3.zoomIdentity); showGaps=false; d3.select("#gapBtn").classed("active",false); applyFilters(); }
+
+function applyFilters(){
+  var vis=new Set();
+  NODES.forEach(function(n){ var inView=currentView==="all"||(currentView==="technical"&&!n.is_sales)||(currentView==="sales"&&n.is_sales); var inGap=showGaps?!n.has_course:true; if(inView&&inGap)vis.add(n.id); });
+  node.each(function(d){ var el=d3.select(this),v=vis.has(d.id); el.style("opacity",v?1:0.06); el.style("pointer-events",v?"auto":"none"); });
+  link.each(function(d){ var s=d.source.id||d.source,t=d.target.id||d.target; d3.select(this).style("opacity",vis.has(s)&&vis.has(t)?0.5:0.01); });
+  var vN=NODES.filter(function(n){return vis.has(n.id);});
+  var tc=vN.filter(function(n){return !n.is_sales;}).length, sc=vN.filter(function(n){return n.is_sales;}).length, hc=vN.filter(function(n){return n.has_course;}).length;
+  document.getElementById("stats").innerHTML="可见: "+vN.length+"节点<br>技术: "+tc+" | 销售: "+sc+"<br>有课: "+hc+" | 缺口: "+(vN.length-hc);
+  document.getElementById("countLabel").textContent=vN.length+"节点 · "+hc+"门课";
+}
+
+function toggleLang(){}
+function toggleTheme(){ var h=document.documentElement; var isDark=h.getAttribute("data-theme")==="dark"; h.setAttribute("data-theme",isDark?"light":"dark"); document.getElementById("themeBtn").textContent=isDark?"🌙":"☀️"; }
+
+sim.on("tick",function(){
+  link.attr("x1",function(d){return d.source.x;}).attr("y1",function(d){return d.source.y;})
+      .attr("x2",function(d){return d.target.x;}).attr("y2",function(d){return d.target.y;});
+  node.attr("transform",function(d){return "translate("+d.x+","+d.y+")";});
+});
+
+applyFilters();
+setTimeout(function(){ var b=g.node().getBBox(); if(b.width){ var s=Math.min(W/b.width,H/b.height)*0.82,tx=W/2-(b.x+b.width/2)*s,ty=H/2-(b.y+b.height/2)*s; svg.transition().duration(800).call(zoom.transform,d3.zoomIdentity.translate(tx,ty).scale(s)); } },600);
+
+// ═══════════════════════════════════════════════
+//  AI 情景对话窗
+// ═══════════════════════════════════════════════
+(function(){
+  var API_BASE = window.location.origin + '/api/chat';
+  var panel = document.getElementById('chat-panel');
+  var messages = document.getElementById('chat-messages');
+  var input = document.getElementById('chat-input');
+  var sendBtn = document.getElementById('chat-send');
+  var title = document.getElementById('chat-title');
+
+  var activeNode = null, conversation = [], isOpen = false, isStreaming = false, currentRole = 'technical';
+
+  window.openAIChat = function(nd) {
+    activeNode = nd; panel.classList.add('open'); isOpen = true;
+    conversation = [{role:'system',content:buildPrompt(nd)}];
+    var w = '你好！我是检验医学 AI 助手。当前知识点：**' + nd.name + '**。';
+    if (nd.has_course) w += '\n\n📚 ' + nd.course_count + ' 门关联课程可用。';
+    addMsg('assistant', w);
+    title.innerHTML = '💬 <span class="tag" style="background:'+nd.color+'20;color:'+nd.color+'">'+nd.name+'</span>';
+    input.focus();
+  };
+
+  window.closeAIChat = function() { panel.classList.remove('open'); isOpen = false; };
+
+  window.switchNavRole = function(role) {
+    currentRole = role;
+    if (isOpen) addMsg('system','🔄 角色: '+(role==='sales'?'销售':role==='technical'?'技术':'检验'));
+  };
+
+  window.showLearningPlan = function() {
+    if (!isOpen) openDefault();
+    var path = (TREE.learning_paths_detail||{})[currentRole];
+    if (!path) { addMsg('assistant','暂无带教计划'); return; }
+    var h = '<b>'+path.name+'</b> ('+path.total_credits+'学分)<br><br>';
+    path.stages.forEach(function(s){ h += '<div class="stage-card" onclick="window.askStageGuide('+s.stage+')"><span class="stage-num">'+s.stage+'</span><span class="stage-name">'+s.name+'</span><div class="stage-desc">'+s.desc+'</div></div>'; });
+    addMsg('assistant', h);
+  };
+
+  window.askStageGuide = function(n) {
+    var s = ((TREE.learning_paths_detail||{})[currentRole]||{}).stages[n-1];
+    if (!s) return;
+    input.value = '请介绍「'+s.name+'」的学习内容。我是'+(currentRole==='sales'?'销售':currentRole==='technical'?'技术工程师':'检验技师')+'岗位。';
+    sendMessage();
+  };
+
+  window.askGuidance = function() {
+    if (!isOpen) openDefault();
+    input.value = '我是新入职'+(currentRole==='sales'?'销售':currentRole==='technical'?'技术工程师':'检验技师')+'，请根据带教计划帮我制定学习路径。';
+    sendMessage();
+  };
+
+  function openDefault() {
+    activeNode = activeNode || {name:'IVD通用',domain:'检验医学',color:'#6b7280',difficulty:1,has_course:false,course_count:0,metadata:{},courses:[]};
+    window.openAIChat(activeNode);
+  }
+
+  function buildPrompt(nd) {
+    var m = nd.metadata||{}, p = [
+      '你是希森美康 IVD 检验医学 AI 讲师。',
+      '角色：'+(currentRole==='sales'?'销售(卖点/竞品/客户)':currentRole==='technical'?'技术(原理/操作/排故)':'检验(流程/判读/质控)'),
+      '节点：'+nd.name+'（'+nd.domain+'）'
+    ];
+    if (m.instrument_models) p.push('仪器：'+m.instrument_models.join('、'));
+    if (m.test_parameters) p.push('参数：'+m.test_parameters.join('、'));
+    var lessons = [];
+    if (nd.courses) nd.courses.forEach(function(c){ if(c.lessons) lessons=lessons.concat(c.lessons); });
+    if (lessons.length>0) { p.push('课节:'); lessons.slice(0,8).forEach(function(l,i){ p.push('  '+(i+1)+'. '+l); }); }
+    var path = (TREE.learning_paths_detail||{})[currentRole];
+    if (path) p.push('带教：'+path.name+'('+path.total_credits+'学分)');
+    p.push('回答200字以内，专业易懂。');
+    return p.join('\n');
+  }
+
+  function addMsg(role, text, str) {
+    var d = document.createElement('div');
+    d.className = 'chat-msg '+role+(str?' streaming':'');
+    d.innerHTML = text.replace(/\n/g,'<br>');
+    messages.appendChild(d); messages.scrollTop = messages.scrollHeight;
+    return d;
+  }
+
+  async function sendMessage() {
+    var text = input.value.trim();
+    if (!text||isStreaming) return;
+    input.value = ''; input.style.height = 'auto';
+    addMsg('user', text); conversation.push({role:'user',content:text});
+    sendBtn.disabled = true; isStreaming = true;
+    var sd = addMsg('assistant','...',true), full = '';
+    try {
+      var resp = await fetch(API_BASE+'/chat/completions',{
+        method:'POST',headers:{'Content-Type':'application/json'},
+        body:JSON.stringify({model:'deepseek-chat',messages:conversation,stream:true,max_tokens:500})
+      });
+      if (!resp.ok) throw new Error('HTTP '+resp.status);
+      var reader = resp.body.getReader(), decoder = new TextDecoder(), buf = '';
+      while (true) {
+        var r = await reader.read(); if (r.done) break;
+        buf += decoder.decode(r.value,{stream:true});
+        var lines = buf.split('\n'); buf = lines.pop()||'';
+        for (var i=0;i<lines.length;i++) {
+          var l = lines[i].trim(); if (!l.startsWith('data: ')) continue;
+          try { var j = JSON.parse(l.slice(6)); var delta = j.choices?.[0]?.delta?.content;
+            if (delta) { full += delta; sd.innerHTML = full.replace(/\n/g,'<br>'); messages.scrollTop = messages.scrollHeight; }
+          } catch(e){}
+        }
+      }
+      sd.classList.remove('streaming');
+      if (!full) full = '(未收到回复)';
+      sd.innerHTML = full.replace(/\n/g,'<br>');
+      conversation.push({role:'assistant',content:full});
+    } catch(e) { sd.classList.remove('streaming'); sd.innerHTML = '❌ 出错: '+e.message; }
+    sendBtn.disabled = false; isStreaming = false; input.focus();
+  }
+
+  sendBtn.onclick = sendMessage;
+  input.onkeydown = function(e) { if (e.key==='Enter'&&!e.shiftKey) { e.preventDefault(); sendMessage(); } };
+  input.oninput = function() { this.style.height='auto'; this.style.height=Math.min(this.scrollHeight,100)+'px'; };
+})();
+</script>
+</body>
+</html>

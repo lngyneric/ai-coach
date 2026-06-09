@@ -1,0 +1,639 @@
+{
+  "subject": "personal-growth",
+  "name": "个人能力提升 — AI时代知识体系",
+  "description": "面向AI时代的个人能力发展知识图谱，涵盖AI智能体开发、AI产品思维、企业数字化转型、知识管理、个人效能和学习方法论六大领域",
+  "target_roles": [
+    "AI产品经理",
+    "企业数字化转型负责人",
+    "知识工作者",
+    "AI开发者",
+    "产品经理",
+    "个人效能追求者"
+  ],
+  "version": "1.0.0",
+  "domains": [
+    {
+      "id": "ai-agent",
+      "name": "AI 智能体开发",
+      "color": "#6366f1",
+      "description": "Claude/ChatGPT等AI智能体的搭建、记忆系统、工具调用、工作流设计",
+      "nodes": [
+        {
+          "id": "agent-fundamentals",
+          "name": "AI智能体基础认知",
+          "difficulty": 1,
+          "estimated_hours": 3,
+          "prerequisites": [],
+          "extends": ["agent-memory", "agent-tools", "agent-workflow"],
+          "parallel": [],
+          "courses": [
+            {
+              "shifu_bid": "89a08c1164cf48bd869aa2beade052ec",
+              "title": "AI 师傅教学引导",
+              "description": "如何用 AI 师傅平台里进行教学的引导",
+              "keywords": "",
+              "lesson_count": 0,
+              "lesson_titles": [],
+              "lessons": []
+            }
+          ],
+          "metadata": {
+            "phase": "入门",
+            "skills": ["AI基础概念", "Prompt工程基础", "AI工具认知"],
+            "sysmex_relevance": "high"
+          }
+        },
+        {
+          "id": "agent-memory",
+          "name": "智能体记忆系统",
+          "difficulty": 2,
+          "estimated_hours": 4,
+          "prerequisites": ["agent-fundamentals"],
+          "extends": ["agent-advanced"],
+          "parallel": ["agent-tools"],
+          "courses": [
+            {
+              "shifu_bid": "8066d09ce27c434bbf400f17334b704a",
+              "title": "给Claude智能体做记忆：12步搭建最小记忆系统",
+              "description": "",
+              "keywords": "",
+              "lesson_count": 12,
+              "lesson_titles": [],
+              "lessons": []
+            }
+          ],
+          "metadata": {
+            "phase": "专业",
+            "skills": ["记忆系统设计", "上下文管理", "状态持久化"],
+            "sysmex_relevance": "high"
+          }
+        },
+        {
+          "id": "agent-tools",
+          "name": "智能体工具与函数调用",
+          "difficulty": 2,
+          "estimated_hours": 3,
+          "prerequisites": ["agent-fundamentals"],
+          "extends": ["agent-advanced"],
+          "parallel": ["agent-memory"],
+          "courses": [],
+          "metadata": {
+            "phase": "专业",
+            "skills": ["Tool Use", "Function Calling", "MCP协议", "API集成"],
+            "sysmex_relevance": "high"
+          }
+        },
+        {
+          "id": "agent-workflow",
+          "name": "智能体工作流设计",
+          "difficulty": 3,
+          "estimated_hours": 4,
+          "prerequisites": ["agent-fundamentals"],
+          "extends": ["agent-advanced"],
+          "parallel": [],
+          "courses": [],
+          "metadata": {
+            "phase": "高级",
+            "skills": ["多Agent协作", "工作流编排", "异常处理"],
+            "sysmex_relevance": "high"
+          }
+        },
+        {
+          "id": "agent-advanced",
+          "name": "高级智能体架构",
+          "difficulty": 4,
+          "estimated_hours": 5,
+          "prerequisites": ["agent-memory", "agent-tools", "agent-workflow"],
+          "extends": [],
+          "parallel": [],
+          "courses": [],
+          "metadata": {
+            "phase": "进阶",
+            "skills": ["多模态Agent", "自主决策", "安全与对齐"],
+            "sysmex_relevance": "high"
+          }
+        }
+      ]
+    },
+    {
+      "id": "ai-product",
+      "name": "AI 产品思维",
+      "color": "#f59e0b",
+      "description": "AI产品经理能力模型、面试知识体系、AI产品设计方法论",
+      "nodes": [
+        {
+          "id": "ai-product-fundamentals",
+          "name": "AI产品经理基础",
+          "difficulty": 1,
+          "estimated_hours": 3,
+          "prerequisites": [],
+          "extends": ["ai-product-interview", "ai-product-design"],
+          "parallel": ["agent-fundamentals"],
+          "courses": [
+            {
+              "shifu_bid": "bc5d971618f3480c90bf49c856154957",
+              "title": "AI-Shifu Creation Guide",
+              "description": "How to create on the AI-Shifu platform",
+              "keywords": "",
+              "lesson_count": 0,
+              "lesson_titles": [],
+              "lessons": []
+            }
+          ],
+          "metadata": {
+            "phase": "入门",
+            "skills": ["AI产品思维", "用户需求分析", "产品规划"],
+            "sysmex_relevance": "high"
+          }
+        },
+        {
+          "id": "ai-product-interview",
+          "name": "AI产品经理面试",
+          "difficulty": 2,
+          "estimated_hours": 4,
+          "prerequisites": ["ai-product-fundamentals"],
+          "extends": ["ai-product-advanced"],
+          "parallel": ["ai-product-design"],
+          "courses": [
+            {
+              "shifu_bid": "91860e8124b24ee49c6bfecfb494af82",
+              "title": "AI产品经理面试知识体系通识",
+              "description": "",
+              "keywords": "",
+              "lesson_count": 0,
+              "lesson_titles": [],
+              "lessons": []
+            }
+          ],
+          "metadata": {
+            "phase": "专业",
+            "skills": ["面试准备", "案例分析", "产品设计题"],
+            "sysmex_relevance": "medium"
+          }
+        },
+        {
+          "id": "ai-product-design",
+          "name": "AI产品设计方法论",
+          "difficulty": 2,
+          "estimated_hours": 3,
+          "prerequisites": ["ai-product-fundamentals"],
+          "extends": ["ai-product-advanced"],
+          "parallel": ["ai-product-interview"],
+          "courses": [],
+          "metadata": {
+            "phase": "专业",
+            "skills": ["AI功能设计", "人机交互", "效果评估"],
+            "sysmex_relevance": "medium"
+          }
+        },
+        {
+          "id": "ai-product-advanced",
+          "name": "高级AI产品策略",
+          "difficulty": 3,
+          "estimated_hours": 4,
+          "prerequisites": ["ai-product-interview", "ai-product-design"],
+          "extends": [],
+          "parallel": [],
+          "courses": [],
+          "metadata": {
+            "phase": "高级",
+            "skills": ["商业化策略", "增长模型", "竞争分析"],
+            "sysmex_relevance": "medium"
+          }
+        }
+      ]
+    },
+    {
+      "id": "enterprise-digital",
+      "name": "企业数字化转型",
+      "color": "#3b82f6",
+      "description": "企业数字化架构、流程体系建设、AI落地方法论、组织变革",
+      "nodes": [
+        {
+          "id": "digital-fundamentals",
+          "name": "数字化基础认知",
+          "difficulty": 1,
+          "estimated_hours": 2,
+          "prerequisites": [],
+          "extends": ["enterprise-architecture", "process-system"],
+          "parallel": ["ai-product-fundamentals"],
+          "courses": [],
+          "metadata": {
+            "phase": "入门",
+            "skills": ["数字化概念", "技术趋势", "行业分析"],
+            "sysmex_relevance": "high"
+          }
+        },
+        {
+          "id": "enterprise-architecture",
+          "name": "企业数字化架构",
+          "difficulty": 3,
+          "estimated_hours": 5,
+          "prerequisites": ["digital-fundamentals"],
+          "extends": ["ai-landing-methodology"],
+          "parallel": ["process-system"],
+          "courses": [
+            {
+              "shifu_bid": "62bc9861aef74d768241d7148b3ebda5",
+              "title": "下一代企业数字化架构：系统CLI化、流程Skill化、员工Agent化",
+              "description": "系统阐述企业Agent落地的三层架构方法论",
+              "keywords": "",
+              "lesson_count": 0,
+              "lesson_titles": [],
+              "lessons": []
+            }
+          ],
+          "metadata": {
+            "phase": "专业",
+            "skills": ["CLI化", "Skill化", "Agent化", "架构设计"],
+            "sysmex_relevance": "high"
+          }
+        },
+        {
+          "id": "process-system",
+          "name": "流程体系建设",
+          "difficulty": 2,
+          "estimated_hours": 3,
+          "prerequisites": ["digital-fundamentals"],
+          "extends": ["ai-landing-methodology"],
+          "parallel": ["enterprise-architecture"],
+          "courses": [
+            {
+              "shifu_bid": "45543be849904548acff040fbf21f1df",
+              "title": "流程体系才是AI建设的锚点：企业智能化转型的底层方法论",
+              "description": "",
+              "keywords": "",
+              "lesson_count": 0,
+              "lesson_titles": [],
+              "lessons": []
+            }
+          ],
+          "metadata": {
+            "phase": "专业",
+            "skills": ["流程建模", "流程优化", "BPM"],
+            "sysmex_relevance": "high"
+          }
+        },
+        {
+          "id": "ai-landing-methodology",
+          "name": "AI落地方法论",
+          "difficulty": 3,
+          "estimated_hours": 4,
+          "prerequisites": ["enterprise-architecture", "process-system"],
+          "extends": [],
+          "parallel": [],
+          "courses": [],
+          "metadata": {
+            "phase": "高级",
+            "skills": ["AI转型路径", "ROI评估", "组织变革"],
+            "sysmex_relevance": "high"
+          }
+        }
+      ]
+    },
+    {
+      "id": "knowledge-mgmt",
+      "name": "知识管理与第二大脑",
+      "color": "#10b981",
+      "description": "个人知识管理方法论、Obsidian等工具使用、知识体系构建",
+      "nodes": [
+        {
+          "id": "km-fundamentals",
+          "name": "知识管理基础",
+          "difficulty": 1,
+          "estimated_hours": 2,
+          "prerequisites": [],
+          "extends": ["obsidian-mastery", "second-brain"],
+          "parallel": ["digital-fundamentals"],
+          "courses": [],
+          "metadata": {
+            "phase": "入门",
+            "skills": ["知识分类", "信息管理", "笔记方法论"],
+            "sysmex_relevance": "medium"
+          }
+        },
+        {
+          "id": "obsidian-mastery",
+          "name": "Obsidian知识库搭建",
+          "difficulty": 2,
+          "estimated_hours": 4,
+          "prerequisites": ["km-fundamentals"],
+          "extends": ["ai-knowledge-assistant"],
+          "parallel": ["second-brain"],
+          "courses": [
+            {
+              "shifu_bid": "db0c0db6b2f845d0870abd3381844481",
+              "title": "从零搭建Obsidian知识库：让AI Agent从\"问答\"到\"执行\"",
+              "description": "",
+              "keywords": "",
+              "lesson_count": 0,
+              "lesson_titles": [],
+              "lessons": []
+            }
+          ],
+          "metadata": {
+            "phase": "专业",
+            "skills": ["Obsidian", "双链笔记", "插件生态", "图谱视图"],
+            "sysmex_relevance": "medium"
+          }
+        },
+        {
+          "id": "second-brain",
+          "name": "第二大脑方法论",
+          "difficulty": 2,
+          "estimated_hours": 3,
+          "prerequisites": ["km-fundamentals"],
+          "extends": ["ai-knowledge-assistant"],
+          "parallel": ["obsidian-mastery"],
+          "courses": [],
+          "metadata": {
+            "phase": "专业",
+            "skills": ["PARA方法", "GTD", "渐进式总结", "知识输出"],
+            "sysmex_relevance": "low"
+          }
+        },
+        {
+          "id": "ai-knowledge-assistant",
+          "name": "AI辅助知识管理",
+          "difficulty": 3,
+          "estimated_hours": 3,
+          "prerequisites": ["obsidian-mastery", "second-brain"],
+          "extends": [],
+          "parallel": [],
+          "courses": [],
+          "metadata": {
+            "phase": "高级",
+            "skills": ["AI知识问答", "自动摘要", "知识图谱"],
+            "sysmex_relevance": "medium"
+          }
+        }
+      ]
+    },
+    {
+      "id": "personal-productivity",
+      "name": "个人效能与自动化",
+      "color": "#ec4899",
+      "description": "工作效率提升、自动化工具、工作流优化、时间管理",
+      "nodes": [
+        {
+          "id": "productivity-fundamentals",
+          "name": "效能基础原则",
+          "difficulty": 1,
+          "estimated_hours": 2,
+          "prerequisites": [],
+          "extends": ["automation-tools", "workflow-design"],
+          "parallel": ["km-fundamentals"],
+          "courses": [],
+          "metadata": {
+            "phase": "入门",
+            "skills": ["时间管理", "优先级排序", "习惯养成"],
+            "sysmex_relevance": "low"
+          }
+        },
+        {
+          "id": "automation-tools",
+          "name": "自动化工具与脚本",
+          "difficulty": 2,
+          "estimated_hours": 3,
+          "prerequisites": ["productivity-fundamentals"],
+          "extends": ["personal-dashboard"],
+          "parallel": ["workflow-design"],
+          "courses": [
+            {
+              "shifu_bid": "5e0e05bffa9d4b88b77c128c64e50179",
+              "title": "前台工作自动提醒系统",
+              "description": "",
+              "keywords": "",
+              "lesson_count": 0,
+              "lesson_titles": [],
+              "lessons": []
+            }
+          ],
+          "metadata": {
+            "phase": "专业",
+            "skills": ["自动化脚本", "提醒系统", "RPA"],
+            "sysmex_relevance": "high"
+          }
+        },
+        {
+          "id": "workflow-design",
+          "name": "工作流设计与优化",
+          "difficulty": 2,
+          "estimated_hours": 3,
+          "prerequisites": ["productivity-fundamentals"],
+          "extends": ["personal-dashboard"],
+          "parallel": ["automation-tools"],
+          "courses": [],
+          "metadata": {
+            "phase": "专业",
+            "skills": ["流程拆解", "效率分析", "瓶颈识别"],
+            "sysmex_relevance": "medium"
+          }
+        },
+        {
+          "id": "personal-dashboard",
+          "name": "个人仪表盘与数据",
+          "difficulty": 3,
+          "estimated_hours": 4,
+          "prerequisites": ["automation-tools", "workflow-design"],
+          "extends": [],
+          "parallel": [],
+          "courses": [],
+          "metadata": {
+            "phase": "高级",
+            "skills": ["数据可视化", "个人分析", "OKR追踪"],
+            "sysmex_relevance": "low"
+          }
+        }
+      ]
+    },
+    {
+      "id": "learning-growth",
+      "name": "学习与成长方法论",
+      "color": "#8b5cf6",
+      "description": "学习路径规划、技能树构建、深度学习方法、知识体系搭建",
+      "nodes": [
+        {
+          "id": "learning-fundamentals",
+          "name": "学习科学基础",
+          "difficulty": 1,
+          "estimated_hours": 2,
+          "prerequisites": [],
+          "extends": ["skill-tree", "deep-learning-methods"],
+          "parallel": ["productivity-fundamentals"],
+          "courses": [],
+          "metadata": {
+            "phase": "入门",
+            "skills": ["学习理论", "认知科学", "记忆原理"],
+            "sysmex_relevance": "low"
+          }
+        },
+        {
+          "id": "skill-tree",
+          "name": "技能树构建与规划",
+          "difficulty": 2,
+          "estimated_hours": 3,
+          "prerequisites": ["learning-fundamentals"],
+          "extends": ["knowledge-system"],
+          "parallel": ["deep-learning-methods"],
+          "courses": [],
+          "metadata": {
+            "phase": "专业",
+            "skills": ["技能诊断", "路径规划", "目标设定"],
+            "sysmex_relevance": "medium"
+          }
+        },
+        {
+          "id": "deep-learning-methods",
+          "name": "深度学习法",
+          "difficulty": 2,
+          "estimated_hours": 3,
+          "prerequisites": ["learning-fundamentals"],
+          "extends": ["knowledge-system"],
+          "parallel": ["skill-tree"],
+          "courses": [],
+          "metadata": {
+            "phase": "专业",
+            "skills": ["费曼学习法", "主动回忆", "间隔重复", "刻意练习"],
+            "sysmex_relevance": "low"
+          }
+        },
+        {
+          "id": "knowledge-system",
+          "name": "个人知识体系构建",
+          "difficulty": 3,
+          "estimated_hours": 4,
+          "prerequisites": ["skill-tree", "deep-learning-methods"],
+          "extends": [],
+          "parallel": [],
+          "courses": [],
+          "metadata": {
+            "phase": "高级",
+            "skills": ["知识体系设计", "跨学科连接", "知识输出"],
+            "sysmex_relevance": "medium"
+          }
+        }
+      ]
+    }
+  ],
+  "cross_domain_relations": [
+    {"source": "agent-fundamentals", "target": "ai-product-fundamentals", "type": "parallel"},
+    {"source": "agent-memory", "target": "obsidian-mastery", "type": "parallel"},
+    {"source": "enterprise-architecture", "target": "ai-landing-methodology", "type": "extends"},
+    {"source": "process-system", "target": "workflow-design", "type": "extends"},
+    {"source": "ai-knowledge-assistant", "target": "agent-advanced", "type": "parallel"},
+    {"source": "knowledge-system", "target": "second-brain", "type": "extends"}
+  ],
+  "learning_paths": {
+    "ai_pm": {
+      "name": "AI产品经理成长路径",
+      "description": "从0到1成为AI产品经理",
+      "stages": [
+        {"name": "入门", "credits": 10, "nodes": ["agent-fundamentals", "ai-product-fundamentals", "digital-fundamentals"]},
+        {"name": "基础", "credits": 20, "nodes": ["ai-product-interview", "ai-product-design", "agent-tools"]},
+        {"name": "专业", "credits": 20, "nodes": ["agent-memory", "enterprise-architecture", "process-system"]},
+        {"name": "进阶", "credits": 15, "nodes": ["ai-product-advanced", "ai-landing-methodology", "agent-advanced"]}
+      ]
+    },
+    "knowledge_worker": {
+      "name": "知识工作者效能路径",
+      "description": "提升个人知识管理与工作效率",
+      "stages": [
+        {"name": "入门", "credits": 10, "nodes": ["km-fundamentals", "productivity-fundamentals", "learning-fundamentals"]},
+        {"name": "基础", "credits": 20, "nodes": ["obsidian-mastery", "second-brain", "automation-tools"]},
+        {"name": "专业", "credits": 20, "nodes": ["workflow-design", "deep-learning-methods", "skill-tree"]},
+        {"name": "进阶", "credits": 15, "nodes": ["ai-knowledge-assistant", "personal-dashboard", "knowledge-system"]}
+      ]
+    },
+    "ai_developer": {
+      "name": "AI应用开发者路径",
+      "description": "掌握AI智能体开发与落地",
+      "stages": [
+        {"name": "入门", "credits": 10, "nodes": ["agent-fundamentals", "digital-fundamentals"]},
+        {"name": "基础", "credits": 20, "nodes": ["agent-memory", "agent-tools", "agent-workflow"]},
+        {"name": "专业", "credits": 20, "nodes": ["ai-product-design", "enterprise-architecture", "process-system"]},
+        {"name": "进阶", "credits": 15, "nodes": ["agent-advanced", "ai-landing-methodology", "knowledge-system"]}
+      ]
+    },
+    "digital_leader": {
+      "name": "数字化转型领导者路径",
+      "description": "企业数字化转型的策略与落地",
+      "stages": [
+        {"name": "入门", "credits": 10, "nodes": ["digital-fundamentals", "learning-fundamentals"]},
+        {"name": "基础", "credits": 20, "nodes": ["enterprise-architecture", "process-system", "productivity-fundamentals"]},
+        {"name": "专业", "credits": 20, "nodes": ["ai-landing-methodology", "agent-fundamentals", "ai-product-fundamentals"]},
+        {"name": "进阶", "credits": 15, "nodes": ["ai-product-advanced", "agent-advanced", "knowledge-system"]}
+      ]
+    }
+  },
+  "gap_analysis": {
+    "nodes_without_courses": [],
+    "priority_for_creation": [
+      "agent-tools", "agent-workflow", "agent-advanced",
+      "ai-product-design", "ai-product-advanced",
+      "digital-fundamentals", "ai-landing-methodology",
+      "km-fundamentals", "second-brain", "ai-knowledge-assistant",
+      "productivity-fundamentals", "workflow-design", "personal-dashboard",
+      "learning-fundamentals", "skill-tree", "deep-learning-methods", "knowledge-system"
+    ]
+  },
+  "views": {
+    "technical": "技术开发视图 — AI开发者/工程师",
+    "product": "产品管理视图 — AI产品经理/企业管理者",
+    "all": "全量视图"
+  },
+  "data_source": {
+    "type": "database",
+    "tables": ["shifu_published_shifus", "shifu_published_outline_items"],
+    "content_type": "课程结构+课程描述+关键词",
+    "note": "Teaching Prompt 由 AI-Shifu 引擎运行时动态生成",
+    "enriched_at": "2026-06-08"
+  },
+  "learning_paths_detail": {
+    "sales": {
+      "name": "销售",
+      "description": "占位（当前无销售方向课程）",
+      "stages": [],
+      "total_credits": 0
+    },
+    "technical": {
+      "name": "AI产品经理",
+      "stages": [
+        {"name": "第1阶段", "required_credits": 10, "nodes": ["agent-fundamentals", "ai-product-fundamentals", "digital-fundamentals"], "desc": "了解AI智能体和AI产品基础概念"},
+        {"name": "第2阶段", "required_credits": 15, "nodes": ["ai-product-interview", "ai-product-design", "agent-tools"], "desc": "掌握AI产品经理核心能力和工具"},
+        {"name": "第3阶段", "required_credits": 15, "nodes": ["agent-memory", "enterprise-architecture", "process-system"], "desc": "深入智能体技术和企业架构"},
+        {"name": "第4阶段", "required_credits": 10, "nodes": ["ai-product-advanced", "ai-landing-methodology", "agent-advanced"], "desc": "达到高级产品策略和架构能力"}
+      ],
+      "total_credits": 50,
+      "intro": "AI产品经理成长路径分4个阶段，共50学分。从AI基础认知到高级产品策略，系统掌握AI产品经理所需的知识体系。"
+    },
+    "lab": {
+      "name": "知识工作者",
+      "stages": [
+        {"name": "第1阶段", "required_credits": 10, "nodes": ["km-fundamentals", "productivity-fundamentals", "learning-fundamentals"], "desc": "建立知识管理和个人效能基础"},
+        {"name": "第2阶段", "required_credits": 15, "nodes": ["obsidian-mastery", "second-brain", "automation-tools"], "desc": "掌握知识库构建和自动化工具"},
+        {"name": "第3阶段", "required_credits": 15, "nodes": ["workflow-design", "deep-learning-methods", "skill-tree"], "desc": "优化工作流和深度学习能力"},
+        {"name": "第4阶段", "required_credits": 10, "nodes": ["ai-knowledge-assistant", "personal-dashboard", "knowledge-system"], "desc": "构建AI辅助的知识体系"}
+      ],
+      "total_credits": 50,
+      "intro": "知识工作者成长路径分4个阶段，共50学分。从知识管理基础到AI辅助的知识体系，实现个人效能的全面跃升。"
+    }
+  },
+  "guided_prompts": {
+    "sales": [
+      {"trigger": "学习路径", "prompt": "我想了解AI产品经理的学习路径，应该从哪里开始？"},
+      {"trigger": "知识管理", "prompt": "作为一个知识工作者，如何系统性地管理我的知识？"},
+      {"trigger": "智能体", "prompt": "如何搭建一个自己的AI智能体？"}
+    ],
+    "technical": [
+      {"trigger": "学习路径", "prompt": "我想成为一名AI产品经理，需要掌握哪些核心能力？"},
+      {"trigger": "智能体开发", "prompt": "给Claude搭建记忆系统的关键步骤是什么？"},
+      {"trigger": "企业架构", "prompt": "企业数字化转型的三层架构具体是指什么？"}
+    ],
+    "lab": [
+      {"trigger": "学习路径", "prompt": "如何规划自己的个人知识管理体系？"},
+      {"trigger": "Obsidian", "prompt": "从零开始搭建Obsidian知识库的关键步骤？"},
+      {"trigger": "效率提升", "prompt": "如何用自动化工具提升日常工作效能？"}
+    ]
+  }
+}
