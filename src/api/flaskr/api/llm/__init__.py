@@ -545,6 +545,7 @@ LITELLM_PROVIDER_CONFIGS: List[ProviderConfig] = [
         base_url_env="ARK_BASE_URL",
         default_base_url="https://ark.cn-beijing.volces.com/api/v3",
         prefix="ark/",
+        wildcard_prefixes=("ark/",),
         config_hint="ARK_API_KEY,ARK_BASE_URL",
         custom_llm_provider="openai",
         reload_params=_reload_ark_params,
