@@ -18,6 +18,16 @@
 - Generated knowledge files must not embed secret values.
 - Diagnostics scripts may surface request-scoped evidence, but they must avoid
   printing unrelated log history when the request id is missing or ambiguous.
+
+## API Key Hardening Checklist
+
+- [ ] `.env` is in `.gitignore` — never commit it
+- [ ] Nginx `.conf` files use `${VAR_NAME}` + envsubst entrypoint
+- [ ] Python scripts read keys from `os.environ.get()`
+- [ ] `scripts/pre-commit` hook installed in `.git/hooks/`
+- [ ] `docker/.env.example` is the committed template (all values sanitized)
+- [ ] `LLM_ALLOWED_MODELS` and `LLM_ALLOWED_MODEL_DISPLAY_NAMES` in `.env` only
+- [ ] No `sk-*`, `fc_*`, `nvapi-*`, `AKIA*` patterns in tracked files
 - Local observability compose config may expose loopback-only ports for Grafana,
   Loki, Tempo, Prometheus, and OTEL, but it must not require committed secrets.
 

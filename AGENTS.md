@@ -41,6 +41,17 @@ to.
 - Do not let shared guidance drift from generated mirrors or from the current
   repository structure.
 
+## 🔒 API Key Security (MANDATORY)
+
+- **NEVER** hardcode API keys, tokens, or secrets in source files.
+- All secrets must be read from environment variables at runtime.
+- Nginx configs must use `${VAR_NAME}` syntax with envsubst entrypoint.
+- Python scripts must use `os.environ.get('VAR_NAME')`.
+- Before committing, run `scripts/pre-commit` to scan for hardcoded keys.
+- If you need a placeholder in tests, use `sk-xxx` or `YOUR_*` — never a real key.
+- `.env` files are gitignored; use `docker/.env.example` as the template.
+- When adding a new API endpoint or proxy config, always use env vars for auth.
+
 ## Commands
 
 - `python scripts/generate_ai_collab_docs.py` regenerates compatibility

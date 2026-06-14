@@ -1,0 +1,76 @@
+#!/bin/sh
+# Pre-commit hook: scan for hardcoded API keys and secrets
+# Installed by: cp scripts/pre-commit .git/hooks/pre-commit
+
+. git-sh-setup 2>/dev/null || true
+
+RED='\033[0;31m'
+NC='\033[0m'
+
+echo "🔍 Scanning for hardcoded secrets..."
+
+# Patterns that look like real API keys (not placeholders)
+PATTERNS="
+sk-[A-Za-z0-9_\-]{30,}
+fc_[a-f0-9]{30,}
+nvapi-[A-Za-z0-9_\-]{20,}
+ghp_[A-Za-z0-9]{36,}
+AKIA[A-Z0-9]{16}
+xox[bpr]-[A-Za-z0-9\-]+
+AIza[A-Za-z0-9_\-]{30,}
+"
+
+EXCLUDE_PATTERNS="
+YOUR_
+sk-xxx
+sk-XXXX
+sk-\.\.\.
+REPLACED_
+\${[A-Z_]+}
+"
+
+# Build grep exclusion
+EXCLUDE_ARGS=""
+for p in $EXCLUDE_PATTERNS; do
+    EXCLUDE_ARGS="$EXCLUDE_ARGS -e '$p'"
+done
+
+HAS_ERRORS=0
+
+# Check staged files
+git diff --cached --name-only --diff-filter=ACM | while read -r file; do
+    # Skip binary files, node_modules, __pycache__
+    case "$file" in
+        *.png|*.jpg|*.jpeg|*.gif|*.ico|*.svg|*.woff|*.woff2|*.ttf|*.eot|*.pdf|*.zip|*.tar.gz|*.lock|*node_modules/*|*__pycache__/*|*.pyc)
+            continue ;;
+    esac
+
+    for pattern in $PATTERNS; do
+        if git show ":${file}" 2>/dev/null | grep -qE "$pattern"; then
+            # Check if it's a false positive (placeholder)
+            MATCH=$(git show ":${file}" 2>/dev/null | grep -oE "$pattern" | head -1)
+            IS_PLACEHOLDER=false
+            for ex in $EXCLUDE_PATTERNS; do
+                if echo "$MATCH" | grep -qE "$ex"; then
+                    IS_PLACEHOLDER=true
+                    break
+                fi
+            done
+            if [ "$IS_PLACEHOLDER" = false ]; then
+                echo "${RED}❌ SECURITY: Potential API key found in $file${NC}"
+                echo "   Match: $MATCH"
+                echo "   If this is a test placeholder, use 'sk-xxx' or 'YOUR_...' instead."
+                HAS_ERRORS=1
+            fi
+        fi
+    done
+done
+
+if [ "$HAS_ERRORS" = "1" ]; then
+    echo "${RED}❌ Commit blocked: remove hardcoded secrets before committing.${NC}"
+    echo "   Use environment variables or .env files instead."
+    exit 1
+fi
+
+echo "✅ No secrets detected."
+exit 0

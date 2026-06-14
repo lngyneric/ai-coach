@@ -1,6 +1,10 @@
 #!/usr/bin/env python3
-import http.server, urllib.request, json, sys
-API_KEY = 'sk-N04XARcSJXELCSq5pncgAZ6rO1GL1pWDmFaRFkImut6hEDCpFm1pRlc8BsxNVoUf'
+"""OpenAI-compatible chat proxy. Reads API key from env to avoid hardcoding."""
+import http.server, urllib.request, json, sys, os
+API_KEY = os.environ.get('OPENCODE_API_KEY') or os.environ.get('OPENAI_API_KEY', '')
+if not API_KEY:
+    print('FATAL: set OPENCODE_API_KEY or OPENAI_API_KEY env var', file=sys.stderr)
+    sys.exit(1)
 UPSTREAM = 'https://opencode.ai/zen/go/v1'
 PROXY = 'http://127.0.0.1:7897'
 
