@@ -124,12 +124,13 @@ services:
     restart: always
     environment:
       ARK_API_KEY: "${ARK_API_KEY}"
+      OPENCODE_API_KEY: "${OPENCODE_API_KEY}"
     entrypoint: ["/entrypoint.sh"]
     volumes:
     - ./nginx.conf:/etc/nginx/nginx.conf
     - ./nginx-entrypoint.sh:/entrypoint.sh:ro
     - ./default.conf:/etc/nginx/conf.d/default.conf
-    - ./certs:/etc/nginx/certs:ro
+    - ./certs2:/etc/nginx/certs:ro
     - ./course-entry.html:/usr/share/nginx/html/course-entry.html:ro
     - ./sysmex-login.html:/usr/share/nginx/html/sysmex-login.html:ro
     - ./ivd-knowledge-tree.html:/usr/share/nginx/html/ivd-knowledge-tree.html:ro
