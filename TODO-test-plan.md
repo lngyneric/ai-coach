@@ -170,3 +170,17 @@ systemctl --user status ai-shifu-db-backup.timer  # 备份定时器
 | 🛠️ 基础设施 | 17 | 7 | 0 | 10 | - |
 | 🔗 Git/部署 | 5 | 3 | 0 | 2 | - |
 | **合计** | **59** | **11** | **0** | **48** | **-** |
+
+## ⚠️ 测试中发现的问题
+
+### Nginx 重启后文件丢失
+`docker cp` 部署的静态文件在 nginx 容器重启后会丢失。
+受影响文件：`personal-growth-tree.html`、`ivd-sandbox-dashboard.html`、`ivd-sandbox-model-docs.html`
+**解决方法**：绑定挂载或加入 docker-compose volumes
+
+### 已验证通过的测试项
+- LLM Ark 路由 ✅
+- IVD 知识图谱页面 ✅
+- 知识图谱 AI 对话 → Ark ✅
+- 课程 LLM 生成路由 ✅
+- Docker 容器状态 ✅
