@@ -65,8 +65,12 @@
     (function() {
       var url = new URL(window.location.href);
       var parts = url.pathname.split('/');
-      var courseId = parts[parts.length - 1] || '';
+      var rawId = parts[parts.length - 1] || '';
       var lessonId = url.searchParams.get('lessonid') || '';
+      var redirectUrl = url.searchParams.get('redirect') || '';
+
+      // Validate courseId: must look like a real course bid (32-hex or UUID), not a filename.
+      var courseId = (/^[0-9a-f]{32}$|^[0-9a-f]{8}-[0-9a-f]{4}-/.test(rawId) ? rawId : '');
 
       function getCookie(name) {
         var match = document.cookie.match(new RegExp('(^| )' + name + '=([^;]+)'));
@@ -74,9 +78,18 @@
       }
 
       function buildCourseUrl() {
-        var href = '/c/' + courseId;
-        if (lessonId) href += '?lessonid=' + encodeURIComponent(lessonId);
-        return href;
+        // If a redirect URL was provided (e.g. from courses page), use it.
+        if (redirectUrl && redirectUrl !== '/') {
+          return redirectUrl;
+        }
+        // If we have a valid courseId, go to the course page.
+        if (courseId) {
+          var href = '/c/' + courseId;
+          if (lessonId) href += '?lessonid=' + encodeURIComponent(lessonId);
+          return href;
+        }
+        // Fallback: go to courses homepage.
+        return '/courses/';
       }
 
       function showLogin() {

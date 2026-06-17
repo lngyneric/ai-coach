@@ -1,0 +1,564 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+  <meta charset="utf-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover" />
+  <title>导师工作台 — sysmex</title>
+  <link rel="preconnect" href="https://fonts.googleapis.com" />
+  <style>
+    *, *::before, *::after { box-sizing: border-box; margin: 0; padding: 0; }
+    body {
+      font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", system-ui, sans-serif;
+      background: #f8fafc;
+      color: #1e293b;
+      min-height: 100vh;
+    }
+    a { color: inherit; text-decoration: none; }
+    img { max-width: 100%; display: block; }
+    button { cursor: pointer; font-family: inherit; }
+    .max-w-7xl { max-width: 1280px; margin: 0 auto; padding: 0 24px; }
+
+    /* ═══ Header ═══ */
+    .header {
+      background: rgba(255,255,255,.85);
+      backdrop-filter: blur(12px);
+      border-bottom: 1px solid #e2e8f0;
+      position: sticky; top: 0; z-index: 50;
+    }
+    .header-inner {
+      display: flex; align-items: center; justify-content: space-between; height: 64px;
+    }
+    .header-logo { display: flex; align-items: center; gap: 10px; font-weight: 600; font-size: 15px; color: #1e293b; }
+    .header-logo .icon {
+      width: 32px; height: 32px; border-radius: 8px;
+      background: linear-gradient(135deg, #2563eb, #4f46e5); color: #fff;
+      display: flex; align-items: center; justify-content: center; font-weight: 700; font-size: 14px;
+    }
+    .header-user { display: flex; align-items: center; gap: 12px; }
+    .header-user .name { font-size: 14px; color: #64748b; }
+    .header-user .avatar {
+      width: 32px; height: 32px; border-radius: 50%; background: #dbeafe; color: #2563eb;
+      display: flex; align-items: center; justify-content: center; font-size: 13px; font-weight: 500;
+    }
+    .header-user .logout-btn {
+      font-size: 13px; color: #94a3b8; background: none; border: none; padding: 4px 8px; border-radius: 6px; cursor: pointer;
+    }
+    .header-user .logout-btn:hover { color: #ef4444; }
+    .mentor-badge {
+      background: #eff6ff; border-bottom: 1px solid #dbeafe; padding: 8px 24px; font-size: 13px;
+      display: flex; align-items: center; gap: 12px;
+    }
+    .mentor-badge span { font-weight: 600; color: #1d4ed8; }
+    .mentor-badge a { color: #3b82f6; margin-left: auto; }
+
+    /* ═══ Stats Grid ═══ */
+    .stats-grid { display: grid; grid-template-columns: repeat(4, 1fr); gap: 16px; margin-bottom: 24px; }
+    @media (max-width: 900px) { .stats-grid { grid-template-columns: repeat(2, 1fr); } }
+    @media (max-width: 500px) { .stats-grid { grid-template-columns: 1fr; } }
+    .stat-card {
+      background: #fff; border: 1px solid #e2e8f0; border-radius: 12px; padding: 20px;
+      display: flex; align-items: flex-start; gap: 14px;
+    }
+    .stat-icon { width: 44px; height: 44px; border-radius: 10px; display: flex; align-items: center; justify-content: center; font-size: 20px; flex-shrink: 0; }
+    .stat-label { font-size: 13px; color: #64748b; }
+    .stat-value { font-size: 26px; font-weight: 700; color: #1e293b; margin-top: 2px; }
+    .stat-sub { font-size: 12px; color: #94a3b8; margin-top: 2px; }
+
+    /* ═══ Alert Banner ═══ */
+    .alert-banner {
+      background: #fef2f2; border: 1px solid #fecaca; border-radius: 12px;
+      padding: 12px 20px; margin-bottom: 24px; display: flex; align-items: center; gap: 12px;
+    }
+    .alert-banner strong { color: #dc2626; font-size: 14px; }
+    .alert-banner .hint { color: #b91c1c; font-size: 13px; margin-left: 12px; }
+
+    /* ═══ Section Title ═══ */
+    .section-title { font-size: 18px; font-weight: 700; margin-bottom: 16px; }
+
+    /* ═══ Student Cards ═══ */
+    .student-card {
+      background: #fff; border: 1px solid #e2e8f0; border-radius: 14px;
+      padding: 16px 20px; transition: all .15s; margin-bottom: 12px;
+    }
+    .student-card.has-pending { border-left: 4px solid #ef4444; }
+    .student-card.no-pending { border-left: 4px solid #3b82f6; }
+    .student-card:hover { box-shadow: 0 2px 12px rgba(0,0,0,.06); }
+    .sc-top { display: flex; align-items: center; gap: 14px; }
+    .sc-avatar {
+      width: 42px; height: 42px; border-radius: 50%;
+      background: linear-gradient(135deg,#3b82f6,#6366f1); color: #fff;
+      display: flex; align-items: center; justify-content: center;
+      font-size: 18px; font-weight: 600; flex-shrink: 0;
+    }
+    .sc-info { flex: 1; min-width: 0; }
+    .sc-name { font-size: 15px; font-weight: 600; color: #1e293b; }
+    .sc-meta { font-size: 13px; color: #64748b; margin-top: 4px; }
+    .badge {
+      font-size: 12px; padding: 2px 10px; border-radius: 20px; display: inline-block;
+    }
+    .badge-blue { background: #dbeafe; color: #1d4ed8; }
+    .badge-green { background: #d1fae5; color: #065f46; }
+    .badge-gray { background: #f3f4f6; color: #6b7280; }
+    .badge-red { background: #fee2e2; color: #dc2626; font-weight: 500; }
+    .sc-action { font-size: 13px; color: #3b82f6; white-space: nowrap; flex-shrink: 0; }
+    .sc-progress { margin-top: 12px; display: flex; align-items: center; gap: 8px; }
+    .sc-progress-bar { flex: 1; height: 6px; background: #f1f5f9; border-radius: 20px; overflow: hidden; }
+    .sc-progress-fill { height: 100%; border-radius: 20px; background: linear-gradient(90deg,#3b82f6,#6366f1); transition: width .5s; }
+    .sc-progress-label { font-size: 11px; color: #94a3b8; }
+
+    /* ═══ Pending Scores Table ═══ */
+    .dash-card { background: #fff; border: 1px solid #e2e8f0; border-radius: 12px; padding: 24px; }
+    .dash-title { font-size: 14px; font-weight: 600; display: flex; align-items: center; gap: 8px; margin-bottom: 16px; }
+    .dash-title .emoji { font-size: 16px; }
+    .score-table { width: 100%; border-collapse: collapse; font-size: 13px; }
+    .score-table th {
+      text-align: left; padding: 10px 12px; color: #475569; font-weight: 500;
+      background: #f8fafc; border-bottom: 1px solid #e2e8f0;
+    }
+    .score-table td { padding: 10px 12px; border-bottom: 1px solid #f1f5f9; }
+    .score-table tr:hover td { background: #f8fafc; }
+    .score-btn {
+      padding: 4px 14px; background: #3b82f6; color: #fff; border: none;
+      border-radius: 6px; font-size: 12px; cursor: pointer;
+    }
+    .score-btn:hover { background: #1d4ed8; }
+
+    /* ═══ Scoring Modal ═══ */
+    .modal-overlay {
+      position: fixed; inset: 0; z-index: 999;
+      background: rgba(0,0,0,.4); display: flex;
+      align-items: center; justify-content: center; padding: 20px;
+    }
+    .modal-box {
+      background: #fff; border-radius: 16px; box-shadow: 0 8px 40px rgba(0,0,0,.15);
+      width: 100%; max-width: 460px; padding: 32px; animation: fadeUp .2s ease;
+    }
+    @keyframes fadeUp { from { opacity: 0; transform: translateY(12px); } to { opacity: 1; transform: translateY(0); } }
+    .modal-box h2 { font-size: 18px; font-weight: 700; margin-bottom: 4px; }
+    .modal-box .sub { font-size: 13px; color: #64748b; margin-bottom: 20px; }
+    .modal-box .field { margin-bottom: 16px; }
+    .modal-box .field label { display: block; font-size: 13px; font-weight: 500; color: #334155; margin-bottom: 4px; }
+    .modal-box .field input, .modal-box .field textarea, .modal-box .field select {
+      width: 100%; padding: 10px 12px; border: 1.5px solid #e2e8f0; border-radius: 8px;
+      font-size: 14px; color: #1e293b; background: #f8fafc; outline: none; font-family: inherit;
+    }
+    .modal-box .field input:focus, .modal-box .field textarea:focus { border-color: #3b82f6; background: #fff; }
+    .modal-box .field textarea { resize: vertical; min-height: 60px; }
+    .modal-actions { display: flex; gap: 10px; margin-top: 20px; }
+    .btn-cancel { flex: 1; padding: 11px; border: 1px solid #e2e8f0; border-radius: 10px; background: #fff; color: #475569; font-size: 14px; font-weight: 500; cursor: pointer; }
+    .btn-cancel:hover { background: #f8fafc; }
+    .btn-submit { flex: 1; padding: 11px; border: none; border-radius: 10px; background: #3b82f6; color: #fff; font-size: 14px; font-weight: 600; cursor: pointer; }
+    .btn-submit:hover { background: #1d4ed8; }
+    .btn-submit:disabled { background: #93c5fd; cursor: not-allowed; }
+
+    /* ═══ AI Advisor ═══ */
+    .ai-advisor { background: linear-gradient(135deg, #eff6ff 0%, #eef2ff 100%); }
+    .ai-header { display: flex; align-items: flex-start; gap: 12px; }
+    .ai-avatar {
+      width: 40px; height: 40px; border-radius: 50%;
+      background: linear-gradient(135deg, #3b82f6, #6366f1);
+      display: flex; align-items: center; justify-content: center;
+      flex-shrink: 0; font-size: 20px;
+    }
+    .ai-body h3 { font-size: 14px; font-weight: 600; margin-bottom: 6px; }
+    .ai-body p { font-size: 14px; color: #475569; line-height: 1.6; }
+    .ai-body strong { color: #2563eb; }
+    .ai-badges { display: flex; gap: 8px; margin-top: 12px; }
+    .ai-badge {
+      font-size: 12px; padding: 3px 10px; border-radius: 20px;
+      background: #dbeafe; color: #1d4ed8;
+    }
+    .ai-badge.purple { background: #ede9fe; color: #6d28d9; }
+
+    /* ═══ Empty State ═══ */
+    .empty-state {
+      background: #fff; border: 2px dashed #e2e8f0; border-radius: 16px;
+      padding: 60px 24px; text-align: center;
+    }
+    .empty-state .empty-icon {
+      width: 64px; height: 64px; border-radius: 50%; background: #f1f5f9;
+      display: flex; align-items: center; justify-content: center; font-size: 28px; margin: 0 auto 16px;
+    }
+    .empty-state h3 { font-size: 16px; color: #475569; }
+    .empty-state p { font-size: 14px; color: #94a3b8; margin-top: 6px; }
+
+    /* ═══ Spinner ═══ */
+    .spinner-overlay { display: flex; align-items: center; justify-content: center; min-height: 60vh; }
+    .spinner {
+      width: 40px; height: 40px; border: 4px solid #e2e8f0; border-top-color: #3b82f6;
+      border-radius: 50%; animation: spin .7s linear infinite;
+    }
+    @keyframes spin { to { transform: rotate(360deg); } }
+
+    /* ═══ Footer ═══ */
+    .footer { border-top: 1px solid #e2e8f0; background: #fff; padding: 24px 0; margin-top: 48px; }
+    .footer-inner {
+      display: flex; justify-content: space-between; align-items: center; font-size: 13px; color: #94a3b8;
+    }
+    @media (max-width: 500px) { .footer-inner { flex-direction: column; gap: 8px; } }
+  </style>
+</head>
+<body>
+
+  <div id="root">
+    <div class="spinner-overlay"><div class="spinner"></div></div>
+  </div>
+
+  <script>
+  (function() {
+    'use strict';
+
+    function getCookie(name) {
+      var match = document.cookie.match(new RegExp('(^| )' + name + '=([^;]+)'));
+      return match ? decodeURIComponent(match[2]) : null;
+    }
+
+    function api(path, opts) {
+      return fetch(path, {
+        headers: { 'Content-Type': 'application/json' },
+        ...opts,
+      }).then(function(r) { return r.json(); });
+    }
+
+    function escapeHtml(str) {
+      if (!str) return '';
+      return String(str)
+        .replace(/&/g, '&amp;')
+        .replace(/</g, '&lt;')
+        .replace(/>/g, '&gt;')
+        .replace(/"/g, '&quot;')
+        .replace(/'/g, '&#x27;');
+    }
+
+    var state = {
+      user: null, students: [], pendingScores: [], loading: true,
+      scoreModal: null,  // { record_bid, studentName, itemBid, submittedAt }
+    };
+
+    function render() {
+      var root = document.getElementById('root');
+      if (!state.user) {
+        root.innerHTML = '<div class="spinner-overlay"><div class="spinner"></div></div>';
+        return;
+      }
+      root.innerHTML = renderHeader() + renderStats() + renderStudents() + renderScores() + renderTips() + renderFooter() + renderModal();
+    }
+
+    function renderHeader() {
+      var uname = state.user.name || state.user.user_id || '导师';
+      var initial = (state.user.name || '?')[0];
+      return (
+        '<header class="header">' +
+          '<div class="header-inner max-w-7xl">' +
+            '<div class="header-logo">' +
+              '<span class="icon">S</span>sysmex Learning' +
+            '</div>' +
+            '<div class="header-user">' +
+              '<span class="name">' + escapeHtml(uname) + '</span>' +
+              '<span class="avatar">' + escapeHtml(initial) + '</span>' +
+              '<button class="logout-btn" onclick="window.location.href=\'/api/user/logout\'">退出</button>' +
+            '</div>' +
+          '</div>' +
+          '<div class="mentor-badge">' +
+            '<span>🧑‍🏫 导师工作台</span>' +
+            '<a href="/courses/">← 返回课程首页</a>' +
+          '</div>' +
+        '</header>'
+      );
+    }
+
+    function renderStats() {
+      var students = state.students || [];
+      var pending = state.pendingScores || [];
+      var active = students.filter(function(s) { return s.current_phase_status === 'in_progress'; }).length;
+      var completed = students.filter(function(s) { return s.status === 'completed'; }).length;
+      var total = students.length;
+
+      return (
+        '<section class="max-w-7xl" style="padding-top:24px">' +
+          '<h1 style="font-size:22px;font-weight:700;color:#1e293b;margin-bottom:4px">导师工作台</h1>' +
+          '<p style="font-size:14px;color:#64748b;margin-bottom:20px">带教情况总览 · 共 ' + total + ' 名学员</p>' +
+          '<div class="stats-grid">' +
+            '<div class="stat-card">' +
+              '<div class="stat-icon" style="background:#eff6ff"><span>👨‍🎓</span></div>' +
+              '<div><div class="stat-label">在带学员</div><div class="stat-value">' + total + '</div><div class="stat-sub">总学员数</div></div>' +
+            '</div>' +
+            '<div class="stat-card">' +
+              '<div class="stat-icon" style="background:#fef3c7"><span>📝</span></div>' +
+              '<div><div class="stat-label">待评分</div><div class="stat-value" style="' + (pending.length > 0 ? 'color:#dc2626' : '') + '">' + pending.length + '</div><div class="stat-sub">' + (pending.length > 0 ? '需尽快处理' : '全部已评分') + '</div></div>' +
+            '</div>' +
+            '<div class="stat-card">' +
+              '<div class="stat-icon" style="background:#ecfdf5"><span>📊</span></div>' +
+              '<div><div class="stat-label">进行中阶段</div><div class="stat-value">' + active + '</div><div class="stat-sub">' + (total > 0 ? Math.round(active/total*100) + '%' : '-') + '</div></div>' +
+            '</div>' +
+            '<div class="stat-card">' +
+              '<div class="stat-icon" style="background:#faf5ff"><span>✅</span></div>' +
+              '<div><div class="stat-label">已完成</div><div class="stat-value">' + completed + '</div><div class="stat-sub">' + (total > 0 ? Math.round(completed/total*100) + '%' : '-') + '</div></div>' +
+            '</div>' +
+          '</div>' +
+          (pending.length > 0
+            ? '<div class="alert-banner">' +
+                '<span style="font-size:20px">⚠️</span>' +
+                '<div style="flex:1">' +
+                  '<strong>' + pending.length + ' 项待评分</strong>' +
+                  '<span class="hint">超过48小时未评分将收到系统催办提醒</span>' +
+                '</div>' +
+              '</div>'
+            : '') +
+        '</section>'
+      );
+    }
+
+    function renderStudents() {
+      var students = state.students || [];
+      var html = '<section class="max-w-7xl" style="margin-top:24px">' +
+        '<h2 class="section-title">👨‍🎓 学员列表</h2>';
+
+      if (students.length === 0) {
+        html += '<div class="empty-state"><div class="empty-icon">👨‍🎓</div><h3>暂无学员</h3><p>你目前没有被分配带教学员，联系管理员设置导师关系</p></div>';
+        html += '</section>';
+        return html;
+      }
+
+      // Sort: pending first, then in_progress, then completed
+      students.sort(function(a,b) {
+        var pa = a.pending_score_count || 0;
+        var pb = b.pending_score_count || 0;
+        if (pa !== pb) return pb - pa;
+        var sa = a.current_phase_status === 'in_progress' ? 0 : (a.status === 'completed' ? 2 : 1);
+        var sb = b.current_phase_status === 'in_progress' ? 0 : (b.status === 'completed' ? 2 : 1);
+        return sa - sb;
+      });
+
+      html += '<div style="display:flex;flex-direction:column;gap:0">';
+      students.forEach(function(s) {
+        var initial = (s.employee_no || s.user_bid || '?')[0].toUpperCase();
+        var hasPending = (s.pending_score_count || 0) > 0;
+        var statusBadge = s.status === 'active' ? 'badge-blue' : (s.status === 'completed' ? 'badge-green' : 'badge-gray');
+        var statusLabel = s.status === 'active' ? '学习中' : (s.status === 'completed' ? '已完成' : s.status);
+        var phaseLabel = s.current_phase_status === 'in_progress' ? '📖 进行中' :
+                        (s.current_phase_status === 'passed' ? '✅ 已通过' :
+                        (s.current_phase_status === 'failed' ? '❌ 未通过' : '⏳ 待开始'));
+        var progressWidth = s.current_phase_status === 'passed' ? 100 :
+                           (s.current_phase_status === 'in_progress' ? 60 : 0);
+        var progressLabel = s.current_phase_status === 'passed' ? '阶段完成' :
+                           (s.current_phase_status === 'in_progress' ? '进行中' : '未开始');
+
+        html += '' +
+          '<div class="student-card' + (hasPending ? ' has-pending' : ' no-pending') + '">' +
+            '<div class="sc-top">' +
+              '<div class="sc-avatar">' + escapeHtml(initial) + '</div>' +
+              '<div class="sc-info">' +
+                '<div style="display:flex;align-items:center;gap:6px;flex-wrap:wrap">' +
+                  '<span class="sc-name">' + escapeHtml(s.employee_no || '未知工号') + '</span>' +
+                  '<span class="badge ' + statusBadge + '">' + statusLabel + '</span>' +
+                  '<span class="badge badge-gray">' + phaseLabel + '</span>' +
+                  (hasPending ? '<span class="badge badge-red">待评分 ' + s.pending_score_count + '</span>' : '') +
+                '</div>' +
+                '<div class="sc-meta">' +
+                  escapeHtml(s.department || '') +
+                  (s.department && s.position_name ? ' · ' : '') +
+                  escapeHtml(s.position_name || '') +
+                  (s.onboarding_date ? ' · 入职 ' + s.onboarding_date : '') +
+                '</div>' +
+              '</div>' +
+              '<a class="sc-action" href="/courses/">查看详情 ›</a>' +
+            '</div>' +
+            '<div class="sc-progress">' +
+              '<div class="sc-progress-bar">' +
+                '<div class="sc-progress-fill" style="width:' + progressWidth + '%"></div>' +
+              '</div>' +
+              '<span class="sc-progress-label">' + progressLabel + '</span>' +
+            '</div>' +
+          '</div>';
+      });
+      html += '</div></section>';
+      return html;
+    }
+
+    function renderScores() {
+      var pending = state.pendingScores || [];
+      if (pending.length === 0) return '';
+      var students = state.students || [];
+
+      var html = '<section class="max-w-7xl" style="margin-top:24px">' +
+        '<div class="dash-card">' +
+        '<div class="dash-title"><span class="emoji">📝</span> 待评分明细 (' + pending.length + ')</div>' +
+        '<div style="overflow-x:auto">' +
+        '<table class="score-table">' +
+        '<thead><tr>' +
+          '<th>学员</th><th>验收项</th><th>提交时间</th><th>备注</th><th style="text-align:center">操作</th>' +
+        '</tr></thead><tbody>';
+
+      pending.forEach(function(item) {
+        var studentName = item.learner_bid;
+        students.forEach(function(s) {
+          if (s.learner_bid === item.learner_bid) studentName = s.employee_no || s.user_bid || item.learner_bid;
+        });
+        var submittedDate = item.submitted_at ? item.submitted_at.split('T')[0] : '-';
+        var isOverdue = false;
+        if (item.submitted_at) {
+          isOverdue = (Date.now() - new Date(item.submitted_at).getTime()) > 48 * 60 * 60 * 1000;
+        }
+        html += '<tr>' +
+          '<td>' + escapeHtml(studentName) + '</td>' +
+          '<td>验收项 #' + escapeHtml((item.item_bid || '').slice(0,8)) + '</td>' +
+          '<td>' + submittedDate + (isOverdue ? ' <span style="color:#dc2626;font-size:11px">⏰ 超48h</span>' : '') + '</td>' +
+          '<td style="color:#64748b;max-width:200px;overflow:hidden;text-overflow:ellipsis;white-space:nowrap">' + escapeHtml((item.comment || '').slice(0,30)) + '</td>' +
+          '<td style="text-align:center"><button class="score-btn" onclick="window.openScoreModal(\'' + escapeHtml(item.record_bid) + '\',\'' + escapeHtml(studentName) + '\',\'' + escapeHtml((item.item_bid || '').slice(0,12)) + '\',\'' + submittedDate + '\')">去评分</button></td>' +
+        '</tr>';
+      });
+      html += '</tbody></table></div></div></section>';
+      return html;
+    }
+
+    function renderTips() {
+      var students = state.students || [];
+      var pending = state.pendingScores || [];
+      var active = students.filter(function(s) { return s.current_phase_status === 'in_progress'; }).length;
+
+      return (
+        '<section class="max-w-7xl" style="margin-top:24px">' +
+          '<div class="dash-card ai-advisor">' +
+            '<div class="ai-header">' +
+              '<div class="ai-avatar">🧑‍🏫</div>' +
+              '<div class="ai-body">' +
+                '<h3>带教建议</h3>' +
+                '<p>' +
+                  (students.length === 0
+                    ? '你目前没有待教学员。联系管理员分配学员后，这里将显示带教建议。'
+                    : (pending.length > 0
+                      ? '你有 <strong>' + pending.length + '</strong> 项验收待评分，建议优先处理超48小时的项目。及时评分有助于学员保持学习节奏。'
+                      : '所有验收项已评分。建议定期检查学员的课程进度，确保带教计划按时推进。'
+                    )
+                  ) +
+                '</p>' +
+                (active > 0 ? '<div class="ai-badges"><span class="ai-badge purple">' + active + ' 名学员进行中</span></div>' : '') +
+              '</div>' +
+            '</div>' +
+          '</div>' +
+        '</section>'
+      );
+    }
+
+    function renderFooter() {
+      return (
+        '<footer class="footer">' +
+          '<div class="max-w-7xl footer-inner">' +
+            '<div>sysmex Learning Platform · 导师工作台</div>' +
+            '<div>© ' + new Date().getFullYear() + ' sysmex</div>' +
+          '</div>' +
+        '</footer>'
+      );
+    }
+
+    // ═══ Scoring Modal ═══
+    function renderModal() {
+      var m = state.scoreModal;
+      if (!m) return '';
+      return (
+        '<div class="modal-overlay" onclick="if(event.target===this)window.closeScoreModal()">' +
+          '<div class="modal-box">' +
+            '<h2>📝 提交评分</h2>' +
+            '<div class="sub">' +
+              '学员: ' + escapeHtml(m.studentName) + ' · 验收项: ' + escapeHtml(m.itemBid) + ' · 提交: ' + escapeHtml(m.submittedAt) +
+            '</div>' +
+            '<div class="field">' +
+              '<label for="scoreInput">评分 (0-5)</label>' +
+              '<input type="number" id="scoreInput" min="0" max="5" step="0.5" value="3" placeholder="输入 0-5 之间的分数" />' +
+            '</div>' +
+            '<div class="field">' +
+              '<label for="commentInput">评语 <span style="color:#94a3b8;font-weight:400">(选填)</span></label>' +
+              '<textarea id="commentInput" placeholder="输入评分评语..."></textarea>' +
+            '</div>' +
+            '<div class="modal-actions">' +
+              '<button class="btn-cancel" onclick="window.closeScoreModal()">取消</button>' +
+              '<button class="btn-submit" id="submitScoreBtn" onclick="window.submitScore()">提交评分</button>' +
+            '</div>' +
+          '</div>' +
+        '</div>'
+      );
+    }
+
+    window.openScoreModal = function(record_bid, studentName, itemBid, submittedAt) {
+      state.scoreModal = { record_bid: record_bid, studentName: studentName, itemBid: itemBid, submittedAt: submittedAt };
+      render();
+    };
+
+    window.closeScoreModal = function() {
+      state.scoreModal = null;
+      render();
+    };
+
+    window.submitScore = function() {
+      var m = state.scoreModal;
+      if (!m) return;
+      var scoreInput = document.getElementById('scoreInput');
+      var commentInput = document.getElementById('commentInput');
+      var score = parseFloat(scoreInput ? scoreInput.value : '0');
+      var comment = commentInput ? commentInput.value : '';
+
+      if (isNaN(score) || score < 0 || score > 5) {
+        alert('评分必须在 0-5 之间');
+        return;
+      }
+
+      var btn = document.getElementById('submitScoreBtn');
+      if (btn) { btn.disabled = true; btn.textContent = '提交中...'; }
+
+      api('/api/portal/mentorship/items/' + m.record_bid + '/score', {
+        method: 'POST',
+        body: JSON.stringify({ score: score, comment: comment })
+      }).then(function(d) {
+        if (d.code === 0) {
+          // Remove this item from pending list and close modal
+          state.pendingScores = state.pendingScores.filter(function(p) { return p.record_bid !== m.record_bid; });
+          state.scoreModal = null;
+          render();
+        } else {
+          alert(d.message || '评分提交失败');
+          if (btn) { btn.disabled = false; btn.textContent = '提交评分'; }
+        }
+      }).catch(function() {
+        alert('网络错误，请重试');
+        if (btn) { btn.disabled = false; btn.textContent = '提交评分'; }
+      });
+    };
+
+    // ── Init ──
+    function init() {
+      var token = getCookie('token');
+      if (!token) {
+        window.location.href = '/login?redirect=' + encodeURIComponent('/mentor/');
+        return;
+      }
+
+      var userLoaded = false;
+      Promise.all([
+        api('/api/user/info').then(function(d) {
+          if (d.code === 0) { state.user = d.data; userLoaded = true; }
+        }).catch(function() {}),
+        api('/api/portal/mentor/students').then(function(d) {
+          if (d.code === 0) state.students = d.data || [];
+        }).catch(function() {}),
+        api('/api/portal/mentor/pending-scores').then(function(d) {
+          if (d.code === 0) state.pendingScores = d.data || [];
+        }).catch(function() {}),
+      ]).then(function() {
+        if (!userLoaded) {
+          window.location.href = '/login?redirect=' + encodeURIComponent('/mentor/');
+          return;
+        }
+        state.loading = false;
+        render();
+      }).catch(function() {
+        state.loading = false;
+        render();
+      });
+    }
+
+    init();
+  })();
+  </script>
+</body>
+</html>

@@ -26,7 +26,7 @@ def test_volcengine_ws_get_credentials_falls_back_to_ark_keys(monkeypatch):
 
     assert app_key == "legacy-app"
     assert access_key == "legacy-access"
-    assert resource_id == "seed-tts-1.0"
+    assert resource_id == "seed-tts-2.0"
 
 
 def test_volcengine_ws_is_configured_uses_volcengine_tts_keys(monkeypatch):

@@ -1333,7 +1333,14 @@ Generate secure key: python -c "import secrets; print(secrets.token_urlsafe(32))
     "VOLCENGINE_TTS_ACCESS_KEY": EnvVar(
         name="VOLCENGINE_TTS_ACCESS_KEY",
         default="",
-        description="Volcengine TTS access key/token (used by both WebSocket and HTTP providers)",
+        description="Volcengine TTS access key/token (used by HTTP v1/tts provider)",
+        secret=True,
+        group="tts",
+    ),
+    "VOLCENGINE_TTS_API_KEY": EnvVar(
+        name="VOLCENGINE_TTS_API_KEY",
+        default="",
+        description="Volcengine TTS API key for ark agent plan (X-Api-Key header, WebSocket)",
         secret=True,
         group="tts",
     ),

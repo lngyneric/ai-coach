@@ -5,7 +5,7 @@ This module provides TTS synthesis using Volcengine's bidirectional
 WebSocket TTS API (ByteDance/Doubao).
 
 API Reference:
-- WebSocket URL: wss://openspeech.bytedance.com/api/v3/tts/bidirection
+- WebSocket URL: wss://openspeech.bytedance.com/api/v3/plan/tts/bidirection
 - Uses custom binary protocol for frame encoding/decoding
 """
 
@@ -43,7 +43,7 @@ except ImportError:
 logger = AppLoggerProxy(logging.getLogger(__name__))
 
 # Volcengine TTS WebSocket endpoint
-VOLCENGINE_TTS_WS_URL = "wss://openspeech.bytedance.com/api/v3/tts/bidirection"
+VOLCENGINE_TTS_WS_URL = "wss://openspeech.bytedance.com/api/v3/plan/tts/bidirection"
 
 # Volcengine TTS models
 VOLCENGINE_MODELS = [
@@ -213,35 +213,21 @@ class VolcengineTTSProvider(BaseTTSProvider):
 
     def _get_credentials(self, resource_id: str = "") -> tuple[str, str, str]:
         """
-        Get Volcengine TTS credentials.
+        Get Volcengine TTS credentials for ark agent plan.
 
-        Uses VOLCENGINE_TTS_* config for authentication.
-
-        Notes:
-        - VOLCENGINE_TTS_APP_KEY and VOLCENGINE_TTS_ACCESS_KEY are also used by
-          the HTTP v1/tts provider. Keeping the same vars avoids duplicated
-          secrets across providers.
-        - ARK_* fallback is kept for backward compatibility with legacy
-          deployments, but VOLCENGINE_TTS_* is preferred.
+        Uses VOLCENGINE_TTS_API_KEY for authentication with X-Api-Key header.
+        X-Api-Resource-Id is set to the model/resource ID.
 
         Returns:
-            tuple: (app_key, access_key, resource_id)
+            tuple: (api_key, resource_id, resource_id_dup)
         """
-        app_key = (get_config("VOLCENGINE_TTS_APP_KEY") or "").strip()
-        access_key = (get_config("VOLCENGINE_TTS_ACCESS_KEY") or "").strip()
-
-        # Backward compatibility: historically Volcengine WebSocket TTS used ARK_*.
-        # Prefer VOLCENGINE_TTS_* to avoid coupling TTS auth with LLM auth.
-        if not app_key:
-            app_key = (get_config("ARK_ACCESS_KEY_ID") or "").strip()
-        if not access_key:
-            access_key = (get_config("ARK_SECRET_ACCESS_KEY") or "").strip()
+        api_key = (get_config("VOLCENGINE_TTS_API_KEY") or "").strip()
 
         # Resource ID (X-Api-Resource-Id) is required in the WebSocket handshake.
         # The `model` argument is treated as a resource ID for this provider.
-        resource_id = (resource_id or "").strip() or "seed-tts-1.0"
+        resource_id = (resource_id or "").strip() or "seed-tts-2.0"
 
-        return app_key, access_key, resource_id
+        return api_key, resource_id, resource_id
 
     def is_configured(self) -> bool:
         """Check if Volcengine TTS is properly configured."""
@@ -249,8 +235,8 @@ class VolcengineTTSProvider(BaseTTSProvider):
             logger.warning("websocket-client package is not installed")
             return False
 
-        app_key, access_key, _resource_id = self._get_credentials()
-        return bool(app_key and access_key)
+        api_key, _rid, _rid2 = self._get_credentials()
+        return bool(api_key)
 
     def get_default_voice_settings(self) -> VoiceSettings:
         """Get default voice settings.
@@ -317,7 +303,7 @@ class VolcengineTTSProvider(BaseTTSProvider):
             audio_settings = self.get_default_audio_settings()
 
         # Resource ID for handshake comes from `model` (provider-specific semantics).
-        app_key, access_key, resource_id = self._get_credentials(
+        api_key, resource_id, _ = self._get_credentials(
             resource_id=model or ""
         )
         inferred_resource_id = self._infer_resource_id_for_voice(
@@ -334,10 +320,10 @@ class VolcengineTTSProvider(BaseTTSProvider):
         # configured via env; use provider defaults.
         model_version = ""
 
-        if not app_key or not access_key or not resource_id:
+        if not api_key or not resource_id:
             raise ValueError(
                 "Volcengine TTS credentials are not configured. "
-                "Set VOLCENGINE_TTS_APP_KEY and VOLCENGINE_TTS_ACCESS_KEY."
+                "Set VOLCENGINE_TTS_API_KEY."
             )
 
         # Generate unique IDs
@@ -351,10 +337,9 @@ class VolcengineTTSProvider(BaseTTSProvider):
         session_finished = threading.Event()
         total_duration_ms = 0
 
-        # Create WebSocket connection
+        # Create WebSocket connection (ark agent plan uses X-Api-Key)
         ws_headers = {
-            "X-Api-App-Key": app_key,
-            "X-Api-Access-Key": access_key,
+            "X-Api-Key": api_key,
             "X-Api-Resource-Id": resource_id,
             "X-Api-Connect-Id": connect_id,
         }
@@ -591,12 +576,11 @@ def stream_volcengine_tts_chunks(
     # Resolve resource_id from voice
     voice_resource_map = {}
     for v in VOLCENGINE_VOICES:
-        voice_resource_map[v["value"]] = v.get("resource_id", "seed-tts-1.0")
-    resource_id = voice_resource_map.get(voice, "seed-tts-1.0")
+        voice_resource_map[v["value"]] = v.get("resource_id", "seed-tts-2.0")
+    resource_id = voice_resource_map.get(voice, "seed-tts-2.0")
 
-    app_key = get_config("VOLCENGINE_TTS_APP_KEY") or ""
-    access_key = get_config("VOLCENGINE_TTS_ACCESS_KEY") or ""
-    if not app_key or not access_key:
+    api_key = get_config("VOLCENGINE_TTS_API_KEY") or ""
+    if not api_key:
         raise ValueError("Volcengine TTS credentials not configured")
 
     result_queue: "queue.Queue[bytes | Exception | str]" = queue.Queue()
@@ -637,8 +621,7 @@ def stream_volcengine_tts_chunks(
         session_finished.set()
 
     headers = {
-        "X-Api-App-Key": app_key,
-        "X-Api-Access-Key": access_key,
+        "X-Api-Key": api_key,
         "X-Api-Resource-Id": resource_id,
         "X-Api-Connect-Id": connect_id,
     }
@@ -662,8 +645,7 @@ def stream_volcengine_tts_chunks(
         # StartSession — note: session_id first, then speaker(voice), model=resource_id
         ws.send(
             protocol.encode_start_session(session_id, voice,
-                                           audio_format="mp3", sample_rate=24000,
-                                           model=resource_id),
+                                           audio_format="mp3", sample_rate=24000),
             opcode=_ws.ABNF.OPCODE_BINARY,
         )
         _time.sleep(0.5)

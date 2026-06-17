@@ -1,0 +1,1010 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+  <meta charset="utf-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover" />
+  <title>sysmex 企业大学</title>
+  <link rel="preconnect" href="https://fonts.googleapis.com" />
+  <style>
+    /* ═══ Reset & Base ═══ */
+    *, *::before, *::after { box-sizing: border-box; margin: 0; padding: 0; }
+    body {
+      font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", system-ui, sans-serif;
+      background: #f8fafc;
+      color: #1e293b;
+      min-height: 100vh;
+    }
+    a { color: inherit; text-decoration: none; }
+    img { max-width: 100%; display: block; }
+    button { cursor: pointer; font-family: inherit; }
+
+    /* ═══ Layout ═══ */
+    .max-w-7xl { max-width: 1280px; margin: 0 auto; padding: 0 24px; }
+
+    /* ═══ Header ═══ */
+    .header {
+      background: rgba(255,255,255,.85);
+      backdrop-filter: blur(12px);
+      border-bottom: 1px solid #e2e8f0;
+      position: sticky;
+      top: 0;
+      z-index: 50;
+    }
+    .header-inner {
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+      height: 64px;
+    }
+    .header-logo {
+      display: flex;
+      align-items: center;
+      gap: 12px;
+      font-weight: 600;
+      font-size: 16px;
+      color: #1e293b;
+    }
+    .header-logo .icon {
+      width: 32px; height: 32px;
+      border-radius: 8px;
+      background: linear-gradient(135deg, #2563eb, #4f46e5);
+      color: #fff;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      font-weight: 700;
+      font-size: 14px;
+    }
+    .header-user {
+      display: flex;
+      align-items: center;
+      gap: 12px;
+    }
+    .header-user .name { font-size: 14px; color: #64748b; }
+    .header-user .avatar {
+      width: 32px; height: 32px;
+      border-radius: 50%;
+      background: #dbeafe;
+      color: #2563eb;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      font-size: 13px;
+      font-weight: 500;
+    }
+    .header-user .logout-btn {
+      font-size: 13px;
+      color: #94a3b8;
+      background: none;
+      border: none;
+      padding: 4px 8px;
+      border-radius: 6px;
+      transition: color .15s;
+    }
+    .header-user .logout-btn:hover { color: #ef4444; }
+
+    /* ═══ Hero ═══ */
+    .hero { padding: 40px 0 32px; }
+    .hero h1 { font-size: 28px; font-weight: 700; }
+    .hero p { color: #64748b; margin-top: 6px; font-size: 15px; line-height: 1.5; }
+
+    /* ═══ Stats Grid ═══ */
+    .stats-grid {
+      display: grid;
+      grid-template-columns: repeat(4, 1fr);
+      gap: 16px;
+      margin-bottom: 40px;
+    }
+    @media (max-width: 768px) { .stats-grid { grid-template-columns: repeat(2, 1fr); } }
+    .stat-card {
+      background: #fff;
+      border: 1px solid #e2e8f0;
+      border-radius: 12px;
+      padding: 20px;
+      display: flex;
+      align-items: flex-start;
+      gap: 14px;
+    }
+    .stat-card .stat-icon {
+      width: 44px; height: 44px;
+      border-radius: 10px;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      font-size: 20px;
+      flex-shrink: 0;
+    }
+    .stat-card .stat-label { font-size: 13px; color: #64748b; }
+    .stat-card .stat-value { font-size: 26px; font-weight: 700; color: #1e293b; margin-top: 2px; }
+    .stat-card .stat-sub  { font-size: 12px; color: #94a3b8; margin-top: 2px; }
+
+    /* ═══ Categories ═══ */
+    .section-title {
+      font-size: 18px;
+      font-weight: 600;
+      margin-bottom: 6px;
+    }
+    .section-subtitle {
+      font-size: 14px;
+      color: #64748b;
+      margin-bottom: 24px;
+    }
+    .category-grid {
+      display: grid;
+      grid-template-columns: repeat(4, 1fr);
+      gap: 16px;
+      margin-bottom: 40px;
+    }
+    @media (max-width: 900px) { .category-grid { grid-template-columns: repeat(2, 1fr); } }
+    @media (max-width: 500px) { .category-grid { grid-template-columns: 1fr; } }
+    .category-card {
+      background: #fff;
+      border: 2px solid #e2e8f0;
+      border-radius: 16px;
+      padding: 24px;
+      cursor: pointer;
+      transition: all .2s;
+      position: relative;
+      overflow: hidden;
+    }
+    .category-card:hover {
+      border-color: #cbd5e1;
+      box-shadow: 0 4px 12px rgba(0,0,0,.06);
+    }
+    .category-card.active {
+      border-color: #3b82f6;
+      box-shadow: 0 4px 16px rgba(59,130,246,.15);
+    }
+    .category-card .cat-icon { font-size: 32px; }
+    .category-card h3 { font-size: 16px; font-weight: 700; margin-top: 12px; }
+    .category-card p { font-size: 13px; color: #64748b; margin-top: 6px; line-height: 1.5; }
+    .category-card .cat-meta {
+      display: flex;
+      align-items: center;
+      gap: 8px;
+      margin-top: 12px;
+    }
+    .category-card .cat-count {
+      font-size: 12px;
+      font-weight: 500;
+      padding: 2px 10px;
+      border-radius: 20px;
+      background: #e0f2fe;
+      color: #0369a1;
+    }
+    .category-card .cat-audience {
+      font-size: 12px;
+      color: #94a3b8;
+    }
+    .category-card .active-marker {
+      position: absolute;
+      top: 12px;
+      right: 12px;
+      width: 24px;
+      height: 24px;
+      border-radius: 50%;
+      background: #3b82f6;
+      color: #fff;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      font-size: 14px;
+    }
+
+    /* ═══ Dashboard: Two columns ═══ */
+    .dashboard-grid {
+      display: grid;
+      grid-template-columns: 1fr 1fr;
+      gap: 16px;
+      margin-bottom: 40px;
+    }
+    @media (max-width: 768px) { .dashboard-grid { grid-template-columns: 1fr; } }
+    .dash-card {
+      background: #fff;
+      border: 1px solid #e2e8f0;
+      border-radius: 12px;
+      padding: 24px;
+    }
+    .dash-card .dash-title {
+      font-size: 14px;
+      font-weight: 600;
+      display: flex;
+      align-items: center;
+      gap: 8px;
+      margin-bottom: 16px;
+    }
+    .dash-card .dash-title .emoji { font-size: 16px; }
+
+    /* Progress bars */
+    .progress-item { margin-bottom: 16px; }
+    .progress-item:last-child { margin-bottom: 0; }
+    .progress-item .progress-label {
+      display: flex;
+      justify-content: space-between;
+      font-size: 13px;
+      margin-bottom: 6px;
+    }
+    .progress-item .progress-label span:first-child { color: #475569; }
+    .progress-item .progress-label span:last-child { font-weight: 600; color: #1e293b; }
+    .progress-bar {
+      height: 8px;
+      background: #f1f5f9;
+      border-radius: 20px;
+      overflow: hidden;
+    }
+    .progress-bar .fill {
+      height: 100%;
+      border-radius: 20px;
+      transition: width .6s ease;
+    }
+    .progress-bar .fill.blue  { background: linear-gradient(90deg, #3b82f6, #6366f1); }
+    .progress-bar .fill.green { background: linear-gradient(90deg, #10b981, #14b8a6); }
+
+    /* Todo list */
+    .todo-item {
+      display: flex;
+      align-items: flex-start;
+      gap: 10px;
+      padding: 10px 0;
+      border-bottom: 1px solid #f1f5f9;
+      cursor: pointer;
+      transition: background .15s;
+      border-radius: 8px;
+      padding: 8px;
+      margin: 0 -8px;
+    }
+    .todo-item:hover { background: #f8fafc; }
+    .todo-item:last-child { border-bottom: none; }
+    .todo-check {
+      width: 20px; height: 20px;
+      border: 2px solid #cbd5e1;
+      border-radius: 50%;
+      flex-shrink: 0;
+      margin-top: 2px;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      transition: all .15s;
+    }
+    .todo-item:hover .todo-check { border-color: #60a5fa; }
+    .todo-check.done { background: #10b981; border-color: #10b981; }
+    .todo-check.done::after { content: '✓'; color: #fff; font-size: 12px; font-weight: 700; }
+    .todo-text { flex: 1; min-width: 0; }
+    .todo-text .label { font-size: 14px; }
+    .todo-text .label.done { color: #94a3b8; text-decoration: line-through; }
+    .todo-text .course { font-size: 12px; color: #94a3b8; margin-top: 2px; }
+
+    /* Growth bar chart */
+    .growth-chart {
+      display: flex;
+      align-items: flex-end;
+      gap: 12px;
+      height: 140px;
+      padding-top: 16px;
+    }
+    .growth-chart .bar-group {
+      flex: 1;
+      display: flex;
+      flex-direction: column;
+      align-items: center;
+      gap: 6px;
+    }
+    .growth-chart .bar-group .bar {
+      width: 100%;
+      border-radius: 6px;
+      background: linear-gradient(180deg, #3b82f6, #818cf8);
+      min-height: 6px;
+      transition: height .5s ease;
+      cursor: pointer;
+    }
+    .growth-chart .bar-group .bar:hover { background: linear-gradient(180deg, #2563eb, #6366f1); }
+    .growth-chart .bar-group .bar-val { font-size: 11px; color: #94a3b8; font-weight: 500; }
+    .growth-chart .bar-group .bar-label { font-size: 11px; color: #94a3b8; }
+
+    /* AI Advisor */
+    .ai-advisor {
+      background: linear-gradient(135deg, #eff6ff 0%, #eef2ff 100%);
+    }
+    .ai-advisor .ai-header {
+      display: flex;
+      align-items: flex-start;
+      gap: 12px;
+    }
+    .ai-advisor .ai-avatar {
+      width: 40px; height: 40px;
+      border-radius: 50%;
+      background: linear-gradient(135deg, #3b82f6, #6366f1);
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      flex-shrink: 0;
+      font-size: 20px;
+    }
+    .ai-advisor .ai-body h3 { font-size: 14px; font-weight: 600; margin-bottom: 6px; }
+    .ai-advisor .ai-body p { font-size: 14px; color: #475569; line-height: 1.6; }
+    .ai-advisor .ai-body strong { color: #2563eb; }
+    .ai-advisor .ai-badges { display: flex; gap: 8px; margin-top: 12px; }
+    .ai-advisor .ai-badge {
+      font-size: 12px;
+      padding: 3px 10px;
+      border-radius: 20px;
+      background: #dbeafe;
+      color: #1d4ed8;
+    }
+    .ai-advisor .ai-badge.purple { background: #ede9fe; color: #6d28d9; }
+
+    /* ═══ Course Grid ═══ */
+    .course-section { margin-bottom: 40px; }
+    .course-section .course-header {
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+      margin-bottom: 16px;
+    }
+    .course-section .course-header h3 { font-size: 16px; font-weight: 600; display: flex; align-items: center; gap: 8px; }
+    .course-section .course-header .view-all {
+      font-size: 13px;
+      color: #3b82f6;
+      display: flex;
+      align-items: center;
+      gap: 4px;
+      border: none;
+      background: none;
+      font-family: inherit;
+    }
+    .course-section .course-header .view-all:hover { color: #1d4ed8; }
+    .course-grid {
+      display: grid;
+      grid-template-columns: repeat(auto-fill, minmax(260px, 1fr));
+      gap: 16px;
+    }
+    .course-card {
+      background: #fff;
+      border: 1px solid #e2e8f0;
+      border-radius: 12px;
+      padding: 20px;
+      transition: all .2s;
+      cursor: pointer;
+      display: block;
+    }
+    .course-card:hover {
+      border-color: #93c5fd;
+      box-shadow: 0 4px 16px rgba(59,130,246,.1);
+    }
+    .course-card .cc-top {
+      display: flex;
+      align-items: center;
+      gap: 12px;
+    }
+    .course-card .cc-icon {
+      width: 40px; height: 40px;
+      border-radius: 10px;
+      background: linear-gradient(135deg, #3b82f6, #6366f1);
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      font-size: 18px;
+      flex-shrink: 0;
+    }
+    .course-card .cc-title {
+      font-size: 14px;
+      font-weight: 500;
+      line-height: 1.3;
+      white-space: nowrap;
+      overflow: hidden;
+      text-overflow: ellipsis;
+    }
+    .course-card .cc-desc {
+      font-size: 13px;
+      color: #64748b;
+      margin-top: 10px;
+      line-height: 1.5;
+      display: -webkit-box;
+      -webkit-line-clamp: 2;
+      -webkit-box-orient: vertical;
+      overflow: hidden;
+    }
+    .course-card .cc-badges {
+      display: flex;
+      gap: 8px;
+      margin-top: 12px;
+    }
+    .course-card .cc-badge {
+      font-size: 11px;
+      padding: 2px 10px;
+      border-radius: 20px;
+      background: #f1f5f9;
+      color: #64748b;
+    }
+
+    /* Empty state */
+    .empty-state {
+      background: #fff;
+      border: 2px dashed #e2e8f0;
+      border-radius: 16px;
+      padding: 60px 24px;
+      text-align: center;
+    }
+    .empty-state .empty-icon {
+      width: 64px; height: 64px;
+      border-radius: 50%;
+      background: #f1f5f9;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      font-size: 28px;
+      margin: 0 auto 16px;
+    }
+    .empty-state h3 { font-size: 16px; color: #475569; }
+    .empty-state p { font-size: 14px; color: #94a3b8; margin-top: 6px; }
+
+    /* Spinner */
+    .spinner-overlay {
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      min-height: 60vh;
+    }
+    .spinner {
+      width: 40px; height: 40px;
+      border: 4px solid #e2e8f0;
+      border-top-color: #3b82f6;
+      border-radius: 50%;
+      animation: spin .7s linear infinite;
+    }
+    @keyframes spin { to { transform: rotate(360deg); } }
+
+    /* Footer */
+    .footer {
+      border-top: 1px solid #e2e8f0;
+      background: #fff;
+      padding: 24px 0;
+      margin-top: 48px;
+    }
+    .footer-inner {
+      display: flex;
+      justify-content: space-between;
+      align-items: center;
+      font-size: 13px;
+      color: #94a3b8;
+    }
+    @media (max-width: 500px) { .footer-inner { flex-direction: column; gap: 8px; } }
+    .footer-inner a { color: #94a3b8; }
+    .footer-inner a:hover { color: #64748b; }
+  </style>
+</head>
+<body>
+
+  <!-- ═══ Root Mount ═══ -->
+  <div id="root">
+    <div class="spinner-overlay"><div class="spinner"></div></div>
+  </div>
+
+  <script>
+  (function() {
+    'use strict';
+
+    // ── Helpers ──────────────────────────────────────
+    function getCookie(name) {
+      var match = document.cookie.match(new RegExp('(^| )' + name + '=([^;]+)'));
+      return match ? decodeURIComponent(match[2]) : null;
+    }
+
+    function setCookie(name, value, maxAgeSec) {
+      document.cookie = name + '=' + encodeURIComponent(value) + ';path=/;SameSite=Lax;max-age=' + maxAgeSec;
+    }
+
+    function $(sel) { return document.querySelector(sel); }
+    function $$(sel) { return document.querySelectorAll(sel); }
+
+    function api(path, opts) {
+      return fetch(path, {
+        headers: { 'Content-Type': 'application/json' },
+        ...opts,
+      }).then(function(r) { return r.json(); });
+    }
+
+    function escapeHtml(str) {
+      if (!str) return '';
+      return String(str)
+        .replace(/&/g, '&amp;')
+        .replace(/</g, '&lt;')
+        .replace(/>/g, '&gt;')
+        .replace(/"/g, '&quot;');
+    }
+
+    function greeting() {
+      var h = new Date().getHours();
+      if (h < 6) return '夜深了';
+      if (h < 9) return '早上好';
+      if (h < 12) return '上午好';
+      if (h < 14) return '中午好';
+      if (h < 18) return '下午好';
+      return '晚上好';
+    }
+
+    var CATEGORIES = [
+      { id: 'onboarding', label: '新人入学', icon: '🎓',
+        desc: '面向新入职员工，帮助快速融入公司文化、了解组织架构、掌握基础业务流程。',
+        audience: '普通员工（新入职）' },
+      { id: 'mentorship', label: '学分制带教', icon: '📚',
+        desc: '系统化导师带教计划，学分制管理学习进度。涵盖岗位技能、产品知识等结构化课程。',
+        audience: '一线营业 / 初级员工' },
+      { id: 'intensive', label: '小灶教学', icon: '🔥',
+        desc: '针对特定场景的精品课程，聚焦实战技能提升。包含案例分析、模拟演练等互动教学。',
+        audience: '一线营业 / 二线支援' },
+      { id: 'leadership', label: '领导力课程', icon: '⭐',
+        desc: '面向管理层的领导力发展项目，涵盖团队管理、战略思维、决策能力等。',
+        audience: '管理层' },
+    ];
+
+    var LEARNER_DIMS = [
+      { role: '普通员工', focus: '新员工入职引导、岗位基础技能、合规培训' },
+      { role: '管理层', focus: '领导力发展、战略决策、团队管理' },
+      { role: '一线营业部门', focus: '产品知识、销售技巧、客户管理' },
+      { role: '二线支援部门', focus: '流程优化、项目管理、跨部门协作' },
+    ];
+
+    var TODOS = [
+      { label: '完成「第2课：三层架构落地」学习', course: '从零搭建Obsidian知识库', done: false },
+      { label: '提交课后作业', course: '华鑫产品线销售培训', done: true },
+      { label: '参加本周五直播答疑', course: 'AI产品经理面试知识体系', done: false },
+    ];
+
+    var GROWTH = [
+      { month: '1月', count: 2 }, { month: '2月', count: 3 },
+      { month: '3月', count: 5 }, { month: '4月', count: 4 },
+      { month: '5月', count: 7 }, { month: '6月', count: 6 },
+    ];
+
+    // ── State ────────────────────────────────────────
+    var state = {
+      user: null,
+      shifus: [],
+      dashboard: null,
+      allCourses: null,       // from /api/portal/courses?category=
+      categoryCourses: {},    // cache for per-category results { slug: [...] }
+      activeCategory: null,
+      loading: true,
+      error: null,
+    };
+
+    // ── Render Functions ─────────────────────────────
+
+    function render() {
+      var root = document.getElementById('root');
+      root.innerHTML = renderHeader() + renderHero() + renderStats() + renderDashboard() + renderCategories() + renderCourseSections() + renderFooter();
+
+      // Bind category clicks
+      $$('.category-card').forEach(function(el) {
+        el.addEventListener('click', function() {
+          var id = el.dataset.catId;
+          if (state.activeCategory === id) {
+            state.activeCategory = null;
+            render();
+            return;
+          }
+          state.activeCategory = id;
+          // Fetch courses for this category from API
+          if (!state.categoryCourses[id]) {
+            api('/api/portal/courses?category=' + id).then(function(d) {
+              if (d.code === 0) state.categoryCourses[id] = d.data || [];
+              render();
+            }).catch(function() {
+              state.categoryCourses[id] = [];
+              render();
+            });
+          } else {
+            render();
+          }
+        });
+      });
+
+      // Bind course card clicks
+      $$('.course-card').forEach(function(el) {
+        el.addEventListener('click', function(e) {
+          e.preventDefault();
+          window.location.href = el.getAttribute('href');
+        });
+      });
+
+      // Bind view all
+      $$('.view-all').forEach(function(el) {
+        el.addEventListener('click', function(e) {
+          e.preventDefault();
+          var catId = el.dataset.catId;
+          state.activeCategory = state.activeCategory === catId ? null : catId;
+          // Fetch if not cached
+          if (state.activeCategory && !state.categoryCourses[catId]) {
+            api('/api/portal/courses?category=' + catId).then(function(d) {
+              if (d.code === 0) state.categoryCourses[catId] = d.data || [];
+              render();
+            }).catch(function() {
+              state.categoryCourses[catId] = [];
+              render();
+            });
+          } else {
+            render();
+          }
+        });
+      });
+    }
+
+function renderHeader() {
+      var uname = state.user ? (state.user.name || state.user.user_id || '用户') : '同学';
+      var initial = (state.user ? (state.user.name || '?') : '?')[0];
+      return (
+        '<header class="header">' +
+          '<div class="header-inner max-w-7xl">' +
+            '<div class="header-logo"><span class="icon">S</span>sysmex Learning</div>' +
+            '<div class="header-user">' +
+              '<span class="name">' + escapeHtml(uname) + '</span>' +
+              '<span class="avatar">' + escapeHtml(initial) + '</span>' +
+              '<button class="logout-btn" onclick="window.location.href=\'/api/user/logout\'">退出</button>' +
+            '</div>' +
+          '</div>' +
+        '</header>'
+      );
+    }
+
+    function renderHero() {
+      var uname = state.user ? (state.user.name || '同学') : '同学';
+      var mentorLink = '';
+      if (state.dashboard && state.dashboard.mentor_student_count > 0) {
+        mentorLink = '<a href="/mentor/" style="font-size:13px;color:#3b82f6;margin-left:16px;white-space:nowrap">🧑‍🏫 导师工作台</a>';
+      }
+      return (
+        '<section class="max-w-7xl">' +
+          '<div class="hero">' +
+            '<h1>' + greeting() + '，' + escapeHtml(uname) + ' 👋' + mentorLink + '</h1>' +
+            '<p>欢迎来到企业学习平台。根据你的岗位和发展阶段，以下是为您推荐的课程体系。</p>' +
+          '</div>' +
+        '</section>'
+      );
+    }
+
+    function renderStats() {
+      var total = state.shifus.length;
+      var dash = state.dashboard || {};
+      var completed = dash.completed_courses || Math.floor(total * 0.45);
+      var rate = dash.completion_rate || (total > 0 ? Math.round((completed / total) * 100) : 0);
+      return (
+        '<section class="max-w-7xl">' +
+          '<div class="stats-grid">' +
+            '<div class="stat-card">' +
+              '<div class="stat-icon" style="background:#eff6ff"><span>📖</span></div>' +
+              '<div><div class="stat-label">在学课程</div><div class="stat-value">' + total + '</div><div class="stat-sub">全部课程</div></div>' +
+            '</div>' +
+            '<div class="stat-card">' +
+              '<div class="stat-icon" style="background:#ecfdf5"><span>✅</span></div>' +
+              '<div><div class="stat-label">已完成</div><div class="stat-value">' + completed + '</div><div class="stat-sub">完成率 ' + rate + '%</div></div>' +
+            '</div>' +
+            '<div class="stat-card">' +
+              '<div class="stat-icon" style="background:#fffbeb"><span>⏱️</span></div>' +
+              '<div><div class="stat-label">学习时长</div><div class="stat-value">' + (total * 1.5).toFixed(1) + 'h</div><div class="stat-sub">累计学习</div></div>' +
+            '</div>' +
+            '<div class="stat-card">' +
+              '<div class="stat-icon" style="background:#faf5ff"><span>🏆</span></div>' +
+              '<div><div class="stat-label">学习积分</div><div class="stat-value">1,280</div><div class="stat-sub">超越 73% 学员</div></div>' +
+            '</div>' +
+          '</div>' +
+        '</section>'
+      );
+    }
+
+    function renderDashboard() {
+      var total = state.shifus.length;
+      var dash = state.dashboard || {};
+      var completed = dash.completed_courses || Math.floor(total * 0.45);
+      var rate = dash.completion_rate || (total > 0 ? Math.round((completed / total) * 100) : 0);
+      var monthTarget = 8;
+      var monthProgress = 4;
+
+      // Build todos from API tasks
+      var todoList = dash.pending_tasks && dash.pending_tasks.length > 0
+        ? dash.pending_tasks.map(function(t) { return { label: t.title, course: t.task_type, done: false }; })
+        : TODOS;
+
+      // Growth chart
+      var maxCount = Math.max.apply(null, GROWTH.map(function(d) { return d.count; }));
+      var barsHtml = '';
+      GROWTH.forEach(function(d) {
+        var h = maxCount > 0 ? Math.round((d.count / maxCount) * 100) : 0;
+        barsHtml += (
+          '<div class="bar-group">' +
+            '<span class="bar-val">' + d.count + '</span>' +
+            '<div class="bar" style="height:' + h + '%"></div>' +
+            '<span class="bar-label">' + d.month + '</span>' +
+          '</div>'
+        );
+      });
+
+      // Todo items
+      var todosHtml = '';
+      todoList.forEach(function(t) {
+        todosHtml += (
+          '<div class="todo-item">' +
+            '<div class="todo-check' + (t.done ? ' done' : '') + '"></div>' +
+            '<div class="todo-text">' +
+              '<div class="label' + (t.done ? ' done' : '') + '">' + escapeHtml(t.label) + '</div>' +
+              '<div class="course">' + escapeHtml(t.course) + '</div>' +
+            '</div>' +
+          '</div>'
+        );
+      });
+
+      return (
+        '<section class="max-w-7xl">' +
+          '<div class="dashboard-grid">' +
+            /* Left Column */
+            '<div style="display:flex;flex-direction:column;gap:16px">' +
+              /* Progress */
+              '<div class="dash-card">' +
+                '<div class="dash-title"><span class="emoji">📊</span> 学习进度概览</div>' +
+                '<div class="progress-item">' +
+                  '<div class="progress-label"><span>课程完成率</span><span>' + rate + '%</span></div>' +
+                  '<div class="progress-bar"><div class="fill blue" style="width:' + rate + '%"></div></div>' +
+                '</div>' +
+                '<div class="progress-item">' +
+                  '<div class="progress-label"><span>本月目标</span><span>' + monthProgress + '/' + monthTarget + ' 门</span></div>' +
+                  '<div class="progress-bar"><div class="fill green" style="width:' + Math.round(monthProgress/monthTarget*100) + '%"></div></div>' +
+                '</div>' +
+              '</div>' +
+              /* Todos */
+              '<div class="dash-card">' +
+                '<div class="dash-title"><span class="emoji">📋</span> 待办事项</div>' +
+                todosHtml +
+              '</div>' +
+            '</div>' +
+            /* Right Column */
+            '<div style="display:flex;flex-direction:column;gap:16px">' +
+              /* Growth */
+              '<div class="dash-card">' +
+                '<div class="dash-title"><span class="emoji">📈</span> 成长曲线 <span style="font-size:12px;color:#94a3b8;font-weight:400;margin-left:auto">近6个月</span></div>' +
+                '<div class="growth-chart">' + barsHtml + '</div>' +
+              '</div>' +
+              /* AI Advisor */
+              '<div class="dash-card ai-advisor">' +
+                '<div class="ai-header">' +
+                  '<div class="ai-avatar">✨</div>' +
+                  '<div class="ai-body">' +
+                    '<h3>AI 学习建议</h3>' +
+                    '<p>' + renderAiAdvice() + '</p>' +
+                    renderAiAdviceBadges() +
+                  '</div>' +
+                '</div>' +
+              '</div>' +
+            '</div>' +
+          '</div>' +
+        '</section>'
+      );
+    }
+
+    function getCoursesByCategory(catId) {
+      // Prefer API results when available
+      if (state.categoryCourses[catId]) {
+        return state.categoryCourses[catId];
+      }
+      // Fall back to keyword matching
+      return state.shifus.filter(function(s) {
+        var name = (s.name || '').toLowerCase();
+        var desc = (s.description || '').toLowerCase();
+        var kw = ((s.keywords || '') + '').toLowerCase();
+        var combined = name + ' ' + desc + ' ' + kw;
+        switch (catId) {
+          case 'onboarding':  return /新人|入职|入门|基础|新员工|onboarding|新手/.test(combined);
+          case 'mentorship':  return /带教|学分|mentor|导师|岗位|技能|培训|培训/.test(combined);
+          case 'intensive':   return /小灶|实战|案例|精品|专项|研修|workshop|训练营/.test(combined);
+          case 'leadership':  return /领导|管理|管理層|战略|决策|团队|leadership/.test(combined);
+          default: return false;
+        }
+      });
+    }
+
+    function renderCategories() {
+      var html = '<section class="max-w-7xl"><h2 class="section-title">课程体系</h2><p class="section-subtitle">围绕四个成长阶段，构建完整的企业人才培养路径</p><div class="category-grid">';
+      CATEGORIES.forEach(function(cat) {
+        var count = getCoursesByCategory(cat.id).length;
+        var active = state.activeCategory === cat.id;
+        html += (
+          '<div class="category-card' + (active ? ' active' : '') + '" data-cat-id="' + cat.id + '">' +
+            '<div class="cat-icon">' + cat.icon + '</div>' +
+            '<h3>' + escapeHtml(cat.label) + '</h3>' +
+            '<p>' + escapeHtml(cat.desc) + '</p>' +
+            '<div class="cat-meta">' +
+              '<span class="cat-count">' + (count > 0 ? count + ' 门课程' : '即将上线') + '</span>' +
+              '<span class="cat-audience">' + escapeHtml(cat.audience) + '</span>' +
+            '</div>' +
+            (active ? '<div class="active-marker">›</div>' : '') +
+          '</div>'
+        );
+      });
+      html += '</div></section>';
+      return html;
+    }
+
+    function renderCourseSections() {
+      var activeCats = state.activeCategory
+        ? CATEGORIES.filter(function(c) { return c.id === state.activeCategory; })
+        : CATEGORIES;
+
+      var html = '<section class="max-w-7xl">';
+      var anyContent = false;
+
+      activeCats.forEach(function(cat) {
+        var courses = getCoursesByCategory(cat.id);
+        html += '<div class="course-section">' +
+          '<div class="course-header">' +
+            '<h3>' + cat.icon + ' ' + escapeHtml(cat.label) + '</h3>' +
+            (courses.length > 0 ? '<button class="view-all" data-cat-id="' + cat.id + '">查看全部 ›</button>' : '') +
+          '</div>';
+
+        if (courses.length > 0) {
+          anyContent = true;
+          html += '<div class="course-grid">';
+          courses.slice(0, 6).forEach(function(s) {
+            var initial = (s.name || '课')[0];
+            html += (
+              '<a class="course-card" href="/c/' + s.bid + '">' +
+                '<div class="cc-top">' +
+                  '<div class="cc-icon">' + escapeHtml(initial) + '</div>' +
+                  '<div class="cc-title">' + escapeHtml(s.name || '未命名课程') + '</div>' +
+                '</div>' +
+                (s.description ? '<div class="cc-desc">' + escapeHtml(s.description) + '</div>' : '') +
+                '<div class="cc-badges">' +
+                  '<span class="cc-badge">' + (s.tts_enabled ? '🎧 语音' : '📖 阅读') + '</span>' +
+                '</div>' +
+              '</a>'
+            );
+          });
+          html += '</div>';
+        } else if (state.activeCategory === cat.id) {
+          html += '<div class="empty-state">' +
+            '<div class="empty-icon">📚</div>' +
+            '<h3>该分类暂无课程</h3>' +
+            '<p>课程正在准备中，敬请期待</p>' +
+          '</div>';
+        }
+        html += '</div>';
+      });
+
+      // Uncategorized
+      var allCatIds = CATEGORIES.map(function(c) { return c.id; });
+      var catCourseIds = {};
+      CATEGORIES.forEach(function(cat) {
+        getCoursesByCategory(cat.id).forEach(function(s) { catCourseIds[s.bid] = true; });
+      });
+      var other = state.shifus.filter(function(s) { return !catCourseIds[s.bid]; });
+
+      if (!state.activeCategory && other.length > 0) {
+        anyContent = true;
+        html += '<div class="course-section">' +
+          '<div class="course-header">' +
+            '<h3>📂 其他课程</h3>' +
+          '</div>' +
+          '<div class="course-grid">';
+        other.slice(0, 6).forEach(function(s) {
+          var initial = (s.name || '课')[0];
+          html += (
+            '<a class="course-card" href="/c/' + s.bid + '">' +
+              '<div class="cc-top">' +
+                '<div class="cc-icon">' + escapeHtml(initial) + '</div>' +
+                '<div class="cc-title">' + escapeHtml(s.name || '未命名课程') + '</div>' +
+              '</div>' +
+              (s.description ? '<div class="cc-desc">' + escapeHtml(s.description) + '</div>' : '') +
+              '<div class="cc-badges"><span class="cc-badge">📖 阅读</span></div>' +
+            '</a>'
+          );
+        });
+        html += '</div></div>';
+      }
+
+      if (!anyContent && state.shifus.length === 0) {
+        html += '<div class="empty-state">' +
+          '<div class="empty-icon">📚</div>' +
+          '<h3>暂无课程</h3>' +
+          '<p>等待管理员发布课程后，这里将展示所有学习内容</p>' +
+        '</div>';
+      }
+
+      html += '</section>';
+      return html;
+    }
+
+    // ═══ AI Advice (dynamic, based on real data) ═══
+    function renderAiAdvice() {
+      var dash = state.dashboard || {};
+      var students = state.shifus || [];
+      var pendingTasks = dash.pending_tasks || [];
+      var mentorships = dash.mentorships || [];
+
+      // Find the first course that's not completed
+      var suggestedCourse = '';
+      students.forEach(function(s) {
+        if (!suggestedCourse && s.name) suggestedCourse = s.name;
+      });
+
+      if (pendingTasks.length > 0) {
+        return '你有 <strong>' + pendingTasks.length + '</strong> 项待办任务待完成，建议优先处理后再开始新课程。';
+      }
+      if (mentorships && mentorships.length > 0) {
+        var active = mentorships.filter(function(m) { return m.status === 'in_progress'; });
+        if (active.length > 0) {
+          return '你正在进行 <strong>' + active.length + '</strong> 个带教阶段，建议专注完成当前阶段学习。';
+        }
+      }
+      if (suggestedCourse) {
+        return '根据你的学习进度，建议继续学习 <strong>' + escapeHtml(suggestedCourse) + '</strong>。';
+      }
+      return '欢迎来到学习平台，浏览课程分类选择感兴趣的课程开始学习。';
+    }
+
+    function renderAiAdviceBadges() {
+      var dash = state.dashboard || {};
+      var badges = '';
+      var count = 0;
+      if (dash.completion_rate > 0) {
+        badges += '<span class="ai-badge purple">完成率 ' + dash.completion_rate + '%</span>';
+        count++;
+      }
+      if ((dash.mentor_student_count || 0) > 0) {
+        badges += '<span class="ai-badge">导师 ' + dash.mentor_student_count + ' 名学员</span>';
+        count++;
+      }
+      if (count === 0) {
+        badges = '<span class="ai-badge">基于你的学习数据</span>';
+      }
+      return '<div class="ai-badges">' + badges + '</div>';
+    }
+
+    function renderFooter() {
+      return (
+        '<footer class="footer">' +
+          '<div class="max-w-7xl footer-inner">' +
+            '<div>sysmex Learning Platform · 企业大学</div>' +
+            '<div>© ' + new Date().getFullYear() + ' sysmex</div>' +
+          '</div>' +
+        '</footer>'
+      );
+    }
+
+    // ── Init ─────────────────────────────────────────
+    function init() {
+      var token = getCookie('token');
+      if (!token) {
+        // Not logged in - redirect to login page
+        var loginUrl = '/login?redirect=' + encodeURIComponent(window.location.pathname);
+        // But first try to redirect back here
+        window.location.href = '/login?redirect=' + encodeURIComponent('/courses/');
+        return;
+      }
+
+      // Fetch user info, courses, and dashboard data in parallel
+      var initialFetch = Promise.all([
+        api('/api/user/info').then(function(d) {
+          if (d.code === 0) state.user = d.data;
+        }).catch(function() {}),
+        api('/api/shifu/shifus?page_index=1&page_size=50').then(function(d) {
+          if (d.code === 0 && d.items) state.shifus = d.items;
+        }).catch(function() {}),
+        api('/api/portal/dashboard').then(function(d) {
+          if (d.code === 0 && d.data) state.dashboard = d.data;
+        }).catch(function() {}),
+        // Pre-fetch uncategorized courses
+        api('/api/portal/courses').then(function(d) {
+          if (d.code === 0 && d.data) state.allCourses = d.data;
+        }).catch(function() {}),
+      ]).then(function() {
+        state.loading = false;
+        render();
+      }).catch(function() {
+        state.loading = false;
+        render();
+      });
+    }
+
+    init();
+  })();
+  </script>
+</body>
+</html>

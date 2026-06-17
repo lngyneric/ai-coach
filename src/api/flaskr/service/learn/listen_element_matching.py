@@ -11,6 +11,6 @@ def get_speakable_text_elements(
     return [
         element
         for element in (elements or [])
-        if element.element_type == ElementType.TEXT
+        if element.element_type in {ElementType.TEXT, ElementType.HTML}
         and (element.content_text or "").strip()
     ]

@@ -1126,6 +1126,23 @@ def register_user_handler(app: Flask, path_prefix: str) -> Flask:
         db.session.commit()
         return make_common_response({"success": True})
 
+    # ── Logout ──
+    @app.route(path_prefix + "/logout", methods=["GET", "POST"])
+    @bypass_token_validation
+    def logout():
+        """Clear auth cookie and redirect to logout page."""
+        response = app.make_response("")
+        response.set_cookie(
+            "token", "", max_age=0, path="/", httponly=False, samesite="Lax"
+        )
+        if request.method == "GET":
+            response.headers["Location"] = "/logout.html"
+            response.status_code = 302
+        else:
+            response.headers["Location"] = "/logout.html"
+            response.status_code = 302
+        return response
+
     # health check
     @app.route("/health", methods=["GET"])
     @bypass_token_validation

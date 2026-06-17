@@ -5,7 +5,7 @@ This module implements the binary protocol used by Volcengine's
 bidirectional TTS WebSocket API.
 
 Protocol Reference:
-- WebSocket URL: wss://openspeech.bytedance.com/api/v3/tts/bidirection
+- WebSocket URL: wss://openspeech.bytedance.com/api/v3/plan/tts/bidirection
 - Uses custom binary frame format with 4-byte header
 """
 

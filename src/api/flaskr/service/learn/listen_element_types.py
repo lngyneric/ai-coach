@@ -1,5 +1,6 @@
 from __future__ import annotations
 
+import re
 from typing import Any
 
 from flask import Flask
@@ -44,6 +45,22 @@ LEGACY_ELEMENT_TYPE_MAP = {
     ElementType._VIDEO: ElementType.HTML,
 }
 
+# ── HTML markup stripping ─────────────────────────────────────────
+_HTML_COMMENT_RE = re.compile(r"<!--.*?-->", re.DOTALL)
+_STYLE_SCRIPT_BLOCK_RE = re.compile(
+    r"<\s*(?:style|script)\b[^>]*>.*?<\s*/\s*(?:style|script)\s*>",
+    re.IGNORECASE | re.DOTALL,
+)
+_HTML_TAG_RE = re.compile(r"</?\s*[a-zA-Z][a-zA-Z0-9:_-]*\b[^>]*>")
+_VISIBLE_HTML_TAG_RE = re.compile(
+    r"<\s*(?:img|svg|canvas|video|iframe|table|picture|audio|source)\b",
+    re.IGNORECASE,
+)
+_HTML_SPACE_ENTITY_RE = re.compile(
+    r"&(?:nbsp|ensp|emsp|thinsp|zwnj|zwj);", re.IGNORECASE
+)
+_SPEAKABLE_TEXT_RE = re.compile(r"[A-Za-z0-9\u4e00-\u9fff]")
+
 
 def _normalize_bool(raw: Any) -> bool:
     if isinstance(raw, str):
@@ -78,7 +95,7 @@ def _default_is_marker(element_type: ElementType) -> bool:
     return element_type not in {ElementType.TEXT, ElementType.ASK, ElementType.ANSWER}
 
 
-def _default_is_renderable(element_type: ElementType) -> bool:
+def _default_is_renderable(element_type: ElementType, **kwargs) -> bool:
     return element_type not in {
         ElementType.TEXT,
         ElementType.ASK,
@@ -87,8 +104,47 @@ def _default_is_renderable(element_type: ElementType) -> bool:
     }
 
 
+# ── HTML content analysis helpers ─────────────────────────────────
+
+def _strip_non_speech_markup(content_text: str = "") -> str:
+    """Remove HTML tags, style/script blocks, comments, and space entities."""
+    text = str(content_text or "")
+    text = _STYLE_SCRIPT_BLOCK_RE.sub(" ", text)
+    text = _HTML_COMMENT_RE.sub(" ", text)
+    text = _HTML_TAG_RE.sub(" ", text)
+    text = _HTML_SPACE_ENTITY_RE.sub(" ", text)
+    return text
+
+
+def _text_has_speakable_content(content_text: str = "") -> bool:
+    """Check if text has any speakable characters (Chinese or alphanumeric)."""
+    return bool(_SPEAKABLE_TEXT_RE.search(_strip_non_speech_markup(content_text)))
+
+
+def _is_markup_only_text_fragment(content_text: str = "") -> bool:
+    """Check if text is entirely HTML markup with no visible content."""
+    text = str(content_text or "")
+    if not text.strip() or ("<" not in text and ">" not in text):
+        return False
+    return not _strip_non_speech_markup(text).strip()
+
+
+def _html_has_renderable_content(content_text: str = "") -> bool:
+    """Check if HTML has renderable visual content (images, tables, etc)."""
+    text = str(content_text or "")
+    if not text.strip():
+        return False
+    if _VISIBLE_HTML_TAG_RE.search(text):
+        return True
+    visible_text = _strip_non_speech_markup(text)
+    return bool(visible_text.strip())
+
+
 def _default_is_speakable(element_type: ElementType, content_text: str = "") -> bool:
-    return element_type == ElementType.TEXT and bool(content_text)
+    """TEXT and HTML elements with speakable content can be read aloud."""
+    if element_type not in {ElementType.TEXT, ElementType.HTML}:
+        return False
+    return _text_has_speakable_content(content_text)
 
 
 def _normalized_is_speakable(
@@ -97,7 +153,7 @@ def _normalized_is_speakable(
     *,
     stored_is_speakable: bool = False,
 ) -> bool:
-    if element_type != ElementType.TEXT:
+    if element_type not in {ElementType.TEXT, ElementType.HTML}:
         return False
     return bool(
         stored_is_speakable or _default_is_speakable(element_type, content_text)
