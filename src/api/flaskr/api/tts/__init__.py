@@ -74,6 +74,8 @@ def _auto_detect_provider_name() -> str:
         return "minimax"
     if get_config("ARK_ACCESS_KEY_ID") and get_config("ARK_SECRET_ACCESS_KEY"):
         return "volcengine"
+    if get_config("VOLCENGINE_TTS_API_KEY"):
+        return "volcengine"
     if (
         get_config("VOLCENGINE_TTS_APP_KEY")
         and get_config("VOLCENGINE_TTS_ACCESS_KEY")

@@ -33,7 +33,7 @@ services:
       NO_PROXY: ai-shifu-mysql,ai-shifu-redis,ai-shifu-cook-web,ai-shifu-api,ai-shifu-nginx,localhost,127.0.0.1,.local
       REDIS_HOST: ai-shifu-redis
       REDIS_PORT: 6379
-      SECRET_KEY: ai-shifu
+      SECRET_KEY: a7oowDYr0nbxrNiCzx3kxfB3OxZfu8E7OgG9FBTYPFw
       SKIP_LOAD_DOTENV: '1'
       SQLALCHEMY_DATABASE_URI: mysql://root:ai-shifu@ai-shifu-mysql:3306/ai-shifu?charset=utf8mb4
       UNIVERSAL_VERIFICATION_CODE: 1024
@@ -58,10 +58,12 @@ services:
     environment: &id001
       CELERY_BROKER_URL: redis://ai-shifu-redis:6379/0
       CELERY_RESULT_BACKEND: redis://ai-shifu-redis:6379/1
+      LOGIN_METHODS_ENABLED: employee
+      VOLCENGINE_TTS_API_KEY: ark-be35c611-370e-4840-b958-fb85a46f59aa-2157a
       MIN_SHIFU_PRICE: '0'
       REDIS_HOST: ai-shifu-redis
       REDIS_PORT: 6379
-      SECRET_KEY: ai-shifu
+      SECRET_KEY: a7oowDYr0nbxrNiCzx3kxfB3OxZfu8E7OgG9FBTYPFw
       SKIP_LOAD_DOTENV: '1'
       SQLALCHEMY_DATABASE_URI: mysql://root:ai-shifu@ai-shifu-mysql:3306/ai-shifu?charset=utf8mb4
       UNIVERSAL_VERIFICATION_CODE: 1024
@@ -99,7 +101,7 @@ services:
     - ./.env
     environment:
     - I18N_ROOT=/app/i18n
-    image: aishifu/ai-shifu-cook-web:v2.0.1
+    image: aishifu/ai-shifu-cook-web:latest
     working_dir: /app
   ai-shifu-mysql:
     container_name: ai-shifu-mysql
@@ -131,10 +133,11 @@ services:
     - ./nginx-entrypoint.sh:/entrypoint.sh:ro
     - ./default.conf:/etc/nginx/conf.d/default.conf
     - ./certs2:/etc/nginx/certs:ro
-    - ./course-entry.html:/usr/share/nginx/html/course-entry.html:ro
-    - ./sysmex-login.html:/usr/share/nginx/html/sysmex-login.html:ro
     - ./ivd-knowledge-tree.html:/usr/share/nginx/html/ivd-knowledge-tree.html:ro
     - ./d3.v7.min.js:/usr/share/nginx/html/d3.v7.min.js:ro
+    - ./courses.html:/usr/share/nginx/html/courses.html:ro
+    - ./logout.html:/usr/share/nginx/html/logout.html:ro
+    - ./mentor.html:/usr/share/nginx/html/mentor.html:ro
   ai-shifu-redis:
     container_name: ai-shifu-redis
     image: redis:7-alpine

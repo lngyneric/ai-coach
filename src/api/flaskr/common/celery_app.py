@@ -33,7 +33,10 @@ def create_celery_app(flask_app: Flask | None = None) -> Celery:
     celery_app = Celery(
         resolved_flask_app.import_name,
         task_cls=FlaskTask,
-        include=("flaskr.service.billing.tasks",),
+        include=(
+            "flaskr.service.billing.tasks",
+            "flaskr.service.learning_portal.tasks",
+        ),
     )
     celery_app.conf.update(_build_celery_config(resolved_flask_app))
     celery_app.flask_app = resolved_flask_app  # type: ignore[attr-defined]
@@ -75,8 +78,14 @@ def _build_celery_config(flask_app: Flask) -> dict[str, Any]:
         "task_ignore_result": False,
         "broker_connection_retry_on_startup": True,
         "timezone": flask_app.config.get("TZ", "UTC"),
-        "imports": ("flaskr.service.billing.tasks",),
-        "beat_schedule": _build_billing_beat_schedule(flask_app),
+        "imports": (
+            "flaskr.service.billing.tasks",
+            "flaskr.service.learning_portal.tasks",
+        ),
+        "beat_schedule": {
+            **_build_billing_beat_schedule(flask_app),
+            **_build_portal_beat_schedule(),
+        },
     }
 
 
@@ -158,8 +167,32 @@ def _load_flask_app() -> Flask:
     return app_module.create_app()
 
 
+def _build_portal_beat_schedule() -> dict[str, Any]:
+    """Beat schedule for learning portal scheduled tasks."""
+    from celery.schedules import crontab
+    return {
+        "learning_portal.daily_task_push.schedule": {
+            "task": "learning_portal.daily_task_push",
+            "schedule": crontab(hour="9", minute="0"),
+        },
+        "learning_portal.score_reminder.schedule": {
+            "task": "learning_portal.score_reminder",
+            "schedule": crontab(hour="*", minute="30"),
+        },
+        "learning_portal.phase_deadline_reminder.schedule": {
+            "task": "learning_portal.phase_deadline_reminder",
+            "schedule": crontab(hour="8", minute="0"),
+        },
+        "learning_portal.probation_check.schedule": {
+            "task": "learning_portal.probation_check",
+            "schedule": crontab(hour="7", minute="0"),
+        },
+    }
+
+
 def _register_default_tasks() -> None:
     importlib.import_module("flaskr.service.billing.tasks")
+    importlib.import_module("flaskr.service.learning_portal.tasks")
 
 
 def _to_bool(value: Any) -> bool:
