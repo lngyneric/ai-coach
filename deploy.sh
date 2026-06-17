@@ -5,6 +5,23 @@
 
 set -euo pipefail
 
+# ── 生产模式检查 ──
+if [ "${1:-}" = "--prod" ]; then
+    PROD_MODE=true
+    echo "  [生产模式] 启用安全检查"
+    # 检查 AAD_BYPASS
+    if grep -q "^AAD_BYPASS=\"1\"\|^AAD_BYPASS=1" docker/.env 2>/dev/null; then
+        echo "  ⚠️  WARNING: AAD_BYPASS=1 生产环境应关闭"
+    fi
+    # 检查 SECRET_KEY 是否为默认值
+    if grep -q "SECRET_KEY=\"ai-shifu\"" docker/.env 2>/dev/null; then
+        echo "  ❌ ERROR: SECRET_KEY 仍为默认值，请修改"
+        exit 1
+    fi
+else
+    PROD_MODE=false
+fi
+
 API="ai-shifu-api"
 ROOT="/home/sysmex/ai-shifu/src/api/flaskr"
 
