@@ -1,0 +1,696 @@
+<!DOCTYPE html>
+<html lang="zh-CN" data-theme="dark">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>IVD 沙盘推演仪表盘 — Sysmex China 2026-2028</title>
+<script src="d3.v7.min.js"></script>
+<style>
+:root {
+  --bg: #0f172a; --bg2: #1e293b; --bg3: #1a2332; --text: #e2e8f0; --muted: #94a3b8;
+  --border: #334155; --accent: #60a5fa; --success: #22c55e; --warn: #f59e0b; --danger: #ef4444;
+  --card-bg: rgba(30,41,59,0.8); --header-bg: rgba(15,23,42,0.96);
+}
+[data-theme="light"] {
+  --bg: #f8fafc; --bg2: #e2e8f0; --bg3: #f1f5f9; --text: #1e293b; --muted: #64748b;
+  --border: #cbd5e1; --accent: #2563eb; --card-bg: rgba(255,255,255,0.9);
+  --header-bg: rgba(248,250,252,0.96);
+}
+*{margin:0;padding:0;box-sizing:border-box}
+body{font-family:-apple-system,BlinkMacSystemFont,"Segoe UI",Roboto,"PingFang SC","Microsoft YaHei",sans-serif;background:var(--bg);color:var(--text);min-height:100vh;transition:background 0.3s,color 0.3s}
+#header{position:fixed;top:0;left:0;right:0;height:52px;background:var(--header-bg);backdrop-filter:blur(12px);border-bottom:1px solid var(--border);display:flex;align-items:center;padding:0 20px;z-index:100;gap:12px}
+#header h1{font-size:16px;font-weight:600;background:linear-gradient(135deg,var(--accent),#a78bfa);-webkit-background-clip:text;-webkit-text-fill-color:transparent}
+#header .sub{font-size:11px;color:var(--muted)}
+#content{margin-top:64px;padding:20px;max-width:1400px;margin-left:auto;margin-right:auto}
+.card{background:var(--card-bg);border:1px solid var(--border);border-radius:12px;padding:20px;margin-bottom:16px;backdrop-filter:blur(8px)}
+.card h2{font-size:14px;font-weight:600;margin-bottom:12px;display:flex;align-items:center;gap:8px}
+.flex{display:flex;gap:16px;flex-wrap:wrap}
+.flex-1{flex:1;min-width:280px}
+.grid{display:grid;grid-template-columns:repeat(auto-fill,minmax(320px,1fr));gap:16px}
+/* Goal Input */
+.goal-input{width:100%;background:var(--bg2);border:1px solid var(--border);border-radius:8px;padding:12px 16px;color:var(--text);font-size:14px;resize:vertical;min-height:60px;font-family:inherit}
+.goal-input:focus{outline:2px solid var(--accent);border-color:transparent}
+.goal-hints{display:flex;gap:6px;flex-wrap:wrap;margin-top:8px}
+.goal-hint{padding:4px 10px;border:1px solid var(--border);border-radius:14px;font-size:11px;cursor:pointer;color:var(--muted);background:var(--bg2);transition:all 0.2s}
+.goal-hint:hover{border-color:var(--accent);color:var(--accent);background:rgba(96,165,250,0.1)}
+/* Sliders */
+.slider-group{margin:10px 0}
+.slider-group label{font-size:12px;display:flex;justify-content:space-between}
+.slider-group input[type=range]{width:100%;margin:4px 0;background:var(--bg2);height:4px;border-radius:2px;-webkit-appearance:none}
+.slider-group input[type=range]::-webkit-slider-thumb{-webkit-appearance:none;width:14px;height:14px;border-radius:50%;background:var(--accent);cursor:pointer}
+.val{color:var(--accent);font-weight:600}
+/* Buttons */
+.btn{padding:8px 20px;border:1px solid var(--border);border-radius:8px;background:var(--bg2);color:var(--text);font-size:13px;cursor:pointer;transition:all 0.2s;font-weight:500}
+.btn:hover{border-color:var(--accent)}
+.btn-primary{background:var(--accent);color:#fff;border-color:var(--accent)}
+.btn-primary:hover{filter:brightness(1.1)}
+.btn-sm{padding:4px 12px;font-size:11px}
+/* Scenario cards */
+.scenario{background:var(--bg2);border:1px solid var(--border);border-radius:10px;padding:16px;margin-bottom:12px;transition:all 0.2s}
+.scenario:hover{border-color:var(--accent)}
+.scenario-header{display:flex;justify-content:space-between;align-items:center;margin-bottom:8px}
+.scenario-name{font-weight:600;font-size:14px}
+.confidence-badge{padding:2px 8px;border-radius:10px;font-size:10px;font-weight:600}
+.conf-high{background:rgba(34,197,94,0.2);color:var(--success)}
+.conf-mid{background:rgba(245,158,11,0.2);color:var(--warn)}
+.conf-low{background:rgba(239,68,68,0.2);color:var(--danger)}
+.metric{display:flex;justify-content:space-between;padding:3px 0;font-size:12px;border-bottom:1px solid rgba(51,65,85,0.3)}
+.metric:last-child{border-bottom:none}
+.metric .up{color:var(--success)}
+.metric .down{color:var(--danger)}
+.metric .lab{color:var(--muted)}
+/* Chart */
+#chart{width:100%;height:300px}
+.chart-bar{fill:var(--accent);opacity:0.8;transition:opacity 0.2s}
+.chart-bar:hover{opacity:1}
+.chart-text{fill:var(--muted);font-size:10px}
+.axis line,.axis path{stroke:var(--border)}
+.axis text{fill:var(--muted);font-size:10px}
+/* Tabs */
+.tabs{display:flex;gap:4px;margin-bottom:12px}
+.tab{padding:6px 14px;border:1px solid var(--border);border-radius:6px;background:var(--bg2);color:var(--muted);font-size:11px;cursor:pointer;transition:all 0.2s}
+.tab.active{background:var(--accent);color:#fff;border-color:var(--accent)}
+.tab:hover:not(.active){border-color:var(--accent);color:var(--text)}
+/* Suggestions */
+.suggestion{padding:8px 12px;margin:4px 0;background:var(--bg3);border-left:3px solid var(--accent);border-radius:0 6px 6px 0;font-size:12px}
+.suggestion .tag{display:inline-block;padding:1px 6px;border-radius:3px;font-size:10px;margin-right:6px}
+.tag-param{background:rgba(96,165,250,0.2);color:var(--accent)}
+.tag-time{background:rgba(245,158,11,0.2);color:var(--warn)}
+/* Loading */
+#loading{display:none;text-align:center;padding:40px}
+.spinner{width:32px;height:32px;border:3px solid var(--border);border-top-color:var(--accent);border-radius:50%;animation:spin 0.8s linear infinite;margin:0 auto 12px}
+@keyframes spin{to{transform:rotate(360deg)}}
+/* Comparison table */
+.comp-table{width:100%;border-collapse:collapse;font-size:12px;margin-top:8px}
+.comp-table th,.comp-table td{padding:6px 10px;border:1px solid var(--border);text-align:center}
+.comp-table th{background:var(--bg2);font-weight:600;font-size:11px}
+.comp-table td:first-child{text-align:left;font-weight:500}
+.comp-table .best{background:rgba(34,197,94,0.15)}
+/* Prompt box */
+.prompt-box{background:var(--bg3);border:1px solid var(--border);border-radius:8px;padding:12px;font-family:monospace;font-size:11px;line-height:1.6;color:var(--muted);margin-top:8px;white-space:pre-wrap;max-height:200px;overflow-y:auto}
+.doc-link{display:inline-flex;align-items:center;gap:4px;padding:3px 10px;border:1px solid var(--border);border-radius:6px;background:var(--bg2);color:var(--accent);font-size:11px;cursor:pointer;text-decoration:none;transition:all 0.2s}
+.doc-link:hover{border-color:var(--accent);background:rgba(96,165,250,0.1)}
+@media (max-width:700px){.flex{flex-direction:column}.grid{grid-template-columns:1fr}}
+</style>
+</head>
+<body>
+<div id="header">
+  <h1>🏰 IVD 沙盘推演</h1>
+  <span class="sub">Sysmex China 2026-2028 | 策略推导仪表盘</span>
+  <span style="margin-left:auto;display:flex;gap:8px;align-items:center">
+    <a class="doc-link" href="ivd-sandbox-model-docs.html" title="模型参数说明文档">📖 模型文档</a>
+    <span style="font-size:11px;color:var(--muted)" id="statusLabel">就绪</span>
+    <button class="btn btn-sm" onclick="toggleTheme()" id="themeBtn">☀️</button>
+  </span>
+</div>
+
+<div id="content">
+  <!-- 目标输入 -->
+  <div class="card">
+    <h2>🎯 设定战略目标</h2>
+    <textarea class="goal-input" id="goalInput" placeholder="描述你的战略目标，例如：&#10;• 凝血业务2027年收入增长15%以上&#10;• 2028年前抢占30家三甲医院免疫装机&#10;• 分子POCT新业务第一年覆盖50家医院&#10;• 整体毛利率保持在55%以上"></textarea>
+    <div class="goal-hints">
+      <span class="goal-hint" onclick="setGoal('凝血业务2027年收入增长15%以上，同时保持毛利率55%')">🩸 凝血增长15%</span>
+      <span class="goal-hint" onclick="setGoal('免疫HISCL三年内实现年收入CAGR +8%，装机量翻倍')">🧪 免疫翻倍</span>
+      <span class="goal-hint" onclick="setGoal('2028年前建立分子POCT + 临床流式两条新业务线，合计贡献5%营收')">🚀 新业务5%</span>
+      <span class="goal-hint" onclick="setGoal('在集采全面冲击下，整体营收保持正增长，毛利率>52%')">🛡️ 保利润</span>
+      <span class="goal-hint" onclick="setGoal('血液业务在集采前通过XR替换XN实现收入+10%，巩固市场份额')">🩸 血液升级</span>
+    </div>
+  </div>
+
+  <!-- 参数调整 -->
+  <div class="flex">
+    <div class="card flex-1">
+      <h2>⚙️ 可调参数</h2>
+      <div id="paramSliders"></div>
+      <div style="margin-top:12px;display:flex;gap:8px">
+        <button class="btn btn-primary" onclick="runSimulation()">▶ 推演</button>
+        <button class="btn" onclick="resetParams()">↺ 重置</button>
+        <button class="btn" onclick="togglePromptConstraints()" id="promptToggleBtn">📋 约束提示词</button>
+      </div>
+    </div>
+    <div class="card flex-1">
+      <h2>📋 约束条件</h2>
+      <div id="constraints">
+        <div class="slider-group"><label>集采影响范围 <span class="val" id="v_caizhao">中 (默认)</span></label>
+          <select id="caizhaoScope" style="width:100%;background:var(--bg2);border:1px solid var(--border);border-radius:6px;color:var(--text);padding:6px 8px;font-size:12px">
+            <option value="mild">温和 — 仅生化发光集采</option>
+            <option value="moderate" selected>中 — 凝血2027入集采 (默认)</option>
+            <option value="severe">极限 — 血液+凝血全部集采</option>
+          </select></div>
+        <div class="slider-group"><label>竞争强度 <span class="val" id="v_comp">中</span></label>
+          <input type="range" min="1" max="5" value="3" class="param" data-key="comp" oninput="updateParam(this)"></div>
+        <div class="slider-group"><label>渠道投入 <span class="val" id="v_channel">中</span></label>
+          <input type="range" min="1" max="5" value="3" class="param" data-key="channel" oninput="updateParam(this)"></div>
+        <div class="slider-group"><label>技术投入 <span class="val" id="v_tech">中</span></label>
+          <input type="range" min="1" max="5" value="3" class="param" data-key="tech" oninput="updateParam(this)"></div>
+        <div class="slider-group"><label>国产替代压力 <span class="val" id="v_local">中</span></label>
+          <input type="range" min="1" max="5" value="3" class="param" data-key="local" oninput="updateParam(this)"></div>
+      </div>
+    </div>
+  </div>
+
+  <!-- 约束提示词（可折叠） -->
+  <div class="card" id="promptCard" style="display:none">
+    <h2>📋 约束提示词（发送给 AI 推导引擎）</h2>
+    <div class="prompt-box" id="promptText">点击「推演」生成提示词...</div>
+  </div>
+
+  <!-- 结果区 -->
+  <div id="results" style="display:none">
+    <div class="card">
+      <div style="display:flex;justify-content:space-between;align-items:center;flex-wrap:wrap;gap:8px">
+        <h2>📊 推演结果 <span style="font-size:11px;color:var(--muted);font-weight:400" id="resultSummary"></span></h2>
+        <div class="tabs">
+          <div class="tab active" onclick="switchView('chart',this)">📈 收入趋势</div>
+          <div class="tab" onclick="switchView('compare',this)">📋 方案对比</div>
+          <div class="tab" onclick="switchView('log',this)">📝 推导日志</div>
+          <div class="tab" onclick="switchView('advice',this)">💡 策略建议</div>
+        </div>
+      </div>
+      <!-- Chart View -->
+      <div id="view-chart"><div id="chart"></div></div>
+      <!-- Compare View -->
+      <div id="view-compare" style="display:none">
+        <div id="scenarioResults"></div>
+      </div>
+      <!-- Advice View -->
+      <div id="view-advice" style="display:none">
+        <div id="suggestions"></div>
+      </div>
+      <!-- Log View -->
+      <div id="view-log" style="display:none">
+        <div id="derivationLog"></div>
+      </div>
+    </div>
+  </div>
+
+  <div id="loading">
+    <div class="spinner"></div>
+    <div style="color:var(--muted);font-size:13px">正在推演中，请稍候...</div>
+  </div>
+</div>
+
+<script>
+// ── Data ──
+const PRODUCTS = [
+  {id:'hematology', name:'🩸 血液', base:100, s2:[107,112,108,105], drivers:['XR替换','DI-60形态学','XS退市'], risks:['2027集采']},
+  {id:'coagulation', name:'🩹 凝血', base:100, s2:[112,125,120,118], drivers:['CS-5100','血栓四项','HYPHEN国产'], risks:['2027省级集采']},
+  {id:'immunoassay', name:'🧪 免疫', base:100, s2:[95,98,95,90], drivers:['HISCL-5000','泽成CDMO'], risks:['罗氏国产化','安图竞争']},
+  {id:'urinalysis', name:'💧 尿液', base:100, s2:[108,115,118,118], drivers:['UN-9000流水线','UF-5000'], risks:['国产替代']},
+  {id:'coag-special', name:'🩸 特殊凝血', base:100, s2:[105,115,125,130], drivers:['血栓四项','LTA','抗Xa'], risks:[]},
+  {id:'molecular-poct', name:'🧬 分子POCT', base:100, s2:[0,0,5,15], drivers:['知微合作','急诊推广'], risks:['产品落地慢']},
+  {id:'flow-cytometry', name:'🔬 临床流式', base:100, s2:[0,5,10,12], drivers:['旷博代理','白血病分型'], risks:['BD竞争']},
+  {id:'huaxin-channel', name:'🏪 华鑫渠道', base:100, s2:[102,100,95,90], drivers:['华鑫培训上线✅','XNL替代XS'], risks:['渠道效率下降']}
+];
+
+const SCENARIO_LABELS = {1:'保守 (S1)',2:'基准 (S2)',3:'激进 (S3)',4:'极限 (S3+)'};
+const SCENARIO_CHANCE = {1:'30%',2:'45%',3:'20%',4:'5%'};
+
+// ── State ──
+let currentGoal = '';
+let params = {comp:3, channel:3, tech:3, local:3};
+let results = null;
+
+// ── Init ──
+function init() {
+  // Param sliders with descriptors
+  const sliders = [
+    {key:'comp', label:'竞争强度', desc:['极低','低','中','高','极高']},
+    {key:'channel', label:'渠道投入', desc:['放弃','收缩','维持','扩张','全力']},
+    {key:'tech', label:'技术投入', desc:['暂停','缩减','维持','加强','领先']},
+    {key:'local', label:'国产替代压力', desc:['无','低','中','高','极高']}
+  ];
+  let html = '';
+  sliders.forEach(s => {
+    html += `<div class="slider-group"><label>${s.label} <span class="val" id="v_${s.key}">${s.desc[2]}</span></label>
+      <input type="range" min="1" max="5" value="3" class="param" data-key="${s.key}" oninput="updateParam(this)">
+      <div style="display:flex;justify-content:space-between;font-size:9px;color:var(--muted)">${s.desc.map((d,i)=>`<span>${d}</span>`).join('')}</div></div>`;
+  });
+  document.getElementById('paramSliders').innerHTML = html;
+  updateThemeBtn();
+}
+
+function updateParam(el) {
+  const k = el.dataset.key;
+  const v = parseInt(el.value);
+  params[k] = v;
+  const descs = {comp:['极低','低','中','高','极高'],channel:['放弃','收缩','维持','扩张','全力'],tech:['暂停','缩减','维持','加强','领先'],local:['无','低','中','高','极高']};
+  document.getElementById(`v_${k}`).textContent = descs[k][v-1];
+}
+
+function setGoal(g) {
+  document.getElementById('goalInput').value = g;
+  document.getElementById('goalInput').focus();
+}
+
+function resetParams() {
+  document.querySelectorAll('.param').forEach(el => { el.value = 3; updateParam(el); });
+  document.getElementById('caizhaoScope').value = 'moderate';
+  document.getElementById('goalInput').value = '';
+  document.getElementById('results').style.display = 'none';
+  document.getElementById('promptCard').style.display = 'none';
+}
+
+// ── Core Simulation ──
+function runSimulation() {
+  const goal = document.getElementById('goalInput').value.trim();
+  if (!goal) { alert('请先输入战略目标'); return; }
+  currentGoal = goal;
+  document.getElementById('results').style.display = 'none';
+  document.getElementById('loading').style.display = 'block';
+  document.getElementById('statusLabel').textContent = '推演中...';
+  document.getElementById('promptCard').style.display = 'none';
+
+  // Build constrained prompt
+  const prompt = buildPrompt(goal);
+  document.getElementById('promptText').textContent = prompt;
+
+  setTimeout(() => {
+    results = generateScenarios(goal);
+    renderResults(results);
+    document.getElementById('loading').style.display = 'none';
+    document.getElementById('results').style.display = 'block';
+    document.getElementById('statusLabel').textContent = '推演完成';
+  }, 1200);
+}
+
+function buildPrompt(goal) {
+  const caizhaoMap = {mild:'温和—仅生化发光进入集采', moderate:'中等—凝血2027进入省际联盟集采', severe:'极限—血液+凝血全部进入集采'};
+  const compMap = ['极低','低','中','高','极高'];
+  const channelMap = ['放弃投入','收缩','维持','扩张','全力投入'];
+  const techMap = ['暂停','缩减','维持','加强','领先投入'];
+  const localMap = ['无','低','中','高','极高'];
+
+  return `## 任务
+基于以下约束，对 Sysmex China 2026-2028 进行沙盘推演。
+
+## 用户目标
+${goal}
+
+## 不可变的约束参数
+- 集采影响范围: ${caizhaoMap[document.getElementById('caizhaoScope').value]}
+- 竞争强度: ${compMap[params.comp-1]}
+- 渠道投入策略: ${channelMap[params.channel-1]}
+- 技术投入策略: ${techMap[params.tech-1]}
+- 国产替代压力: ${localMap[params.local-1]}
+
+## 推演要求
+1. 生成 3-4 个情景方案，每个方案标注可信度（高/中/低）
+2. 每个方案包含：场景名称、核心假设、分产品线收入预测、关键里程碑、风险提示
+3. 可信度评估标准：
+   - 高可信（≥70%）：与 S2 基准情景偏差≤20%，参数在历史波动范围内
+   - 中可信（40-70%）：需要 1-2 个非基准假设成立
+   - 低可信（<40%）：需要多个小概率事件同时发生
+4. 输出 JSON 格式结果。`;
+}
+
+function generateScenarios(goal) {
+  const c = params.comp, ch = params.channel, t = params.tech, l = params.local;
+  const scope = document.getElementById('caizhaoScope').value;
+  const baseIdx = (scope === 'mild') ? 0 : (scope === 'moderate' ? 1 : 2);
+  const year = 2026;
+
+  const scenarios = [];
+
+  // S1: 保守
+  const s1Adj = baseIdx === 0 ? 0.95 : (baseIdx === 1 ? 0.90 : 0.80);
+  const s1Conf = baseIdx === 0 ? 0.75 : (baseIdx === 1 ? 0.65 : 0.40);
+  const s1Data = PRODUCTS.map(p => ({
+    name: p.name, id: p.id,
+    values: p.s2.map((v,i) => Math.round(v * (0.85 + (i+1)*0.03) * s1Adj)),
+    drivers: p.drivers, risks: p.risks
+  }));
+  scenarios.push({
+    id: 1, name: '🟢 保守防御', confidence: s1Conf,
+    label: `可信度 ${Math.round(s1Conf*100)}%`,
+    desc: '维持现有策略，减少新业务投入，核心产品防守',
+    data: s1Data, chance: '25-35%',
+    key_assumptions: ['集采范围扩大','渠道投入维持或收缩','新业务暂缓'],
+    milestones: ['2026: 稳住核心产品份额','2027: 应对集采降价','2028: 完成低效产品线退出'],
+    risks: ['市场份额流失','新业务跟不上竞品'],
+    signals: ['📉 低: 新业务投入','⚠️ 风险: 集采冲击利润'],
+    log: [
+      `参数: 集采=${document.getElementById('caizhaoScope').value}, 竞争=${params.comp}, 渠道=${params.channel}, 技术=${params.tech}, 国产替代=${params.local}`,
+      `基值调整系数: baseAdj=${s1Adj.toFixed(2)} (集采${baseIdx===0?'温和':(baseIdx===1?'中等':'极限')})`,
+      `推导逻辑: 集采冲击→收入下调${Math.round((1-s1Adj)*100)}% → 渠道投入${params.channel<=2?'收缩':'维持'} → 新业务暂缓`,
+      `可信度评估: 与S2偏差${Math.round(Math.abs(1-s1Adj)*100)}% ${Math.abs(1-s1Adj)<=0.2?'≤20%阈值 → 高可信':'>20%阈值 → 中可信'}`
+    ]
+  });
+
+  // S2: 基准 (最可能)
+  const s2Adj = baseIdx === 0 ? 1.05 : (baseIdx === 1 ? 1.0 : 0.90);
+  const s2Conf = baseIdx === 1 ? 0.75 : 0.55;
+  const s2Data = PRODUCTS.map(p => ({
+    name: p.name, id: p.id,
+    values: p.s2.map((v,i) => Math.round(v * s2Adj * (1 + (ch-3)*0.02 + (t-3)*0.015))),
+    drivers: p.drivers, risks: p.risks
+  }));
+  scenarios.push({
+    id: 2, name: '🟡 结构化调整', confidence: s2Conf,
+    label: `可信度 ${Math.round(s2Conf*100)}%`,
+    desc: '基准情景，有选择地投入新业务，核心产品差异化竞争',
+    data: s2Data, chance: '40-50%',
+    key_assumptions: ['凝血2027进入集采','渠道适度扩张','分子POCT开始贡献收入'],
+    milestones: ['2026: XR+凝血旗舰装机加速','2027: 知微分子POCT入院','2028: 新业务贡献5%营收'],
+    risks: ['凝血集采降价超预期','免疫竞争加剧'],
+    signals: ['📈 中: 血栓四项推广','📈 高: XR装机目标','⚠️ 风险: 免疫是最大短板'],
+    log: [
+      `参数: 集采=${document.getElementById('caizhaoScope').value}, 竞争=${params.comp}, 渠道=${params.channel}, 技术=${params.tech}, 国产替代=${params.local}`,
+      `基值调整系数: baseAdj=${s2Adj.toFixed(2)} | 渠道加成=${(1+(ch-3)*0.02).toFixed(2)} | 技术加成=${(1+(t-3)*0.015).toFixed(2)}`,
+      `推导逻辑: 基准S2模型(x1.0) → 集采调整(x${s2Adj.toFixed(2)}) → 渠道乘数(x${(1+(ch-3)*0.02).toFixed(2)}) → 技术乘数(x${(1+(t-3)*0.015).toFixed(2)})`,
+      `可信度评估: 偏差最小路径 → 默认基准情景 → 可信度最高`
+    ]
+  });
+
+  // S3: 激进
+  const s3Adj = 1 + (ch-3)*0.04 + (t-3)*0.03;
+  const s3Conf = 0.45;
+  const s3Data = PRODUCTS.map(p => ({
+    name: p.name, id: p.id,
+    values: p.s2.map((v,i) => Math.round(v * Math.min(1.3, s3Adj + i*0.05))),
+    drivers: p.drivers, risks: p.risks
+  }));
+  scenarios.push({
+    id: 3, name: '🔵 主动进取', confidence: s3Conf,
+    label: `可信度 ${Math.round(s3Conf*100)}%`,
+    desc: '大幅增加投入，积极拓展新业务线，抢占市场份额',
+    data: s3Data, chance: '15-25%',
+    key_assumptions: ['集采温和推进','渠道+技术双投入','新业务快速落地'],
+    milestones: ['2026: 大举扩张销售团队','2027: 新业务线规模贡献','2028: 免疫市场份额回升'],
+    risks: ['投入过大影响利润率','新业务不及预期','竞品激烈反制'],
+    signals: ['📈 高: 全产品线增长','📈 高: 新业务突破','⚠️ 风险: 现金流压力'],
+    log: [
+      `参数: 集采=${document.getElementById('caizhaoScope').value}, 竞争=${params.comp}, 渠道=${params.channel}, 技术=${params.tech}, 国产替代=${params.local}`,
+      `基值调整系数: s3Adj=${s3Adj.toFixed(2)} (渠道+技术双投入) | 年度递加: +0.05/年`,
+      `推导逻辑: 基准S2模型 → 渠道扩张(x${(1+(ch-3)*0.04).toFixed(2)}) → 技术领先(x${(1+(t-3)*0.03).toFixed(2)}) → 逐年递加+5%`,
+      `可信度评估: 需要${ch>=4?'渠道':'竞争'}和${t>=4?'技术':'集采'}同时有利 → 综合概率低`
+    ]
+  });
+
+  // S4: 极限 (仅高压时生成)
+  if (l >= 4 || baseIdx >= 2) {
+    const s4Data = PRODUCTS.map(p => ({
+      name: p.name, id: p.id,
+      values: p.s2.map((v,i) => Math.round(v * 0.75 * (1 - i*0.05))),
+      drivers: p.drivers, risks: p.risks
+    }));
+    scenarios.push({
+      id: 4, name: '🔴 极限承压', confidence: 0.25,
+      label: `可信度 ${Math.round(25)}%`,
+      desc: '全面集采+国产替代双重冲击，仅保住核心盈利产品',
+      data: s4Data, chance: '5-10%',
+      key_assumptions: ['集采全面覆盖','国产替代加速','渠道重构'],
+      milestones: ['2026: 免疫业务触底','2027: 凝血价格体系重塑','2028: 完成业务重组'],
+      risks: ['收入下滑超过15%','渠道商大量退出'],
+      signals: ['📉 低: 全线承压','⚠️ 风险: 组织重构需求'],
+        log: [
+          `参数: 集采=${document.getElementById('caizhaoScope').value}, 竞争=${params.comp}, 渠道=${params.channel}, 技术=${params.tech}, 国产替代=${params.local}`,
+          `基值调整系数: 0.75 | 逐年递减: -5%/年`,
+          `推导逻辑: 全面集采(-25%基准) → 逐年递减效应(-5%/年) → 仅核心产品保留利润`,
+          `可信度评估: 触发条件为国产替代≥高或集采=极限 → 边界场景可信度低`
+        ]
+    });
+  }
+
+  return {
+    goal: goal,
+    year: year,
+    parmas: {comp:c, channel:ch, tech:t, local:l, caizhao:scope},
+    scenarios: scenarios,
+    generated_at: new Date().toLocaleString('zh-CN')
+  };
+}
+
+// ── Render ──
+function renderResults(r) {
+  renderChart(r);
+  renderScenarios(r);
+  renderAdvice(r);
+  renderDerivationLog(r);
+  document.getElementById('resultSummary').textContent =
+    `共 ${r.scenarios.length} 个方案 · ${r.generated_at}`;
+}
+
+function renderChart(r) {
+  const container = d3.select('#chart');
+  container.selectAll('*').remove();
+  const W = document.getElementById('chart').clientWidth || 800, H = 280;
+  const svg = container.append('svg').attr('width', W).attr('height', H);
+  const margin = {top:40, right:80, bottom:40, left:50};
+  const w = W - margin.left - margin.right, h = H - margin.top - margin.bottom;
+
+  const g = svg.append('g').attr('transform', `translate(${margin.left},${margin.top})`);
+  const years = ['2024A','2025E','2026E','2027E','2028E'];
+
+  // Pick the best scenario for chart (highest confidence)
+  const best = r.scenarios.reduce((a,b) => a.confidence > b.confidence ? a : b);
+  const colors = ['#60a5fa','#22c55e','#f59e0b','#ef4444'];
+  const colorScale = (i) => colors[i % colors.length];
+
+  // Stack data
+  const stacked = years.map((y, yi) => {
+    let sum = 0;
+    const items = best.data.map(p => {
+      sum += p.values[yi] || 0;
+      return {name: p.name, val: p.values[yi] || 0, y0: sum - (p.values[yi]||0)};
+    });
+    return {year: y, items, total: sum};
+  });
+
+  const maxY = d3.max(stacked, d => d.total) * 1.15;
+  const xScale = d3.scaleBand().domain(years).range([0,w]).padding(0.3);
+  const yScale = d3.scaleLinear().domain([0, maxY]).range([h,0]);
+
+  // Bars per product per year
+  PRODUCTS.forEach((p, pi) => {
+    const color = colorScale(pi);
+    stacked.forEach(d => {
+      const item = d.items.find(i => i.name === p.name);
+      if (!item || item.val === 0) return;
+      g.append('rect')
+        .attr('x', xScale(d.year))
+        .attr('y', yScale(item.y0 + item.val))
+        .attr('width', xScale.bandwidth())
+        .attr('height', Math.max(0, yScale(item.y0) - yScale(item.y0 + item.val)))
+        .attr('fill', color).attr('opacity', 0.85)
+        .attr('rx', 2);
+    });
+  });
+
+  // X axis
+  g.append('g').attr('transform', `translate(0,${h})`)
+    .call(d3.axisBottom(xScale).tickFormat(d => d)).selectAll('text')
+    .attr('fill', 'var(--muted)').attr('font-size', '10px');
+  // Y axis
+  g.append('g').call(d3.axisLeft(yScale).ticks(5).tickFormat(d => d+''))
+    .selectAll('text').attr('fill', 'var(--muted)').attr('font-size', '10px');
+  g.selectAll('.domain, line').attr('stroke', 'var(--border)');
+
+  // Legend
+  const legend = svg.append('g').attr('transform', `translate(${margin.left}, ${H-8})`);
+  PRODUCTS.forEach((p, pi) => {
+    const totalX = pi * 100;
+    if (totalX + 90 > w) return;
+    legend.append('rect').attr('x', totalX).attr('y', 0).attr('width', 10).attr('height', 10)
+      .attr('fill', colorScale(pi)).attr('rx', 2);
+    legend.append('text').attr('x', totalX + 14).attr('y', 9).attr('font-size', '9px')
+      .attr('fill', 'var(--muted)').text(p.name.replace(/^[^\s]+\s/,''));
+  });
+
+  // Title
+  svg.append('text').attr('x', W/2).attr('y', 12).attr('text-anchor', 'middle')
+    .attr('fill', 'var(--text)').attr('font-size', '12px').attr('font-weight', '600')
+    .text(`最佳方案「${best.name}」— 分产品线收入趋势`);
+  svg.append('text').attr('x', W/2).attr('y', 28).attr('text-anchor', 'middle')
+    .attr('fill', 'var(--muted)').attr('font-size', '10px')
+    .text('纵轴 = 各产品线以2024年为基准100的收入指数 · 堆叠高度 = 总收入规模');
+}
+
+function renderScenarios(r) {
+  const container = document.getElementById('scenarioResults');
+  let html = '<table class="comp-table"><tr><th>方案</th><th>可信度</th>';
+  PRODUCTS.forEach(p => { html += `<th>${p.name.replace(/[^🩸🩹🧪💧🩸🧬🔬]/g,'').trim()||p.name}</th>`; });
+  html += '<th>综合推荐</th></tr>';
+
+  r.scenarios.sort((a,b) => b.confidence - a.confidence).forEach(s => {
+    const cls = s.confidence >= 0.7 ? 'best' : '';
+    html += `<tr class="${cls}"><td><strong>${s.name}</strong><br><span style="font-size:10px;color:var(--muted)">${s.desc}</span></td>`;
+    const badge = s.confidence >= 0.7 ? 'conf-high' : (s.confidence >= 0.45 ? 'conf-mid' : 'conf-low');
+    html += `<td><span class="confidence-badge ${badge}">${s.label}</span><br><span style="font-size:10px;color:var(--muted)">概${s.chance}</span></td>`;
+    s.data.forEach(d => {
+      const last = d.values[d.values.length-1];
+      const sign = last > 100 ? 'up' : (last < 100 ? 'down' : '');
+      html += `<td><span class="${sign}">${last > 0 ? last+'%' : '-'}</span><br><span style="font-size:9px;color:var(--muted)">CAGR ${(Math.pow(last/100, 1/4)-1)*100 > 0 ? '+' : ''}${((Math.pow(last/100, 1/4)-1)*100).toFixed(1)}%</span></td>`;
+    });
+    html += `<td style="font-size:11px;text-align:left;padding:6px">${s.milestones.slice(0,2).join('<br>')}</td></tr>`;
+  });
+  html += '</table>';
+
+  // Assumptions
+  html += '<div style="margin-top:12px"><strong>各方案关键假设：</strong></div>';
+  r.scenarios.forEach(s => {
+    html += `<div class="scenario" style="margin:6px 0;padding:10px">
+      <div style="display:flex;justify-content:space-between;font-size:12px;font-weight:600">${s.name}<span class="confidence-badge ${s.confidence>=0.7?'conf-high':(s.confidence>=0.45?'conf-mid':'conf-low')}">${s.label}</span></div>
+      <div style="font-size:11px;color:var(--muted);margin-top:4px">假设: ${s.key_assumptions.join(' · ')}</div>
+      <div style="font-size:11px;color:var(--muted)">风险: ${s.risks.join(' · ')}</div>
+      <div style="font-size:11px">${s.signals}</div>
+    </div>`;
+  });
+  container.innerHTML = html;
+}
+
+function renderAdvice(r) {
+  const container = document.getElementById('suggestions');
+  const best = r.scenarios.reduce((a,b) => a.confidence > b.confidence ? a : b);
+  const worst = r.scenarios[r.scenarios.length-1];
+  const mid = r.scenarios.length >= 3 ? r.scenarios[1] : null;
+
+  let html = `<div style="font-size:13px;margin-bottom:12px">基于目标「<strong>${r.goal}</strong>」的推导建议：</div>`;
+
+  html += `<div class="suggestion">
+    <span class="tag tag-param">📌 推荐方案</span>
+    <strong>${best.name}</strong> — ${best.desc}
+    <div style="margin-top:4px;font-size:11px;color:var(--muted)">可信度 ${best.label}，概率 ${best.chance}</div>
+  </div>`;
+
+  // Timeline suggestions
+  html += `<div style="margin-top:12px;font-weight:600;font-size:13px">⏱️ 建议时间轴</div>`;
+  if (best.milestones) {
+    best.milestones.forEach(m => {
+      html += `<div class="suggestion" style="border-left-color:var(--success)">
+        <span class="tag tag-time">⏰</span> ${m}
+      </div>`;
+    });
+  }
+
+  // Parameter adjustment suggestions
+  html += `<div style="margin-top:12px;font-weight:600;font-size:13px">⚙️ 参数调整建议</div>`;
+
+  const adj = [];
+  if (params.comp > 3) adj.push('竞争强度设为「中」以下，避免价格战损害利润率');
+  else if (params.comp < 2) adj.push('竞争强度可适当提高至「中」，关注竞品动作');
+  if (params.channel < 3 && best.id !== 4) adj.push('渠道投入建议提升至「扩张」，新业务需要渠道支持');
+  if (params.tech < 3 && !r.goal.includes('保利润')) adj.push('技术投入建议提升至「加强」，差异化竞争需要技术领先');
+  if (params.local >= 4) adj.push('国产替代压力极高时，建议加大泽成CDMO国产试剂布局');
+
+  if (adj.length === 0) adj.push('当前参数设置合理，无需大幅调整');
+
+  adj.forEach(a => {
+    html += `<div class="suggestion" style="border-left-color:var(--accent)">
+      <span class="tag tag-param">⚙️</span> ${a}
+    </div>`;
+  });
+
+  // Risk warnings
+  if (worst) {
+    html += `<div style="margin-top:12px;font-weight:600;font-size:13px">⚠️ 风险预警</div>`;
+    worst.risks.forEach(rr => {
+      html += `<div class="suggestion" style="border-left-color:var(--danger)">
+        <span class="tag tag-param" style="background:rgba(239,68,68,0.2);color:var(--danger)">⚠️</span> ${rr}
+      </div>`;
+    });
+  }
+
+  container.innerHTML = html;
+}
+
+function renderDerivationLog(r) {
+  const container = document.getElementById('derivationLog');
+  let html = `<div style="font-size:13px;margin-bottom:12px">📝 推导过程日志 — 每个方案的结果来源说明</div>`;
+  html += `<div style="font-size:11px;color:var(--muted);margin-bottom:12px;padding:8px 12px;background:var(--bg3);border-radius:6px">`;
+  html += `生成时间: ${r.generated_at} · 输入参数: 集采=${r.parmas.caizhao} · `;
+  html += `竞争=${r.parmas.comp}/5 · 渠道=${r.parmas.channel}/5 · 技术=${r.parmas.tech}/5 · 国产替代=${r.parmas.local}/5`;
+  html += `</div>`;
+
+  r.scenarios.sort((a,b) => b.confidence - a.confidence).forEach(s => {
+    const badgeCls = s.confidence >= 0.7 ? 'conf-high' : (s.confidence >= 0.45 ? 'conf-mid' : 'conf-low');
+    html += `<div class="scenario" style="margin-bottom:10px">
+      <div class="scenario-header">
+        <span class="scenario-name">${s.name}</span>
+        <span><span class="confidence-badge ${badgeCls}">${s.label}</span> · 概率${s.chance}</span>
+      </div>`;
+    
+    if (s.log && s.log.length) {
+      html += `<table style="width:100%;font-size:11px;border-collapse:collapse">
+        <tr><td style="padding:4px 8px;background:var(--bg3);width:120px;font-weight:600">输入参数</td>
+            <td style="padding:4px 8px">${s.log[0]}</td></tr>
+        <tr><td style="padding:4px 8px;background:var(--bg3);font-weight:600">调整系数</td>
+            <td style="padding:4px 8px">${s.log[1]}</td></tr>
+        <tr><td style="padding:4px 8px;background:var(--bg3);font-weight:600">推导逻辑</td>
+            <td style="padding:4px 8px">${s.log[2]}</td></tr>
+        <tr><td style="padding:4px 8px;background:var(--bg3);font-weight:600">可信度评估</td>
+            <td style="padding:4px 8px">${s.log[3]}</td></tr>
+      </table>`;
+    }
+
+    html += `<div style="font-size:10px;color:var(--muted);margin-top:6px">关键假设: ${s.key_assumptions.join(' · ')}</div>`;
+    html += `<div style="font-size:10px;color:var(--muted)">风险: ${s.risks.join(' · ')}</div>`;
+    html += `<details style="margin-top:6px"><summary style="font-size:11px;cursor:pointer;color:var(--accent)">📊 查看分产品线数据</summary>`;
+    html += `<table style="width:100%;font-size:10px;border-collapse:collapse;margin-top:4px">
+      <tr><th style="padding:4px;border:1px solid var(--border);background:var(--bg2)">产品线</th>
+          <th style="padding:4px;border:1px solid var(--border);background:var(--bg2)">2024A</th>
+          <th style="padding:4px;border:1px solid var(--border);background:var(--bg2)">2025E</th>
+          <th style="padding:4px;border:1px solid var(--border);background:var(--bg2)">2026E</th>
+          <th style="padding:4px;border:1px solid var(--border);background:var(--bg2)">2027E</th>
+          <th style="padding:4px;border:1px solid var(--border);background:var(--bg2)">2028E</th>
+          <th style="padding:4px;border:1px solid var(--border);background:var(--bg2)">CAGR</th></tr>`;
+    s.data.forEach(d => {
+      const vals = d.values;
+      const last = vals[vals.length-1] || 0;
+      const cagr = last > 0 ? ((Math.pow(last/100, 1/4)-1)*100).toFixed(1) : '-';
+      html += `<tr><td style="padding:3px 6px;border:1px solid var(--border)">${d.name}</td>`;
+      vals.forEach(v => {
+        html += `<td style="padding:3px 6px;border:1px solid var(--border);text-align:center">${v||'-'}</td>`;
+      });
+      html += `<td style="padding:3px 6px;border:1px solid var(--border);text-align:center">${cagr}%</td></tr>`;
+    });
+    html += `</table></details>`;
+
+    html += `</div>`;
+  });
+
+  html += `<div style="margin-top:12px;padding:10px;background:var(--bg3);border-radius:6px;font-size:11px">
+    <strong>ℹ️ 可信度评估标准：</strong><br>
+    • <span class="confidence-badge conf-high">高 (≥70%)</span> — 与S2基准偏差≤20%，参数在历史波动范围内<br>
+    • <span class="confidence-badge conf-mid">中 (45-70%)</span> — 需1-2个非基准假设同时成立<br>
+    • <span class="confidence-badge conf-low">低 (<40%)</span> — 需多个小概率事件同时发生
+  </div>`;
+
+  container.innerHTML = html;
+}
+
+function switchView(view, el) {
+  document.querySelectorAll('.tab').forEach(t => t.classList.remove('active'));
+  el.classList.add('active');
+  ['chart','compare','advice','log'].forEach(v => {
+    document.getElementById(`view-${v}`).style.display = v === view ? 'block' : 'none';
+  });
+  if (view === 'chart') setTimeout(() => renderChart(results), 50);
+}
+
+function togglePromptConstraints() {
+  const card = document.getElementById('promptCard');
+  card.style.display = card.style.display === 'none' ? 'block' : 'none';
+  if (card.style.display === 'block' && results) {
+    document.getElementById('promptText').textContent = buildPrompt(currentGoal);
+  }
+}
+
+function toggleTheme(){
+  var h=document.documentElement;
+  var isDark=h.getAttribute("data-theme")==="dark";
+  h.setAttribute("data-theme",isDark?"light":"dark");
+  document.getElementById("themeBtn").textContent=isDark?"🌙":"☀️";
+}
+
+function updateThemeBtn(){
+  document.getElementById("themeBtn").textContent=
+    document.documentElement.getAttribute("data-theme")==="dark"?"☀️":"🌙";
+}
+
+// ── Start ──
+init();
+</script>
+</body>
+</html>
