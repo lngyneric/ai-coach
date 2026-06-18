@@ -69,14 +69,32 @@ services:
   ai-shifu-nginx:
     container_name: ai-shifu-nginx
     image: nginx:stable
+    entrypoint: ["/entrypoint.sh"]
+    env_file:
+      - ./.env
     ports:
       - "8080:8080"
     depends_on:
       - ai-shifu-api
       - ai-shifu-cook-web
     restart: unless-stopped
+    environment:
+      ARK_API_KEY: "${ARK_API_KEY:-}"
+      OPENCODE_API_KEY: "${OPENCODE_API_KEY:-}"
     volumes:
       - ./nginx.conf:/etc/nginx/nginx.conf
+      - ./nginx-entrypoint.sh:/entrypoint.sh:ro
+      - ./default.conf:/etc/nginx/conf.d/default.conf
+      - ./certs:/etc/nginx/certs:ro
+      - ./ivd-knowledge-tree.html:/usr/share/nginx/html/ivd-knowledge-tree.html:ro
+      - ./d3.v7.min.js:/usr/share/nginx/html/d3.v7.min.js:ro
+      - ./courses.html:/usr/share/nginx/html/courses.html:ro
+      - ./logout.html:/usr/share/nginx/html/logout.html:ro
+      - ./mentor.html:/usr/share/nginx/html/mentor.html:ro
+      - ./login.html:/usr/share/nginx/html/login.html:ro
+      - ./course-entry.html:/usr/share/nginx/html/course-entry.html:ro
+      - ./sysmex-login.html:/usr/share/nginx/html/sysmex-login.html:ro
+      - ./personal-growth-tree.html:/usr/share/nginx/html/personal-growth-tree.html:ro
   ai-shifu-mysql:
     container_name: ai-shifu-mysql
     environment:
