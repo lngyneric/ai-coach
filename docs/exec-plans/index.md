@@ -6,6 +6,7 @@ Active and completed ExecPlans live here. The structure and required sections ar
 
 ## Active
 
+- [Admin Home Onboarding](./active/admin-home-onboarding.md)
 - [Agent-First Harness Phase 2](./active/agent-first-harness-phase-2.md)
 - [Employee AAD Authentication](./active/employee-aad-auth.md)
 - [WeCom H5 Learner Integration](./active/wecom-h5-learner.md)

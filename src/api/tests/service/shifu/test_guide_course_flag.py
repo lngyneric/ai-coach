@@ -42,7 +42,7 @@ def test_get_shifu_draft_list_marks_builtin_guide_course(app, monkeypatch):
             [
                 DraftShifu(
                     shifu_bid=guide_bid,
-                    title="AI Shifu Guide Course",
+                    title="AI 师傅教学引导",
                     description="guide",
                     avatar_res_bid="",
                     keywords="",

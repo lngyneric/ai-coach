@@ -10,5 +10,4 @@ export type OnboardingStep = {
   highlightPadding?: number;
   actionLabel?: React.ReactNode;
   actionHref?: string;
-  panel?: 'shifu_settings';
 };

@@ -13,6 +13,7 @@ export type BlockType =
 export interface ModelOption {
   value: string;
   label: string;
+  creditMultiplier?: number | null;
 }
 
 export interface Shifu {
@@ -20,12 +21,16 @@ export interface Shifu {
   name?: string;
   description?: string;
   avatar?: string;
+  preview_url?: string;
+  url?: string;
   state?: number;
   is_favorite?: boolean;
   readonly?: boolean;
   archived?: boolean;
   created_user_bid?: string;
   can_manage_archive?: boolean;
+  can_manage_permissions?: boolean;
+  is_guide_course?: boolean;
   canPublish?: boolean;
   ask_enabled_status?: number;
   ask_model?: string;

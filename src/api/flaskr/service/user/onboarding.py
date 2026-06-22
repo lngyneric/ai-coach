@@ -24,7 +24,6 @@ SUPPORTED_SCENES = {
 }
 SUPPORTED_TRIGGER_SOURCES = {
     "admin_entry",
-    "editor_entry",
     "manual_create",
     "lobster_create",
 }
@@ -41,9 +40,7 @@ class OnboardingSceneStatus:
 def _serialize_datetime(value: datetime | None) -> str | None:
     if value is None:
         return None
-    if value.tzinfo is None:
-        return f"{value.isoformat()}Z"
-    return value.astimezone(timezone.utc).isoformat().replace("+00:00", "Z")
+    return value.isoformat()
 
 
 def _parse_rollout_threshold(value: Any) -> datetime | None:
