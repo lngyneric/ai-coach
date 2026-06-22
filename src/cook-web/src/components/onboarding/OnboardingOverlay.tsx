@@ -1,5 +1,4 @@
 import React from 'react';
-import { createPortal } from 'react-dom';
 import { OnboardingCard } from './OnboardingCard';
 
 type RectLike = {
@@ -25,7 +24,6 @@ type OnboardingOverlayProps = {
 };
 
 const PADDING = 10;
-const VIEWPORT_EDGE_GAP = 8;
 const HIGHLIGHT_RADIUS = 16;
 const OVERLAY_BG = 'rgba(15,23,42,0.62)';
 const DEFAULT_CARD_WIDTH = 340;
@@ -53,10 +51,7 @@ function buildCardPosition(
   if (!targetRect) {
     return {
       left: Math.max((window.innerWidth - cardSize.width) / 2, VIEWPORT_MARGIN),
-      top: Math.min(
-        Math.max((window.innerHeight - cardSize.height) / 2, VIEWPORT_MARGIN),
-        maxTop,
-      ),
+      top: Math.max((window.innerHeight - 180) / 2, VIEWPORT_MARGIN),
     };
   }
 
@@ -117,17 +112,10 @@ export function OnboardingOverlay({
   onAdvance,
 }: OnboardingOverlayProps) {
   const cardRef = React.useRef<HTMLDivElement | null>(null);
-  const [mounted, setMounted] = React.useState(false);
   const [cardSize, setCardSize] = React.useState({
     width: DEFAULT_CARD_WIDTH,
     height: DEFAULT_CARD_HEIGHT,
   });
-  const contentKey = `${stepIndex}-${totalSteps}`;
-  const [measuredContentKey, setMeasuredContentKey] = React.useState('');
-
-  React.useEffect(() => {
-    setMounted(true);
-  }, []);
 
   React.useLayoutEffect(() => {
     if (!open || !cardRef.current) {
@@ -144,60 +132,68 @@ export function OnboardingOverlay({
         ? current
         : nextSize,
     );
-    setMeasuredContentKey(contentKey);
-  }, [contentKey, description, open, title, totalSteps]);
+  }, [description, open, title, totalSteps]);
 
-  if (!open || !mounted) {
+  if (!open) {
     return null;
   }
 
   const rect = targetRect
-    ? (() => {
-        const availablePadding = Math.max(
-          0,
-          Math.min(
-            highlightPadding,
-            targetRect.top - VIEWPORT_EDGE_GAP,
-            targetRect.left - VIEWPORT_EDGE_GAP,
-            window.innerWidth -
-              (targetRect.left + targetRect.width) -
-              VIEWPORT_EDGE_GAP,
-            window.innerHeight -
-              (targetRect.top + targetRect.height) -
-              VIEWPORT_EDGE_GAP,
-          ),
-        );
-
-        return {
-          top: targetRect.top - availablePadding,
-          left: targetRect.left - availablePadding,
-          width: targetRect.width + availablePadding * 2,
-          height: targetRect.height + availablePadding * 2,
-        };
-      })()
+    ? {
+        top: Math.max(targetRect.top - highlightPadding, 8),
+        left: Math.max(targetRect.left - highlightPadding, 8),
+        width: targetRect.width + highlightPadding * 2,
+        height: targetRect.height + highlightPadding * 2,
+      }
     : null;
   const cardStyle = buildCardPosition(rect, cardSize);
-  const isCardMeasured = measuredContentKey === contentKey;
+  const viewportWidth = typeof window !== 'undefined' ? window.innerWidth : 0;
+  const viewportHeight = typeof window !== 'undefined' ? window.innerHeight : 0;
 
-  return createPortal(
-    <div className='fixed inset-0 z-[2147483640]'>
+  return (
+    <div className='fixed inset-0 z-[120]'>
       {rect ? (
         <>
           <button
             type='button'
             aria-label={advanceAriaLabel}
             onClick={onAdvance}
-            className='absolute inset-0 z-10'
+            className='absolute inset-0'
           />
+          <svg
+            className='pointer-events-none absolute inset-0 h-full w-full'
+            aria-hidden='true'
+            viewBox={`0 0 ${viewportWidth} ${viewportHeight}`}
+            preserveAspectRatio='none'
+          >
+            <path
+              fill={OVERLAY_BG}
+              fillRule='evenodd'
+              d={[
+                `M0 0H${viewportWidth}V${viewportHeight}H0V0Z`,
+                `M${rect.left + HIGHLIGHT_RADIUS} ${rect.top}`,
+                `H${rect.left + rect.width - HIGHLIGHT_RADIUS}`,
+                `A${HIGHLIGHT_RADIUS} ${HIGHLIGHT_RADIUS} 0 0 1 ${rect.left + rect.width} ${rect.top + HIGHLIGHT_RADIUS}`,
+                `V${rect.top + rect.height - HIGHLIGHT_RADIUS}`,
+                `A${HIGHLIGHT_RADIUS} ${HIGHLIGHT_RADIUS} 0 0 1 ${rect.left + rect.width - HIGHLIGHT_RADIUS} ${rect.top + rect.height}`,
+                `H${rect.left + HIGHLIGHT_RADIUS}`,
+                `A${HIGHLIGHT_RADIUS} ${HIGHLIGHT_RADIUS} 0 0 1 ${rect.left} ${rect.top + rect.height - HIGHLIGHT_RADIUS}`,
+                `V${rect.top + HIGHLIGHT_RADIUS}`,
+                `A${HIGHLIGHT_RADIUS} ${HIGHLIGHT_RADIUS} 0 0 1 ${rect.left + HIGHLIGHT_RADIUS} ${rect.top}`,
+                'Z',
+              ].join(' ')}
+            />
+          </svg>
           <div
-            className='pointer-events-none absolute border border-white/70'
+            className='pointer-events-none absolute border border-white/70 shadow-[0_0_0_9999px_rgba(0,0,0,0)]'
             style={{
               top: rect.top,
               left: rect.left,
               width: rect.width,
               height: rect.height,
               borderRadius: `${HIGHLIGHT_RADIUS}px`,
-              boxShadow: `0 0 0 9999px ${OVERLAY_BG}, 0 0 0 1px rgba(255,255,255,0.55), 0 10px 32px rgba(255,255,255,0.10), 0 0 0 8px rgba(255,255,255,0.05)`,
+              boxShadow:
+                '0 0 0 1px rgba(255,255,255,0.55), 0 10px 32px rgba(255,255,255,0.10), 0 0 0 8px rgba(255,255,255,0.05)',
             }}
           />
         </>
@@ -206,17 +202,14 @@ export function OnboardingOverlay({
           type='button'
           aria-label={advanceAriaLabel}
           onClick={onAdvance}
-          className='absolute inset-0 z-10'
+          className='absolute inset-0'
           style={{ backgroundColor: OVERLAY_BG }}
         />
       )}
       <div
         ref={cardRef}
-        className='pointer-events-auto absolute z-20'
-        style={{
-          ...cardStyle,
-          visibility: isCardMeasured ? 'visible' : 'hidden',
-        }}
+        className='pointer-events-auto absolute'
+        style={cardStyle}
         onClick={onAdvance}
       >
         <OnboardingCard
@@ -229,7 +222,6 @@ export function OnboardingOverlay({
           actionHref={actionHref}
         />
       </div>
-    </div>,
-    document.body,
+    </div>
   );
 }
