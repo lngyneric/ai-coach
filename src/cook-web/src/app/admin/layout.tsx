@@ -76,6 +76,118 @@ const MainInterface = ({
   const billingEnabled = useEnvStore(
     (state: EnvStoreState) => state.billingEnabled === 'true',
   );
+<<<<<<< HEAD
+=======
+  const { data: onboardingStatus, mutate: mutateOnboardingStatus } =
+    useCreatorOnboardingStatus(menuReady);
+  const courseCreatorUrl = useMemo(() => getCourseCreatorUrl(), []);
+
+  const adminHomeSteps = useMemo(
+    () =>
+      buildAdminHomeOnboardingSteps({
+        t: tOnboarding,
+        billingEnabled,
+        trialOffer: billingOverview?.trial_offer,
+        courseCreatorUrl,
+        locale: currentLanguage || i18n.language,
+      }),
+    [
+      billingEnabled,
+      courseCreatorUrl,
+      billingOverview?.trial_offer,
+      currentLanguage,
+      i18n.language,
+      tOnboarding,
+    ],
+  );
+  const shouldShowAdminHomeOnboarding =
+    pathname === '/admin' &&
+    menuReady &&
+    Boolean(onboardingStatus?.eligible) &&
+    onboardingStatus?.scenes.admin_home_onboarding.completed === false &&
+    (!billingEnabled || !billingOverviewLoading);
+
+  const {
+    isOpen: adminHomeOnboardingOpen,
+    currentStep: adminHomeOnboardingStep,
+    currentStepIndex: adminHomeOnboardingStepIndex,
+    totalSteps: adminHomeOnboardingTotalSteps,
+    targetRect: adminHomeOnboardingTargetRect,
+    advance: advanceAdminHomeOnboarding,
+  } = useOnboarding({
+    enabled: shouldShowAdminHomeOnboarding,
+    steps: adminHomeSteps,
+    onStepResolved: (step, stepIndex) => {
+      trackEvent('creator_onboarding_step_viewed', {
+        scene_key: 'admin_home_onboarding',
+        version: onboardingStatus?.version || 'v1',
+        step_id: step.id,
+        step_index: stepIndex + 1,
+        trigger_source: 'admin_entry',
+        language: currentLanguage || i18n.language,
+      });
+    },
+    onComplete: async () => {
+      const version = onboardingStatus?.version || 'v1';
+      const language = currentLanguage || i18n.language;
+      try {
+        await api.completeCreatorOnboarding({
+          scene_key: 'admin_home_onboarding',
+          version,
+          trigger_source: 'admin_entry',
+        });
+        trackEvent('creator_onboarding_completed', {
+          scene_key: 'admin_home_onboarding',
+          version,
+          trigger_source: 'admin_entry',
+          language,
+        });
+      } catch {
+        trackEvent('creator_onboarding_complete_failed', {
+          scene_key: 'admin_home_onboarding',
+          version,
+          trigger_source: 'admin_entry',
+          language,
+        });
+      }
+      await mutateOnboardingStatus(current => {
+        if (!current) {
+          return current;
+        }
+        return {
+          ...current,
+          scenes: {
+            ...current.scenes,
+            admin_home_onboarding: {
+              completed: true,
+              completed_at: new Date().toISOString(),
+            },
+          },
+        };
+      }, false);
+    },
+  });
+
+  const trackedOnboardingStartRef = useRef(false);
+  useEffect(() => {
+    if (!adminHomeOnboardingOpen || trackedOnboardingStartRef.current) {
+      return;
+    }
+    trackedOnboardingStartRef.current = true;
+    trackEvent('creator_onboarding_started', {
+      scene_key: 'admin_home_onboarding',
+      version: onboardingStatus?.version || 'v1',
+      trigger_source: 'admin_entry',
+      language: currentLanguage || i18n.language,
+    });
+  }, [
+    adminHomeOnboardingOpen,
+    currentLanguage,
+    i18n.language,
+    onboardingStatus?.version,
+    trackEvent,
+  ]);
+>>>>>>> ac23e4dc9 (feat:add course editor onboarding (#1933))
 
   return (
     <>
