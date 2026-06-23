@@ -1,6 +1,19 @@
 import React from 'react';
+<<<<<<< HEAD
 import { act, render, screen, waitFor } from '@testing-library/react';
 import ScriptEditor from './ShifuEdit';
+=======
+import {
+  act,
+  fireEvent,
+  render,
+  screen,
+  waitFor,
+} from '@testing-library/react';
+import ScriptEditor, {
+  resolveEditorOnboardingTriggerSource,
+} from './ShifuEdit';
+>>>>>>> ac23e4dc9 (feat:add course editor onboarding (#1933))
 
 const refreshLabel = 'refresh';
 const mockMarkdownFlowEditor = jest.fn();
@@ -288,6 +301,23 @@ describe('ShifuEdit draft conflict checks', () => {
     await waitFor(() => {
       expect(mockLoadDraftMeta).not.toHaveBeenCalled();
     });
+  });
+
+  test('defaults editor onboarding trigger source for direct editor entry', () => {
+    expect(resolveEditorOnboardingTriggerSource(null)).toBe('editor_entry');
+    expect(resolveEditorOnboardingTriggerSource('')).toBe('editor_entry');
+    expect(resolveEditorOnboardingTriggerSource('unknown')).toBe(
+      'editor_entry',
+    );
+    expect(resolveEditorOnboardingTriggerSource('manual_create')).toBe(
+      'manual_create',
+    );
+    expect(resolveEditorOnboardingTriggerSource('lobster_create')).toBe(
+      'lobster_create',
+    );
+    expect(resolveEditorOnboardingTriggerSource('skills_create')).toBe(
+      'skills_create',
+    );
   });
 
   test('still loads draft meta when a lesson node is selected', async () => {
