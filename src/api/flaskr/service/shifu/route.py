@@ -65,6 +65,10 @@ from .consts import UNIT_TYPE_GUEST
 from functools import wraps
 from enum import Enum
 from flaskr.service.shifu.shifu_import_export_funcs import export_shifu
+from flaskr.service.shifu.shifu_export_formats import (
+    export_to_markdown,
+    export_to_html,
+)
 from flaskr.common.shifu_context import with_shifu_context
 from flaskr.common.cache_provider import cache as redis
 from flaskr.common.config import get_config
@@ -3335,36 +3339,92 @@ def register_shifu_routes(app: Flask, path_prefix="/api/shifu"):
             - name: shifu_bid
               type: string
               required: true
+            - name: format
+              type: string
+              in: query
+              required: false
+              description: "Export format: json, markdown, html (default: json)"
         responses:
             200:
                 description: export shifu success
-                content:
-                    application/octet-stream:
-                        schema:
-                            type: string
-                            format: binary
         """
-        temp_dir = tempfile.mkdtemp(prefix="shifu_export_")
-        file_path = Path(temp_dir) / f"{shifu_bid}.json"
-        export_shifu(app, shifu_bid, str(file_path))
+        fmt = request.args.get("format", "json")
 
-        @after_this_request
-        def cleanup(response):
-            try:
-                os.remove(file_path)
-                os.rmdir(temp_dir)
-            except OSError:
-                current_app.logger.warning(
-                    "Failed to cleanup shifu export temp files", exc_info=True
+        # For JSON format, use existing logic
+        if fmt == "json":
+            temp_dir = tempfile.mkdtemp(prefix="shifu_export_")
+            file_path = Path(temp_dir) / f"{shifu_bid}.json"
+            export_shifu(app, shifu_bid, str(file_path))
+
+            @after_this_request
+            def cleanup(response):
+                try:
+                    os.remove(file_path)
+                    os.rmdir(temp_dir)
+                except OSError:
+                    current_app.logger.warning(
+                        "Failed to cleanup shifu export temp files", exc_info=True
+                    )
+                return response
+
+            return send_file(
+                file_path,
+                mimetype="application/json",
+                as_attachment=True,
+                download_name=f"{shifu_bid}.json",
+            )
+
+        # Build export data first
+        shifu_draft = __import__(
+            "flaskr.service.shifu.shifu_draft_funcs",
+            fromlist=["get_latest_shifu_draft"],
+        ).get_latest_shifu_draft(shifu_bid)
+        if not shifu_draft:
+            from flaskr.service.common.models import raise_error
+            raise_error("server.shifu.shifuNotFound")
+
+        outline_items = __import__(
+            "flaskr.service.shifu.shifu_import_export_funcs",
+            fromlist=["_build_export_data"],
+        )._build_export_data(app, shifu_bid)
+
+        export_data = {
+            "version": "1.0",
+            "exported_at": datetime.now().isoformat(),
+            "shifu": {
+                "shifu_bid": shifu_draft.shifu_bid,
+                "title": shifu_draft.title,
+                "description": shifu_draft.description,
+                "keywords": shifu_draft.keywords,
+            },
+            "outline_items": outline_items,
+            "structure": json.loads(
+                __import__(
+                    "flaskr.service.shifu.shifu_struct_manager",
+                    fromlist=["get_shifu_struct"],
                 )
-            return response
+                .get_shifu_struct(app, shifu_bid, is_preview=True)
+                .to_json()
+            ),
+        }
 
-        return send_file(
-            file_path,
-            mimetype="application/json",
-            as_attachment=True,
-            download_name=f"{shifu_bid}.json",
-        )
+        content_type = "text/plain"
+        filename = f"{shifu_bid}.md"
+        body = export_data
+
+        if fmt == "markdown":
+            body = export_to_markdown(export_data)
+            content_type = "text/markdown"
+            filename = f"{shifu_bid}.md"
+        elif fmt == "html":
+            body = export_to_html(export_data)
+            content_type = "text/html"
+            filename = f"{shifu_bid}.html"
+
+        response = current_app.make_response(body)
+        response.headers["Content-Type"] = content_type
+        response.headers["Content-Disposition"] = f'attachment; filename="{filename}"'
+        return response
 
     @app.route(path_prefix + "/ask/config", methods=["GET"])
     @bypass_token_validation
