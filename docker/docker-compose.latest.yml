@@ -112,5 +112,6 @@ services:
     container_name: ai-shifu-redis
     image: redis:7-alpine
     restart: unless-stopped
+    command: redis-server --stop-writes-on-bgsave-error no
     volumes:
       - ./redis_data:/data
