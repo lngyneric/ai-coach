@@ -375,6 +375,37 @@ def get_video_info(app, user_id: str, url: str) -> dict:
                         raise_error("server.file.videoBilibiliApiError")
                 else:
                     raise_error("server.file.videoBilibiliApiRequestFailed")
+            # ── Direct video URL (mp4 / m3u8 / webm) ──
+            elif re.search(r'\.(mp4|m3u8|webm)(\?|$)', url.lower()):
+                content_type = 'video/mp4'
+                if '.m3u8' in url.lower():
+                    content_type = 'application/x-mpegURL'
+                elif '.webm' in url.lower():
+                    content_type = 'video/webm'
+                return {
+                    'success': True,
+                    'source': 'direct',
+                    'direct_url': url,
+                    'content_type': content_type,
+                    'title': url.split('/')[-1].split('?')[0],
+                }
+
+            # ── Alibaba Cloud VOD (aliyunvod://<VideoId> 或标准 VOD URL) ──
+            elif 'aliyundrive.com' in domain or 'aliyuncs.com' in domain or url.startswith('aliyunvod://'):
+                video_id = url.replace('aliyunvod://', '')
+                # 从 VOD URL 中提取 VideoId
+                vod_match = re.search(r'/v/([a-fA-F0-9]{32})', url)
+                if vod_match:
+                    video_id = vod_match.group(1)
+                if video_id:
+                    return {
+                        'success': True,
+                        'source': 'aliyunvod',
+                        'video_id': video_id,
+                        'embed_url': f'//player.alicdn.com/video/player.html?vid={video_id}',
+                        'title': video_id,
+                    }
+
             else:
                 raise_error("server.file.videoUnsupportedVideoSite")
 
