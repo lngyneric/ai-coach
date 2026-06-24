@@ -402,6 +402,7 @@ def get_video_info(app, user_id: str, url: str) -> dict:
                         'success': True,
                         'source': 'aliyunvod',
                         'video_id': video_id,
+                        'vid': video_id,
                         'embed_url': f'//player.alicdn.com/video/player.html?vid={video_id}',
                         'title': video_id,
                     }
