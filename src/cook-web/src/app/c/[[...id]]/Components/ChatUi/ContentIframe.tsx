@@ -1,4 +1,4 @@
-import { memo, useMemo } from 'react';
+import { memo, useMemo, useEffect, useRef, useState } from 'react';
 import { isEqual } from 'lodash';
 import { IframeSandbox, type RenderSegment } from 'markdown-flow-ui/renderer';
 
@@ -12,7 +12,8 @@ interface ContentIframeProps {
   sectionTitle?: string;
 }
 
-/** Detect if a segment value is a video source object from MDFlow */
+// ── Video source detection ──
+
 function isVideoSegment(segment: RenderSegment): boolean {
   if (segment.type === 'video') return true;
   try {
@@ -22,7 +23,6 @@ function isVideoSegment(segment: RenderSegment): boolean {
   return false;
 }
 
-/** Parse video metadata from segment value */
 function parseVideoMeta(segment: RenderSegment): Record<string, any> {
   try {
     const v = typeof segment.value === 'string' ? JSON.parse(segment.value) : segment.value;
@@ -32,7 +32,116 @@ function parseVideoMeta(segment: RenderSegment): Record<string, any> {
   }
 }
 
-/** Render video player based on source type */
+// ── Aliplayer SDK 动态加载器 ──
+
+let aliplayerPromise: Promise<void> | null = null;
+
+function loadAliplayerSDK(): Promise<void> {
+  if (typeof Aliplayer !== 'undefined') return Promise.resolve();
+  if (aliplayerPromise) return aliplayerPromise;
+
+  aliplayerPromise = new Promise((resolve, reject) => {
+    // 加载 CSS
+    const link = document.createElement('link');
+    link.rel = 'stylesheet';
+    link.href = '//g.alicdn.com/apsara-media-box/imp-web-player/2.35.4/skins/default/aliplayer-min.css';
+    document.head.appendChild(link);
+
+    // 加载 JS
+    const script = document.createElement('script');
+    script.src = '//g.alicdn.com/apsara-media-box/imp-web-player/2.35.4/aliplayer-min.js';
+    script.onload = () => {
+      // 等待 Aliplayer 全局变量就绪
+      const check = setInterval(() => {
+        if (typeof Aliplayer !== 'undefined') {
+          clearInterval(check);
+          resolve();
+        }
+      }, 100);
+      setTimeout(() => clearInterval(check), 10000);
+    };
+    script.onerror = () => reject(new Error('Aliplayer SDK 加载失败'));
+    document.head.appendChild(script);
+  });
+
+  return aliplayerPromise;
+}
+
+/** 阿里云 Aliplayer 播放器组件（动态加载 SDK） */
+function AliplayerPlayer({ vid, playauth, cover, title }: {
+  vid: string;
+  playauth?: string;
+  cover?: string;
+  title?: string;
+}) {
+  const containerRef = useRef<HTMLDivElement>(null);
+  const playerRef = useRef<any>(null);
+  const [sdkReady, setSdkReady] = useState(false);
+  const [loadError, setLoadError] = useState(false);
+
+  useEffect(() => {
+    loadAliplayerSDK()
+      .then(() => setSdkReady(true))
+      .catch(() => setLoadError(true));
+  }, []);
+
+  useEffect(() => {
+    if (!sdkReady || !containerRef.current || playerRef.current) return;
+
+    const player = new Aliplayer({
+      id: containerRef.current.id,
+      autoplay: true,
+      width: '100%',
+      height: '100%',
+      vid: vid,
+      playauth: playauth || '',
+      cover: cover || '',
+    }, function (player: any) {
+      // 播放器就绪回调
+    });
+
+    playerRef.current = player;
+
+    return () => {
+      if (playerRef.current) {
+        try { playerRef.current.dispose(); } catch {}
+        playerRef.current = null;
+      }
+    };
+  }, [sdkReady, vid, playauth, cover]);
+
+  if (loadError) {
+    // SDK 加载失败，回退到 iframe embed
+    return (
+      <iframe
+        src={`//player.alicdn.com/video/player.html?vid=${vid}`}
+        className="w-full h-full"
+        allow="autoplay; fullscreen"
+        allowFullScreen
+        title={title || '阿里云 VOD'}
+      />
+    );
+  }
+
+  if (!sdkReady) {
+    return (
+      <div className="w-full h-full flex items-center justify-center bg-muted rounded-lg">
+        <span className="text-muted-foreground">加载播放器中...</span>
+      </div>
+    );
+  }
+
+  return (
+    <div
+      ref={containerRef}
+      id={`aliplayer-${vid}`}
+      className="prism-player w-full h-full"
+    />
+  );
+}
+
+// ── 视频播放器调度 ──
+
 function VideoPlayer({ meta }: { meta: Record<string, any> }) {
   switch (meta.source) {
     case 'direct':
@@ -42,18 +151,19 @@ function VideoPlayer({ meta }: { meta: Record<string, any> }) {
           您的浏览器不支持视频播放
         </video>
       );
+
     case 'aliyunvod':
       return (
         <div className="w-full max-w-3xl mx-auto aspect-video rounded-lg overflow-hidden shadow-lg">
-          <iframe
-            src={meta.embed_url}
-            className="w-full h-full"
-            allow="autoplay; fullscreen"
-            allowFullScreen
-            title={meta.title || '阿里云 VOD 视频'}
+          <AliplayerPlayer
+            vid={meta.video_id || meta.vid}
+            playauth={meta.playauth}
+            cover={meta.cover}
+            title={meta.title}
           />
         </div>
       );
+
     case 'bilibili':
       return (
         <div className="w-full max-w-3xl mx-auto aspect-video rounded-lg overflow-hidden shadow-lg">
@@ -66,6 +176,7 @@ function VideoPlayer({ meta }: { meta: Record<string, any> }) {
           />
         </div>
       );
+
     case 'youtube':
       return (
         <div className="w-full max-w-3xl mx-auto aspect-video rounded-lg overflow-hidden shadow-lg">
@@ -78,6 +189,7 @@ function VideoPlayer({ meta }: { meta: Record<string, any> }) {
           />
         </div>
       );
+
     default:
       return (
         <div className="w-full max-w-3xl mx-auto aspect-video rounded-lg overflow-hidden shadow-lg bg-muted flex items-center justify-center text-muted-foreground">
@@ -86,6 +198,8 @@ function VideoPlayer({ meta }: { meta: Record<string, any> }) {
       );
   }
 }
+
+// ── 主组件 ──
 
 const ContentIframe = memo(
   ({ segments, blockBid, sectionTitle }: ContentIframeProps) => {
@@ -102,7 +216,6 @@ const ContentIframe = memo(
             );
           }
 
-          // Check if this segment is a video
           if (isVideoSegment(segment)) {
             const meta = parseVideoMeta(segment);
             return (
