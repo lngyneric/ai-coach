@@ -330,7 +330,7 @@ setTimeout(function(){ var b=g.node().getBBox(); if(b.width){ var s=Math.min(W/b
     try {
       var resp = await fetch(API_BASE+'/chat/completions',{
         method:'POST',headers:{'Content-Type':'application/json'},
-        body:JSON.stringify({model:'minimax-m3',messages:conversation,stream:true,max_tokens:500})
+        body:JSON.stringify({model:'mimo-v2.5',messages:conversation,stream:true,max_tokens:500})
       });
       if (!resp.ok) throw new Error('HTTP '+resp.status);
       var reader = resp.body.getReader(), decoder = new TextDecoder(), buf = '';

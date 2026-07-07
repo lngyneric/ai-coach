@@ -174,15 +174,9 @@ export const useUserStore = create<
         });
 
         if (reload && typeof window !== 'undefined') {
-          const url = removeParamFromUrl(window.location.href, [
-            'code',
-            'state',
-            'redirect',
-          ]);
-          debugWarn('[auth-chain] logout page reload start', {
-            targetUrl: url,
-          });
-          window.location.assign(url);
+          const targetUrl = '/login?redirect=' + encodeURIComponent(window.location.pathname);
+          debugWarn('[auth-chain] logout redirect', { targetUrl });
+          window.location.assign(targetUrl);
           didTriggerReload = true;
         }
       } catch (logoutError) {

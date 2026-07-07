@@ -239,11 +239,10 @@ export default function CoursesPage() {
   // Group courses by category (using keywords or name matching for now)
   // In a production system, this would use a proper category field from the API
   const getCoursesByCategory = (categoryId: string) => {
-    // Simple keyword-based categorization (to be replaced with proper API field)
     return shifus.filter(s => {
       const name = (s.name || '').toLowerCase();
       const desc = (s.description || '').toLowerCase();
-      const kw = ((s as any).keywords || '').toLowerCase();
+      const kw = (s.keywords || []).join(' ').toLowerCase();
       const combined = `${name} ${desc} ${kw}`;
       
       switch (categoryId) {
@@ -265,7 +264,8 @@ export default function CoursesPage() {
   const otherCourses = shifus.filter(s => {
     const name = (s.name || '').toLowerCase();
     const desc = (s.description || '').toLowerCase();
-    const combined = `${name} ${desc}`;
+    const kw = (s.keywords || []).join(' ').toLowerCase();
+    const combined = `${name} ${desc} ${kw}`;
     return !/新人|入职|入门|基础|新员工|onboarding|新手|带教|学分|mentor|导师|岗位|技能|培训|小灶|实战|案例|精品|专项|研修|workshop|训练营|领导|管理|管理層|战略|决策|团队|leadership/.test(combined);
   });
 

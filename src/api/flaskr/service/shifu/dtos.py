@@ -55,6 +55,11 @@ class ShifuDto(BaseModel):
         description="whether this course is the built-in guide course",
         required=False,
     )
+    keywords: list[str] = Field(
+        default_factory=list,
+        description="course keywords for categorization",
+        required=False,
+    )
 
     def __init__(
         self,
@@ -83,6 +88,7 @@ class ShifuDto(BaseModel):
             can_manage_permissions=can_manage_permissions,
             created_user_bid=created_user_bid or "",
             is_guide_course=is_guide_course,
+            **kwargs,
         )
 
     def __json__(self):
@@ -93,6 +99,7 @@ class ShifuDto(BaseModel):
             "avatar": self.avatar,
             "is_favorite": self.is_favorite,
             "archived": self.archived,
+            "keywords": self.keywords,
             "can_manage_archive": self.can_manage_archive,
             "can_manage_permissions": self.can_manage_permissions,
             "created_user_bid": self.created_user_bid,
