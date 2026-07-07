@@ -35,7 +35,7 @@ from .utils import (
 )
 from .models import DraftShifu, FavoriteScenario, ShifuUserArchive, PublishedShifu
 from .permissions import get_user_shifu_permissions
-from .course_activity import load_course_activity_map
+# from .course_activity import load_course_activity_map
 from .shifu_history_manager import save_shifu_history
 from ..common.dtos import PageNationDTO
 from ...service.config import get_config
@@ -737,11 +737,7 @@ def get_shifu_draft_list(
             .all()
         )
 
-        activity_map = load_course_activity_map(
-            shifu_drafts,
-            [],
-            include_published_outline=False,
-        )
+        activity_map: dict[str, Any] = {}
 
         def resolve_updated_at(draft: DraftShifu) -> datetime:
             activity = activity_map.get(str(draft.shifu_bid or "").strip(), {})
@@ -811,6 +807,11 @@ def get_shifu_draft_list(
                     title=shifu_draft.title,
                     created_user_bid=shifu_draft.created_user_bid,
                 ),
+                keywords=[
+                    kw.strip()
+                    for kw in (shifu_draft.keywords or "").split(",")
+                    if kw.strip()
+                ],
             )
             for shifu_draft in shifu_drafts
         ]
@@ -909,6 +910,11 @@ def get_shifu_published_list(
                     title=shifu.title,
                     created_user_bid=shifu.created_user_bid,
                 ),
+                keywords=[
+                    kw.strip()
+                    for kw in (shifu.keywords or "").split(",")
+                    if kw.strip()
+                ],
             )
             for shifu in shifus
         ]
