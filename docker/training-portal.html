@@ -270,28 +270,29 @@ function logout(){
   state.token = token;
   document.getElementById('headerUser').querySelector('span').textContent = '加载中...';
 
-  Promise.all([
-    api('GET','/api/user/info'),
-    api('GET','/api/shifu/shifus?page_index=1&page_size=50'),
-    api('GET','/api/portal/dashboard').catch(function(){ return {}; }),
-  ]).then(function(results){
-    state.user = results[0];
-    state.courses = (results[1]||{}).items || results[1] || [];
-    var dash = results[2]||{};
-    state.tasks = dash.pending_tasks || [];
-    document.getElementById('headerUser').querySelector('span').textContent = state.user.name||state.user.username||'用户';
-    // Check admin
-    if(state.user.is_operator || state.user.is_creator) document.getElementById('adminPanel').className = 'admin-panel show';
-    // Load enrollments
-    loadEnrollments();
+  // Sequential loads with individual error handling
+  api('GET','/api/user/info').then(function(u){
+    state.user = u;
+    document.getElementById('headerUser').querySelector('span').textContent = u.name||u.username||'用户';
+    if(u.is_operator || u.is_creator) document.getElementById('adminPanel').className = 'admin-panel show';
+    return api('GET','/api/shifu/shifus?page_index=1&page_size=50');
+  }).then(function(resp){
+    state.courses = (resp||{}).items || resp || [];
+    return api('GET','/api/portal/dashboard').catch(function(){ return {}; });
+  }).then(function(dash){
+    state.tasks = (dash||{}).pending_tasks || [];
     renderTasks();
+    return loadEnrollments();
   }).catch(function(e){
-    document.querySelector('.main').innerHTML = '<div class="card"><div class="card-body"><p style="color:#dc2626;text-align:center;padding:40px">加载失败: '+e.message+'</p></div></div>';
+    console.error('Init error:', e);
+    // Still show UI even if some parts fail
+    renderTasks();
+    renderModule(CURRENT_MODULE);
   });
 })();
 
 function loadEnrollments(){
-  api('GET','/api/portal/enrollments?page_index=1&page_size=200').then(function(resp){
+  return api('GET','/api/portal/enrollments?page_index=1&page_size=200').then(function(resp){
     state.enrollments = resp.items || resp || [];
     renderProgress();
     renderModule(CURRENT_MODULE);
