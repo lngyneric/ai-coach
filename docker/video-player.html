@@ -3,83 +3,142 @@
 <head>
 <meta charset="utf-8" />
 <meta name="viewport" content="width=device-width, initial-scale=1, maximum-scale=1, user-scalable=no">
-<title>视频播放 - sysmex</title>
+<title>视频学习 - sysmex</title>
 <style>
 *{box-sizing:border-box;margin:0;padding:0}
-body{font-family:-apple-system,BlinkMacSystemFont,"Segoe UI",system-ui,sans-serif;background:#000;color:#fff;min-height:100vh;overflow:hidden}
-.header{position:fixed;top:0;left:0;right:0;z-index:50;background:linear-gradient(180deg,rgba(0,0,0,.8) 0%,transparent);padding:12px 16px;opacity:0;transition:opacity .3s}
-.header:hover,.header.show{opacity:1}
-.header-inner{max-width:960px;margin:0 auto;display:flex;align-items:center;gap:12px}
-.back-btn{background:none;border:none;color:#fff;font-size:14px;cursor:pointer;padding:4px 8px;border-radius:6px;transition:background .2s}
-.back-btn:hover{background:rgba(255,255,255,.1)}
-.course-title{font-size:14px;font-weight:500;color:rgba(255,255,255,.9);overflow:hidden;text-overflow:ellipsis;white-space:nowrap}
-.video-wrap{width:100%;height:100dvh;display:flex;align-items:center;justify-content:center;background:#000}
-video{width:100%;height:100%;object-fit:contain;outline:none}
-.loading{position:fixed;inset:0;display:flex;flex-direction:column;align-items:center;justify-content:center;background:#000;z-index:10;gap:12px}
-.spinner{width:36px;height:36px;border:3px solid rgba(255,255,255,.2);border-top-color:#fff;border-radius:50%;animation:spin .8s linear infinite}
+body{font-family:-apple-system,BlinkMacSystemFont,"Segoe UI",system-ui,sans-serif;background:#0f172a;color:#e2e8f0;min-height:100vh;overflow-x:hidden}
+/* ── Top Bar ── */
+.topbar{background:rgba(15,23,42,.95);backdrop-filter:blur(8px);border-bottom:1px solid rgba(255,255,255,.06);padding:8px 16px;display:flex;align-items:center;gap:12px;position:sticky;top:0;z-index:100}
+.topbar .back{background:none;border:none;color:#94a3b8;font-size:14px;cursor:pointer;padding:4px 10px;border-radius:6px;transition:all .15s}
+.topbar .back:hover{color:#fff;background:rgba(255,255,255,.08)}
+.topbar .title{font-size:14px;font-weight:500;color:#e2e8f0;overflow:hidden;text-overflow:ellipsis;white-space:nowrap;flex:1}
+.topbar .lesson-nav{display:flex;align-items:center;gap:6px}
+.topbar .lesson-nav button{background:rgba(255,255,255,.06);border:none;color:#94a3b8;padding:4px 10px;border-radius:6px;font-size:12px;cursor:pointer;transition:all .15s}
+.topbar .lesson-nav button:hover{background:rgba(255,255,255,.12);color:#fff}
+.topbar .lesson-nav span{font-size:12px;color:#64748b}
+/* ── Video Container (floating) ── */
+.video-section{position:relative;background:#000;overflow:hidden;transition:all .3s ease}
+.video-section.expanded{height:auto}
+.video-section.collapsed{height:80px}
+video{width:100%;display:block;outline:none;max-height:70vh;background:#000;margin:0 auto}
+.video-controls{position:absolute;bottom:8px;right:8px;z-index:10;display:flex;gap:4px}
+.video-controls button{background:rgba(0,0,0,.6);border:1px solid rgba(255,255,255,.1);color:#fff;padding:4px 10px;border-radius:6px;font-size:11px;cursor:pointer;transition:all .15s;backdrop-filter:blur(4px)}
+.video-controls button:hover{background:rgba(0,0,0,.8)}
+/* ── Main Content Area ── */
+.content-area{max-width:960px;margin:0 auto;padding:20px 16px}
+.content-card{background:rgba(255,255,255,.04);border:1px solid rgba(255,255,255,.06);border-radius:12px;padding:20px;margin-bottom:16px}
+.content-card h3{font-size:14px;font-weight:600;color:#94a3b8;margin-bottom:12px;display:flex;align-items:center;gap:8px}
+.content-card h3 .badge{font-size:10px;font-weight:500;padding:2px 8px;border-radius:4px;background:rgba(99,102,241,.15);color:#818cf8}
+/* ── Subtitle / Transcript ── */
+.transcript-text{font-size:14px;line-height:1.8;color:#cbd5e1;max-height:400px;overflow-y:auto}
+.transcript-text .cue{padding:8px 12px;border-radius:6px;cursor:pointer;transition:all .1s;border-left:2px solid transparent;margin-bottom:2px}
+.transcript-text .cue:hover{background:rgba(255,255,255,.04)}
+.transcript-text .cue.active{background:rgba(99,102,241,.12);border-left-color:#818cf8;color:#fff}
+.transcript-text .cue .time{font-size:11px;color:#64748b;margin-right:8px}
+/* ── Q&A Input ── */
+.qa-area{margin-top:16px}
+.qa-input-wrap{display:flex;gap:8px}
+.qa-input-wrap input{flex:1;padding:10px 14px;border-radius:8px;border:1px solid rgba(255,255,255,.1);background:rgba(255,255,255,.04);color:#e2e8f0;font-size:14px;outline:none;transition:border .2s}
+.qa-input-wrap input:focus{border-color:#818cf8}
+.qa-input-wrap input::placeholder{color:#475569}
+.qa-input-wrap button{padding:10px 20px;border-radius:8px;border:none;background:#6366f1;color:#fff;font-size:14px;cursor:pointer;transition:background .15s;white-space:nowrap}
+.qa-input-wrap button:hover{background:#4f46e5}
+.qa-input-wrap button:disabled{opacity:.5;cursor:not-allowed}
+.qa-messages{margin-top:12px;max-height:300px;overflow-y:auto}
+.qa-msg{padding:10px 14px;border-radius:8px;margin-bottom:8px;font-size:14px;line-height:1.5}
+.qa-msg.user{background:rgba(99,102,241,.1);border:1px solid rgba(99,102,241,.15)}
+.qa-msg.assistant{background:rgba(255,255,255,.04);border:1px solid rgba(255,255,255,.06)}
+.qa-msg .role{font-size:11px;color:#64748b;margin-bottom:4px}
+/* ── Loading ── */
+.loading-overlay{position:fixed;inset:0;background:#0f172a;z-index:200;display:flex;flex-direction:column;align-items:center;justify-content:center;gap:12px}
+.spinner{width:36px;height:36px;border:3px solid rgba(255,255,255,.08);border-top-color:#6366f1;border-radius:50%;animation:spin .8s linear infinite}
 @keyframes spin{to{transform:rotate(360deg)}}
-.loading span{color:rgba(255,255,255,.5);font-size:14px}
-.error{position:fixed;inset:0;display:flex;flex-direction:column;align-items:center;justify-content:center;background:#000;z-index:10;gap:12px;padding:24px;text-align:center}
-.error p{color:rgba(255,255,255,.7);font-size:15px;line-height:1.5}
-.error button{margin-top:8px;padding:8px 20px;border-radius:8px;border:1px solid rgba(255,255,255,.2);background:rgba(255,255,255,.1);color:#fff;font-size:14px;cursor:pointer;transition:background .2s}
-.error button:hover{background:rgba(255,255,255,.2)}
-.list-btn{position:fixed;bottom:24px;right:24px;z-index:50;padding:8px 16px;border-radius:20px;border:1px solid rgba(255,255,255,.2);background:rgba(0,0,0,.5);color:#fff;font-size:13px;cursor:pointer;backdrop-filter:blur(8px);transition:background .2s}
-.list-btn:hover{background:rgba(255,255,255,.2)}
-.lesson-list{position:fixed;bottom:68px;right:24px;z-index:50;width:280px;max-height:360px;overflow-y:auto;background:rgba(0,0,0,.85);backdrop-filter:blur(16px);border-radius:12px;border:1px solid rgba(255,255,255,.1);display:none}
-.lesson-list.show{display:block}
-.lesson-item{padding:10px 14px;font-size:13px;color:rgba(255,255,255,.6);cursor:pointer;transition:all .15s;border-bottom:1px solid rgba(255,255,255,.05)}
-.lesson-item:last-child{border-bottom:none}
-.lesson-item:hover{background:rgba(255,255,255,.08);color:#fff}
-.lesson-item.active{background:rgba(255,255,255,.12);color:#fff}
-.lesson-num{display:inline-flex;width:22px;height:22px;border-radius:50%;background:rgba(255,255,255,.1);align-items:center;justify-content:center;font-size:11px;margin-right:8px;flex-shrink:0}
-.lesson-item.active .lesson-num{background:rgba(99,102,241,.4)}
+.loading-overlay span{color:#64748b;font-size:14px}
+.error-overlay{position:fixed;inset:0;background:#0f172a;z-index:200;display:flex;flex-direction:column;align-items:center;justify-content:center;gap:12px;padding:24px;text-align:center;display:none}
+.error-overlay p{color:#94a3b8;font-size:15px;line-height:1.5}
+.error-overlay button{margin-top:8px;padding:8px 20px;border-radius:8px;border:1px solid rgba(255,255,255,.1);background:rgba(255,255,255,.06);color:#e2e8f0;font-size:14px;cursor:pointer;transition:background .15s}
+.error-overlay button:hover{background:rgba(255,255,255,.1)}
+/* ── Responsive ── */
+@media(max-width:640px){
+  .topbar .title{font-size:13px}
+  .video-section.expanded video{max-height:55vh}
+  .content-area{padding:12px}
+}
 </style>
 </head>
 <body>
 
-<div class="loading" id="loading">
+<!-- Loading -->
+<div class="loading-overlay" id="loading">
   <div class="spinner"></div>
-  <span>加载视频...</span>
+  <span>加载课程...</span>
 </div>
 
-<div class="error" id="error" style="display:none">
+<!-- Error -->
+<div class="error-overlay" id="error">
   <p id="errorMsg">加载失败</p>
-  <button onclick="init()">重试</button>
+  <button onclick="location.reload()">重试</button>
 </div>
 
-<div class="header" id="header">
-  <div class="header-inner">
-    <button class="back-btn" onclick="goBack()">← 返回</button>
-    <div class="course-title" id="courseTitle">视频课程</div>
+<!-- Top Bar -->
+<div class="topbar">
+  <button class="back" onclick="window.location.href=document.referrer||'/courses'">←</button>
+  <div class="title" id="courseTitle">视频课程</div>
+  <div class="lesson-nav" id="lessonNav">
+    <button onclick="prevLesson()" id="prevBtn">‹ 上一节</button>
+    <span id="lessonIdx">0/0</span>
+    <button onclick="nextLesson()" id="nextBtn">下一节 ›</button>
   </div>
 </div>
 
-<div class="video-wrap" id="videoWrap" style="display:none">
+<!-- Video Section (floating) -->
+<div class="video-section expanded" id="videoSection">
   <video id="videoPlayer" controls playsinline preload="metadata"></video>
+  <div class="video-controls">
+    <button onclick="toggleVideoSize()" id="videoToggleBtn">━ 收起</button>
+  </div>
 </div>
 
-<button class="list-btn" id="listBtn" style="display:none" onclick="toggleList()">☰ <span id="listLabel">1/1</span></button>
+<!-- Content Area -->
+<div class="content-area">
+  <!-- Transcript placeholder -->
+  <div class="content-card" id="transcriptCard">
+    <h3>📝 课程内容 <span class="badge">即将支持字幕同步</span></h3>
+    <div class="transcript-text" id="transcriptText">
+      <p style="color:#64748b;text-align:center;padding:20px 0">加载课程内容...</p>
+    </div>
+  </div>
 
-<div class="lesson-list" id="lessonList"></div>
+  <!-- Q&A -->
+  <div class="content-card">
+    <h3>💬 向课程提问</h3>
+    <div class="qa-area">
+      <div class="qa-input-wrap">
+        <input type="text" id="qaInput" placeholder="输入关于视频内容的问题..." onkeydown="if(event.key==='Enter')askQuestion()">
+        <button onclick="askQuestion()" id="qaBtn">提问</button>
+      </div>
+      <div class="qa-messages" id="qaMessages"></div>
+    </div>
+  </div>
+</div>
 
 <script>
 // ═══════════════════════════════════════════════
 // State
 // ═══════════════════════════════════════════════
-var BID = '';
+var BID = qs('bid');
 var TOKEN = '';
 var LESSONS = [];
 var CURRENT = 0;
-var LIST_OPEN = false;
+var VIDEO_COLLAPSED = false;
+var HLS_INSTANCE = null;
 
-// ═══════════════════════════════════════════════
-// Helpers
-// ═══════════════════════════════════════════════
 function qs(k){ var m=location.search.match(new RegExp('[?&]'+k+'=([^&]*)')); return m?decodeURIComponent(m[1]):''; }
 function getToken(){
   var c=document.cookie.match(/(?:^| )token=([^;]*)/);
   return c?c[1]:(localStorage.getItem('token')||'');
 }
+
 function api(m,u,b){
   var h={'Content-Type':'application/json'};
   if(TOKEN){ h['Token']=TOKEN; h['Authorization']='Bearer '+TOKEN; }
@@ -87,70 +146,52 @@ function api(m,u,b){
     if(!r.ok) throw new Error('HTTP '+r.status);
     return r.json();
   }).then(function(j){
-    if(j.code!==0 && j.code!==undefined) throw new Error(j.message||j.msg||'API error');
+    if(j.code!==0&&j.code!==void 0) throw new Error(j.message||j.msg||'API error');
     return j.data||j;
   });
 }
-function showLoading(){ document.getElementById('loading').style.display='flex'; document.getElementById('error').style.display='none'; }
-function hideLoading(){ document.getElementById('loading').style.display='none'; }
-function showError(msg){ document.getElementById('errorMsg').textContent=msg||'加载失败'; document.getElementById('error').style.display='flex'; hideLoading(); }
 
 // ═══════════════════════════════════════════════
 // Init
 // ═══════════════════════════════════════════════
-function goBack(){ window.location.href=document.referrer||'/courses'; }
-
 function init(){
-  BID = qs('bid');
   if(!BID){ showError('缺少课程 ID'); return; }
   TOKEN = getToken();
   if(!TOKEN){ window.location.href='/login?redirect=/video-player.html?bid='+BID; return; }
 
   showLoading();
-  document.getElementById('header').className='header';
-
-  // Step 1: get course info and outline tree
+  // Get course info + outline tree
   api('GET','/api/learn/shifu/'+BID+'/outline-item-tree?preview_mode=false').then(function(tree){
     var items = tree.outline_items || [];
-    if(!items.length) throw new Error('课程无章节内容');
-
-    // Step 2: walk chapters to find video lessons
+    if(!items.length) throw new Error('课程暂无内容');
     var promises = [];
     for(var ci=0;ci<items.length;ci++){
-      var ch = items[ci];
-      var children = ch.children || [];
+      var children = items[ci].children||[];
       for(var li=0;li<children.length;li++){
-        var lesson = children[li];
-        if(!lesson.bid) continue;
+        var ls = children[li];
+        if(!ls.bid) continue;
         promises.push(
-          api('GET','/api/shifu/shifus/'+BID+'/outlines/'+lesson.bid+'/mdflow').then(function(ls){
+          api('GET','/api/shifu/shifus/'+BID+'/outlines/'+ls.bid+'/mdflow').then((function(l){
             return function(md){
-              var content = typeof md==='string' ? md : (md&&md.data) ? md.data : (md&&md.content)||md||'';
-              // Extract {{video}} URL
-              var match = content.match(/^\{\{video\}\}\s*\n\s*(\S+)/im);
-              var url = match ? match[1] : null;
-              // Fallback: [video] or source=
-              if(!url){ var vm=content.match(/\[video\]([^\[]+)\[\/video\]/); if(vm) url=vm[1]; }
-              if(!url){ var am=content.match(/source\s*=\s*"([^"]+)"/); if(am) url=am[1]; }
-              return { bid:ls.bid, title:ls.name||'视频课时', url:url||'' };
+              var c = typeof md==='string'?md:(md&&md.data)?md.data:(md&&md.content)||md||'';
+              var m1 = c.match(/^\{\{video\}\}\s*\n\s*(\S+)/im);
+              var m2 = c.match(/\[video\]([^\[]+)\[\/video\]/);
+              var m3 = c.match(/source\s*=\s*"([^"]+)"/);
+              return { bid:l.bid, title:l.name||'视频课时', url:m1?m1[1]:(m2?m2[1]:(m3?m3[1]:'')), mdflow:c };
             };
-          }(lesson))
+          })(ls))
         );
       }
     }
-
-    return Promise.all(promises).then(function(results){
-      LESSONS = results.filter(function(r){ return r.url; });
-      if(!LESSONS.length) throw new Error('未找到视频内容');
-      document.getElementById('courseTitle').textContent = LESSONS[0].title||'视频课程';
-      document.getElementById('listBtn').style.display='';
-      renderList();
-      playLesson(0);
-      hideLoading();
-    });
-  }).catch(function(e){
-    showError(e.message||'加载失败');
-  });
+    return Promise.all(promises).then(function(r){ return r.filter(function(x){ return x.url; }); });
+  }).then(function(lessons){
+    if(!lessons.length) throw new Error('未找到视频内容');
+    LESSONS = lessons;
+    document.getElementById('courseTitle').textContent = lessons[0].title;
+    playLesson(0);
+    renderTranscript(0);
+    hideLoading();
+  }).catch(function(e){ showError(e.message||'加载失败'); });
 }
 
 // ═══════════════════════════════════════════════
@@ -159,97 +200,137 @@ function init(){
 function playLesson(idx){
   if(idx<0||idx>=LESSONS.length) return;
   CURRENT = idx;
-  var lesson = LESSONS[idx];
-  document.getElementById('listLabel').textContent = (idx+1)+'/'+LESSONS.length;
-  document.getElementById('courseTitle').textContent = lesson.title;
-  document.getElementById('videoWrap').style.display='';
-  var video = document.getElementById('videoPlayer');
-  video.removeAttribute('src');
-  video.load();
+  var ls = LESSONS[idx];
+  document.getElementById('courseTitle').textContent = ls.title;
+  document.getElementById('lessonIdx').textContent = (idx+1)+'/'+LESSONS.length;
+  document.getElementById('prevBtn').style.display = idx>0?'':'none';
+  document.getElementById('nextBtn').style.display = idx<LESSONS.length-1?'':'none';
 
-  var src = lesson.url;
-  var isHls = src.match(/\.m3u8/i);
+  var v = document.getElementById('videoPlayer');
+  v.removeAttribute('src');
+  if(HLS_INSTANCE){ HLS_INSTANCE.destroy(); HLS_INSTANCE=null; }
+  v.load();
 
-  if(!isHls){
-    // MP4 direct play
-    video.src = src;
-    video.play().catch(function(){});
-    return;
-  }
-
-  // HLS — attempt native, fallback to hls.js
-  if(video.canPlayType('application/vnd.apple.mpegurl')){
-    video.src = src;
-    video.play().catch(function(){});
-    return;
-  }
-
-  loadHlsJs(src, video);
+  var src = ls.url;
+  if(!src.match(/\.m3u8/i)){ v.src=src; v.play().catch(function(){}); return; }
+  if(v.canPlayType('application/vnd.apple.mpegurl')){ v.src=src; v.play().catch(function(){}); return; }
+  loadHlsJs(src, v);
 }
 
-function loadHlsJs(src, video){
-  if(window.Hls){
-    startHls(src, video);
-    return;
-  }
-  var s = document.createElement('script');
-  s.src = 'https://cdn.jsdelivr.net/npm/hls.js@latest/dist/hls.min.js';
-  s.onload = function(){ startHls(src, video); };
-  s.onerror = function(){ video.src = src; video.play().catch(function(){}); };
+function loadHlsJs(src, v){
+  if(window.Hls){ startHls(src,v); return; }
+  var s=document.createElement('script');
+  s.src='https://cdn.jsdelivr.net/npm/hls.js@latest/dist/hls.min.js';
+  s.onload=function(){ startHls(src,v); };
+  s.onerror=function(){ v.src=src; v.play().catch(function(){}); };
   document.body.appendChild(s);
 }
 
-var hlsInstance = null;
-function startHls(src, video){
-  if(hlsInstance) hlsInstance.destroy();
-  var Hls = window.Hls;
-  if(Hls && Hls.isSupported()){
-    var h = new Hls();
-    hlsInstance = h;
-    h.loadSource(src);
-    h.attachMedia(video);
-    h.on(Hls.Events.MANIFEST_PARSED, function(){ video.play().catch(function(){}); });
-    h.on(Hls.Events.ERROR, function(e,d){ if(d.fatal){ h.destroy(); showError('播放错误'); }});
+function startHls(src, v){
+  if(HLS_INSTANCE) HLS_INSTANCE.destroy();
+  var Hls=window.Hls;
+  if(Hls&&Hls.isSupported()){
+    var h=new Hls(); HLS_INSTANCE=h;
+    h.loadSource(src); h.attachMedia(v);
+    h.on(Hls.Events.MANIFEST_PARSED,function(){ v.play().catch(function(){}); });
+    h.on(Hls.Events.ERROR,function(e,d){ if(d.fatal){ h.destroy(); showError('播放错误'); }});
+  } else { v.src=src; v.play().catch(function(){}); }
+}
+
+function prevLesson(){ playLesson(CURRENT-1); renderTranscript(CURRENT); }
+function nextLesson(){ playLesson(CURRENT+1); renderTranscript(CURRENT); }
+
+// ═══════════════════════════════════════════════
+// Video Float Toggle
+// ═══════════════════════════════════════════════
+function toggleVideoSize(){
+  VIDEO_COLLAPSED = !VIDEO_COLLAPSED;
+  var sec = document.getElementById('videoSection');
+  var btn = document.getElementById('videoToggleBtn');
+  if(VIDEO_COLLAPSED){
+    sec.className='video-section collapsed';
+    btn.textContent='□ 展开';
   } else {
-    video.src = src;
-    video.play().catch(function(){});
+    sec.className='video-section expanded';
+    btn.textContent='━ 收起';
   }
 }
 
 // ═══════════════════════════════════════════════
-// Lesson List
+// Transcript
 // ═══════════════════════════════════════════════
-function toggleList(){
-  LIST_OPEN = !LIST_OPEN;
-  document.getElementById('lessonList').className = 'lesson-list'+(LIST_OPEN?' show':'');
+function renderTranscript(idx){
+  var ls = LESSONS[idx];
+  if(!ls||!ls.mdflow){ return; }
+  var el = document.getElementById('transcriptText');
+  var md = ls.mdflow;
+  // Remove {{video}} line
+  var text = md.replace(/^\{\{video\}\}\s*\n\s*\S+\s*/im,'').trim();
+  // Markdown→simple HTML
+  var html = text
+    .replace(/^###\s+(.*)$/gm,'<h3 style="font-size:15px;font-weight:600;color:#e2e8f0;margin:16px 0 8px">$1</h3>')
+    .replace(/^##\s+(.*)$/gm,'<h2 style="font-size:16px;font-weight:600;color:#f1f5f9;margin:20px 0 10px">$1</h2>')
+    .replace(/^#\s+(.*)$/gm,'<h1 style="font-size:18px;font-weight:700;color:#f8fafc;margin:24px 0 12px">$1</h1>')
+    .replace(/^---\s*$/gm,'<hr style="border:none;border-top:1px solid rgba(255,255,255,.06);margin:16px 0">')
+    .replace(/\*\*(.*?)\*\*/g,'<strong>$1</strong>')
+    .replace(/\n\n/g,'</p><p style="margin-bottom:12px;line-height:1.8">')
+    .replace(/\n/g,'<br>');
+  el.innerHTML = '<p style="margin-bottom:12px;line-height:1.8">'+html+'</p>';
+  if(!text) el.innerHTML = '<p style="color:#64748b;text-align:center;padding:20px 0">此课程暂无文字内容</p>';
+  // Future: parse subtitle cues here
 }
 
-function renderList(){
-  var html = '';
-  for(var i=0;i<LESSONS.length;i++){
-    html += '<div class="lesson-item'+(i===CURRENT?' active':'')+'" onclick="selectLesson('+i+')">';
-    html += '<span class="lesson-num">'+(i+1)+'</span>'+LESSONS[i].title;
-    html += '</div>';
-  }
-  document.getElementById('lessonList').innerHTML = html;
+// ═══════════════════════════════════════════════
+// Q&A (AI Questioning)
+// ═══════════════════════════════════════════════
+var QA_HISTORY = [];
+function askQuestion(){
+  var input = document.getElementById('qaInput');
+  var q = input.value.trim();
+  if(!q) return;
+  input.value = '';
+  addQAMsg('user',q);
+  document.getElementById('qaBtn').disabled = true;
+  // Build conversation context
+  var ls = LESSONS[CURRENT];
+  var context = '关于课程「'+(ls?ls.title:'')+'」的问题：\n\n';
+  if(ls&&ls.mdflow){ context += '课程内容摘要：'+ls.mdflow.replace(/^\{\{video\}\}\s*\n\s*\S+/im,'').substring(0,500)+'\n\n'; }
+  var messages = [{'role':'system','content':'你是课程助教，回答关于视频内容的问题。回答简洁有条理，用中文。'}];
+  QA_HISTORY.forEach(function(m){ messages.push(m); });
+  messages.push({'role':'user','content':context+q});
+
+  // Call OpenAI-compatible API through the nginx proxy
+  fetch('/api/chat/chat/completions',{
+    method:'POST',
+    headers:{'Content-Type':'application/json'},
+    body:JSON.stringify({model:'mimo-v2.5',messages:messages,stream:false,max_tokens:1000})
+  }).then(function(r){ return r.json(); }).then(function(d){
+    var answer = (d.choices&&d.choices[0]&&d.choices[0].message&&d.choices[0].message.content)||'抱歉，暂时无法回答';
+    QA_HISTORY.push({role:'user',content:q});
+    QA_HISTORY.push({role:'assistant',content:answer});
+    addQAMsg('assistant',answer);
+  }).catch(function(e){
+    addQAMsg('assistant','回答失败：'+e.message);
+  }).finally(function(){
+    document.getElementById('qaBtn').disabled = false;
+  });
 }
 
-function selectLesson(idx){
-  LIST_OPEN = false;
-  document.getElementById('lessonList').className = 'lesson-list';
-  playLesson(idx);
-  renderList();
+function addQAMsg(role, content){
+  var el = document.getElementById('qaMessages');
+  var d = document.createElement('div');
+  d.className = 'qa-msg '+role;
+  d.innerHTML = '<div class="role">'+(role==='user'?'🧑 你':'🤖 助教')+'</div>'+content;
+  el.appendChild(d);
+  el.scrollTop = el.scrollHeight;
 }
 
 // ═══════════════════════════════════════════════
-// Header auto-hide
+// UI Helpers
 // ═══════════════════════════════════════════════
-var headerTimer;
-document.addEventListener('mousemove', function(){
-  document.getElementById('header').className = 'header show';
-  clearTimeout(headerTimer);
-  headerTimer = setTimeout(function(){ document.getElementById('header').className = 'header'; }, 3000);
-});
+function showLoading(){ document.getElementById('loading').style.display='flex'; }
+function hideLoading(){ document.getElementById('loading').style.display='none'; }
+function showError(m){ document.getElementById('errorMsg').textContent=m||'加载失败'; document.getElementById('error').style.display='flex'; hideLoading(); }
 
 // ═══════════════════════════════════════════════
 // Start
