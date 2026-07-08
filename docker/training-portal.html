@@ -384,10 +384,12 @@ function renderModule(m){
   enr.forEach(function(e){
     var course = state.courses.find(function(c){ return c.bid === e.shifu_bid; });
     var name = course ? (course.name||'未命名课程') : '课程';
-    var pct = e.progress_pct || e.progress || 0;
+    var isVideo = course && (course.keywords||[]).some(function(k){ return /视频|video/i.test(k); });
+    var link = isVideo ? '/c/v/'+e.shifu_bid : '/c/'+e.shifu_bid;
+    var pct = e.progress_pct || 0;
     var statusLabel = {assigned:'已分配',in_progress:'学习中',completed:'已完成',expired:'已过期'}[e.status]||e.status;
     var statusCls = 'status-'+((e.status||'assigned').replace('.','_'));
-    html += '<a href="/c/'+e.shifu_bid+'" class="course-card">';
+    html += '<a href="'+link+'" class="course-card">';
     html += '<span class="course-status '+statusCls+'">'+statusLabel+'</span>';
     html += '<div class="course-icon" style="background:'+cfg.color+'20;color:'+cfg.color+'">'+cfg.icon+'</div>';
     html += '<div class="course-name">'+name+'</div>';
