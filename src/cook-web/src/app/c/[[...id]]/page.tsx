@@ -337,7 +337,7 @@ export default function ChatPage() {
         }).then(r => r.json());
         const kw = detail?.data?.keywords || [];
         if (kw.some((k: string) => /视频|video/i.test(k))) {
-          window.location.href = `/c/v/${courseId}`;
+          window.location.href = `/video-player.html?bid=${courseId}`;
           return;
         }
         // Check first lesson outline for {{video}} tag
@@ -353,7 +353,7 @@ export default function ChatPage() {
             }).then(r => r.json());
             const content = typeof md === 'string' ? md : md?.data || md?.content || '';
             if (content.trim().startsWith('{{video}}')) {
-              window.location.href = `/c/v/${courseId}`;
+              window.location.href = `/video-player.html?bid=${courseId}`;
               return;
             }
           }

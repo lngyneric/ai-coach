@@ -29,7 +29,7 @@ const COURSE_CATEGORIES = [
 // ── Course Card ──────────────────────────────────────────────────
 function CourseCard({ shifu }: { shifu: Shifu }) {
   const isVideo = (shifu.keywords || []).some((k: string) => /视频|video/i.test(k));
-  const courseUrl = isVideo ? `/c/v/${shifu.bid}` : `/c/${shifu.bid}`;
+  const courseUrl = isVideo ? `/video-player.html?bid=${shifu.bid}` : `/c/${shifu.bid}`;
   return (
     <Link href={courseUrl} className="block group">
       <Card className="border-slate-200 hover:border-blue-300 hover:shadow-md transition-all duration-200 h-full">

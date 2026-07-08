@@ -92,7 +92,6 @@ http {
         # Static files served directly by nginx (before proxy)
         location = /ivd-knowledge-tree.html { root /usr/share/nginx/html; }
         location = /training-portal.html { root /usr/share/nginx/html; }
-        location = /video-player.html { root /usr/share/nginx/html; }
         location = /admin-training-enroll.html { root /usr/share/nginx/html; }
         location = /ivd-sandbox-model-docs.html { root /usr/share/nginx/html; }
         location = /ivd-sandbox-dashboard.html { root /usr/share/nginx/html; }
@@ -175,18 +174,7 @@ http {
 
         # Static files — nginx direct serve
         location = /ivd-knowledge-tree.html { root /usr/share/nginx/html; }
-        # VOD video proxy (bypass CORS/network issues)
-        location /vod/ {
-            proxy_pass https://video.sysmex.com.cn/;
-            proxy_set_header Host video.sysmex.com.cn;
-            proxy_ssl_server_name on;
-            proxy_ssl_verify off;
-            proxy_buffering off;
-            proxy_read_timeout 300s;
-            add_header Access-Control-Allow-Origin *;
-        }
         location = /training-portal.html { root /usr/share/nginx/html; }
-        location = /video-player.html { root /usr/share/nginx/html; }
         location = /admin-training-enroll.html { root /usr/share/nginx/html; }
         location = /ivd-sandbox-model-docs.html { root /usr/share/nginx/html; }
         location = /ivd-sandbox-dashboard.html { root /usr/share/nginx/html; }

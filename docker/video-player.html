@@ -1,0 +1,260 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+<meta charset="utf-8" />
+<meta name="viewport" content="width=device-width, initial-scale=1, maximum-scale=1, user-scalable=no">
+<title>视频播放 - sysmex</title>
+<style>
+*{box-sizing:border-box;margin:0;padding:0}
+body{font-family:-apple-system,BlinkMacSystemFont,"Segoe UI",system-ui,sans-serif;background:#000;color:#fff;min-height:100vh;overflow:hidden}
+.header{position:fixed;top:0;left:0;right:0;z-index:50;background:linear-gradient(180deg,rgba(0,0,0,.8) 0%,transparent);padding:12px 16px;opacity:0;transition:opacity .3s}
+.header:hover,.header.show{opacity:1}
+.header-inner{max-width:960px;margin:0 auto;display:flex;align-items:center;gap:12px}
+.back-btn{background:none;border:none;color:#fff;font-size:14px;cursor:pointer;padding:4px 8px;border-radius:6px;transition:background .2s}
+.back-btn:hover{background:rgba(255,255,255,.1)}
+.course-title{font-size:14px;font-weight:500;color:rgba(255,255,255,.9);overflow:hidden;text-overflow:ellipsis;white-space:nowrap}
+.video-wrap{width:100%;height:100dvh;display:flex;align-items:center;justify-content:center;background:#000}
+video{width:100%;height:100%;object-fit:contain;outline:none}
+.loading{position:fixed;inset:0;display:flex;flex-direction:column;align-items:center;justify-content:center;background:#000;z-index:10;gap:12px}
+.spinner{width:36px;height:36px;border:3px solid rgba(255,255,255,.2);border-top-color:#fff;border-radius:50%;animation:spin .8s linear infinite}
+@keyframes spin{to{transform:rotate(360deg)}}
+.loading span{color:rgba(255,255,255,.5);font-size:14px}
+.error{position:fixed;inset:0;display:flex;flex-direction:column;align-items:center;justify-content:center;background:#000;z-index:10;gap:12px;padding:24px;text-align:center}
+.error p{color:rgba(255,255,255,.7);font-size:15px;line-height:1.5}
+.error button{margin-top:8px;padding:8px 20px;border-radius:8px;border:1px solid rgba(255,255,255,.2);background:rgba(255,255,255,.1);color:#fff;font-size:14px;cursor:pointer;transition:background .2s}
+.error button:hover{background:rgba(255,255,255,.2)}
+.list-btn{position:fixed;bottom:24px;right:24px;z-index:50;padding:8px 16px;border-radius:20px;border:1px solid rgba(255,255,255,.2);background:rgba(0,0,0,.5);color:#fff;font-size:13px;cursor:pointer;backdrop-filter:blur(8px);transition:background .2s}
+.list-btn:hover{background:rgba(255,255,255,.2)}
+.lesson-list{position:fixed;bottom:68px;right:24px;z-index:50;width:280px;max-height:360px;overflow-y:auto;background:rgba(0,0,0,.85);backdrop-filter:blur(16px);border-radius:12px;border:1px solid rgba(255,255,255,.1);display:none}
+.lesson-list.show{display:block}
+.lesson-item{padding:10px 14px;font-size:13px;color:rgba(255,255,255,.6);cursor:pointer;transition:all .15s;border-bottom:1px solid rgba(255,255,255,.05)}
+.lesson-item:last-child{border-bottom:none}
+.lesson-item:hover{background:rgba(255,255,255,.08);color:#fff}
+.lesson-item.active{background:rgba(255,255,255,.12);color:#fff}
+.lesson-num{display:inline-flex;width:22px;height:22px;border-radius:50%;background:rgba(255,255,255,.1);align-items:center;justify-content:center;font-size:11px;margin-right:8px;flex-shrink:0}
+.lesson-item.active .lesson-num{background:rgba(99,102,241,.4)}
+</style>
+</head>
+<body>
+
+<div class="loading" id="loading">
+  <div class="spinner"></div>
+  <span>加载视频...</span>
+</div>
+
+<div class="error" id="error" style="display:none">
+  <p id="errorMsg">加载失败</p>
+  <button onclick="init()">重试</button>
+</div>
+
+<div class="header" id="header">
+  <div class="header-inner">
+    <button class="back-btn" onclick="goBack()">← 返回</button>
+    <div class="course-title" id="courseTitle">视频课程</div>
+  </div>
+</div>
+
+<div class="video-wrap" id="videoWrap" style="display:none">
+  <video id="videoPlayer" controls playsinline preload="metadata"></video>
+</div>
+
+<button class="list-btn" id="listBtn" style="display:none" onclick="toggleList()">☰ <span id="listLabel">1/1</span></button>
+
+<div class="lesson-list" id="lessonList"></div>
+
+<script>
+// ═══════════════════════════════════════════════
+// State
+// ═══════════════════════════════════════════════
+var BID = '';
+var TOKEN = '';
+var LESSONS = [];
+var CURRENT = 0;
+var LIST_OPEN = false;
+
+// ═══════════════════════════════════════════════
+// Helpers
+// ═══════════════════════════════════════════════
+function qs(k){ var m=location.search.match(new RegExp('[?&]'+k+'=([^&]*)')); return m?decodeURIComponent(m[1]):''; }
+function getToken(){
+  var c=document.cookie.match(/(?:^| )token=([^;]*)/);
+  return c?c[1]:(localStorage.getItem('token')||'');
+}
+function api(m,u,b){
+  var h={'Content-Type':'application/json'};
+  if(TOKEN){ h['Token']=TOKEN; h['Authorization']='Bearer '+TOKEN; }
+  return fetch(u,{method:m||'GET',headers:h,body:b?JSON.stringify(b):null}).then(function(r){
+    if(!r.ok) throw new Error('HTTP '+r.status);
+    return r.json();
+  }).then(function(j){
+    if(j.code!==0 && j.code!==undefined) throw new Error(j.message||j.msg||'API error');
+    return j.data||j;
+  });
+}
+function showLoading(){ document.getElementById('loading').style.display='flex'; document.getElementById('error').style.display='none'; }
+function hideLoading(){ document.getElementById('loading').style.display='none'; }
+function showError(msg){ document.getElementById('errorMsg').textContent=msg||'加载失败'; document.getElementById('error').style.display='flex'; hideLoading(); }
+
+// ═══════════════════════════════════════════════
+// Init
+// ═══════════════════════════════════════════════
+function goBack(){ window.location.href=document.referrer||'/courses'; }
+
+function init(){
+  BID = qs('bid');
+  if(!BID){ showError('缺少课程 ID'); return; }
+  TOKEN = getToken();
+  if(!TOKEN){ window.location.href='/login?redirect=/video-player.html?bid='+BID; return; }
+
+  showLoading();
+  document.getElementById('header').className='header';
+
+  // Step 1: get course info and outline tree
+  api('GET','/api/learn/shifu/'+BID+'/outline-item-tree?preview_mode=false').then(function(tree){
+    var items = tree.outline_items || [];
+    if(!items.length) throw new Error('课程无章节内容');
+
+    // Step 2: walk chapters to find video lessons
+    var promises = [];
+    for(var ci=0;ci<items.length;ci++){
+      var ch = items[ci];
+      var children = ch.children || [];
+      for(var li=0;li<children.length;li++){
+        var lesson = children[li];
+        if(!lesson.bid) continue;
+        promises.push(
+          api('GET','/api/shifu/shifus/'+BID+'/outlines/'+lesson.bid+'/mdflow').then(function(ls){
+            return function(md){
+              var content = typeof md==='string' ? md : (md&&md.data) ? md.data : (md&&md.content)||md||'';
+              // Extract {{video}} URL
+              var match = content.match(/^\{\{video\}\}\s*\n\s*(\S+)/im);
+              var url = match ? match[1] : null;
+              // Fallback: [video] or source=
+              if(!url){ var vm=content.match(/\[video\]([^\[]+)\[\/video\]/); if(vm) url=vm[1]; }
+              if(!url){ var am=content.match(/source\s*=\s*"([^"]+)"/); if(am) url=am[1]; }
+              return { bid:ls.bid, title:ls.name||'视频课时', url:url||'' };
+            };
+          }(lesson))
+        );
+      }
+    }
+
+    return Promise.all(promises).then(function(results){
+      LESSONS = results.filter(function(r){ return r.url; });
+      if(!LESSONS.length) throw new Error('未找到视频内容');
+      document.getElementById('courseTitle').textContent = LESSONS[0].title||'视频课程';
+      document.getElementById('listBtn').style.display='';
+      renderList();
+      playLesson(0);
+      hideLoading();
+    });
+  }).catch(function(e){
+    showError(e.message||'加载失败');
+  });
+}
+
+// ═══════════════════════════════════════════════
+// Playback
+// ═══════════════════════════════════════════════
+function playLesson(idx){
+  if(idx<0||idx>=LESSONS.length) return;
+  CURRENT = idx;
+  var lesson = LESSONS[idx];
+  document.getElementById('listLabel').textContent = (idx+1)+'/'+LESSONS.length;
+  document.getElementById('courseTitle').textContent = lesson.title;
+  document.getElementById('videoWrap').style.display='';
+  var video = document.getElementById('videoPlayer');
+  video.removeAttribute('src');
+  video.load();
+
+  var src = lesson.url;
+  var isHls = src.match(/\.m3u8/i);
+
+  if(!isHls){
+    // MP4 direct play
+    video.src = src;
+    video.play().catch(function(){});
+    return;
+  }
+
+  // HLS — attempt native, fallback to hls.js
+  if(video.canPlayType('application/vnd.apple.mpegurl')){
+    video.src = src;
+    video.play().catch(function(){});
+    return;
+  }
+
+  loadHlsJs(src, video);
+}
+
+function loadHlsJs(src, video){
+  if(window.Hls){
+    startHls(src, video);
+    return;
+  }
+  var s = document.createElement('script');
+  s.src = 'https://cdn.jsdelivr.net/npm/hls.js@latest/dist/hls.min.js';
+  s.onload = function(){ startHls(src, video); };
+  s.onerror = function(){ video.src = src; video.play().catch(function(){}); };
+  document.body.appendChild(s);
+}
+
+var hlsInstance = null;
+function startHls(src, video){
+  if(hlsInstance) hlsInstance.destroy();
+  var Hls = window.Hls;
+  if(Hls && Hls.isSupported()){
+    var h = new Hls();
+    hlsInstance = h;
+    h.loadSource(src);
+    h.attachMedia(video);
+    h.on(Hls.Events.MANIFEST_PARSED, function(){ video.play().catch(function(){}); });
+    h.on(Hls.Events.ERROR, function(e,d){ if(d.fatal){ h.destroy(); showError('播放错误'); }});
+  } else {
+    video.src = src;
+    video.play().catch(function(){});
+  }
+}
+
+// ═══════════════════════════════════════════════
+// Lesson List
+// ═══════════════════════════════════════════════
+function toggleList(){
+  LIST_OPEN = !LIST_OPEN;
+  document.getElementById('lessonList').className = 'lesson-list'+(LIST_OPEN?' show':'');
+}
+
+function renderList(){
+  var html = '';
+  for(var i=0;i<LESSONS.length;i++){
+    html += '<div class="lesson-item'+(i===CURRENT?' active':'')+'" onclick="selectLesson('+i+')">';
+    html += '<span class="lesson-num">'+(i+1)+'</span>'+LESSONS[i].title;
+    html += '</div>';
+  }
+  document.getElementById('lessonList').innerHTML = html;
+}
+
+function selectLesson(idx){
+  LIST_OPEN = false;
+  document.getElementById('lessonList').className = 'lesson-list';
+  playLesson(idx);
+  renderList();
+}
+
+// ═══════════════════════════════════════════════
+// Header auto-hide
+// ═══════════════════════════════════════════════
+var headerTimer;
+document.addEventListener('mousemove', function(){
+  document.getElementById('header').className = 'header show';
+  clearTimeout(headerTimer);
+  headerTimer = setTimeout(function(){ document.getElementById('header').className = 'header'; }, 3000);
+});
+
+// ═══════════════════════════════════════════════
+// Start
+// ═══════════════════════════════════════════════
+init();
+</script>
+</body>
+</html>
