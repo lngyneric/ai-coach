@@ -328,14 +328,39 @@ export default function ChatPage() {
     if (!courseId || !isUserInitialized) return;
     const token = useUserStore.getState().getToken();
     if (!token) return;
-    fetch(`/api/shifu/shifus/${courseId}/detail`, {
-      headers: { 'Token': token, 'Content-Type': 'application/json' }
-    }).then(r => r.json()).then(data => {
-      const kw = data?.data?.keywords || [];
-      if (kw.some((k: string) => /视频|video/i.test(k))) {
-        window.location.href = `/c/v/${courseId}`;
-      }
-    }).catch(() => {});
+    
+    // Check both keywords and mdflow {{video}} tag
+    async function checkVideo() {
+      try {
+        const detail = await fetch(`/api/shifu/shifus/${courseId}/detail`, {
+          headers: { 'Token': token, 'Content-Type': 'application/json' }
+        }).then(r => r.json());
+        const kw = detail?.data?.keywords || [];
+        if (kw.some((k: string) => /视频|video/i.test(k))) {
+          window.location.href = `/c/v/${courseId}`;
+          return;
+        }
+        // Check first lesson outline for {{video}} tag
+        const tree = await fetch(`/api/learn/shifu/${courseId}/outline-item-tree?preview_mode=false`, {
+          headers: { 'Token': token }
+        }).then(r => r.json());
+        const items = tree?.data?.outline_items || [];
+        for (const ch of items) {
+          for (const lesson of (ch.children || [])) {
+            if (!lesson.bid) continue;
+            const md = await fetch(`/api/shifu/shifus/${courseId}/outlines/${lesson.bid}/mdflow`, {
+              headers: { 'Token': token }
+            }).then(r => r.json());
+            const content = typeof md === 'string' ? md : md?.data || md?.content || '';
+            if (content.trim().startsWith('{{video}}')) {
+              window.location.href = `/c/v/${courseId}`;
+              return;
+            }
+          }
+        }
+      } catch(e) { /* ignore */ }
+    }
+    checkVideo();
   }, [courseId, isUserInitialized]);
 
   const { updateCourseId } = useEnvStore.getState();

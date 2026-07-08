@@ -42,9 +42,11 @@ export default function VideoCoursePage() {
           try {
             const md: any = await request.get(`/api/shifu/shifus/${courseId}/outlines/${lesson.bid}/mdflow`);
             const content = typeof md === 'string' ? md : md?.data || md?.content || '';
+            // Support {{video}} format: first line with URL, skip AI entirely
+            const videoTagMatch = content.match(/^\{\{video\}\}\s*\n\s*(https?:\/\/\S+)/im);
             const aliMatch = content.match(/source\s*=\s*"([^"]+)"/);
             const videoMatch = content.match(/\[video\]([^\[]+)\[\/video\]/);
-            const src = aliMatch?.[1] || videoMatch?.[1] || '';
+            const src = videoTagMatch?.[1] || aliMatch?.[1] || videoMatch?.[1] || '';
             if (src) found.push({ bid: lesson.bid, title: lesson.name || '视频', sourceUrl: src });
           } catch { /* skip */ }
         }
