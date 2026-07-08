@@ -1,0 +1,209 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+<meta charset="utf-8" />
+<meta name="viewport" content="width=device-width, initial-scale=1, maximum-scale=1, user-scalable=no">
+<title>视频课程管理 - sysmex</title>
+<style>
+*{box-sizing:border-box;margin:0;padding:0}
+body{font-family:-apple-system,BlinkMacSystemFont,"Segoe UI",system-ui,sans-serif;background:#f0f4ff;color:#1e293b}
+/* ── Layout ── */
+.topbar{position:sticky;top:0;z-index:50;background:rgba(255,255,255,.85);backdrop-filter:blur(16px);border-bottom:1px solid #e2e8f0;padding:12px 16px}
+.topbar-inner{max-width:1200px;margin:0 auto;display:flex;align-items:center;justify-content:space-between}
+.topbar-brand{display:flex;align-items:center;gap:10px;font-weight:600;font-size:16px}
+.topbar-user{display:flex;align-items:center;gap:12px;font-size:13px;color:#64748b}
+.main{max-width:1200px;margin:0 auto;padding:20px 16px}
+/* ── Stats Card ── */
+.stats{display:grid;grid-template-columns:repeat(4,1fr);gap:12px;margin-bottom:24px}
+.stat-card{background:#fff;border-radius:12px;padding:16px;border:1px solid #e2e8f0}
+.stat-num{font-size:28px;font-weight:700;color:#6366f1}
+.stat-label{font-size:13px;color:#94a3b8;margin-top:4px}
+/* ── Admin Bar ── */
+.admin-bar{display:none;align-items:center;gap:12px;margin-bottom:20px;padding:12px 16px;background:#fff;border-radius:12px;border:1px solid #e2e8f0}
+.admin-bar.show{display:flex}
+.admin-bar select,.admin-bar button{padding:8px 12px;border-radius:8px;border:1px solid #e2e8f0;font-size:13px;background:#fff;color:#1e293b}
+.admin-bar button{background:#6366f1;color:#fff;border-color:#6366f1;cursor:pointer}
+.admin-bar button:hover{background:#4f46e5}
+/* ── Course Grid ── */
+.course-grid{display:grid;grid-template-columns:repeat(auto-fill,minmax(280px,1fr));gap:14px}
+.course-card{background:#fff;border-radius:14px;border:1px solid #e2e8f0;padding:16px;transition:all .2s;text-decoration:none;color:inherit;position:relative}
+.course-card:hover{border-color:#818cf8;box-shadow:0 4px 16px rgba(99,102,241,.1);transform:translateY(-1px)}
+.course-icon{width:40px;height:40px;border-radius:10px;background:linear-gradient(135deg,#6366f1,#8b5cf6);display:flex;align-items:center;justify-content:center;font-size:20px;margin-bottom:10px}
+.course-name{font-size:14px;font-weight:500;line-height:1.3;margin-bottom:6px;display:-webkit-box;-webkit-line-clamp:2;-webkit-box-orient:vertical;overflow:hidden}
+.course-desc{font-size:12px;color:#94a3b8;line-height:1.4;margin-bottom:8px;display:-webkit-box;-webkit-line-clamp:2;-webkit-box-orient:vertical;overflow:hidden}
+.course-meta{display:flex;align-items:center;gap:8px;font-size:11px;color:#94a3b8}
+.course-badge{font-size:10px;font-weight:500;padding:2px 8px;border-radius:4px;background:#eef2ff;color:#6366f1}
+.course-actions{display:none;gap:6px;margin-top:10px;padding-top:10px;border-top:1px solid #f1f5f9}
+.course-card.admin .course-actions{display:flex}
+.btn-play{padding:6px 12px;border-radius:6px;border:none;background:#6366f1;color:#fff;font-size:12px;cursor:pointer;text-decoration:none}
+.btn-play:hover{background:#4f46e5}
+.btn-enroll{padding:6px 12px;border-radius:6px;border:1px solid #e2e8f0;background:#fff;color:#64748b;font-size:12px;cursor:pointer}
+.btn-enroll:hover{background:#f8fafc}
+/* ── Empty ── */
+.empty{padding:60px 20px;text-align:center;color:#94a3b8}
+.empty .icon{font-size:48px;margin-bottom:12px}
+/* ── Modal ── */
+.modal-overlay{display:none;position:fixed;inset:0;background:rgba(0,0,0,.4);z-index:200;align-items:center;justify-content:center;padding:20px}
+.modal-overlay.show{display:flex}
+.modal{background:#fff;border-radius:20px;width:100%;max-width:480px;padding:24px;animation:modalIn .2s}
+@keyframes modalIn{from{opacity:0;transform:scale(.95)translateY(10px)}to{opacity:1;transform:scale(1)translateY(0)}}
+.modal h2{font-size:18px;font-weight:600;margin-bottom:16px}
+.modal-close{float:right;background:none;border:none;font-size:20px;color:#94a3b8;cursor:pointer}
+.form-group{margin-bottom:14px}
+.form-group label{display:block;font-size:13px;font-weight:500;color:#475569;margin-bottom:4px}
+.form-group select{width:100%;padding:10px 12px;border:1px solid #e2e8f0;border-radius:8px;font-size:14px;background:#fff}
+.form-actions{display:flex;gap:8px;justify-content:flex-end;margin-top:20px}
+.btn{display:inline-flex;align-items:center;gap:6px;padding:8px 20px;border-radius:8px;font-size:13px;font-weight:500;border:none;cursor:pointer;transition:all .15s}
+.btn-primary{background:#6366f1;color:#fff}
+.btn-primary:hover{background:#4f46e5}
+.btn-outline{background:none;border:1px solid #e2e8f0;color:#64748b}
+/* ── Toast ── */
+.toast{position:fixed;bottom:24px;left:50%;transform:translateX(-50%);background:#1e293b;color:#fff;padding:12px 24px;border-radius:12px;font-size:14px;z-index:300;display:none;box-shadow:0 4px 20px rgba(0,0,0,.2)}
+.toast.show{display:block}
+@media(max-width:640px){.stats{grid-template-columns:1fr 1fr}}
+</style>
+</head>
+<body>
+<div class="topbar">
+  <div class="topbar-inner">
+    <div class="topbar-brand">🎬 视频课程管理</div>
+    <div class="topbar-user"><span id="userName">加载中...</span><button class="btn btn-outline" style="padding:4px 10px;font-size:12px" onclick="location.href='/training-portal.html'">培训门户</button></div>
+  </div>
+</div>
+<div class="main">
+  <div class="stats">
+    <div class="stat-card"><div class="stat-num" id="statTotal">0</div><div class="stat-label">全部视频</div></div>
+    <div class="stat-card"><div class="stat-num" id="statHls">0</div><div class="stat-label">HLS 格式</div></div>
+    <div class="stat-card"><div class="stat-num" id="statMp4">0</div><div class="stat-label">MP4 格式</div></div>
+    <div class="stat-card"><div class="stat-num" id="statEnrolled">0</div><div class="stat-label">已分配用户</div></div>
+  </div>
+
+  <div class="admin-bar" id="adminBar">
+    <select id="enrollUser"><option value="">选择学员</option></select>
+    <select id="enrollCourse"><option value="">选择课程</option></select>
+    <button onclick="submitEnroll()" id="enrollBtn">分配课程</button>
+  </div>
+
+  <div id="courseGrid" class="course-grid"></div>
+</div>
+
+<div class="modal-overlay" id="modal">
+  <div class="modal">
+    <button class="modal-close" onclick="closeModal()">✕</button>
+    <h2 id="modalTitle">分配课程</h2>
+    <div class="form-group"><label>选择学员</label><select id="modalUser"></select></div>
+    <div class="form-group"><label>培训模块</label><select id="modalModule"><option value="leadership">👑 领导力课程</option><option value="onboarding">🎓 新人培训</option><option value="mentorship">📚 学分制带教</option><option value="intensive">🔥 小灶培训</option></select></div>
+    <div class="form-actions"><button class="btn btn-outline" onclick="closeModal()">取消</button><button class="btn btn-primary" onclick="modalConfirm()">确认分配</button></div>
+  </div>
+</div>
+<div class="toast" id="toast"></div>
+
+<script>
+var TOKEN='', USER=null, COURSES=[], USERS=[], MODAL_BID='', MODAL_DATA=null;
+
+function getToken(){var c=document.cookie.match(/(?:^| )token=([^;]*)/);return c?c[1]:(localStorage.getItem('token')||'');}
+function api(m,u,b){
+  var h={'Content-Type':'application/json'};
+  if(TOKEN){h['Token']=TOKEN;h['Authorization']='Bearer '+TOKEN;}
+  return fetch(u,{method:m||'GET',headers:h,body:b?JSON.stringify(b):null}).then(function(r){
+    if(!r.ok)throw new Error('HTTP '+r.status);
+    return r.json();
+  }).then(function(j){
+    if(j.code!==0&&j.code!==void 0)throw new Error(j.message||j.msg||'API error');
+    return j.data||j;
+  });
+}
+function toast(m,ok){var e=document.getElementById('toast');e.textContent=(ok?'✅ ':'❌ ')+m;e.style.background=ok?'#16a34a':'#dc2626';e.className='toast show';setTimeout(function(){e.className='toast';},2500);}
+function closeModal(){document.getElementById('modal').className='modal-overlay';}
+
+function init(){
+  TOKEN=getToken();
+  if(!TOKEN){window.location.href='/login?redirect=/video-manager.html';return;}
+  api('GET','/api/user/info').then(function(u){
+    USER=u;
+    document.getElementById('userName').textContent=u.name||u.username||'用户';
+    if(u.is_operator||u.is_creator)document.getElementById('adminBar').className='admin-bar show';
+    return api('GET','/api/shifu/shifus?page_index=1&page_size=200');
+  }).then(function(c){
+    COURSES=(c.items||c||[]).filter(function(s){return(s.keywords||[]).some(function(k){return/视频|video/i.test(k);});});
+    renderCourses();
+    if(document.getElementById('adminBar').className=='admin-bar show'){
+      api('GET','/api/shifu/admin/operations/users?page_index=1&page_size=200').then(function(u){
+        USERS=(u.items||u||[]);
+        var sel=document.getElementById('enrollUser');
+        sel.innerHTML='<option value="">选择学员</option>';
+        var msel=document.getElementById('modalUser');
+        msel.innerHTML='';
+        USERS.forEach(function(uu){
+          var name=uu.name||uu.nickname||uu.username||'未知';
+          sel.innerHTML+='<option value="'+(uu.user_bid||uu.bid||'')+'">'+name+'</option>';
+          msel.innerHTML+='<option value="'+(uu.user_bid||uu.bid||'')+'">'+name+'</option>';
+        });
+        var csel=document.getElementById('enrollCourse');
+        csel.innerHTML='<option value="">选择课程</option>';
+        COURSES.forEach(function(co){
+          csel.innerHTML+='<option value="'+(co.bid||'')+'">'+(co.name||'')+'</option>';
+        });
+      }).catch(function(){});
+    }
+  }).catch(function(e){document.getElementById('courseGrid').innerHTML='<div class="empty"><div class="icon">⚠️</div><p>加载失败: '+e.message+'</p></div>';});
+}
+
+function renderCourses(){
+  var el=document.getElementById('courseGrid');
+  if(!COURSES.length){el.innerHTML='<div class="empty"><div class="icon">📭</div><p>暂无视频课程</p></div>';return;}
+  var html='';
+  var hls=0,mp4=0;
+  COURSES.forEach(function(c){
+    // Try to find video URL from the first lesson's mdflow
+    var name=c.name||'未命名';
+    var desc=c.description||'';
+    // Determine format from name or keywords (just estimate)
+    var isMp4=name.match(/\.mp4/i)?1:0;
+    if(isMp4)mp4++;else hls++;
+    html+='<div class="course-card'+(USER&&(USER.is_operator||USER.is_creator)?' admin':'')+'">';
+    html+='<div class="course-icon">🎬</div>';
+    html+='<div class="course-name">'+name+'</div>';
+    html+='<div class="course-desc">'+desc+'</div>';
+    html+='<div class="course-meta"><span class="course-badge">'+(isMp4?'MP4':'HLS')+'</span><span>'+(c.keywords||[]).join(' · ')+'</span></div>';
+    html+='<div class="course-actions">';
+    html+='<a href="/video-player.html?bid='+c.bid+'" class="btn-play">▶ 播放</a>';
+    html+='<button class="btn-enroll" onclick="openEnroll(\''+c.bid+'\',\''+name.replace(/'/g,"\\'")+'\')">分配</button>';
+    html+='</div></div>';
+  });
+  el.innerHTML=html;
+  document.getElementById('statTotal').textContent=COURSES.length;
+  document.getElementById('statHls').textContent=hls;
+  document.getElementById('statMp4').textContent=mp4;
+  // Count enrolled users (from course_enrollments for these courses)
+  document.getElementById('statEnrolled').textContent='-';
+}
+
+function openEnroll(bid,name){
+  MODAL_BID=bid;
+  document.getElementById('modalTitle').textContent='分配课程：'+name;
+  document.getElementById('modal').className='modal-overlay show';
+}
+
+function modalConfirm(){
+  var user=document.getElementById('modalUser').value;
+  var module=document.getElementById('modalModule').value;
+  if(!user||!MODAL_BID){toast('请选择学员',false);return;}
+  api('POST','/api/portal/admin/enroll',{user_bid:user,shifu_bid:MODAL_BID,module:module}).then(function(){
+    toast('分配成功',true);closeModal();
+  }).catch(function(e){toast(e.message||'分配失败',false);});
+}
+
+function submitEnroll(){
+  var user=document.getElementById('enrollUser').value;
+  var course=document.getElementById('enrollCourse').value;
+  if(!user||!course){toast('请选择学员和课程',false);return;}
+  api('POST','/api/portal/admin/enroll',{user_bid:user,shifu_bid:course,module:'leadership'}).then(function(){
+    toast('分配成功',true);
+  }).catch(function(e){toast(e.message||'分配失败',false);});
+}
+
+init();
+</script>
+</body>
+</html>
