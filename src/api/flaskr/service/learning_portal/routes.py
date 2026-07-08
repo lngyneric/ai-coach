@@ -18,6 +18,7 @@ from flaskr.service.learning_portal.models import (
     LearnerChecklistItem,
     LearnerTask,
     TaskNotification,
+    CourseEnrollment,
 )
 from flaskr.util.uuid import generate_id
 
@@ -681,6 +682,121 @@ def register_learning_portal_routes(
         db.session.commit()
         return make_common_response({"record_bid": record.record_bid})
 
+    # ── Enrollment (Training Module Assignment) Routes ──
+
+    @app.route(path_prefix + "/admin/enroll", methods=["POST"])
+    def admin_enroll():
+        """Assign a course to a user for a training module."""
+        user_bid = request.get_json().get("user_bid")
+        shifu_bid = request.get_json().get("shifu_bid")
+        module = request.get_json().get("module")
+        if not all([user_bid, shifu_bid, module]):
+            raise_param_error("user_bid, shifu_bid, module are required")
+        if module not in ("onboarding", "mentorship", "intensive", "leadership"):
+            raise_param_error("invalid module")
+
+        enrollment = CourseEnrollment(
+            user_bid=user_bid,
+            shifu_bid=shifu_bid,
+            trainer_bid=request.user.user_id,
+            module=module,
+            status="active",
+            created_at=datetime.utcnow(),
+            updated_at=datetime.utcnow(),
+        )
+        db.session.add(enrollment)
+        try:
+            db.session.commit()
+        except Exception:
+            db.session.rollback()
+            raise_param_error("duplicate enrollment or database error")
+        return make_common_response({"enroll_id": enrollment.id, "status": "active"})
+
+    @app.route(path_prefix + "/admin/enroll", methods=["DELETE"])
+    def admin_unenroll():
+        """Remove a course assignment."""
+        user_bid = request.get_json().get("user_bid")
+        shifu_bid = request.get_json().get("shifu_bid")
+        if not user_bid or not shifu_bid:
+            raise_param_error("user_bid and shifu_bid required")
+        deleted = CourseEnrollment.query.filter_by(
+            user_bid=user_bid, shifu_bid=shifu_bid
+        ).delete()
+        db.session.commit()
+        return make_common_response({"deleted": deleted > 0})
+
+    @app.route(path_prefix + "/enrollments", methods=["GET"])
+    def my_enrollments():
+        """Get current user's enrolled courses, optionally filtered by module."""
+        module = request.args.get("module", "")
+        query = CourseEnrollment.query.filter_by(user_bid=request.user.user_id)
+        if module:
+            query = query.filter_by(module=module)
+        enrollments = query.order_by(CourseEnrollment.created_at.desc()).all()
+        result = []
+        for e in enrollments:
+            result.append(
+                {
+                    "id": e.id,
+                    "shifu_bid": e.shifu_bid,
+                    "module": e.module,
+                    "status": e.status,
+                    "deadline": e.deadline.isoformat() if e.deadline else None,
+                    "progress_pct": e.progress_pct,
+                    "created_at": e.created_at.isoformat() if e.created_at else None,
+                }
+            )
+        return make_common_response(result)
+
+    @app.route(path_prefix + "/admin/enrollments", methods=["GET"])
+    def admin_list_enrollments():
+        """Admin: list enrollments for a user or all."""
+        user_bid = request.args.get("user_bid", "")
+        module = request.args.get("module", "")
+        query = CourseEnrollment.query
+        if user_bid:
+            query = query.filter_by(user_bid=user_bid)
+        if module:
+            query = query.filter_by(module=module)
+        enrollments = query.order_by(CourseEnrollment.created_at.desc()).all()
+        result = []
+        for e in enrollments:
+            result.append(
+                {
+                    "id": e.id,
+                    "user_bid": e.user_bid,
+                    "shifu_bid": e.shifu_bid,
+                    "trainer_bid": e.trainer_bid,
+                    "module": e.module,
+                    "status": e.status,
+                    "deadline": e.deadline.isoformat() if e.deadline else None,
+                    "progress_pct": e.progress_pct,
+                    "created_at": e.created_at.isoformat() if e.created_at else None,
+                }
+            )
+        return make_common_response(result)
+
+    @app.route(path_prefix + "/courses/<shifu_bid>/progress", methods=["PUT"])
+    def update_progress(shifu_bid):
+        """Update learning progress for an enrolled course."""
+        user_bid = request.user.user_id
+        data = request.get_json() or {}
+        progress = data.get("progress_pct", 0)
+        status = data.get("status", "")
+        enrollment = CourseEnrollment.query.filter_by(
+            user_bid=user_bid, shifu_bid=shifu_bid
+        ).first()
+        if not enrollment:
+            raise_param_error("enrollment not found")
+        enrollment.progress_pct = min(max(int(progress), 0), 100)
+        if status:
+            enrollment.status = status
+        if enrollment.progress_pct >= 100:
+            enrollment.status = "completed"
+        enrollment.updated_at = datetime.utcnow()
+        db.session.commit()
+        return make_common_response({"progress_pct": enrollment.progress_pct})
+
 
 def _recalc_phase_score(learner_bid: str) -> None:
     """Recalculate total score for all in-progress phases of a learner."""
@@ -702,33 +818,3 @@ def _recalc_phase_score(learner_bid: str) -> None:
         review_scores = []
         mentor_scores = []
 
-        for si in scored_items:
-            tmpl = MentorshipChecklist.query.get(si.item_bid)
-            cat = tmpl.category if tmpl else "exam"
-            s = float(si.score or 0)
-            if cat == "exam":
-                theory_scores.append(s)
-            elif cat == "practice":
-                practice_scores.append(s)
-            elif cat == "review":
-                review_scores.append(s)
-            elif cat == "mentor":
-                mentor_scores.append(s)
-
-        rec.theory_score = sum(theory_scores) / max(len(theory_scores), 1)
-        rec.practice_score = sum(practice_scores) / max(len(practice_scores), 1)
-        rec.peer_review_score = sum(review_scores) / max(len(review_scores), 1)
-        rec.mentor_score = sum(mentor_scores) / max(len(mentor_scores), 1)
-
-        rec.total_score = (
-            float(rec.theory_score or 0) * float(phase.theory_weight or 0.4)
-            + float(rec.practice_score or 0) * float(phase.practice_weight or 0.3)
-            + float(rec.peer_review_score or 0) * float(phase.review_weight or 0.2)
-            + float(rec.mentor_score or 0) * float(phase.mentor_weight or 0.1)
-        )
-
-        if rec.total_score >= float(phase.passing_score or 60):
-            rec.status = "passed"
-            rec.completed_at = datetime.utcnow()
-
-    db.session.commit()

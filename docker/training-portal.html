@@ -1,0 +1,438 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+<meta charset="utf-8" />
+<meta name="viewport" content="width=device-width, initial-scale=1, maximum-scale=1, user-scalable=no">
+<title>sysmex 培训门户</title>
+<style>
+*,*::before,*::after{box-sizing:border-box;margin:0;padding:0}
+body{font-family:-apple-system,BlinkMacSystemFont,"Segoe UI",system-ui,sans-serif;background:#f0f4ff;color:#1e293b;min-height:100vh}
+/* ── Layout ── */
+.header{position:sticky;top:0;z-index:100;background:rgba(255,255,255,.85);backdrop-filter:blur(16px);border-bottom:1px solid rgba(226,232,240,.8);padding:12px 16px}
+.header-inner{max-width:800px;margin:0 auto;display:flex;align-items:center;justify-content:space-between}
+.header-brand{display:flex;align-items:center;gap:10px;font-weight:600;font-size:16px;color:#1e293b}
+.header-user{display:flex;align-items:center;gap:12px;font-size:13px;color:#64748b}
+.header-user .avatar{width:32px;height:32px;border-radius:50%;background:linear-gradient(135deg,#6366f1,#8b5cf6);display:flex;align-items:center;justify-content:center;color:#fff;font-size:14px;font-weight:600}
+.logout-btn{background:none;border:none;color:#94a3b8;cursor:pointer;font-size:13px;padding:4px 8px;border-radius:6px;transition:all .2s}
+.logout-btn:hover{color:#ef4444;background:#fef2f2}
+.main{max-width:800px;margin:0 auto;padding:16px}
+/* ── Cards ── */
+.card{background:#fff;border-radius:16px;border:1px solid rgba(226,232,240,.8);overflow:hidden;margin-bottom:16px}
+.card-header{padding:16px 20px 0;display:flex;align-items:center;justify-content:space-between}
+.card-header h3{font-size:15px;font-weight:600;display:flex;align-items:center;gap:8px}
+.card-body{padding:16px 20px}
+/* ── Progress Overview ── */
+.progress-grid{display:grid;grid-template-columns:1fr 1fr;gap:12px;padding:12px 0}
+.progress-item{padding:14px;border-radius:12px;border:1px solid rgba(226,232,240,.6);transition:all .2s}
+.progress-item:hover{box-shadow:0 2px 8px rgba(0,0,0,.06)}
+.progress-label{font-size:13px;font-weight:500;color:#475569;margin-bottom:8px;display:flex;align-items:center;gap:6px}
+.progress-bar{height:6px;border-radius:3px;background:#e2e8f0;overflow:hidden;position:relative}
+.progress-fill{height:100%;border-radius:3px;transition:width .6s ease}
+.progress-text{font-size:11px;color:#94a3b8;margin-top:4px;text-align:right}
+/* ── Tasks ── */
+.task-item{display:flex;align-items:flex-start;gap:10px;padding:10px 0;border-bottom:1px solid #f1f5f9}
+.task-item:last-child{border-bottom:none}
+.task-check{width:18px;height:18px;border-radius:4px;border:2px solid #cbd5e1;cursor:pointer;margin-top:2px;flex-shrink:0;display:flex;align-items:center;justify-content:center;transition:all .2s}
+.task-check.done{background:#22c55e;border-color:#22c55e;color:#fff;font-size:11px}
+.task-info{flex:1;min-width:0}
+.task-title{font-size:14px;color:#1e293b;line-height:1.4}
+.task-title.done{text-decoration:line-through;color:#94a3b8}
+.task-meta{font-size:12px;color:#94a3b8;margin-top:2px}
+/* ── Module Sections ── */
+.module-tabs{display:flex;gap:4px;background:#f1f5f9;border-radius:10px;padding:3px;margin-bottom:16px;overflow-x:auto}
+.module-tab{padding:8px 14px;border-radius:8px;font-size:13px;font-weight:500;cursor:pointer;border:none;background:none;color:#64748b;white-space:nowrap;transition:all .2s}
+.module-tab.active{background:#fff;color:#1e293b;box-shadow:0 1px 3px rgba(0,0,0,.1)}
+.module-tab:hover:not(.active){color:#334155}
+/* ── Course Cards ── */
+.course-grid{display:grid;grid-template-columns:1fr 1fr;gap:12px}
+@media(max-width:500px){.course-grid{grid-template-columns:1fr}}
+.course-card{display:block;padding:14px;border-radius:12px;border:1px solid rgba(226,232,240,.6);background:#fff;text-decoration:none;color:inherit;transition:all .2s;position:relative}
+.course-card:hover{border-color:#818cf8;box-shadow:0 2px 12px rgba(99,102,241,.1)}
+.course-icon{width:36px;height:36px;border-radius:10px;display:flex;align-items:center;justify-content:center;font-size:18px;margin-bottom:8px}
+.course-name{font-size:14px;font-weight:500;color:#1e293b;line-height:1.3;margin-bottom:4px;display:-webkit-box;-webkit-line-clamp:2;-webkit-box-orient:vertical;overflow:hidden}
+.course-progress{margin-top:8px;display:flex;align-items:center;gap:8px}
+.course-progress .bar{flex:1;height:4px;border-radius:2px;background:#e2e8f0}
+.course-progress .bar .fill{height:100%;border-radius:2px;transition:width .6s}
+.course-progress .pct{font-size:11px;color:#94a3b8;min-width:32px;text-align:right}
+.course-status{font-size:11px;padding:2px 8px;border-radius:4px;font-weight:500;position:absolute;top:10px;right:10px}
+.status-assigned{background:#f0f9ff;color:#0284c7}
+.status-in_progress{background:#fefce8;color:#ca8a04}
+.status-completed{background:#f0fdf4;color:#16a34a}
+.status-expired{background:#fef2f2;color:#dc2626}
+/* ── Empty States ── */
+.empty-state{text-align:center;padding:40px 20px;color:#94a3b8}
+.empty-state .icon{font-size:48px;margin-bottom:12px}
+.empty-state p{font-size:14px;margin-bottom:16px}
+/* ── Buttons ── */
+.btn{display:inline-flex;align-items:center;gap:6px;padding:8px 16px;border-radius:8px;font-size:13px;font-weight:500;border:none;cursor:pointer;transition:all .2s;text-decoration:none}
+.btn-primary{background:#6366f1;color:#fff}
+.btn-primary:hover{background:#4f46e5}
+.btn-outline{background:none;border:1px solid #e2e8f0;color:#64748b}
+.btn-outline:hover{border-color:#818cf8;color:#4f46e5}
+.btn-sm{padding:6px 12px;font-size:12px}
+/* ── Loading ── */
+.loading{display:flex;align-items:center;justify-content:center;padding:60px;color:#94a3b8;flex-direction:column;gap:12px}
+.spinner{width:32px;height:32px;border:3px solid #e2e8f0;border-top-color:#6366f1;border-radius:50%;animation:spin .8s linear infinite}
+@keyframes spin{to{transform:rotate(360deg)}}
+/* ── Admin Panel ── */
+.admin-panel{display:none;margin-top:24px;padding-top:24px;border-top:2px dashed #e2e8f0}
+.admin-panel.show{display:block}
+.admin-panel-title{font-size:14px;font-weight:600;color:#64748b;margin-bottom:12px;display:flex;align-items:center;gap:8px}
+.admin-actions{display:flex;gap:8px;flex-wrap:wrap}
+/* ── Modal ── */
+.modal-overlay{display:none;position:fixed;inset:0;background:rgba(0,0,0,.4);z-index:200;align-items:center;justify-content:center;padding:20px}
+.modal-overlay.show{display:flex}
+.modal{background:#fff;border-radius:20px;width:100%;max-width:560px;max-height:80vh;overflow-y:auto;padding:24px;animation:modalIn .2s ease}
+@keyframes modalIn{from{opacity:0;transform:scale(.95)translateY(10px)}to{opacity:1;transform:scale(1)translateY(0)}}
+.modal h2{font-size:18px;font-weight:600;margin-bottom:16px}
+.modal-close{float:right;background:none;border:none;font-size:20px;color:#94a3b8;cursor:pointer}
+.form-group{margin-bottom:14px}
+.form-group label{display:block;font-size:13px;font-weight:500;color:#475569;margin-bottom:4px}
+.form-group select,.form-group input{width:100%;padding:10px 12px;border:1px solid #e2e8f0;border-radius:8px;font-size:14px;color:#1e293b;background:#fff;outline:none}
+.form-group select:focus,.form-group input:focus{border-color:#818cf8;box-shadow:0 0 0 3px rgba(99,102,241,.1)}
+.form-actions{display:flex;gap:8px;justify-content:flex-end;margin-top:16px}
+/* ── Toast ── */
+.toast{position:fixed;bottom:24px;left:50%;transform:translateX(-50%);background:#1e293b;color:#fff;padding:12px 24px;border-radius:12px;font-size:14px;z-index:300;display:none;animation:toastIn .3s;box-shadow:0 4px 20px rgba(0,0,0,.2)}
+.toast.show{display:block}
+@keyframes toastIn{from{opacity:0;transform:translateX(-50%)translateY(20px)}to{opacity:1;transform:translateX(-50%)translateY(0)}}
+</style>
+</head>
+<body>
+
+<!-- Header -->
+<div class="header">
+  <div class="header-inner">
+    <div class="header-brand">🎓 sysmex 培训门户</div>
+    <div class="header-user" id="headerUser">
+      <span id="userName">加载中...</span>
+      <button class="logout-btn" onclick="logout()">退出</button>
+    </div>
+  </div>
+</div>
+
+<!-- Main -->
+<div class="main">
+
+  <!-- Progress Overview -->
+  <div class="card">
+    <div class="card-header">
+      <h3>📊 学习进度</h3>
+      <span style="font-size:12px;color:#94a3b8">总课程 <span id="totalCourses">0</span></span>
+    </div>
+    <div class="card-body">
+      <div class="progress-grid" id="progressGrid">
+        <div class="progress-item">
+          <div class="progress-label">🎓 新人培训</div>
+          <div class="progress-bar"><div class="progress-fill" style="width:0%;background:#3b82f6" id="progOnboarding"></div></div>
+          <div class="progress-text"><span id="progOnboardingText">0/0</span></div>
+        </div>
+        <div class="progress-item">
+          <div class="progress-label">📚 学分制带教</div>
+          <div class="progress-bar"><div class="progress-fill" style="width:0%;background:#10b981" id="progMentorship"></div></div>
+          <div class="progress-text"><span id="progMentorshipText">0/0</span></div>
+        </div>
+        <div class="progress-item">
+          <div class="progress-label">🔥 小灶培训</div>
+          <div class="progress-bar"><div class="progress-fill" style="width:0%;background:#f59e0b" id="progIntensive"></div></div>
+          <div class="progress-text"><span id="progIntensiveText">0/0</span></div>
+        </div>
+        <div class="progress-item">
+          <div class="progress-label">👑 领导力课程</div>
+          <div class="progress-bar"><div class="progress-fill" style="width:0%;background:#8b5cf6" id="progLeadership"></div></div>
+          <div class="progress-text"><span id="progLeadershipText">0/0</span></div>
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <!-- Tasks -->
+  <div class="card" id="tasksCard">
+    <div class="card-header"><h3>📌 当前任务</h3></div>
+    <div class="card-body" id="tasksBody"><div class="empty-state"><p>暂无待办任务</p></div></div>
+  </div>
+
+  <!-- Module Tabs -->
+  <div class="module-tabs" id="moduleTabs">
+    <button class="module-tab active" data-module="onboarding" onclick="switchModule('onboarding')">🎓 新人培训</button>
+    <button class="module-tab" data-module="mentorship" onclick="switchModule('mentorship')">📚 学分制带教</button>
+    <button class="module-tab" data-module="intensive" onclick="switchModule('intensive')">🔥 小灶培训</button>
+    <button class="module-tab" data-module="leadership" onclick="switchModule('leadership')">👑 领导力课程</button>
+  </div>
+
+  <!-- Module Content -->
+  <div id="moduleContent"><div class="loading"><div class="spinner"></div><span>加载课程...</span></div></div>
+
+  <!-- Admin Panel -->
+  <div class="admin-panel" id="adminPanel">
+    <div class="admin-panel-title">🛠 管理员</div>
+    <div class="admin-actions">
+      <button class="btn btn-primary btn-sm" onclick="openEnrollModal()">＋ 分配课程</button>
+    </div>
+  </div>
+
+</div>
+
+<!-- Enroll Modal -->
+<div class="modal-overlay" id="enrollModal">
+  <div class="modal">
+    <button class="modal-close" onclick="closeModal('enrollModal')">✕</button>
+    <h2>分配课程</h2>
+    <div class="form-group">
+      <label>选择学员</label>
+      <select id="enrollUser"><option value="">加载中...</option></select>
+    </div>
+    <div class="form-group">
+      <label>培训模块</label>
+      <select id="enrollModule">
+        <option value="onboarding">🎓 新人培训</option>
+        <option value="mentorship">📚 学分制带教</option>
+        <option value="intensive">🔥 小灶培训</option>
+        <option value="leadership">👑 领导力课程</option>
+      </select>
+    </div>
+    <div class="form-group">
+      <label>选择课程</label>
+      <select id="enrollCourse"><option value="">加载中...</option></select>
+    </div>
+    <div class="form-actions">
+      <button class="btn btn-outline" onclick="closeModal('enrollModal')">取消</button>
+      <button class="btn btn-primary" onclick="submitEnroll()">确认分配</button>
+    </div>
+  </div>
+</div>
+
+<!-- Toast -->
+<div class="toast" id="toast"></div>
+
+<script>
+// ═══════════════════════════════════════════════
+// State
+// ═══════════════════════════════════════════════
+var state = { user: null, token: '', courses: [], enrollments: [], tasks: [] };
+var CURRENT_MODULE = 'onboarding';
+var MODULE_CONFIG = {
+  onboarding: { icon: '🎓', label: '新人培训', color: '#3b82f6' },
+  mentorship: { icon: '📚', label: '学分制带教', color: '#10b981' },
+  intensive:  { icon: '🔥', label: '小灶培训', color: '#f59e0b' },
+  leadership: { icon: '👑', label: '领导力课程', color: '#8b5cf6' }
+};
+
+// ═══════════════════════════════════════════════
+// Helpers
+// ═══════════════════════════════════════════════
+function getToken(){
+  var m = document.cookie.match(/(?:^| )token=([^;]*)/);
+  return m ? m[1] : (localStorage.getItem('token') || '');
+}
+function api(method, url, body){
+  var headers = {'Content-Type':'application/json'};
+  var t = getToken();
+  if(t){ headers['Token'] = t; headers['Authorization'] = 'Bearer '+t; }
+  var opts = { method: method||'GET', headers: headers };
+  if(body) opts.body = JSON.stringify(body);
+  return fetch((window.location.origin||'')+url, opts).then(function(r){
+    if(!r.ok) throw new Error('HTTP '+r.status);
+    return r.json();
+  }).then(function(j){
+    if(j.code !== 0) throw new Error(j.message || j.msg || 'API error');
+    return j.data || j;
+  });
+}
+function toast(msg, ok){
+  var el = document.getElementById('toast');
+  el.textContent = (ok?'✅ ':'❌ ')+msg;
+  el.style.background = ok ? '#16a34a' : '#dc2626';
+  el.className = 'toast show';
+  setTimeout(function(){ el.className = 'toast'; }, 2500);
+}
+function closeModal(id){ document.getElementById(id).className = 'modal-overlay'; }
+
+// ═══════════════════════════════════════════════
+// Logout
+// ═══════════════════════════════════════════════
+function logout(){
+  var c = document.cookie.split(';');
+  for(var i=0;i<c.length;i++){
+    var eq = c[i].indexOf('=');
+    var n = eq>-1 ? c[i].substr(0,eq).trim() : c[i].trim();
+    document.cookie = n+'=; path=/; expires=Thu, 01 Jan 1970 00:00:00 GMT';
+  }
+  localStorage.removeItem('token');
+  window.location.href = '/logout.html';
+}
+
+// ═══════════════════════════════════════════════
+// Init
+// ═══════════════════════════════════════════════
+(function init(){
+  var token = getToken();
+  if(!token){ window.location.href='/login?redirect=/training-portal.html'; return; }
+  state.token = token;
+  document.getElementById('headerUser').querySelector('span').textContent = '加载中...';
+
+  Promise.all([
+    api('GET','/api/user/info'),
+    api('GET','/api/shifu/shifus?page_index=1&page_size=50'),
+    api('GET','/api/portal/dashboard').catch(function(){ return {}; }),
+  ]).then(function(results){
+    state.user = results[0];
+    state.courses = (results[1]||{}).items || results[1] || [];
+    var dash = results[2]||{};
+    state.tasks = dash.pending_tasks || [];
+    document.getElementById('headerUser').querySelector('span').textContent = state.user.name||state.user.username||'用户';
+    // Check admin
+    if(state.user.is_operator || state.user.is_creator) document.getElementById('adminPanel').className = 'admin-panel show';
+    // Load enrollments
+    loadEnrollments();
+    renderTasks();
+  }).catch(function(e){
+    document.querySelector('.main').innerHTML = '<div class="card"><div class="card-body"><p style="color:#dc2626;text-align:center;padding:40px">加载失败: '+e.message+'</p></div></div>';
+  });
+})();
+
+function loadEnrollments(){
+  api('GET','/api/portal/enrollments?page_index=1&page_size=200').then(function(resp){
+    state.enrollments = resp.items || resp || [];
+    renderProgress();
+    renderModule(CURRENT_MODULE);
+  }).catch(function(){ renderModule(CURRENT_MODULE); });
+}
+
+// ═══════════════════════════════════════════════
+// Progress
+// ═══════════════════════════════════════════════
+function renderProgress(){
+  var modules = ['onboarding','mentorship','intensive','leadership'];
+  var total = 0;
+  modules.forEach(function(m){
+    var enr = state.enrollments.filter(function(e){ return e.module === m; });
+    var completed = enr.filter(function(e){ return e.status === 'completed'; }).length;
+    var pct = enr.length ? Math.round(completed/enr.length*100) : 0;
+    total += enr.length;
+    document.getElementById('progressGrid').querySelector('[style*="background:#3b82f6"]').style.width = (modules.indexOf(m)===0?pct+'%':'');
+    switch(m){
+      case 'onboarding':
+        document.getElementById('progOnboarding').style.width = pct+'%';
+        document.getElementById('progOnboardingText').textContent = completed+'/'+enr.length;
+        break;
+      case 'mentorship':
+        document.getElementById('progMentorship').style.width = pct+'%';
+        document.getElementById('progMentorshipText').textContent = completed+'/'+enr.length;
+        break;
+      case 'intensive':
+        document.getElementById('progIntensive').style.width = pct+'%';
+        document.getElementById('progIntensiveText').textContent = completed+'/'+enr.length;
+        break;
+      case 'leadership':
+        document.getElementById('progLeadership').style.width = pct+'%';
+        document.getElementById('progLeadershipText').textContent = completed+'/'+enr.length;
+        break;
+    }
+  });
+  document.getElementById('totalCourses').textContent = total;
+}
+
+// ═══════════════════════════════════════════════
+// Module Switching
+// ═══════════════════════════════════════════════
+function switchModule(m){
+  CURRENT_MODULE = m;
+  document.querySelectorAll('.module-tab').forEach(function(t){ t.className='module-tab'; });
+  document.querySelector('.module-tab[data-module="'+m+'"]').className = 'module-tab active';
+  renderModule(m);
+}
+
+function renderModule(m){
+  var cfg = MODULE_CONFIG[m];
+  var enr = state.enrollments.filter(function(e){ return e.module === m; });
+  var container = document.getElementById('moduleContent');
+
+  if(!enr.length){
+    container.innerHTML = '<div class="card"><div class="card-body"><div class="empty-state"><div class="icon">📭</div><p>暂未分配课程，请联系管理员</p></div></div></div>';
+    return;
+  }
+
+  var html = '<div class="course-grid">';
+  enr.forEach(function(e){
+    var course = state.courses.find(function(c){ return c.bid === e.shifu_bid; });
+    var name = course ? (course.name||'未命名课程') : '课程';
+    var pct = e.progress_pct || e.progress || 0;
+    var statusLabel = {assigned:'已分配',in_progress:'学习中',completed:'已完成',expired:'已过期'}[e.status]||e.status;
+    var statusCls = 'status-'+((e.status||'assigned').replace('.','_'));
+    html += '<a href="/c/'+e.shifu_bid+'" class="course-card">';
+    html += '<span class="course-status '+statusCls+'">'+statusLabel+'</span>';
+    html += '<div class="course-icon" style="background:'+cfg.color+'20;color:'+cfg.color+'">'+cfg.icon+'</div>';
+    html += '<div class="course-name">'+name+'</div>';
+    if(pct > 0){
+      html += '<div class="course-progress"><div class="bar"><div class="fill" style="width:'+pct+'%;background:'+cfg.color+'"></div></div><span class="pct">'+pct+'%</span></div>';
+    }
+    html += '</a>';
+  });
+  html += '</div>';
+  container.innerHTML = html;
+}
+
+// ═══════════════════════════════════════════════
+// Tasks
+// ═══════════════════════════════════════════════
+function renderTasks(){
+  var body = document.getElementById('tasksBody');
+  if(!state.tasks.length){ return; }
+  var html = '';
+  state.tasks.slice(0,5).forEach(function(t){
+    var done = t.status === 'completed';
+    html += '<div class="task-item">';
+    html += '<div class="task-check'+(done?' done':'')+'" onclick="toggleTask(\''+(t.task_bid||t.bid||'')+'\')">'+(done?'✓':'')+'</div>';
+    html += '<div class="task-info"><div class="task-title'+(done?' done':'')+'">'+(t.title||'')+'</div>';
+    if(t.course_name) html += '<div class="task-meta">'+t.course_name+'</div>';
+    html += '</div></div>';
+  });
+  body.innerHTML = html;
+}
+function toggleTask(bid){
+  toast('任务状态更新', true);
+}
+
+// ═══════════════════════════════════════════════
+// Admin: Enroll Modal
+// ═══════════════════════════════════════════════
+function openEnrollModal(){
+  document.getElementById('enrollModal').className = 'modal-overlay show';
+  // Load users
+  api('GET','/api/shifu/admin/operations/users?page_index=1&page_size=200').then(function(r){
+    var users = r.items || r || [];
+    var sel = document.getElementById('enrollUser');
+    sel.innerHTML = '<option value="">选择学员...</option>';
+    users.forEach(function(u){
+      sel.innerHTML += '<option value="'+(u.user_bid||u.bid||'')+'">'+(u.name||u.nickname||u.username||'未知')+'</option>';
+    });
+  }).catch(function(){});
+  // Load courses
+  api('GET','/api/shifu/shifus?page_index=1&page_size=200').then(function(r){
+    var courses = r.items || r || [];
+    var sel = document.getElementById('enrollCourse');
+    sel.innerHTML = '<option value="">选择课程...</option>';
+    courses.forEach(function(c){
+      sel.innerHTML += '<option value="'+(c.bid||'')+'">'+(c.name||'未命名')+'</option>';
+    });
+  }).catch(function(){});
+}
+
+function submitEnroll(){
+  var user = document.getElementById('enrollUser').value;
+  var module = document.getElementById('enrollModule').value;
+  var course = document.getElementById('enrollCourse').value;
+  if(!user || !module || !course){ toast('请完整填写所有字段', false); return; }
+  api('POST','/api/portal/admin/enroll',{
+    user_bid: user, shifu_bid: course, module: module
+  }).then(function(){
+    toast('分配成功', true);
+    closeModal('enrollModal');
+    loadEnrollments();
+  }).catch(function(e){
+    toast(e.message||'分配失败', false);
+  });
+}
+</script>
+</body>
+</html>
