@@ -8,7 +8,7 @@ import { useShallow } from 'zustand/react/shallow';
 import { useTranslation } from 'react-i18next';
 import type { MobileViewMode } from 'markdown-flow-ui/slide';
 
-import { useParams, useSearchParams } from 'next/navigation';
+import { useParams, useSearchParams, useRouter } from 'next/navigation';
 
 import {
   calcFrameLayout,
@@ -320,6 +320,23 @@ export default function ChatPage() {
   if (params?.id?.[0]) {
     courseId = params.id[0];
   }
+
+  const router = useRouter();
+
+  // Redirect video courses to /c/v/{bid}
+  useEffect(() => {
+    if (!courseId || !isUserInitialized) return;
+    const token = useUserStore.getState().getToken();
+    if (!token) return;
+    fetch(`/api/shifu/shifus/${courseId}/detail`, {
+      headers: { 'Token': token, 'Content-Type': 'application/json' }
+    }).then(r => r.json()).then(data => {
+      const kw = data?.data?.keywords || [];
+      if (kw.some((k: string) => /视频|video/i.test(k))) {
+        window.location.href = `/c/v/${courseId}`;
+      }
+    }).catch(() => {});
+  }, [courseId, isUserInitialized]);
 
   const { updateCourseId } = useEnvStore.getState();
 
