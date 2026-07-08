@@ -62,6 +62,36 @@ class LearnerMentorship(db.Model):
     updated_at = db.Column(db.DateTime)
 
 
+class CourseEnrollment(db.Model):
+    """Course enrollment — admin assigns courses to users for training modules."""
+
+    __tablename__ = "course_enrollments"
+    __table_args__ = (
+        db.UniqueConstraint("user_bid", "shifu_bid", name="uq_user_course"),
+    )
+
+    id = db.Column(db.Integer, primary_key=True, autoincrement=True)
+    user_bid = db.Column(db.String(32), nullable=False, index=True)
+    shifu_bid = db.Column(db.String(32), nullable=False, index=True)
+    trainer_bid = db.Column(db.String(32), nullable=True, comment="Admin or mentor who assigned")
+    module = db.Column(
+        db.String(20),
+        nullable=False,
+        default="onboarding",
+        comment="onboarding|mentorship|intensive|leadership",
+    )
+    status = db.Column(
+        db.String(20),
+        nullable=False,
+        default="assigned",
+        comment="assigned|in_progress|completed|expired",
+    )
+    deadline = db.Column(db.DateTime, nullable=True)
+    progress = db.Column(db.Integer, default=0, comment="Learning progress 0-100")
+    created_at = db.Column(db.DateTime)
+    updated_at = db.Column(db.DateTime)
+
+
 class MentorshipChecklist(db.Model):
     __tablename__ = "mentorship_checklist"
 
@@ -121,3 +151,32 @@ class TaskNotification(db.Model):
     related_bid = db.Column(db.String(32), nullable=True)
     is_read = db.Column(db.Integer, default=0)
     created_at = db.Column(db.DateTime)
+
+
+class CourseEnrollment(db.Model):
+    """Records admin assigning a course to a user for a training module."""
+
+    __tablename__ = "course_enrollments"
+
+    id = db.Column(db.BigInteger, primary_key=True, autoincrement=True)
+    user_bid = db.Column(db.String(32), nullable=False, index=True)
+    shifu_bid = db.Column(db.String(32), nullable=False, index=True)
+    trainer_bid = db.Column(db.String(32), nullable=True, comment="assigned by")
+    module = db.Column(
+        db.String(20),
+        nullable=False,
+        comment="onboarding | mentorship | intensive | leadership",
+    )
+    status = db.Column(
+        db.String(20),
+        default="active",
+        comment="active | completed | expired",
+    )
+    deadline = db.Column(db.DateTime, nullable=True)
+    progress_pct = db.Column(db.Integer, default=0, comment="0-100")
+    created_at = db.Column(db.DateTime)
+    updated_at = db.Column(db.DateTime)
+
+    __table_args__ = (
+        db.UniqueConstraint("user_bid", "shifu_bid", name="uq_user_course"),
+    )
