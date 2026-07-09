@@ -128,7 +128,7 @@ const ShifuCard = ({
                   )}
                   {!image && (
                     <img
-                      src='/icons/logo.svg'
+                      src='/logo.png'
                       alt=''
                       aria-hidden='true'
                       className='h-[19px] w-4 object-contain'

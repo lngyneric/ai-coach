@@ -20,12 +20,12 @@ export const LogoWithText = ({ direction, size = 64 }) => {
   const logoWideUrl = useEnvStore(state => state.logoWideUrl);
   const logoSquareUrl = useEnvStore(state => state.logoSquareUrl);
   const homeUrl = useEnvStore(state => state.homeUrl);
-  const wideLogoSrc: string | StaticImageData = useMemo(() => {
-    return logoWideUrl || logoHorizontal || imgLogoRow;
+  const wideLogoSrc: string = useMemo(() => {
+    return logoWideUrl || logoHorizontal || '/logo.png';
   }, [logoHorizontal, logoWideUrl]);
 
-  const squareLogoSrc: string | StaticImageData = useMemo(() => {
-    return logoSquareUrl || logoVertical || imgLogoColumn;
+  const squareLogoSrc: string = useMemo(() => {
+    return logoSquareUrl || logoVertical || '/logo.png';
   }, [logoSquareUrl, logoVertical]);
 
   const wideWidth = useMemo(() => {
