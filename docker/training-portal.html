@@ -453,7 +453,7 @@ function submitEnroll(){
   var module = document.getElementById('enrollModule').value;
   var course = document.getElementById('enrollCourse').value;
   if(!user || !module || !course){ toast('请完整填写所有字段', false); return; }
-  api('POST','/api/portal/admin/enroll',{
+  api('POST','/api/shifu/admin/enroll',{
     user_bid: user, shifu_bid: course, module: module
   }).then(function(){
     toast('分配成功', true);
