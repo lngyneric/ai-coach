@@ -117,11 +117,6 @@
             }
             // Redirect: 1) explicit redirect param, 2) admin if creator, 3) courses
             var target = redirectUrl || '/courses/';
-            if (target === '/courses/' && data.data && data.data.userInfo) {
-              if (data.data.userInfo.is_creator || data.data.userInfo.is_operator) {
-                target = '/admin';
-              }
-            }
             window.location.href = target;
           } else {
             showError(data.message || 'Authentication failed.');
