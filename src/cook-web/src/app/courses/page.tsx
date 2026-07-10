@@ -207,22 +207,30 @@ export default function CoursesPage() {
     <div className="min-h-screen bg-slate-50">
       <header className="sticky top-0 z-50 bg-white/80 backdrop-blur-md border-b border-slate-200">
         <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
-          <div className="flex items-center justify-between h-16">
-            <div className="flex items-center gap-3">
-              <div className="w-8 h-8 rounded-lg bg-gradient-to-br from-blue-600 to-indigo-600 flex items-center justify-center overflow-hidden">
-                <img src="/logo.png" className="w-full h-full object-contain p-1" alt="S" />
+          <div className="flex items-center justify-between h-14">
+            <div className="flex items-center gap-6">
+              <div className="flex items-center gap-2 shrink-0">
+                <div className="w-7 h-7 rounded-lg bg-gradient-to-br from-blue-600 to-indigo-600 flex items-center justify-center overflow-hidden">
+                  <img src="/logo.png" className="w-full h-full object-contain p-0.5" alt="S" />
+                </div>
+                <span className="font-semibold text-slate-900 text-sm hidden sm:inline">sysmex</span>
               </div>
-              <span className="font-semibold text-slate-900">sysmex 全部课程</span>
-              {isAdmin && (
-                <button onClick={() => setShowEnrollModal(true)} className="ml-3 px-3 py-1.5 text-xs font-medium bg-blue-50 text-blue-700 rounded-lg hover:bg-blue-100 transition-colors">
-                  ＋ 分配课程
-                </button>
-              )}
+              <nav className="flex items-center gap-1">
+                <Link href="/courses" className="px-3 py-1.5 text-sm font-medium rounded-lg bg-blue-50 text-blue-700">课程</Link>
+                <Link href="/ivd-knowledge-tree.html" className="px-3 py-1.5 text-sm font-medium rounded-lg text-slate-600 hover:bg-slate-100 hover:text-slate-900 transition-colors">知识图谱</Link>
+                <Link href="/ivd-sandbox-dashboard.html" className="px-3 py-1.5 text-sm font-medium rounded-lg text-slate-600 hover:bg-slate-100 hover:text-slate-900 transition-colors">沙盘推演</Link>
+                <Link href="/personal-growth-tree.html" className="px-3 py-1.5 text-sm font-medium rounded-lg text-slate-600 hover:bg-slate-100 hover:text-slate-900 transition-colors">个人成长</Link>
+                <Link href="/training-portal.html" className="px-3 py-1.5 text-sm font-medium rounded-lg text-slate-600 hover:bg-slate-100 hover:text-slate-900 transition-colors">培训门户</Link>
+                {isAdmin && (
+                  <button onClick={() => setShowEnrollModal(true)} className="ml-2 px-3 py-1.5 text-xs font-medium bg-blue-50 text-blue-700 rounded-lg hover:bg-blue-100 transition-colors">
+                    ＋ 分配
+                  </button>
+                )}
+              </nav>
             </div>
-            <div className="flex items-center gap-4">
-              <Link href="/training-portal.html" className="text-xs text-blue-600 hover:text-blue-700">培训门户</Link>
+            <div className="flex items-center gap-3">
               <span className="text-sm text-slate-500">{userInfo?.name || userInfo?.user_id || '用户'}</span>
-              <div className="w-8 h-8 rounded-full bg-blue-100 text-blue-600 flex items-center justify-center text-sm font-medium">{(userInfo?.name || '?')[0]}</div>
+              <div className="w-7 h-7 rounded-full bg-blue-100 text-blue-600 flex items-center justify-center text-xs font-medium">{(userInfo?.name || '?')[0]}</div>
             </div>
           </div>
         </div>

@@ -636,7 +636,14 @@ function renderHeader() {
       return (
         '<header class="header">' +
           '<div class="header-inner max-w-7xl">' +
-            '<div class="header-logo"><img src="/logo.png" style="height:20px;width:auto;vertical-align:middle;margin-right:8px" alt="sysmex" />sysmex Learning</div>' +
+            '<div class="header-logo"><img src="/logo.png" style="height:20px;width:auto;vertical-align:middle;margin-right:8px" alt="sysmex" />sysmex</div>' +
+            '<nav style="display:flex;align-items:center;gap:4px;flex:1;margin-left:16px">' +
+              '<a href="/courses/" style="padding:4px 12px;border-radius:8px;font-size:13px;font-weight:500;background:#eff6ff;color:#2563eb;text-decoration:none">课程</a>' +
+              '<a href="/ivd-knowledge-tree.html" style="padding:4px 12px;border-radius:8px;font-size:13px;color:#475569;text-decoration:none">知识图谱</a>' +
+              '<a href="/ivd-sandbox-dashboard.html" style="padding:4px 12px;border-radius:8px;font-size:13px;color:#475569;text-decoration:none">沙盘推演</a>' +
+              '<a href="/personal-growth-tree.html" style="padding:4px 12px;border-radius:8px;font-size:13px;color:#475569;text-decoration:none">个人成长</a>' +
+              '<a href="/training-portal.html" style="padding:4px 12px;border-radius:8px;font-size:13px;color:#475569;text-decoration:none">培训门户</a>' +
+            '</nav>' +
             '<div class="header-user">' +
               '<span class="name">' + escapeHtml(uname) + '</span>' +
               '<span class="avatar">' + escapeHtml(initial) + '</span>' +
