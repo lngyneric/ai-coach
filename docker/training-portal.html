@@ -290,7 +290,7 @@ function logout(){
     return api('GET','/api/shifu/shifus?page_index=1&page_size=50');
   }).then(function(resp){
     state.courses = (resp||{}).items || resp || [];
-    return api('GET','/api/portal/dashboard').catch(function(){ return {}; });
+    return api('GET','/api/shifu/dashboard').catch(function(){ return {}; });
   }).then(function(dash){
     state.dashboard = dash;
     state.tasks = (dash||{}).pending_tasks || [];
@@ -319,7 +319,7 @@ function renderStats(){
 }
 
 function loadEnrollments(){
-  return api('GET','/api/portal/enrollments?page_index=1&page_size=200').then(function(resp){
+  return api('GET','/api/shifu/enrollments?page_index=1&page_size=200').then(function(resp){
     state.enrollments = resp.items || resp || [];
     renderProgress();
     renderModule(CURRENT_MODULE);
@@ -383,7 +383,7 @@ function renderModule(m){
   var html = '<div class="course-grid">';
   enr.forEach(function(e){
     var course = state.courses.find(function(c){ return c.bid === e.shifu_bid; });
-    var name = course ? (course.name||'未命名课程') : '课程';
+    var name = course ? (course.name||'未命名课程') : (e.course_name || '课程');
     var isVideo = course && (course.keywords||[]).some(function(k){ return /视频|video/i.test(k); });
     var link = isVideo ? '/video-player.html?bid='+e.shifu_bid : '/c/'+e.shifu_bid;
     var pct = e.progress_pct || 0;
