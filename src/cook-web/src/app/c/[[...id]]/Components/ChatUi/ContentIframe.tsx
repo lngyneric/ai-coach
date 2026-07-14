@@ -14,8 +14,10 @@ interface ContentIframeProps {
 
 // ── Video source detection ──
 
+declare let Aliplayer: any;
+
 function isVideoSegment(segment: RenderSegment): boolean {
-  if (segment.type === 'video') return true;
+  if ((segment.type as string) === 'video') return true;
   try {
     const v = typeof segment.value === 'string' ? JSON.parse(segment.value) : segment.value;
     if (v?.source === 'direct' || v?.source === 'aliyunvod' || v?.source === 'bilibili' || v?.source === 'youtube') return true;
