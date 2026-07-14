@@ -1,0 +1,111 @@
+# ═══════════════════════════════════════════════
+#  docker-compose.prod.yml — 生产环境独立部署
+#  基于当前 docker-compose.yml，使用独立 DB/Redis
+#  端口: 8081(HTTP) / 444(HTTPS)
+# ═══════════════════════════════════════════════
+
+x-api-env: &api-env
+  env_file:
+    - ./.env.prod
+  environment:
+    - SQLALCHEMY_DATABASE_URI=mysql://root:ai-shifu@ai-shifu-mysql-prod:3306/ai-shifu?charset=utf8mb4
+    - REDIS_HOST=ai-shifu-redis-prod
+    - REDIS_PORT=6379
+    - CELERY_BROKER_URL=redis://ai-shifu-redis-prod:6379/0
+    - CELERY_RESULT_BACKEND=redis://ai-shifu-redis-prod:6379/1
+    - ENVERIMENT=production
+    - SKIP_LOAD_DOTENV=1
+
+services:
+  ai-shifu-api-prod:
+    <<: *api-env
+    container_name: ai-shifu-api-prod
+    image: aishifu/ai-shifu-api:patched
+    depends_on:
+      - ai-shifu-mysql-prod
+      - ai-shifu-redis-prod
+    working_dir: /app
+    volumes:
+      - ./storage:/app/storage
+    restart: unless-stopped
+
+  ai-shifu-celery-worker-prod:
+    <<: *api-env
+    container_name: ai-shifu-celery-worker-prod
+    image: aishifu/ai-shifu-api:patched
+    depends_on:
+      - ai-shifu-mysql-prod
+      - ai-shifu-redis-prod
+    working_dir: /app
+    command: celery -A flaskr.common.celery_app worker --loglevel=info
+    restart: unless-stopped
+
+  ai-shifu-celery-beat-prod:
+    <<: *api-env
+    container_name: ai-shifu-celery-beat-prod
+    image: aishifu/ai-shifu-api:patched
+    depends_on:
+      - ai-shifu-mysql-prod
+      - ai-shifu-redis-prod
+    working_dir: /app
+    command: celery -A flaskr.common.celery_app beat --loglevel=info
+    restart: unless-stopped
+
+  ai-shifu-cook-web-prod:
+    container_name: ai-shifu-cook-web-prod
+    image: aishifu/ai-shifu-cook-web:latest
+    env_file:
+      - ./.env.prod
+    environment:
+      - I18N_ROOT=/app/i18n
+    working_dir: /app
+    command: npm start
+    restart: unless-stopped
+
+  ai-shifu-nginx-prod:
+    container_name: ai-shifu-nginx-prod
+    image: nginx:latest
+    depends_on:
+      - ai-shifu-api-prod
+      - ai-shifu-cook-web-prod
+    ports:
+      - 8081:8080
+      - 444:443
+    volumes:
+      - ./nginx.prod.conf:/etc/nginx/nginx.conf:ro
+      - ./certs2:/etc/nginx/certs:ro
+      - ./courses.html:/usr/share/nginx/html/courses.html:ro
+      - ./logout.html:/usr/share/nginx/html/logout.html:ro
+      - ./login.html:/usr/share/nginx/html/login.html:ro
+      - ./logo.png:/usr/share/nginx/html/logo.png:ro
+      - ./ivd-knowledge-tree.html:/usr/share/nginx/html/ivd-knowledge-tree.html:ro
+      - ./ivd-sandbox-dashboard.html:/usr/share/nginx/html/ivd-sandbox-dashboard.html:ro
+      - ./ivd-sandbox-model-docs.html:/usr/share/nginx/html/ivd-sandbox-model-docs.html:ro
+      - ./personal-growth-tree.html:/usr/share/nginx/html/personal-growth-tree.html:ro
+      - ./training-portal.html:/usr/share/nginx/html/training-portal.html:ro
+      - ./video-player.html:/usr/share/nginx/html/video-player.html:ro
+      - ./video-manager.html:/usr/share/nginx/html/video-manager.html:ro
+      - ./d3.v7.min.js:/usr/share/nginx/html/d3.v7.min.js:ro
+      - ./mentor.html:/usr/share/nginx/html/mentor.html:ro
+    restart: unless-stopped
+
+  ai-shifu-mysql-prod:
+    container_name: ai-shifu-mysql-prod
+    image: mysql:8.0
+    environment:
+      MYSQL_DATABASE: ai-shifu
+      MYSQL_ROOT_PASSWORD: ai-shifu
+    ports:
+      - 127.0.0.1:3307:3306
+    volumes:
+      - ./mysql_data_prod:/var/lib/mysql
+    restart: unless-stopped
+
+  ai-shifu-redis-prod:
+    container_name: ai-shifu-redis-prod
+    image: redis:7-alpine
+    ports:
+      - 127.0.0.1:6380:6379
+    volumes:
+      - ./redis_data_prod:/data
+    restart: unless-stopped
