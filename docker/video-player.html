@@ -88,6 +88,7 @@ video{width:100%;display:block;outline:none;max-height:70vh;background:#000;marg
     <button onclick="prevLesson()" id="prevBtn">‹ 上一节</button>
     <span id="lessonIdx">0/0</span>
     <button onclick="nextLesson()" id="nextBtn">下一节 ›</button>
+    <button onclick="restudyCourse()" id="restudyBtn" style="background:rgba(239,68,68,.12);color:#f87171;border:none;padding:4px 10px;border-radius:6px;font-size:12px;cursor:pointer">↻ 重修</button>
   </div>
 </div>
 
@@ -331,6 +332,27 @@ function addQAMsg(role, content){
 function showLoading(){ document.getElementById('loading').style.display='flex'; }
 function hideLoading(){ document.getElementById('loading').style.display='none'; }
 function showError(m){ document.getElementById('errorMsg').textContent=m||'加载失败'; document.getElementById('error').style.display='flex'; hideLoading(); }
+
+// ═══════════════════════════════════════════════
+// Restudy
+// ═══════════════════════════════════════════════
+function restudyCourse(){
+  if(!confirm('确定重修此课程吗？当前进度将重置。')) return;
+  var bid = getQueryParam('bid');
+  if(!bid){ showError('缺少课程 ID'); return; }
+  var tok = getToken();
+  if(!tok){ showError('请先登录'); return; }
+  showLoading();
+  fetch('/api/admin/learn/restudy/' + bid, {
+    method: 'POST', headers: { 'Token': tok, 'Content-Type': 'application/json' }
+  }).then(function(r){ return r.json(); }).then(function(d){
+    if(d.code === 0){
+      // Reset progress in URL, reload page
+      progressPct = 0; completedLessons = {}; saveProgress();
+      setTimeout(function(){ window.location.reload(); }, 500);
+    } else { showError(d.message || '重置失败'); hideLoading(); }
+  }).catch(function(e){ showError('网络错误'); hideLoading(); });
+}
 
 // ═══════════════════════════════════════════════
 // Start
