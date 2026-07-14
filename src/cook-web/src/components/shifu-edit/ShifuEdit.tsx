@@ -78,6 +78,7 @@ import {
   MdflowHistoryVersionDetail,
 } from '@/types/shifu';
 import DraftConflictDialog from './DraftConflictDialog';
+import { OnboardingOverlay } from '@/components/onboarding/OnboardingOverlay';
 
 const OUTLINE_DEFAULT_WIDTH = 256;
 const OUTLINE_COLLAPSED_WIDTH = 60;
