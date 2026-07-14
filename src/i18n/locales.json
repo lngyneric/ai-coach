@@ -8,7 +8,8 @@
     "zh-CN": {
       "label": "中文",
       "rtl": false
-    }
+    },
+    "fr-FR": "Français"
   },
   "namespaces": [
     "common.core",

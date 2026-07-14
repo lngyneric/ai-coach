@@ -1908,3 +1908,12 @@ def get_config(key: str, default: Any = None) -> Any:
         # For unknown keys, check environment directly
         return os.environ.get(key, default)
     return __INSTANCE__.get(key, default)
+
+
+def get_redis_derived_prefix(config_key: str, app=None) -> str:
+    """Get Redis key prefix derived from config value."""
+    try:
+        val = __INSTANCE__.get(config_key, "") if __INSTANCE__ else os.environ.get(config_key, "")
+    except Exception:
+        val = os.environ.get(config_key, "")
+    return f"{config_key}:{val}" if val else config_key
