@@ -260,6 +260,7 @@ export const useListenContentData = (items: ChatContentItem[]) => {
     ttsReadyElementBids,
     lastInteractionBid,
     lastItemIsInteraction,
+    lastItemIsLessonFeedbackInteraction: false,
     firstContentItem,
   };
 };
