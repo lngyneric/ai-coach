@@ -182,6 +182,7 @@ interface ListenModeSlideRendererProps {
   shifuBid?: string;
   previewMode?: boolean;
   lessonStatus?: string;
+  isOutputInProgress?: boolean;
   onSend?: (content: OnSendContentParams, blockBid: string) => void;
   onPlayerVisibilityChange?: (visible: boolean) => void;
   onPlaybackStateChange?: (state: {
