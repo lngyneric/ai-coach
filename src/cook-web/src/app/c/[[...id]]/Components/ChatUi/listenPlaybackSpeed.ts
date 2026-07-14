@@ -8,7 +8,7 @@ export const LISTEN_PLAYBACK_SPEED_OPTIONS: ListenPlaybackSpeed[] = [
 
 const STORAGE_KEY = 'listen-playback-speed';
 
-export function readListenPlaybackSpeedFromStorage(): ListenPlaybackSpeed {
+export function readListenPlaybackSpeedFromStorage(vaultId?: string): ListenPlaybackSpeed {
   try {
     const stored = localStorage.getItem(STORAGE_KEY);
     if (stored) {
@@ -23,7 +23,7 @@ export function readListenPlaybackSpeedFromStorage(): ListenPlaybackSpeed {
   return 1.0;
 }
 
-export function writeListenPlaybackSpeedToStorage(speed: ListenPlaybackSpeed): void {
+export function writeListenPlaybackSpeedToStorage(vaultId: string, speed: ListenPlaybackSpeed): void {
   try {
     localStorage.setItem(STORAGE_KEY, String(speed));
   } catch {
