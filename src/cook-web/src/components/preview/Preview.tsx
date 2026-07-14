@@ -5,11 +5,6 @@ import { useShifu } from '@/store';
 import api from '@/api';
 import { useTranslation } from 'react-i18next';
 import { useTracking } from '@/c-common/hooks/useTracking';
-<<<<<<< HEAD
-=======
-import { useBillingOverview } from '@/hooks/useBillingData';
-import { buildOnboardingTargetProps } from '@/lib/onboardingTargets';
->>>>>>> ac23e4dc9 (feat:add course editor onboarding (#1933))
 
 type PreviewSettingsModalProps = {
   targetId?: string;

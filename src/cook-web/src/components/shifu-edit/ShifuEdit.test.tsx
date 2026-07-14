@@ -1,19 +1,6 @@
 import React from 'react';
-<<<<<<< HEAD
 import { act, render, screen, waitFor } from '@testing-library/react';
 import ScriptEditor from './ShifuEdit';
-=======
-import {
-  act,
-  fireEvent,
-  render,
-  screen,
-  waitFor,
-} from '@testing-library/react';
-import ScriptEditor, {
-  resolveEditorOnboardingTriggerSource,
-} from './ShifuEdit';
->>>>>>> ac23e4dc9 (feat:add course editor onboarding (#1933))
 
 const refreshLabel = 'refresh';
 const mockMarkdownFlowEditor = jest.fn();

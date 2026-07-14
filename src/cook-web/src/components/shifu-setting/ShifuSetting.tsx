@@ -109,25 +109,6 @@ import {
   buildAskProviderConfigForSubmit as buildAskProviderConfigBySchema,
 } from '@/components/shifu-setting/ask-provider-schema';
 import AskSettingsSection from '@/components/shifu-setting/AskSettingsSection';
-<<<<<<< HEAD
-=======
-import MiniMaxVoiceCloneDialog from '@/components/shifu-setting/MiniMaxVoiceCloneDialog';
-import {
-  buildMiniMaxClonedVoiceListParams,
-  buildMiniMaxVoiceOptions,
-  executeMiniMaxVoiceAction,
-  isMiniMaxProvider,
-  isValidMiniMaxCustomVoiceId,
-  loadMiniMaxVoiceRefreshData,
-  shouldPreserveCustomMiniMaxVoice,
-  type MiniMaxCloneCost,
-  type MiniMaxClonedVoice,
-} from '@/components/shifu-setting/minimax-voice-clone';
-import {
-  buildOnboardingTargetProps,
-  ONBOARDING_TARGET_IDS,
-} from '@/lib/onboardingTargets';
->>>>>>> ac23e4dc9 (feat:add course editor onboarding (#1933))
 
 interface Shifu {
   description: string;
@@ -2717,7 +2698,6 @@ export default function ShifuSettingDialog({
                   )}
                 />
 
-<<<<<<< HEAD
                 <AskSettingsSection
                   readonly={currentShifu?.readonly}
                   askProviderOptions={askProviderOptions}
@@ -2745,37 +2725,6 @@ export default function ShifuSettingDialog({
                   askPreviewMeta={askPreviewMeta}
                   askPreviewResult={askPreviewResult}
                 />
-=======
-                <div>
-                  <AskSettingsSection
-                    readonly={currentShifu?.readonly || !debugAllowed}
-                    askProviderOptions={askProviderOptions}
-                    resolvedAskProvider={resolvedAskProvider}
-                    askProviderLlmValue={ASK_PROVIDER_LLM}
-                    askModel={askModel}
-                    onAskModelChange={setAskModel}
-                    askTemperature={askTemperature}
-                    askTemperatureInput={askTemperatureInput}
-                    setAskTemperature={setAskTemperature}
-                    setAskTemperatureInput={setAskTemperatureInput}
-                    normalizeAskTemperature={normalizeAskTemperature}
-                    adjustAskTemperature={adjustAskTemperature}
-                    onAskProviderChange={handleAskProviderChange}
-                    askProviderFieldEntries={askProviderFieldEntries}
-                    askProviderRequiredFields={askProviderRequiredFields}
-                    askProviderConfig={askProviderConfig}
-                    setAskProviderConfig={setAskProviderConfig}
-                    askProviderObjectInputs={askProviderObjectInputs}
-                    setAskProviderObjectInputs={setAskProviderObjectInputs}
-                    askPreviewLoading={askPreviewLoading}
-                    askPreviewQuery={askPreviewQuery}
-                    setAskPreviewQuery={setAskPreviewQuery}
-                    handleAskPreview={handleAskPreview}
-                    askPreviewMeta={askPreviewMeta}
-                    askPreviewResult={askPreviewResult}
-                  />
-                </div>
->>>>>>> ac23e4dc9 (feat:add course editor onboarding (#1933))
 
                 {/* Language Output Configuration Section */}
                 <div className='mb-6'>
