@@ -6,16 +6,7 @@ import React, {
   useCallback,
   useRef,
 } from 'react';
-<<<<<<< HEAD
 import { Button } from '@/components/ui/Button';
-=======
-import dynamic from 'next/dynamic';
-import Link from 'next/link';
-import { useSearchParams } from 'next/navigation';
-import { UploadProps, EditMode } from 'markdown-flow-ui/editor';
-import { Rnd } from 'react-rnd';
-import { useTranslation } from 'react-i18next';
->>>>>>> ac23e4dc9 (feat:add course editor onboarding (#1933))
 import {
   Columns2,
   History,
@@ -26,35 +17,8 @@ import {
   Sparkles,
   X,
 } from 'lucide-react';
-<<<<<<< HEAD
 import { useShifu } from '@/store';
 import { useUserStore } from '@/store';
-=======
-import { useEnvStore } from '@/c-store';
-import api from '@/api';
-import { useTracking } from '@/c-common/hooks/useTracking';
-import { EnvStoreState } from '@/c-types/store';
-import {
-  buildUrlWithLessonId,
-  replaceCurrentUrlWithLessonId,
-} from '@/c-utils/urlUtils';
-import { toast } from '@/hooks/useToast';
-import i18n, { normalizeLanguage } from '@/i18n';
-import { cn } from '@/lib/utils';
-import { useShifu, useUserStore } from '@/store';
-import {
-  DraftMeta,
-  LessonCreationSettings,
-  MdflowHistoryItem,
-  MdflowHistoryVersionDetail,
-} from '@/types/shifu';
-import ChapterSettingsDialog from '@/components/chapter-setting';
-import LessonPreview from '@/components/lesson-preview';
-import { usePreviewChat } from '@/components/lesson-preview/usePreviewChat';
-import { MdfConvertDialog } from '@/components/mdf-convert';
-import { OnboardingOverlay } from '@/components/onboarding/OnboardingOverlay';
-import { buildCourseEditorOnboardingSteps } from '@/components/onboarding/editorOnboardingSteps';
->>>>>>> ac23e4dc9 (feat:add course editor onboarding (#1933))
 import OutlineTree from '@/components/outline-tree';
 import ChapterSettingsDialog from '@/components/chapter-setting';
 import { MdfConvertDialog } from '@/components/mdf-convert';
@@ -129,28 +93,7 @@ const DEFAULT_EDITOR_TRIGGER_SOURCE = 'editor_entry';
 const CREATED_COURSE_ONBOARDING_DELAY_MS = 900;
 
 const VARIABLE_NAME_REGEXP = /\{\{([\p{L}\p{N}_]+)\}\}/gu;
-<<<<<<< HEAD
 const HISTORY_CONTENT_PREVIEW_LINES = 6;
-=======
-
-export const resolveEditorOnboardingTriggerSource = (
-  source: string | null | undefined,
-) => {
-  const explicitSource = String(source || '').trim();
-  return SUPPORTED_EDITOR_TRIGGER_SOURCES.has(explicitSource)
-    ? explicitSource
-    : DEFAULT_EDITOR_TRIGGER_SOURCE;
-};
-type MarkdownFlowEditorLocale = 'en-US' | 'zh-CN';
-
-const resolveMarkdownFlowEditorLocale = (
-  language?: string | null,
-): MarkdownFlowEditorLocale => {
-  const normalizedLanguage = normalizeLanguage(language);
-  // markdown-flow-ui/editor currently ships only en-US and zh-CN resources.
-  return normalizedLanguage === 'zh-CN' ? 'zh-CN' : 'en-US';
-};
->>>>>>> ac23e4dc9 (feat:add course editor onboarding (#1933))
 
 // Collect variable names that truly exist in current markdown content
 const extractVariableNames = (text?: string | null) => {
@@ -315,56 +258,6 @@ const ScriptEditor = ({ id, initialLessonId = '' }: ScriptEditorProps) => {
     if (!profile) return '';
     return profile.user_bid || profile.user_id || '';
   }, [profile]);
-<<<<<<< HEAD
-=======
-  const isHistoryPage = initialViewMode === 'history';
-  const editorOnboardingTriggerSource = useMemo(() => {
-    const source =
-      searchParams?.get('onboarding_source') || searchParams?.get('onboarding');
-    return resolveEditorOnboardingTriggerSource(source);
-  }, [searchParams]);
-  const [editorOnboardingReady, setEditorOnboardingReady] = useState(false);
-  useEffect(() => {
-    if (isHistoryPage || !currentShifu?.bid) {
-      setEditorOnboardingReady(false);
-      return;
-    }
-
-    setEditorOnboardingReady(false);
-    const timeoutId = window.setTimeout(() => {
-      setEditorOnboardingReady(true);
-    }, CREATED_COURSE_ONBOARDING_DELAY_MS);
-    return () => {
-      window.clearTimeout(timeoutId);
-    };
-  }, [currentShifu?.bid, isHistoryPage]);
-  const isCourseOwner = Boolean(
-    currentShifu?.created_user_bid &&
-    currentUserId &&
-    currentShifu.created_user_bid === currentUserId,
-  );
-  const { data: onboardingStatus, mutate: mutateOnboardingStatus } =
-    useCreatorOnboardingStatus(Boolean(currentUserId));
-  const editorOnboardingSteps = useMemo(
-    () =>
-      buildCourseEditorOnboardingSteps({
-        t: tOnboarding,
-        targetIds: {
-          backHome: ONBOARDING_TARGET_IDS.editorBackHome,
-          settingsEntry: ONBOARDING_TARGET_IDS.editorSettingsEntry,
-          listenMode: ONBOARDING_TARGET_IDS.editorCourseListenMode,
-          publish: ONBOARDING_TARGET_IDS.editorPublish,
-        },
-      }),
-    [tOnboarding],
-  );
-  const shouldShowCourseEditorOnboarding =
-    !isHistoryPage &&
-    editorOnboardingReady &&
-    Boolean(onboardingStatus?.eligible) &&
-    onboardingStatus?.scenes.course_editor_onboarding.completed === false &&
-    isCourseOwner;
->>>>>>> ac23e4dc9 (feat:add course editor onboarding (#1933))
   const actionsRef = useRef(actions);
   const baseRevisionRef = useRef<number | null>(null);
   const conflictStateRef = useRef({

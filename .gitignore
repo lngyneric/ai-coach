@@ -192,3 +192,6 @@ src/api/logs/
 !src/api/tests
 docker/storage/
 docker/certs2/
+docker/.env.prod
+docker/mysql_data_dev/
+docker/redis_data_dev/
