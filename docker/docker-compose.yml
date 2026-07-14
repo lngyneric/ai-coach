@@ -37,7 +37,7 @@ services:
       SKIP_LOAD_DOTENV: '1'
       SQLALCHEMY_DATABASE_URI: mysql://root:ai-shifu@ai-shifu-mysql:3306/ai-shifu?charset=utf8mb4
       UNIVERSAL_VERIFICATION_CODE: 1024
-    image: aishifu/ai-shifu-api:v2.0.1
+    image: aishifu/ai-shifu-api:patched
     volumes:
     - ./storage:/app/storage
     working_dir: /app
@@ -67,7 +67,7 @@ services:
       SKIP_LOAD_DOTENV: '1'
       SQLALCHEMY_DATABASE_URI: mysql://root:ai-shifu@ai-shifu-mysql:3306/ai-shifu?charset=utf8mb4
       UNIVERSAL_VERIFICATION_CODE: 1024
-    image: aishifu/ai-shifu-api:v2.0.1
+    image: aishifu/ai-shifu-api:patched
     volumes:
     - ./storage:/app/storage
     working_dir: /app
@@ -86,7 +86,7 @@ services:
     env_file:
     - ./.env
     environment: *id001
-    image: aishifu/ai-shifu-api:v2.0.1
+    image: aishifu/ai-shifu-api:patched
     volumes:
     - ./storage:/app/storage
     working_dir: /app
