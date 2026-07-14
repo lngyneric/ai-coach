@@ -99,6 +99,17 @@ const nextConfig: NextConfig = {
     unoptimized: true,
   },
 
+  // Limit file watcher scope for dev server (chokidar)
+  // Prevents ENOSPC by ignoring cache/dependency directories
+  webpack: (config, { dev, isServer }) => {
+    if (dev) {
+      config.watchOptions = {
+        ignored: ['**/node_modules/**', '**/.next/**', '**/__pycache__/**', '**/.git/**'],
+      };
+    }
+    return config;
+  },
+
   // Effective only in Turbopack dev
   experimental: {
     externalDir: process.env.NEXT_EXTERNAL_DIR === 'true',

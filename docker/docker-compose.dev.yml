@@ -95,7 +95,7 @@ services:
     environment:
       - I18N_ROOT=/app/src/i18n
       - NEXT_TELEMETRY_DISABLED=1
-      - NODE_OPTIONS=--max-old-space-size=2048
+      - NODE_OPTIONS=--max-old-space-size=2048 -r /app/patched-watcher.js
       - NEXT_PUBLIC_LOGIN_METHODS_ENABLED=phone
       - NEXT_PUBLIC_DEFAULT_LOGIN_METHOD=phone
       - NEXT_PUBLIC_BRAND_NAME=${BRAND_NAME:-AI-Shifu}
