@@ -134,12 +134,15 @@ function SimpleHlsPlayer({ src }: { src: string }) {
     async function load() {
       // MP4: native play
       if (src.match(/\.(mp4|webm|ogg)$/i)) {
-        v.src = src;
-        v.addEventListener('loadedmetadata', () => { if (!destroyed) setStatus('ready'); });
-        v.addEventListener('error', () => { if (!destroyed) { setStatus('error'); setErrMsg('视频加载失败'); }});
+        if (v) {
+          v.src = src;
+          v.addEventListener('loadedmetadata', () => { if (!destroyed) setStatus('ready'); });
+          v.addEventListener('error', () => { if (!destroyed) { setStatus('error'); setErrMsg('视频加载失败'); }});
+        }
         return;
       }
       // HLS: try native (Safari) then hls.js
+      if (!v) { setStatus('error'); setErrMsg('播放器未就绪'); return; }
       if (v.canPlayType('application/vnd.apple.mpegurl')) {
         v.src = src;
         v.addEventListener('loadedmetadata', () => { if (!destroyed) setStatus('ready'); });

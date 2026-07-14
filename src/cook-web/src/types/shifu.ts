@@ -36,6 +36,7 @@ export interface Shifu {
   ask_model?: string;
   ask_temperature?: number;
   ask_system_prompt?: string;
+  keywords?: string[];
   ask_provider_config?: {
     provider?: string;
     mode?: string;
