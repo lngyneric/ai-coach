@@ -11,13 +11,10 @@ services:
     environment:
       OBSERVABILITY_TRACES_ENABLED: "false"
       OTEL_SERVICE_NAME: ai-shifu-api-dev
-      LOGIN_METHODS_ENABLED: phone
-      DEFAULT_LOGIN_METHOD: phone
-      WECOM_CORP_ID: ${WECOM_CORP_ID:-}
-      WECOM_SECRET: ${WECOM_SECRET:-}
-      BRAND_NAME: ${BRAND_NAME:-AI-Shifu}
+      LOGIN_METHODS_ENABLED: employee
+      DEFAULT_LOGIN_METHOD: employee
+      AAD_BYPASS: "1"
       AAD_AUTH_URL: ${AAD_AUTH_URL:-}
-      CAPTCHA_CODE_OVERRIDE: "0000"
       REDIS_HOST: ai-shifu-redis-dev
       REDIS_PORT: 6379
       SKIP_LOAD_DOTENV: "1"
