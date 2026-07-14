@@ -245,3 +245,5 @@ export const initializeEnvData = async (): Promise<void> => {
 
   await initPromise;
 };
+
+export function applyCreatorBranding(userId: string) {}

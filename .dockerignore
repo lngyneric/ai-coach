@@ -17,3 +17,5 @@ dist
 docker/mysql_data/
 docker/redis_data/
 docker/storage/
+docker/mysql_data*
+docker/redis_data*
