@@ -83,7 +83,7 @@ services:
     environment:
       - I18N_ROOT=/app/src/i18n
       - NEXT_TELEMETRY_DISABLED=1
-      - NODE_OPTIONS=--max-old-space-size=2048 -r /app/patched-watcher.js
+      - NODE_OPTIONS=--max-old-space-size=2048
       - NEXT_PUBLIC_LOGIN_METHODS_ENABLED=phone
       - NEXT_PUBLIC_DEFAULT_LOGIN_METHOD=phone
       - NEXT_PUBLIC_BRAND_NAME=${BRAND_NAME:-AI-Shifu}
@@ -97,13 +97,17 @@ services:
   ai-shifu-nginx-dev-dev:
     image: nginx:latest
     ports:
-      - "127.0.0.1:${AI_SHIFU_WEB_PORT:-8080}:8080"
+      - "0.0.0.0:${AI_SHIFU_WEB_PORT:-8082}:8080"
     depends_on:
       - ai-shifu-cook-web-dev
       - ai-shifu-api-dev
+    environment:
+      - OPENCODE_API_KEY=${OPENCODE_API_KEY}
+    entrypoint: ["/bin/sh", "/entrypoint.sh"]
     restart: always
     volumes:
       - ./nginx.dev.conf:/etc/nginx/nginx.conf
+      - ./nginx-dev-entrypoint.sh:/entrypoint.sh:ro
 
   ai-shifu-loki:
     image: grafana/loki:3.1.1
