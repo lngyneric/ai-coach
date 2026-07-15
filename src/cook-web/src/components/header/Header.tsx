@@ -207,3 +207,4 @@ const Header = ({
 };
 
 export default Header;
+export function buildOnboardingTargetProps(id?: string): Record<string, any> { return {}; }

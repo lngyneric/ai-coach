@@ -18,3 +18,4 @@ interface Props {
 export function OnboardingOverlay(props: Props) {
   return null;
 }
+export function buildOnboardingTargetProps(id: string): Record<string, any> { return {}; }
