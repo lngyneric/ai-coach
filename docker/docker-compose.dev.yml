@@ -108,6 +108,23 @@ services:
     volumes:
       - ./nginx.dev.conf:/etc/nginx/nginx.conf
       - ./nginx-dev-entrypoint.sh:/entrypoint.sh:ro
+      # Static H5 pages
+      - ./ivd-knowledge-tree.html:/usr/share/nginx/html/ivd-knowledge-tree.html:ro
+      - ./ivd-sandbox-model-docs.html:/usr/share/nginx/html/ivd-sandbox-model-docs.html:ro
+      - ./ivd-sandbox-dashboard.html:/usr/share/nginx/html/ivd-sandbox-dashboard.html:ro
+      - ./personal-growth-tree.html:/usr/share/nginx/html/personal-growth-tree.html:ro
+      - ./d3.v7.min.js:/usr/share/nginx/html/d3.v7.min.js:ro
+      - ./courses.html:/usr/share/nginx/html/courses.html:ro
+      - ./logout.html:/usr/share/nginx/html/logout.html:ro
+      - ./login.html:/usr/share/nginx/html/login.html:ro
+      - ./mentor.html:/usr/share/nginx/html/mentor.html:ro
+      - ./training-portal.html:/usr/share/nginx/html/training-portal.html:ro
+      - ./video-player.html:/usr/share/nginx/html/video-player.html:ro
+      - ./video-manager.html:/usr/share/nginx/html/video-manager.html:ro
+      - ./admin-training-enroll.html:/usr/share/nginx/html/admin-training-enroll.html:ro
+      - ./course-entry.html:/usr/share/nginx/html/course-entry.html:ro
+      - ./sysmex-login.html:/usr/share/nginx/html/sysmex-login.html:ro
+      - ./logo.png:/usr/share/nginx/html/logo.png:ro
 
   ai-shifu-loki:
     image: grafana/loki:3.1.1
