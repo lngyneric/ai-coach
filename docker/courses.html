@@ -527,7 +527,7 @@
       { id: 'onboarding', label: '新人入学', icon: '🎓',
         desc: '面向新入职员工，帮助快速融入公司文化、了解组织架构、掌握基础业务流程。',
         audience: '普通员工（新入职）' },
-      { id: 'mentorship', label: '学分制带教', icon: '📚',
+      { id: 'coaching', label: '学分制带教', icon: '📚',
         desc: '系统化导师带教计划，学分制管理学习进度。涵盖岗位技能、产品知识等结构化课程。',
         audience: '一线营业 / 初级员工' },
       { id: 'intensive', label: '小灶教学', icon: '🔥',
@@ -800,7 +800,7 @@ function renderHeader() {
         var combined = name + ' ' + desc + ' ' + kw;
         switch (catId) {
           case 'onboarding':  return /新人|入职|入门|基础|新员工|onboarding|新手/.test(combined);
-          case 'mentorship':  return /带教|学分|mentor|导师|岗位|技能|培训|培训/.test(combined);
+          case 'coaching':  return /带教|学分|mentor|导师|岗位|技能|培训|培训/.test(combined);
           case 'intensive':   return /小灶|实战|案例|精品|专项|研修|workshop|训练营/.test(combined);
           case 'leadership':  return /领导|管理|管理層|战略|决策|团队|leadership/.test(combined);
           default: return false;
@@ -923,7 +923,7 @@ function renderHeader() {
       var dash = state.dashboard || {};
       var students = state.shifus || [];
       var pendingTasks = dash.pending_tasks || [];
-      var mentorships = dash.mentorships || [];
+      var coachings = dash.coachings || [];
 
       // Find the first course that's not completed
       var suggestedCourse = '';
@@ -934,8 +934,8 @@ function renderHeader() {
       if (pendingTasks.length > 0) {
         return '你有 <strong>' + pendingTasks.length + '</strong> 项待办任务待完成，建议优先处理后再开始新课程。';
       }
-      if (mentorships && mentorships.length > 0) {
-        var active = mentorships.filter(function(m) { return m.status === 'in_progress'; });
+      if (coachings && coachings.length > 0) {
+        var active = coachings.filter(function(m) { return m.status === 'in_progress'; });
         if (active.length > 0) {
           return '你正在进行 <strong>' + active.length + '</strong> 个带教阶段，建议专注完成当前阶段学习。';
         }
