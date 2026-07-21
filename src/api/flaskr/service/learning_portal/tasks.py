@@ -1,9 +1,9 @@
 """Learning Portal — Celery scheduled tasks.
 
 Tasks:
-- phase_deadline_reminder: Check phase deadlines and notify learners/mentors
+- phase_deadline_reminder: Check phase deadlines and notify learners/coachs
 - daily_task_push: Daily push of pending tasks at 09:00
-- score_reminder: Remind mentors to score submitted items after 48h
+- score_reminder: Remind coachs to score submitted items after 48h
 - probation_check: Auto-check probation status when all phases completed
 """
 
@@ -16,8 +16,8 @@ from celery import shared_task
 from flaskr.dao import db
 from flaskr.service.learning_portal.models import (
     LearnerProfile,
-    LearnerMentorship,
-    MentorshipPhase,
+    LearnerCoaching,
+    CoachingPhase,
     LearnerChecklistItem,
     LearnerTask,
     TaskNotification,
@@ -30,10 +30,10 @@ logger = logging.getLogger(__name__)
 def phase_deadline_reminder():
     """Check phase deadlines and send reminders 7/3/1 day before."""
     now = datetime.utcnow()
-    active = LearnerMentorship.query.filter_by(status="in_progress").all()
+    active = LearnerCoaching.query.filter_by(status="in_progress").all()
 
     for rec in active:
-        phase = MentorshipPhase.query.get(rec.phase_bid)
+        phase = CoachingPhase.query.get(rec.phase_bid)
         if not phase or not rec.started_at:
             continue
 
@@ -103,7 +103,7 @@ def daily_task_push():
 
 @shared_task(name="learning_portal.score_reminder")
 def score_reminder():
-    """Remind mentors to score items submitted more than 48h ago."""
+    """Remind coachs to score items submitted more than 48h ago."""
     cutoff = datetime.utcnow() - timedelta(hours=48)
     items = (
         LearnerChecklistItem.query.filter(
@@ -115,19 +115,19 @@ def score_reminder():
     reminded = set()
     for item in items:
         profile = LearnerProfile.query.get(item.learner_bid)
-        if profile and profile.mentor_bid not in reminded:
+        if profile and profile.coach_bid not in reminded:
             notif = TaskNotification(
                 notif_bid=__import__("uuid").uuid4().hex,
-                user_bid=profile.mentor_bid,
+                user_bid=profile.coach_bid,
                 title="评分催办",
                 content=f"学员有待评分项已超过48小时，请及时评分",
                 notif_type="score_reminder",
             )
             db.session.add(notif)
-            reminded.add(profile.mentor_bid)
+            reminded.add(profile.coach_bid)
 
     db.session.commit()
-    return f"reminded {len(reminded)} mentors"
+    return f"reminded {len(reminded)} coachs"
 
 
 @shared_task(name="learning_portal.probation_check")
@@ -146,7 +146,7 @@ def probation_check():
             continue
 
         # Check if all phases passed
-        phases = LearnerMentorship.query.filter_by(learner_bid=p.learner_bid).all()
+        phases = LearnerCoaching.query.filter_by(learner_bid=p.learner_bid).all()
         if not phases:
             continue
 

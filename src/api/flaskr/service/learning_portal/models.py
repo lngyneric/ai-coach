@@ -1,4 +1,4 @@
-"""Learning Portal — Models for learner profiles, mentorship, tasks."""
+"""Learning Portal — Models for learner profiles, coaching, tasks."""
 
 from __future__ import annotations
 
@@ -14,7 +14,7 @@ class LearnerProfile(db.Model):
     department = db.Column(db.String(100), nullable=True)
     position_name = db.Column(db.String(100), nullable=True)
     level = db.Column(db.String(20), nullable=True)
-    mentor_bid = db.Column(db.String(32), nullable=True, index=True)
+    coach_bid = db.Column(db.String(32), nullable=True, index=True)
     supervisor_bid = db.Column(db.String(32), nullable=True)
     onboarding_date = db.Column(db.Date, nullable=True)
     probation_end_date = db.Column(db.Date, nullable=True)
@@ -23,8 +23,8 @@ class LearnerProfile(db.Model):
     updated_at = db.Column(db.DateTime)
 
 
-class MentorshipPhase(db.Model):
-    __tablename__ = "mentorship_phases"
+class CoachingPhase(db.Model):
+    __tablename__ = "coaching_phases"
 
     phase_bid = db.Column(db.String(32), primary_key=True)
     name = db.Column(db.String(100), nullable=False)
@@ -36,14 +36,14 @@ class MentorshipPhase(db.Model):
     theory_weight = db.Column(db.Numeric(3, 2), default=0.40)
     practice_weight = db.Column(db.Numeric(3, 2), default=0.30)
     review_weight = db.Column(db.Numeric(3, 2), default=0.20)
-    mentor_weight = db.Column(db.Numeric(3, 2), default=0.10)
+    coach_weight = db.Column(db.Numeric(3, 2), default=0.10)
     is_active = db.Column(db.Integer, default=1)
     created_at = db.Column(db.DateTime)
     updated_at = db.Column(db.DateTime)
 
 
-class LearnerMentorship(db.Model):
-    __tablename__ = "learner_mentorship"
+class LearnerCoaching(db.Model):
+    __tablename__ = "learner_coaching"
 
     record_bid = db.Column(db.String(32), primary_key=True)
     learner_bid = db.Column(db.String(32), nullable=False, index=True)
@@ -54,7 +54,7 @@ class LearnerMentorship(db.Model):
     theory_score = db.Column(db.Numeric(5, 2), nullable=True)
     practice_score = db.Column(db.Numeric(5, 2), nullable=True)
     peer_review_score = db.Column(db.Numeric(5, 2), nullable=True)
-    mentor_score = db.Column(db.Numeric(5, 2), nullable=True)
+    coach_score = db.Column(db.Numeric(5, 2), nullable=True)
     total_score = db.Column(db.Numeric(5, 2), nullable=True)
     retry_count = db.Column(db.Integer, default=0)
     remark = db.Column(db.Text, nullable=True)
@@ -73,12 +73,12 @@ class CourseEnrollment(db.Model):
     id = db.Column(db.Integer, primary_key=True, autoincrement=True)
     user_bid = db.Column(db.String(32), nullable=False, index=True)
     shifu_bid = db.Column(db.String(32), nullable=False, index=True)
-    trainer_bid = db.Column(db.String(32), nullable=True, comment="Admin or mentor who assigned")
+    trainer_bid = db.Column(db.String(32), nullable=True, comment="Admin or coach who assigned")
     module = db.Column(
         db.String(20),
         nullable=False,
         default="onboarding",
-        comment="onboarding|mentorship|intensive|leadership",
+        comment="onboarding|coaching|intensive|leadership",
     )
     status = db.Column(
         db.String(20),
@@ -92,8 +92,8 @@ class CourseEnrollment(db.Model):
     updated_at = db.Column(db.DateTime)
 
 
-class MentorshipChecklist(db.Model):
-    __tablename__ = "mentorship_checklist"
+class CoachingChecklist(db.Model):
+    __tablename__ = "coaching_checklist"
 
     item_bid = db.Column(db.String(32), primary_key=True)
     phase_bid = db.Column(db.String(32), nullable=False, index=True)
@@ -165,7 +165,7 @@ class CourseEnrollment(db.Model):
     module = db.Column(
         db.String(20),
         nullable=False,
-        comment="onboarding | mentorship | intensive | leadership",
+        comment="onboarding | coaching | intensive | leadership",
     )
     status = db.Column(
         db.String(20),
