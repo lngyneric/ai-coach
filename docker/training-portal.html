@@ -140,8 +140,8 @@ body{font-family:-apple-system,BlinkMacSystemFont,"Segoe UI",system-ui,sans-seri
         </div>
         <div class="progress-item">
           <div class="progress-label">📚 学分制带教</div>
-          <div class="progress-bar"><div class="progress-fill" style="width:0%;background:#10b981" id="progMentorship"></div></div>
-          <div class="progress-text"><span id="progMentorshipText">0/0</span></div>
+          <div class="progress-bar"><div class="progress-fill" style="width:0%;background:#10b981" id="progCoaching"></div></div>
+          <div class="progress-text"><span id="progCoachingText">0/0</span></div>
         </div>
         <div class="progress-item">
           <div class="progress-label">🔥 小灶培训</div>
@@ -166,7 +166,7 @@ body{font-family:-apple-system,BlinkMacSystemFont,"Segoe UI",system-ui,sans-seri
   <!-- Module Tabs -->
   <div class="module-tabs" id="moduleTabs">
     <button class="module-tab active" data-module="onboarding" onclick="switchModule('onboarding')">🎓 新人培训</button>
-    <button class="module-tab" data-module="mentorship" onclick="switchModule('mentorship')">📚 学分制带教</button>
+    <button class="module-tab" data-module="coaching" onclick="switchModule('coaching')">📚 学分制带教</button>
     <button class="module-tab" data-module="intensive" onclick="switchModule('intensive')">🔥 小灶培训</button>
     <button class="module-tab" data-module="leadership" onclick="switchModule('leadership')">👑 领导力课程</button>
   </div>
@@ -197,7 +197,7 @@ body{font-family:-apple-system,BlinkMacSystemFont,"Segoe UI",system-ui,sans-seri
       <label>培训模块</label>
       <select id="enrollModule">
         <option value="onboarding">🎓 新人培训</option>
-        <option value="mentorship">📚 学分制带教</option>
+        <option value="coaching">📚 学分制带教</option>
         <option value="intensive">🔥 小灶培训</option>
         <option value="leadership">👑 领导力课程</option>
       </select>
@@ -224,7 +224,7 @@ var state = { user: null, token: '', courses: [], enrollments: [], tasks: [], da
 var CURRENT_MODULE = 'onboarding';
 var MODULE_CONFIG = {
   onboarding: { icon: '🎓', label: '新人培训', color: '#3b82f6' },
-  mentorship: { icon: '📚', label: '学分制带教', color: '#10b981' },
+  coaching: { icon: '📚', label: '学分制带教', color: '#10b981' },
   intensive:  { icon: '🔥', label: '小灶培训', color: '#f59e0b' },
   leadership: { icon: '👑', label: '领导力课程', color: '#8b5cf6' }
 };
@@ -330,7 +330,7 @@ function loadEnrollments(){
 // Progress
 // ═══════════════════════════════════════════════
 function renderProgress(){
-  var modules = ['onboarding','mentorship','intensive','leadership'];
+  var modules = ['onboarding','coaching','intensive','leadership'];
   var total = 0;
   modules.forEach(function(m){
     var enr = state.enrollments.filter(function(e){ return e.module === m; });
@@ -343,9 +343,9 @@ function renderProgress(){
         document.getElementById('progOnboarding').style.width = pct+'%';
         document.getElementById('progOnboardingText').textContent = completed+'/'+enr.length;
         break;
-      case 'mentorship':
-        document.getElementById('progMentorship').style.width = pct+'%';
-        document.getElementById('progMentorshipText').textContent = completed+'/'+enr.length;
+      case 'coaching':
+        document.getElementById('progCoaching').style.width = pct+'%';
+        document.getElementById('progCoachingText').textContent = completed+'/'+enr.length;
         break;
       case 'intensive':
         document.getElementById('progIntensive').style.width = pct+'%';
