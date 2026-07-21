@@ -12,9 +12,9 @@ from flaskr.route.common import make_common_response
 from flaskr.service.common.models import raise_param_error
 from flaskr.service.learning_portal.models import (
     LearnerProfile,
-    LearnerMentorship,
-    MentorshipPhase,
-    MentorshipChecklist,
+    LearnerCoaching,
+    CoachingPhase,
+    CoachingChecklist,
     LearnerChecklistItem,
     LearnerTask,
     TaskNotification,
@@ -50,7 +50,7 @@ def register_learning_portal_routes(
                 "department": profile.department,
                 "position_name": profile.position_name,
                 "level": profile.level,
-                "mentor_bid": profile.mentor_bid,
+                "coach_bid": profile.coach_bid,
                 "supervisor_bid": profile.supervisor_bid,
                 "onboarding_date": str(profile.onboarding_date)
                 if profile.onboarding_date
@@ -77,7 +77,7 @@ def register_learning_portal_routes(
             "department",
             "position_name",
             "level",
-            "mentor_bid",
+            "coach_bid",
             "supervisor_bid",
         ):
             val = data.get(field)
@@ -96,16 +96,16 @@ def register_learning_portal_routes(
         user_bid = request.user.user_id
         profile = LearnerProfile.query.filter_by(user_bid=user_bid).first()
 
-        mentorships = []
+        coachings = []
         if profile:
             records = (
-                LearnerMentorship.query.filter_by(learner_bid=profile.learner_bid)
-                .order_by(LearnerMentorship.created_at.desc())
+                LearnerCoaching.query.filter_by(learner_bid=profile.learner_bid)
+                .order_by(LearnerCoaching.created_at.desc())
                 .all()
             )
             for r in records:
-                phase = MentorshipPhase.query.get(r.phase_bid)
-                mentorships.append(
+                phase = CoachingPhase.query.get(r.phase_bid)
+                coachings.append(
                     {
                         "record_bid": r.record_bid,
                         "phase_bid": r.phase_bid,
@@ -142,19 +142,19 @@ def register_learning_portal_routes(
                 user_bid=user_bid, is_read=0
             ).count()
 
-        # Check if user is a mentor (has students assigned)
-        mentor_count = LearnerProfile.query.filter_by(mentor_bid=user_bid).count()
+        # Check if user is a coach (has students assigned)
+        coach_count = LearnerProfile.query.filter_by(coach_bid=user_bid).count()
 
         return make_common_response(
             {
-                "mentorships": mentorships,
+                "coachings": coachings,
                 "pending_tasks": tasks,
                 "unread_notifications": notif_count,
-                "mentor_student_count": mentor_count,
-                "total_courses": LearnerMentorship.query.filter_by(
+                "coach_student_count": coach_count,
+                "total_courses": LearnerCoaching.query.filter_by(
                     learner_bid=profile.learner_bid if profile else ""
                 ).count(),
-                "completed_courses": LearnerMentorship.query.filter_by(
+                "completed_courses": LearnerCoaching.query.filter_by(
                     learner_bid=profile.learner_bid if profile else "",
                     status="passed",
                 ).count(),
@@ -248,22 +248,22 @@ def register_learning_portal_routes(
     #  导师端 API
     # ═══════════════════════════════════════════════
 
-    # ── GET /api/portal/mentor/students ──
-    @app.route(path_prefix + "/mentor/students", methods=["GET"])
-    def mentor_students():
+    # ── GET /api/portal/coach/students ──
+    @app.route(path_prefix + "/coach/students", methods=["GET"])
+    def coach_students():
         user_bid = request.user.user_id
         students = (
-            LearnerProfile.query.filter_by(mentor_bid=user_bid)
+            LearnerProfile.query.filter_by(coach_bid=user_bid)
             .order_by(LearnerProfile.created_at.desc())
             .all()
         )
         result = []
         for s in students:
             active_phase = (
-                LearnerMentorship.query.filter_by(
+                LearnerCoaching.query.filter_by(
                     learner_bid=s.learner_bid, status="in_progress"
                 )
-                .order_by(LearnerMentorship.created_at.desc())
+                .order_by(LearnerCoaching.created_at.desc())
                 .first()
             )
             pending_count = LearnerChecklistItem.query.filter_by(
@@ -286,11 +286,11 @@ def register_learning_portal_routes(
             )
         return make_common_response(result)
 
-    # ── GET /api/portal/mentor/pending-scores ──
-    @app.route(path_prefix + "/mentor/pending-scores", methods=["GET"])
-    def mentor_pending_scores():
+    # ── GET /api/portal/coach/pending-scores ──
+    @app.route(path_prefix + "/coach/pending-scores", methods=["GET"])
+    def coach_pending_scores():
         user_bid = request.user.user_id
-        students = LearnerProfile.query.filter_by(mentor_bid=user_bid).all()
+        students = LearnerProfile.query.filter_by(coach_bid=user_bid).all()
         learner_bids = [s.learner_bid for s in students]
         if not learner_bids:
             return make_common_response([])
@@ -316,11 +316,11 @@ def register_learning_portal_routes(
             ]
         )
 
-    # ── POST /api/portal/mentorship/items/<record_bid>/score ──
+    # ── POST /api/portal/coaching/items/<record_bid>/score ──
     @app.route(
-        path_prefix + "/mentorship/items/<record_bid>/score", methods=["POST"]
+        path_prefix + "/coaching/items/<record_bid>/score", methods=["POST"]
     )
-    def mentor_score_item(record_bid):
+    def coach_score_item(record_bid):
         user_bid = request.user.user_id
         data = request.get_json() or {}
         score = data.get("score")
@@ -407,7 +407,7 @@ def register_learning_portal_routes(
                         "department": s.department,
                         "position_name": s.position_name,
                         "level": s.level,
-                        "mentor_bid": s.mentor_bid,
+                        "coach_bid": s.coach_bid,
                         "status": s.status,
                         "onboarding_date": str(s.onboarding_date)
                         if s.onboarding_date
@@ -432,7 +432,7 @@ def register_learning_portal_routes(
             "department",
             "position_name",
             "level",
-            "mentor_bid",
+            "coach_bid",
             "supervisor_bid",
             "status",
         ):
@@ -467,7 +467,7 @@ def register_learning_portal_routes(
             department=data.get("department"),
             position_name=data.get("position_name"),
             level=data.get("level"),
-            mentor_bid=data.get("mentor_bid"),
+            coach_bid=data.get("coach_bid"),
             status="active",
         )
         db.session.add(profile)
@@ -477,7 +477,7 @@ def register_learning_portal_routes(
     # ── GET /api/portal/admin/phases ──
     @app.route(path_prefix + "/admin/phases", methods=["GET"])
     def admin_phases():
-        phases = MentorshipPhase.query.order_by(MentorshipPhase.sort_order).all()
+        phases = CoachingPhase.query.order_by(CoachingPhase.sort_order).all()
         return make_common_response(
             [
                 {
@@ -491,7 +491,7 @@ def register_learning_portal_routes(
                     "theory_weight": float(p.theory_weight) if p.theory_weight else None,
                     "practice_weight": float(p.practice_weight) if p.practice_weight else None,
                     "review_weight": float(p.review_weight) if p.review_weight else None,
-                    "mentor_weight": float(p.mentor_weight) if p.mentor_weight else None,
+                    "coach_weight": float(p.coach_weight) if p.coach_weight else None,
                     "is_active": bool(p.is_active),
                 }
                 for p in phases
@@ -502,12 +502,12 @@ def register_learning_portal_routes(
     @app.route(path_prefix + "/admin/phases/<phase_bid>", methods=["PUT"])
     def admin_update_phase(phase_bid):
         data = request.get_json() or {}
-        phase = MentorshipPhase.query.get(phase_bid)
+        phase = CoachingPhase.query.get(phase_bid)
         if not phase:
             raise_param_error("phase not found")
         for field in (
             "name", "description", "duration_days", "passing_score",
-            "theory_weight", "practice_weight", "review_weight", "mentor_weight",
+            "theory_weight", "practice_weight", "review_weight", "coach_weight",
         ):
             val = data.get(field)
             if val is not None:
@@ -520,8 +520,8 @@ def register_learning_portal_routes(
     # ── GET /api/portal/admin/checklist/<phase_bid> ──
     @app.route(path_prefix + "/admin/checklist/<phase_bid>", methods=["GET"])
     def admin_checklist(phase_bid):
-        items = MentorshipChecklist.query.filter_by(phase_bid=phase_bid).order_by(
-            MentorshipChecklist.sort_order
+        items = CoachingChecklist.query.filter_by(phase_bid=phase_bid).order_by(
+            CoachingChecklist.sort_order
         ).all()
         return make_common_response(
             [
@@ -542,7 +542,7 @@ def register_learning_portal_routes(
     @app.route(path_prefix + "/admin/checklist", methods=["POST"])
     def admin_create_checklist():
         data = request.get_json() or {}
-        item = MentorshipChecklist(
+        item = CoachingChecklist(
             item_bid=uuid.uuid4().hex,
             phase_bid=data.get("phase_bid", ""),
             name=data.get("name", ""),
@@ -559,14 +559,14 @@ def register_learning_portal_routes(
     def admin_stats():
         total_learners = LearnerProfile.query.count()
         active_learners = LearnerProfile.query.filter_by(status="active").count()
-        in_progress = LearnerMentorship.query.filter_by(status="in_progress").count()
-        passed = LearnerMentorship.query.filter_by(status="passed").count()
+        in_progress = LearnerCoaching.query.filter_by(status="in_progress").count()
+        passed = LearnerCoaching.query.filter_by(status="passed").count()
         return make_common_response(
             {
                 "total_learners": total_learners,
                 "active_learners": active_learners,
-                "in_progress_mentorships": in_progress,
-                "passed_mentorships": passed,
+                "in_progress_coachings": in_progress,
+                "passed_coachings": passed,
             }
         )
 
@@ -644,20 +644,20 @@ def register_learning_portal_routes(
             **kwargs,
         })
 
-    # ── POST /api/portal/mentorship/start ──
-    @app.route(path_prefix + "/mentorship/start", methods=["POST"])
-    def portal_start_mentorship():
+    # ── POST /api/portal/coaching/start ──
+    @app.route(path_prefix + "/coaching/start", methods=["POST"])
+    def portal_start_coaching():
         data = request.get_json() or {}
         learner_bid = data.get("learner_bid", "")
         phase_bid = data.get("phase_bid", "")
 
-        existing = LearnerMentorship.query.filter_by(
+        existing = LearnerCoaching.query.filter_by(
             learner_bid=learner_bid, phase_bid=phase_bid, status="in_progress"
         ).first()
         if existing:
             raise_param_error("phase already in progress")
 
-        record = LearnerMentorship(
+        record = LearnerCoaching(
             record_bid=uuid.uuid4().hex,
             learner_bid=learner_bid,
             phase_bid=phase_bid,
@@ -669,7 +669,7 @@ def register_learning_portal_routes(
         # Notify
         profile = LearnerProfile.query.get(learner_bid)
         if profile:
-            phase = MentorshipPhase.query.get(phase_bid)
+            phase = CoachingPhase.query.get(phase_bid)
             notif = TaskNotification(
                 notif_bid=uuid.uuid4().hex,
                 user_bid=profile.user_bid,
@@ -692,7 +692,7 @@ def register_learning_portal_routes(
         module = request.get_json().get("module")
         if not all([user_bid, shifu_bid, module]):
             raise_param_error("user_bid, shifu_bid, module are required")
-        if module not in ("onboarding", "mentorship", "intensive", "leadership"):
+        if module not in ("onboarding", "coaching", "intensive", "leadership"):
             raise_param_error("invalid module")
 
         enrollment = CourseEnrollment(
@@ -797,14 +797,144 @@ def register_learning_portal_routes(
         db.session.commit()
         return make_common_response({"progress_pct": enrollment.progress_pct})
 
+    # ── GET /api/portal/coach/phase-detail/<learner_bid> ──
+    @app.route(path_prefix + "/coach/phase-detail/<learner_bid>", methods=["GET"])
+    def coach_phase_detail(learner_bid):
+        """Get detailed phase progress for a learner."""
+        records = LearnerCoaching.query.filter_by(learner_bid=learner_bid).order_by(LearnerCoaching.created_at).all()
+        result = []
+        for rec in records:
+            phase = CoachingPhase.query.get(rec.phase_bid)
+            items = LearnerChecklistItem.query.filter_by(learner_bid=learner_bid).all()
+            scored = sum(1 for i in items if i.status == "scored")
+            total = len(items) or 1
+            result.append({
+                "phase_bid": rec.phase_bid,
+                "phase_name": phase.name if phase else "",
+                "status": rec.status,
+                "theory_score": float(rec.theory_score or 0),
+                "practice_score": float(rec.practice_score or 0),
+                "coach_score": float(rec.coach_score or 0),
+                "total_score": float(rec.total_score or 0),
+                "checklist_progress": f"{scored}/{len(items)}",
+                "checklist_pct": round(scored / total * 100, 1),
+                "started_at": str(rec.started_at or ""),
+                "completed_at": str(rec.completed_at or ""),
+                "coach_summary": rec.coach_summary or "",
+                "learner_feedback": rec.learner_feedback or "",
+                "improvement_plan": rec.improvement_plan or "",
+            })
+        return make_common_response(result)
+
+    # ── POST /api/portal/coach/phase-summary/<record_bid> ──
+    @app.route(path_prefix + "/coach/phase-summary/<record_bid>", methods=["POST"])
+    def coach_phase_summary(record_bid):
+        """Submit phase summary and evaluation."""
+        data = request.get_json() or {}
+        rec = LearnerCoaching.query.get(record_bid)
+        if not rec:
+            raise_param_error("phase record not found")
+        if "coach_summary" in data:
+            rec.coach_summary = data["coach_summary"]
+        if "learner_feedback" in data:
+            rec.learner_feedback = data["learner_feedback"]
+        if "improvement_plan" in data:
+            rec.improvement_plan = data["improvement_plan"]
+        if data.get("complete"):
+            rec.status = "completed"
+            rec.completed_at = datetime.utcnow()
+        rec.updated_at = datetime.utcnow()
+        db.session.commit()
+        return make_common_response({"ok": True})
+
+    # ── POST /api/portal/coach/session ──
+    @app.route(path_prefix + "/coach/session", methods=["POST"])
+    def create_coach_session():
+        """Record a coaching session."""
+        import uuid
+        data = request.get_json() or {}
+        session = CoachSession(
+            session_bid=uuid.uuid4().hex[:32],
+            learner_bid=data["learner_bid"],
+            coach_bid=request.user.user_id,
+            phase_bid=data.get("phase_bid", ""),
+            session_type=data.get("session_type", "regular"),
+            session_date=datetime.utcnow(),
+            duration_minutes=data.get("duration", 0),
+            topic=data.get("topic", ""),
+            coach_notes=data.get("coach_notes", ""),
+            learner_notes=data.get("learner_notes", ""),
+            action_items=data.get("action_items", ""),
+        )
+        db.session.add(session)
+        db.session.commit()
+        return make_common_response({"session_bid": session.session_bid})
+
+    # ── GET /api/portal/coach/sessions/<learner_bid> ──
+    @app.route(path_prefix + "/coach/sessions/<learner_bid>", methods=["GET"])
+    def get_coach_sessions(learner_bid):
+        """Get coaching session history."""
+        sessions = CoachSession.query.filter_by(learner_bid=learner_bid).order_by(CoachSession.session_date.desc()).limit(50).all()
+        return make_common_response([{
+            "session_bid": s.session_bid,
+            "session_type": s.session_type,
+            "session_date": str(s.session_date),
+            "duration": s.duration_minutes,
+            "topic": s.topic,
+            "coach_notes": s.coach_notes,
+            "action_items": s.action_items,
+            "status": s.status,
+        } for s in sessions])
+
+    # ── GET /api/portal/coach/report/<learner_bid> ──
+    @app.route(path_prefix + "/coach/report/<learner_bid>", methods=["GET"])
+    def coach_report(learner_bid):
+        """Generate coaching analysis report."""
+        profile = LearnerProfile.query.filter_by(user_bid=learner_bid).first()
+        records = LearnerCoaching.query.filter_by(learner_bid=learner_bid).order_by(LearnerCoaching.created_at).all()
+        sessions = CoachSession.query.filter_by(learner_bid=learner_bid).order_by(CoachSession.session_date).all()
+        items = LearnerChecklistItem.query.filter_by(learner_bid=learner_bid).all()
+        total_items = len(items)
+        scored_items = sum(1 for i in items if i.status == "scored")
+        passed_items = sum(1 for i in items if i.status == "scored" and (i.score or 0) >= 3)
+        phases = []
+        for rec in records:
+            phase = CoachingPhase.query.get(rec.phase_bid)
+            phases.append({
+                "name": phase.name if phase else "",
+                "status": rec.status,
+                "total_score": float(rec.total_score or 0),
+                "passing_score": float(phase.passing_score) if phase else 60,
+                "theory_score": float(rec.theory_score or 0),
+                "practice_score": float(rec.practice_score or 0),
+                "coach_score": float(rec.coach_score or 0),
+                "coach_summary": rec.coach_summary or "",
+                "started_at": str(rec.started_at or ""),
+                "completed_at": str(rec.completed_at or ""),
+            })
+        return make_common_response({
+            "learner_name": profile.name if profile else "",
+            "learner_bid": learner_bid,
+            "total_phases": len(records),
+            "completed_phases": sum(1 for r in records if r.status == "completed"),
+            "in_progress_phases": sum(1 for r in records if r.status == "in_progress"),
+            "checklist_total": total_items,
+            "checklist_scored": scored_items,
+            "checklist_passed": passed_items,
+            "checklist_pass_rate": round(passed_items / total_items * 100, 1) if total_items else 0,
+            "session_count": len(sessions),
+            "phases": phases,
+            "generated_at": str(datetime.utcnow()),
+        })
+
 
 def _recalc_phase_score(learner_bid: str) -> None:
     """Recalculate total score for all in-progress phases of a learner."""
-    records = LearnerMentorship.query.filter_by(
+    records = LearnerCoaching.query.filter_by(
         learner_bid=learner_bid, status="in_progress"
     ).all()
     for rec in records:
-        phase = MentorshipPhase.query.get(rec.phase_bid)
+        phase = CoachingPhase.query.get(rec.phase_bid)
         if not phase:
             continue
 
@@ -816,5 +946,5 @@ def _recalc_phase_score(learner_bid: str) -> None:
         theory_scores = []
         practice_scores = []
         review_scores = []
-        mentor_scores = []
+        coach_scores = []
 
