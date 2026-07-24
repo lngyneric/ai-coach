@@ -14,7 +14,9 @@
 | `docs/design-docs/ai-doc-generator-shrink.md` | AI Doc Generator Shrink And Baseline Restoration | `design-doc` | `implemented` | `repo` | `2026-04-17` | `true` |
 | `docs/design-docs/ai-doc-hard-rules-restoration.md` | AI Doc Hard Rules Restoration | `design-doc` | `implemented` | `repo` | `2026-04-17` | `true` |
 | `docs/design-docs/ai-tool-compat.md` | AI Tool Compatibility Layer Design | `design-doc` | `implemented` | `repo` | `2026-04-17` | `true` |
+| `docs/design-docs/coach-lab-validation.md` | Coaching Interaction Redesign Validation (Coach Lab) | `design-doc` | `implemented` | `frontend` | `2026-07-22` | `true` |
 | `docs/design-docs/langfuse-trace-association.md` | Langfuse Trace Association | `design-doc` | `implemented` | `backend` | `2026-04-17` | `true` |
+| `docs/design-docs/learner-experience-redesign.md` | Learner Experience Redesign (Course Chat Player) | `design-doc` | `proposed` | `frontend` | `2026-07-21` | `true` |
 | `docs/design-docs/primary-surface-rules.md` | Primary Surface Rules Completion | `design-doc` | `implemented` | `repo` | `2026-04-17` | `true` |
 | `docs/engineering-baseline.md` | Engineering Baseline | `root-doc` | `reference` | `repo` | `2026-04-17` | `true` |
 | `docs/exec-plans/active/admin-home-onboarding.md` | Admin Home Onboarding | `exec-plan-active` | `active` | `repo` | `-` | `true` |
@@ -37,4 +39,5 @@
 | `docs/product-specs/transfer-course-creator.md` | Operator Course Creator Transfer | `product-spec` | `implemented` | `shared` | `2026-04-17` | `true` |
 | `docs/references/architecture-boundaries.md` | Architecture Boundaries | `reference` | `reference` | `repo` | `-` | `true` |
 | `docs/references/i18n.md` | Internationalization (i18n) Guide | `reference` | `reference` | `repo` | `-` | `true` |
+| `docs/references/sandbox-model-docs.md` | IVD 沙盘推演 — 模型参数说明文档 | `reference` | `reference` | `repo` | `-` | `true` |
 | `docs/references/scripts.md` | Scripts Overview | `reference` | `reference` | `repo` | `-` | `true` |

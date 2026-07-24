@@ -6,4 +6,5 @@ Evergreen repository references and operational guides live here.
 
 - [Architecture Boundaries](../references/architecture-boundaries.md)
 - [Internationalization (i18n) Guide](../references/i18n.md)
+- [IVD 沙盘推演 — 模型参数说明文档](../references/sandbox-model-docs.md)
 - [Scripts Overview](../references/scripts.md)

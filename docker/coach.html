@@ -3,6 +3,7 @@
 <head>
   <meta charset="utf-8" />
   <meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover" />
+  <link rel="icon" type="image/svg+xml" href="/favicon.svg">
   <title>导师工作台 — sysmex</title>
   <link rel="preconnect" href="https://fonts.googleapis.com" />
   <style>
@@ -196,17 +197,64 @@
       display: flex; justify-content: space-between; align-items: center; font-size: 13px; color: #94a3b8;
     }
     @media (max-width: 500px) { .footer-inner { flex-direction: column; gap: 8px; } }
+    /* ═══ Unified Navbar ═══ */
+    .topnav {
+      background: rgba(255,255,255,.92);
+      backdrop-filter: blur(12px);
+      border-bottom: 1px solid #e2e8f0;
+      position: sticky; top: 0; z-index: 100;
+      display: flex; align-items: center; height: 56px; padding: 0 16px;
+    }
+    .topnav-logo { display: flex; align-items: center; gap: 8px; font-weight: 600; font-size: 14px; color: #1e293b; margin-right: 16px; flex-shrink: 0; }
+    .topnav-logo img { height: 20px; width: auto; }
+    .topnav-links { display: flex; gap: 2px; flex: 1; overflow-x: auto; }
+    .topnav-link { padding: 6px 12px; border-radius: 8px; font-size: 13px; font-weight: 500; color: #64748b; text-decoration: none; white-space: nowrap; transition: all .15s; }
+    .topnav-link:hover { background: #f1f5f9; color: #1e293b; }
+    .topnav-link.active { background: #eff6ff; color: #2563eb; }
+    .topnav-user { display: flex; align-items: center; gap: 8px; flex-shrink: 0; font-size: 13px; color: #64748b; }
+    .topnav-avatar { width: 28px; height: 28px; border-radius: 50%; background: #dbeafe; color: #2563eb; display: flex; align-items: center; justify-content: center; font-size: 12px; font-weight: 600; }
+    .topnav-logout { background: none; border: none; color: #94a3b8; cursor: pointer; font-size: 12px; padding: 4px 8px; border-radius: 6px; }
+    .topnav-logout:hover { color: #ef4444; }
   </style>
 </head>
 <body>
 
-  <div id="root">
+  <!-- ═══ Unified Navbar ═══ -->
+<div class="topnav" id="appNavbar">
+  <div class="topnav-logo"><img src="/logo.png" alt="sysmex" />sysmex</div>
+  <div class="topnav-links">
+    <a class="topnav-link" href="/courses/">📖 课程</a>
+    <a class="topnav-link" href="/ivd-knowledge-tree.html">🧠 知识图谱</a>
+    <a class="topnav-link" href="/ivd-sandbox-dashboard.html">🎮 沙盘推演</a>
+    <a class="topnav-link" href="/personal-growth-tree.html">🌱 个人成长</a>
+    <a class="topnav-link" href="/training-portal.html">🎯 培训门户</a>
+    <a class="topnav-link active" href="/coach">🧑‍🏫 导师工作台</a>
+  </div>
+  <div class="topnav-user" id="navUser">
+    <span id="navUserName">加载中...</span>
+    <span class="topnav-avatar" id="navAvatar">?</span>
+    <button class="topnav-logout" onclick="window.location.href='/api/user/logout'">退出</button>
+  </div>
+</div>
+
+<div id="root">
     <div class="spinner-overlay"><div class="spinner"></div></div>
   </div>
 
   <script>
   (function() {
     'use strict';
+
+    // Global error handler for unhandled promise rejections
+    window.addEventListener('unhandledrejection', function(e) {
+      console.error('[Coach] Unhandled rejection:', JSON.stringify(e.reason), e.reason);
+      // Show a visible error on the page so the user can screenshot it
+      var root = document.getElementById('root');
+      if (root) {
+        root.innerHTML = '<div style="padding:40px;text-align:center;color:#dc2626"><h2>加载失败</h2><p style="font-size:13px;color:#94a3b8;margin-top:8px">' + JSON.stringify(e.reason).slice(0,200) + '</p></div>';
+      }
+      e.preventDefault();
+    });
 
     function getCookie(name) {
       var match = document.cookie.match(new RegExp('(^| )' + name + '=([^;]+)'));
@@ -216,8 +264,14 @@
     function api(path, opts) {
       return fetch(path, {
         headers: { 'Content-Type': 'application/json' },
-        ...opts,
-      }).then(function(r) { return r.json(); });
+        credentials: 'same-origin',
+      }).then(function(r) {
+        if (!r.ok) throw new Error('HTTP ' + r.status);
+        return r.json().catch(function() { return {}; });
+      }).catch(function(e) {
+        console.warn('API error:', path, e.message || e);
+        throw e;
+      });
     }
 
     function escapeHtml(str) {
@@ -237,11 +291,11 @@
 
     function render() {
       var root = document.getElementById('root');
-      if (!state.user) {
+      if (!state.user || !state.user.user_id) {
         root.innerHTML = '<div class="spinner-overlay"><div class="spinner"></div></div>';
         return;
       }
-      root.innerHTML = renderHeader() + renderStats() + renderTasks() + renderStudents() + renderScores() + renderTips() + renderFooter() + renderModal();
+      root.innerHTML = renderStats() + renderTasks() + renderStudents() + renderScores() + renderTips() + renderFooter() + renderModal();
     }
 
     function renderTasks() {
@@ -277,8 +331,8 @@
     }
 
     function renderStats() {
-      var students = state.students || [];
-      var pending = state.pendingScores || [];
+      var students = Array.isArray(state.students) ? state.students : [];
+      var pending = Array.isArray(state.pendingScores) ? state.pendingScores : [];
       var active = students.filter(function(s) { return s.current_phase_status === 'in_progress'; }).length;
       var completed = students.filter(function(s) { return s.status === 'completed'; }).length;
       var total = students.length;
@@ -319,7 +373,7 @@
     }
 
     function renderStudents() {
-      var students = state.students || [];
+      var students = Array.isArray(state.students) ? state.students : [];
       var html = '<section class="max-w-7xl" style="margin-top:24px">' +
         '<h2 class="section-title">👨‍🎓 学员列表</h2>';
 
@@ -388,7 +442,7 @@
     function renderScores() {
       var pending = state.pendingScores || [];
       if (pending.length === 0) return '';
-      var students = state.students || [];
+      var students = Array.isArray(state.students) ? state.students : [];
 
       var html = '<section class="max-w-7xl" style="margin-top:24px">' +
         '<div class="dash-card">' +
@@ -422,8 +476,8 @@
     }
 
     function renderTips() {
-      var students = state.students || [];
-      var pending = state.pendingScores || [];
+      var students = Array.isArray(state.students) ? state.students : [];
+      var pending = Array.isArray(state.pendingScores) ? state.pendingScores : [];
       var active = students.filter(function(s) { return s.current_phase_status === 'in_progress'; }).length;
 
       return (
@@ -545,14 +599,23 @@
       var userLoaded = false;
       Promise.all([
         api('/api/user/info').then(function(d) {
-          if (d.code === 0) { state.user = d.data; userLoaded = true; }
+          if (d.code === 0) { 
+            state.user = d.data; userLoaded = true;
+            // Update navbar user info
+            var navName = document.getElementById('navUserName');
+            var navAvatar = document.getElementById('navAvatar');
+            if (navName) navName.textContent = d.data.name || d.data.user_id || '用户';
+            if (navAvatar) navAvatar.textContent = (d.data.name || '?')[0];
+          }
         }).catch(function() {}),
         api('/api/shifu/coach/students').then(function(d) {
-          if (d.code === 0) state.students = d.data || [];
-        }).catch(function() {}),
+          if (d.code === 0 && Array.isArray(d.data)) state.students = d.data;
+          else state.students = [];
+        }).catch(function() { state.students = []; }),
         api('/api/shifu/coach/pending-scores').then(function(d) {
-          if (d.code === 0) state.pendingScores = d.data || [];
-        }).catch(function() {}),
+          if (d.code === 0 && Array.isArray(d.data)) state.pendingScores = d.data;
+          else state.pendingScores = [];
+        }).catch(function() { state.pendingScores = []; }),
       ]).then(function() {
         if (!userLoaded) {
           window.location.href = '/login?redirect=' + encodeURIComponent('/coach/');
@@ -560,7 +623,10 @@
         }
         state.loading = false;
         render();
-      }).catch(function() {
+      }).catch(function(e) {
+        console.warn('Coach init error:', e);
+        state.students = state.students || [];
+        state.pendingScores = state.pendingScores || [];
         state.loading = false;
         render();
       });
@@ -569,5 +635,28 @@
     init();
   })();
   </script>
+<script>
+      // Navbar: set active link based on current URL
+      (function() {
+        var path = window.location.pathname;
+        document.querySelectorAll('.topnav-link').forEach(function(a) {
+          var href = a.getAttribute('href');
+          if (path === href || path.startsWith(href) && href !== '/') {
+            a.classList.add('active');
+          }
+        });
+        // Load user info for navbar
+        fetch('/api/user/info').then(function(r){return r.json()}).then(function(d){
+          if (d.code === 0) {
+            var u = d.data;
+            var navName = document.getElementById('navUserName');
+            var navAvatar = document.getElementById('navAvatar');
+            if (navName) navName.textContent = u.name || u.user_id || '用户';
+            if (navAvatar) navAvatar.textContent = (u.name || u.user_id || '?')[0];
+          }
+        }).catch(function(){});
+      })();
+
+</script>
 </body>
 </html>

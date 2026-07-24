@@ -6,16 +6,16 @@ This generated report summarizes the repository harness control plane.
 
 ## Knowledge System
 
-- Design docs: `10`
+- Design docs: `9`
 - Product specs: `10`
-- References: `3`
-- Active ExecPlans: `13`
-- Completed ExecPlans: `6`
+- References: `4`
+- Active ExecPlans: `4`
+- Completed ExecPlans: `1`
 
 ## Boundary Baseline
 
-- Baseline entries: `121`
-- `backend.cross_service_import`: `121`
+- Baseline entries: `117`
+- `backend.cross_service_import`: `117`
 
 ## Critical Assets
 

@@ -3,7 +3,8 @@
 <head>
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width, initial-scale=1.0">
-<title>IVD 知识图谱 — sysmex</title>
+<link rel="icon" type="image/svg+xml" href="/favicon.svg">
+  <title>IVD 知识图谱 — sysmex</title>
 <script src="d3.v7.min.js"></script>
 <style>
 :root {
@@ -80,9 +81,54 @@ svg{width:100%;height:100vh}
 .stage-name{font-weight:600}
 .stage-desc{color:var(--muted);font-size:10px;margin-top:2px}
 @media (max-width:500px){#chat-panel{width:100%;right:0;height:60vh;border-radius:16px 16px 0 0}#navRole{max-width:70px}}
+
+    /* ═══ Unified Navbar ═══ */
+    .topnav {
+      background: rgba(255,255,255,.92);
+      backdrop-filter: blur(12px);
+      border-bottom: 1px solid #e2e8f0;
+      position: sticky; top: 0; z-index: 100;
+      display: flex; align-items: center; height: 56px; padding: 0 16px;
+    }
+    .topnav-logo { display: flex; align-items: center; gap: 8px; font-weight: 600; font-size: 14px; color: #1e293b; margin-right: 16px; flex-shrink: 0; }
+    .topnav-logo img { height: 20px; width: auto; }
+    .topnav-links { display: flex; gap: 2px; flex: 1; overflow-x: auto; }
+    .topnav-link { padding: 6px 12px; border-radius: 8px; font-size: 13px; font-weight: 500; color: #64748b; text-decoration: none; white-space: nowrap; transition: all .15s; }
+    .topnav-link:hover { background: #f1f5f9; color: #1e293b; }
+    .topnav-link.active { background: #eff6ff; color: #2563eb; }
+    .topnav-user { display: flex; align-items: center; gap: 8px; flex-shrink: 0; font-size: 13px; color: #64748b; }
+    .topnav-avatar { width: 28px; height: 28px; border-radius: 50%; background: #dbeafe; color: #2563eb; display: flex; align-items: center; justify-content: center; font-size: 12px; font-weight: 600; }
+    .topnav-logout { background: none; border: none; color: #94a3b8; cursor: pointer; font-size: 12px; padding: 4px 8px; border-radius: 6px; }
+    .topnav-logout:hover { color: #ef4444; }
+    body.dark .topnav { background: rgba(15,23,42,.92); border-bottom-color: #1e293b; }
+    body.dark .topnav-logo { color: #e2e8f0; }
+    body.dark .topnav-link { color: #94a3b8; }
+    body.dark .topnav-link:hover { background: #1e293b; color: #e2e8f0; }
+    body.dark .topnav-link.active { background: #1e3a5f; color: #60a5fa; }
+    body.dark .topnav-user { color: #94a3b8; }
+    body.dark .topnav-avatar { background: #1e3a5f; color: #60a5fa; }
+
 </style>
 </head>
 <body>
+<!-- ═══ Unified Navbar ═══ -->
+<div class="topnav" id="appNavbar">
+  <div class="topnav-logo"><img src="/logo.png" alt="sysmex" />sysmex</div>
+  <div class="topnav-links">
+    <a class="topnav-link" href="/courses/">📖 课程</a>
+    <a class="topnav-link" href="/ivd-knowledge-tree.html">🧠 知识图谱</a>
+    <a class="topnav-link" href="/ivd-sandbox-dashboard.html">🎮 沙盘推演</a>
+    <a class="topnav-link" href="/personal-growth-tree.html">🌱 个人成长</a>
+    <a class="topnav-link" href="/training-portal.html">🎯 培训门户</a>
+    <a class="topnav-link" href="/coach">🧑‍🏫 导师工作台</a>
+  </div>
+  <div class="topnav-user" id="navUser">
+    <span id="navUserName">加载中...</span>
+    <span class="topnav-avatar" id="navAvatar">?</span>
+    <button class="topnav-logout" onclick="window.location.href='/api/user/logout'">退出</button>
+  </div>
+</div>
+
 <div id="header">
   <h1 id="mainTitle">🧬 IVD 知识图谱</h1>
   <span class="sub" id="subTitle">sysmex — 检验医学知识体系</span><span class="sub" id="countLabel" style="margin-left:8px"></span>
@@ -356,6 +402,24 @@ setTimeout(function(){ var b=g.node().getBBox(); if(b.width){ var s=Math.min(W/b
   sendBtn.onclick = sendMessage;
   input.onkeydown = function(e) { if (e.key==='Enter'&&!e.shiftKey) { e.preventDefault(); sendMessage(); } };
   input.oninput = function() { this.style.height='auto'; this.style.height=Math.min(this.scrollHeight,100)+'px'; };
+})();
+</script>
+
+<script>
+(function() {
+  var path = window.location.pathname;
+  document.querySelectorAll('.topnav-link').forEach(function(a) {
+    if (path === a.getAttribute('href')) a.classList.add('active');
+  });
+  fetch('/api/user/info').then(function(r){return r.json()}).then(function(d){
+    if (d.code === 0) {
+      var u = d.data;
+      var navName = document.getElementById('navUserName');
+      var navAvatar = document.getElementById('navAvatar');
+      if (navName) navName.textContent = u.name || u.user_id || '用户';
+      if (navAvatar) navAvatar.textContent = (u.name || u.user_id || '?')[0];
+    }
+  }).catch(function(){});
 })();
 </script>
 </body>

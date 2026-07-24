@@ -14,7 +14,11 @@ Implementation and architecture decisions that shape repository behavior live he
   - Status: `implemented` | Owner: `repo` | Last reviewed: `2026-04-17` | Canonical: `true`
 - [AI Tool Compatibility Layer Design](../design-docs/ai-tool-compat.md)
   - Status: `implemented` | Owner: `repo` | Last reviewed: `2026-04-17` | Canonical: `true`
+- [Coaching Interaction Redesign Validation (Coach Lab)](../design-docs/coach-lab-validation.md)
+  - Status: `implemented` | Owner: `frontend` | Last reviewed: `2026-07-22` | Canonical: `true`
 - [Langfuse Trace Association](../design-docs/langfuse-trace-association.md)
   - Status: `implemented` | Owner: `backend` | Last reviewed: `2026-04-17` | Canonical: `true`
+- [Learner Experience Redesign (Course Chat Player)](../design-docs/learner-experience-redesign.md)
+  - Status: `proposed` | Owner: `frontend` | Last reviewed: `2026-07-21` | Canonical: `true`
 - [Primary Surface Rules Completion](../design-docs/primary-surface-rules.md)
   - Status: `implemented` | Owner: `repo` | Last reviewed: `2026-04-17` | Canonical: `true`

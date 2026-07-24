@@ -1,0 +1,305 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width,initial-scale=1">
+<title>AI-Coach · Sysmex Dev 环境功能全景</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=DM+Sans:opsz,wght@9..40,400;9..40,500;9..40,700;9..40,900&family=Noto+Sans+SC:wght@400;500;700;900&display=swap" rel="stylesheet">
+<style>
+/* =========================================== */
+/* VIEWPORT FITTING — MANDATORY */
+/* =========================================== */
+html,body{height:100%;overflow-x:hidden;margin:0;padding:0}
+html{scroll-snap-type:y mandatory;scroll-behavior:smooth}
+.slide{width:100vw;height:100vh;height:100dvh;overflow:hidden;scroll-snap-align:start;display:flex;flex-direction:column;position:relative}
+.slide-content{flex:1;display:flex;flex-direction:column;justify-content:center;max-height:100%;overflow:hidden;padding:var(--slide-padding)}
+:root{--title-size:clamp(1.5rem,5vw,4rem);--h2-size:clamp(1.25rem,3.5vw,2.5rem);--h3-size:clamp(1rem,2.5vw,1.75rem);--body-size:clamp(0.75rem,1.5vw,1.125rem);--small-size:clamp(0.65rem,1vw,0.875rem);--slide-padding:clamp(1rem,4vw,4rem);--content-gap:clamp(0.5rem,2vw,2rem);--element-gap:clamp(0.25rem,1vw,1rem)}
+@media(max-height:700px){:root{--slide-padding:clamp(0.75rem,3vw,2rem);--content-gap:clamp(0.4rem,1.5vw,1rem);--title-size:clamp(1.25rem,4.5vw,2.5rem);--h2-size:clamp(1rem,3vw,1.75rem)}}
+@media(max-height:600px){:root{--slide-padding:clamp(0.5rem,2.5vw,1.5rem);--content-gap:clamp(0.3rem,1vw,0.75rem);--title-size:clamp(1.1rem,4vw,2rem);--body-size:clamp(0.7rem,1.2vw,0.95rem)}.nav-dots,.keyboard-hint,.decorative{display:none}}
+@media(max-height:500px){:root{--slide-padding:clamp(0.4rem,2vw,1rem);--title-size:clamp(1rem,3.5vw,1.5rem);--h2-size:clamp(0.9rem,2.5vw,1.25rem);--body-size:clamp(0.65rem,1vw,0.85rem)}}
+@media(max-width:600px){:root{--title-size:clamp(1.25rem,7vw,2.5rem)}}
+@media(prefers-reduced-motion:reduce){*,*::before,*::after{animation-duration:.01ms!important;transition-duration:.2s!important}html{scroll-behavior:auto}}
+
+/* =========================================== */
+/* DESIGN SYSTEM: Bold Signal — Sysmex Edition */
+/* =========================================== */
+*{box-sizing:border-box}
+body{font-family:'DM Sans','Noto Sans SC',sans-serif;background:#020617;color:#e2e8f0;letter-spacing:-0.01em}
+h1,h2,h3{font-weight:900;line-height:1.1;margin:0}
+h1{font-size:var(--title-size);letter-spacing:-0.03em}
+h2{font-size:var(--h2-size)}
+h3{font-size:var(--h3-size)}
+p{font-size:var(--body-size);line-height:1.5;margin:0;color:#94a3b8}
+
+/* Color tokens */
+:root{--c-primary:#0f63ee;--c-accent:#3e84f4;--c-green:#10b981;--c-amber:#f59e0b;--c-purple:#8b5cf6;--c-red:#ef4444;--c-bg:#020617;--c-card:#0f172a;--c-border:#1e293b}
+
+/* Title slide */
+.slide-hero{background:linear-gradient(135deg,#020617 0%,#0f172a 40%,#0a1a3a 70%,#020617 100%);align-items:center;justify-content:center;text-align:center}
+.slide-hero::before{content:'';position:absolute;top:0;left:0;right:0;bottom:0;background:radial-gradient(ellipse 80% 50% at 50% -20%,rgba(15,99,238,.15),transparent);z-index:0}
+.slide-hero>*{position:relative;z-index:1}
+.badge{display:inline-block;background:var(--c-primary);color:#fff;font-size:var(--small-size);font-weight:700;padding:.35em 1em;border-radius:99px;letter-spacing:.08em;text-transform:uppercase;margin-bottom:var(--element-gap)}
+
+/* Section slides */
+.slide-section{background:linear-gradient(180deg,var(--c-bg) 0%,#0a1628 100%)}
+.slide-section .section-num{font-size:clamp(3rem,10vw,8rem);font-weight:900;opacity:.06;position:absolute;right:var(--slide-padding);top:50%;transform:translateY(-50%);line-height:1;white-space:nowrap;pointer-events:none}
+
+/* Card grid */
+.feat-grid{display:grid;grid-template-columns:repeat(auto-fit,minmax(min(100%,280px),1fr));gap:clamp(.5rem,1.5vw,1.2rem);max-width:min(90vw,1100px);margin:0 auto}
+.feat-card{background:var(--c-card);border:1px solid var(--c-border);border-radius:clamp(.5rem,1vw,1rem);padding:clamp(.8rem,2vw,1.5rem);transition:transform .2s,border-color .2s;position:relative;overflow:hidden}
+.feat-card:hover{transform:translateY(-2px);border-color:var(--c-primary)}
+.feat-card .icon{font-size:clamp(1.5rem,3vw,2.2rem);margin-bottom:clamp(.3rem,.8vw,.6rem)}
+.feat-card .tag{display:inline-block;font-size:var(--small-size);padding:.15em .6em;border-radius:4px;font-weight:700;margin-bottom:.4em}
+.feat-card p{font-size:var(--small-size);line-height:1.45;color:#64748b}
+.feat-card a{display:inline-block;margin-top:.5em;font-size:var(--small-size);color:var(--c-accent);text-decoration:none;font-weight:500}
+.feat-card a:hover{text-decoration:underline}
+
+/* List style */
+.big-list{list-style:none;padding:0;max-width:min(85vw,900px);margin:0 auto}
+.big-list li{font-size:var(--body-size);padding:clamp(.4rem,1.2vh,.8rem) 0;border-bottom:1px solid var(--c-border);display:flex;align-items:baseline;gap:clamp(.5rem,1vw,.8rem)}
+.big-list li:last-child{border-bottom:none}
+.big-list .num{font-weight:900;font-size:var(--h3-size);color:var(--c-primary);min-width:clamp(1.5rem,3vw,2.5rem);text-align:right;flex-shrink:0}
+
+/* Quote slide */
+.slide-quote{background:linear-gradient(135deg,#0a1a3a 0%,#0f172a 100%);justify-content:center;align-items:center;text-align:center}
+blockquote{font-size:clamp(1.1rem,3vw,2rem);font-weight:500;font-style:italic;line-height:1.4;max-width:min(80vw,800px);margin:0 auto}
+blockquote::before{content:'\201C';font-size:clamp(4rem,12vw,8rem);display:block;color:var(--c-primary);line-height:.5;margin-bottom:clamp(.5rem,2vh,1.5rem);opacity:.5}
+blockquote cite{display:block;font-size:var(--body-size);font-style:normal;color:var(--c-accent);margin-top:clamp(.5rem,2vh,1rem)}
+
+/* Closing slide */
+.slide-closing{background:linear-gradient(135deg,var(--c-primary),var(--c-accent));justify-content:center;align-items:center;text-align:center}
+.slide-closing h1{color:#fff}
+.slide-closing p{color:rgba(255,255,255,.7)}
+
+/* Navigation */
+.nav-dots{position:fixed;right:clamp(.5rem,2vw,1.5rem);top:50%;transform:translateY(-50%);display:flex;flex-direction:column;gap:clamp(.3rem,.8vh,.6rem);z-index:100}
+.nav-dots a{width:clamp(6px,1vw,10px);height:clamp(6px,1vw,10px);border-radius:50%;background:rgba(255,255,255,.25);transition:background .3s,transform .2s;display:block}
+.nav-dots a:hover,.nav-dots a.active{background:var(--c-primary);transform:scale(1.4)}
+.keyboard-hint{position:fixed;bottom:clamp(.5rem,2vh,1.5rem);left:50%;transform:translateX(-50%);font-size:var(--small-size);color:#475569;z-index:100;opacity:.7}
+
+/* Animations */
+.reveal{opacity:0;transform:translateY(30px);animation:revealUp .6s cubic-bezier(.16,1,.3,1) forwards}
+.reveal:nth-child(2){animation-delay:.1s}
+.reveal:nth-child(3){animation-delay:.2s}
+.reveal:nth-child(4){animation-delay:.3s}
+.reveal:nth-child(5){animation-delay:.4s}
+.reveal:nth-child(6){animation-delay:.45s}
+.reveal:nth-child(7){animation-delay:.5s}
+.reveal:nth-child(8){animation-delay:.55s}
+@keyframes revealUp{to{opacity:1;transform:translateY(0)}}
+.fade-in{animation:fadeIn .8s ease forwards}
+@keyframes fadeIn{from{opacity:0}to{opacity:1}}
+</style>
+</head>
+<body>
+
+<!-- ═══ SLIDE 1 — HERO ═══ -->
+<div class="slide slide-hero">
+  <div class="slide-content">
+    <div class="fade-in"><span class="badge">Sysmex China · Dev Environment</span></div>
+    <h1 class="reveal">AI-Coach<br>培训与带教系统</h1>
+    <p class="reveal">AI 驱动的课程学习 · 四阶段带教闭环 · 企业微信实时集成</p>
+    <p class="reveal" style="font-size:var(--small-size);margin-top:clamp(.8rem,2vh,1.5rem);color:#64748b">培训端口 8082 ｜ Coaching 带教系统 ｜ 2026-07-22</p>
+  </div>
+</div>
+
+<!-- ═══ SLIDE 2 — 一、培训端口 ═══ -->
+<div class="slide slide-section">
+  <div class="section-num">01</div>
+  <div class="slide-content">
+    <div class="fade-in"><span class="badge" style="background:var(--c-primary)">培训端口 8082</span></div>
+    <h2 class="reveal" style="margin-bottom:clamp(.8rem,2vh,1.5rem)">AI 驱动的学习生态</h2>
+    <p class="reveal" style="margin-bottom:clamp(1rem,3vh,2rem);max-width:650px">从课程浏览到 1v1 AI 对话、知识图谱挖掘、沙盘策略模拟——培训端口覆盖一线销售与市场人员的完整学习链路。</p>
+    <div class="feat-grid">
+      <div class="feat-card reveal"><div class="icon">📚</div><div class="tag" style="background:rgba(15,99,238,.2);color:var(--c-accent)">courses</div><h3>课程中心</h3><p>按模块组织课程列表，入职培训/三个明白/专业自学，进度追踪。</p><a href="http://10.32.16.47:8082/courses.html">courses.html →</a></div>
+      <div class="feat-card reveal"><div class="icon">🎬</div><div class="tag" style="background:rgba(15,99,238,.2);color:var(--c-accent)">video</div><h3>视频课程</h3><p>原生 HLS 播放器，章节导航与进度记录。</p><a href="http://10.32.16.47:8082/video-player.html">video-player →</a></div>
+      <div class="feat-card reveal"><div class="icon">🤖</div><div class="tag" style="background:rgba(16,185,129,.2);color:var(--c-green)">chat</div><h3>1v1 AI 课件</h3><p>课程大纲生成对话课件。读模式 Markdown 交互 / 听模式 TTS 语音。</p><a href="http://10.32.16.47:8082/c/">/c/ 播放器 →</a></div>
+    </div>
+  </div>
+</div>
+
+<!-- ═══ SLIDE 3 — 知识挖掘 ═══ -->
+<div class="slide slide-section">
+  <div class="section-num">02</div>
+  <div class="slide-content">
+    <div class="fade-in"><span class="badge" style="background:var(--c-purple)">知识挖掘</span></div>
+    <h2 class="reveal" style="margin-bottom:clamp(.8rem,2vh,1.5rem)">垂直维度知识库</h2>
+    <p class="reveal" style="margin-bottom:clamp(1rem,3vh,2rem);max-width:650px">从课件知识挖掘出的 3D 知识图谱与个人能力成长树，AI 知识问答辅助。</p>
+    <div class="feat-grid">
+      <div class="feat-card reveal"><div class="icon">🗺️</div><div class="tag" style="background:rgba(139,92,246,.2);color:var(--c-purple)">knowledge</div><h3>IVD 行业知识图谱</h3><p>D3 3D 力导向图，节点为知识点，连线为关联关系。搜索/缩放/拖拽探索。</p><a href="http://10.32.16.47:8082/ivd-knowledge-tree.html">ivd-knowledge-tree →</a></div>
+      <div class="feat-card reveal"><div class="icon">🌱</div><div class="tag" style="background:rgba(16,185,129,.2);color:var(--c-green)">growth</div><h3>个人能力提升图谱</h3><p>血液/尿液/凝血/免疫/生化/生科 六维能力树，基于 AI 学习内容量化。</p><a href="http://10.32.16.47:8082/personal-growth-tree.html">personal-growth-tree →</a></div>
+      <div class="feat-card reveal"><div class="icon">🎯</div><div class="tag" style="background:rgba(245,158,11,.2);color:var(--c-amber)">sandbox</div><h3>IVD 沙盘推演 2026-2028</h3><p>3 年滚动模拟，市场/销售/供应链策略。D3 交互图表，集采冲击分析。</p><a href="http://10.32.16.47:8082/ivd-sandbox-dashboard.html">沙盘仪表盘 →</a></div>
+    </div>
+  </div>
+</div>
+
+<!-- ═══ SLIDE 4 — 二、Coaching ═══ -->
+<div class="slide slide-section">
+  <div class="section-num">03</div>
+  <div class="slide-content">
+    <div class="fade-in"><span class="badge" style="background:var(--c-green)">Coaching 带教</span></div>
+    <h2 class="reveal" style="margin-bottom:clamp(.8rem,2vh,1.5rem)">四阶段闭环带教流程</h2>
+    <p class="reveal" style="margin-bottom:clamp(1rem,3vh,2rem);max-width:650px">入职培训 → 三个明白 → 专业培训跟踪，全链路时间追踪，AI 辅助面谈与四维报告。</p>
+    <div class="feat-grid">
+      <div class="feat-card reveal"><div class="icon">📋</div><div class="tag" style="background:rgba(16,185,129,.2);color:var(--c-green)">ph-000</div><h3>入职培训 3 天</h3><p>19 项纯确认清单。HR 讲解 7 项 → 上司 Brief 8 项 → 助理团队 4 项。</p><a href="http://10.32.16.47:3100/coach/students/lrn-zhang-wei">Coach Lab →</a></div>
+      <div class="feat-card reveal"><div class="icon">🎓</div><div class="tag" style="background:rgba(16,185,129,.2);color:var(--c-green)">ph-001~003</div><h3>三个明白 3×60 天</h3><p>38 项验收（exam/review/practice），四维评分，合规控制点追踪。</p><a href="http://10.32.16.47:3100/coach/students/lrn-zhang-wei">闭环时间线 →</a></div>
+      <div class="feat-card reveal"><div class="icon">💬</div><div class="tag" style="background:rgba(245,158,11,.2);color:var(--c-amber)">1v1</div><h3>1v1 三环面谈</h3><p>课前准备 → 面谈交互 → 课后总结。企业微信导入 + AI 汇总 + 评分。</p><a href="http://10.32.16.47:3100/coach/students/lrn-zhang-wei">面谈侧栏 →</a></div>
+    </div>
+  </div>
+</div>
+
+<!-- ═══ SLIDE 5 — 导师工作台 ═══ -->
+<div class="slide slide-section">
+  <div class="section-num">04</div>
+  <div class="slide-content" style="text-align:center;max-width:min(90vw,900px);margin:0 auto">
+    <div class="fade-in"><span class="badge" style="background:var(--c-green)">导师工作台</span></div>
+    <h2 class="reveal" style="margin-bottom:clamp(.4rem,1vh,.8rem)">在带学员管理</h2>
+    <p class="reveal" style="margin-bottom:clamp(1rem,3vh,2rem)">3 名学员 · 2 个一线部门</p>
+    <div class="feat-grid">
+      <div class="feat-card reveal"><div class="icon">👤</div><h3>张伟 · sch11111</h3><p>销售本部 · ph-001 进行中 · 3 项待评分</p></div>
+      <div class="feat-card reveal"><div class="icon">👤</div><h3>李娜 · sch22222</h3><p>销售本部 · ph-002 进行中 · 1 项待评分</p></div>
+      <div class="feat-card reveal"><div class="icon">👤</div><h3>王芳 · sch33333</h3><p>市场本部 · 全部阶段已完成 · 总分 92.6</p></div>
+    </div>
+    <p class="reveal" style="margin-top:clamp(.8rem,2vh,1.5rem);font-size:var(--small-size)">教练端 8082 / 交互验证 3100 &nbsp;|&nbsp; <a href="http://10.32.16.47:8082/coach.html" style="color:var(--c-accent)">coach.html</a> &nbsp;|&nbsp; <a href="http://10.32.16.47:3100/coach" style="color:var(--c-green)">Coach Lab</a></p>
+  </div>
+</div>
+
+<!-- ═══ SLIDE 6 — 验收与合规 ═══ -->
+<div class="slide slide-section">
+  <div class="section-num">05</div>
+  <div class="slide-content" style="max-width:min(90vw,900px);margin:0 auto">
+    <div class="fade-in"><span class="badge" style="background:var(--c-amber)">验收与合规</span></div>
+    <h2 class="reveal" style="margin-bottom:clamp(.8rem,2vh,1.5rem)">确认制 + 评分制双轨</h2>
+    <div class="feat-grid">
+      <div class="feat-card reveal"><div class="icon">☑️</div><h3>确认清单（ph-000）</h3><p>19 项纯确认，不评分。三组（HR/上司/助理）各自签字确认，确认即完成。不显示成绩条、不要改进计划。</p></div>
+      <div class="feat-card reveal"><div class="icon">📊</div><h3>四维评分（ph-001~003）</h3><p>理论 40% / 实操 30% / 互评 20% / 导师 10%。38 项验收按 exam/review/practice 分类。合规控制点三态可视化。</p></div>
+      <div class="feat-card reveal"><div class="icon">🔴</div><h3>催办与预警</h3><p>超 48h 待评分 🔴 标记 + 催办横幅汇总。学员按待评分降序排列，紧急项自动置顶。</p></div>
+    </div>
+  </div>
+</div>
+
+<!-- ═══ SLIDE 7 — 四维报告 ═══ -->
+<div class="slide slide-section">
+  <div class="section-num">06</div>
+  <div class="slide-content" style="text-align:center;max-width:min(90vw,900px);margin:0 auto">
+    <div class="fade-in"><span class="badge" style="background:var(--c-amber)">分析报告</span></div>
+    <h2 class="reveal" style="margin-bottom:clamp(.4rem,1vh,.8rem)">四维报告</h2>
+    <p class="reveal" style="margin-bottom:clamp(1rem,3vh,2rem)">echarts 可视化 · 暗色模式自适应 · 双视角（教练/学员）</p>
+    <div class="feat-grid">
+      <div class="feat-card reveal"><div class="icon">📈</div><h3>阶段成绩趋势</h3><p>多阶段总分趋势线 + 及格线 markLine，面积渐变。</p></div>
+      <div class="feat-card reveal"><div class="icon">📊</div><h3>能力维度构成</h3><p>理论 / 实操 / 互评 / 导师评价分组柱状图。</p></div>
+      <div class="feat-card reveal"><div class="icon">🗣️</div><h3>面谈时间线</h3><p>主题 · 类型 · 时长 · AI 摘要 · 教练评分 · 下一步行动。</p></div>
+    </div>
+    <p class="reveal" style="margin-top:clamp(.8rem,2vh,1.5rem);font-size:var(--small-size)"><a href="http://10.32.16.47:3100/report/lrn-wang-fang" style="color:var(--c-accent)">王芳 · 分析报告 →</a> &nbsp;|&nbsp; <a href="http://10.32.16.47:3100/report/lrn-zhang-wei" style="color:var(--c-accent)">张伟 · 分析报告 →</a></p>
+  </div>
+</div>
+
+<!-- ═══ SLIDE 8 — 企业微信集成 ═══ -->
+<div class="slide slide-section">
+  <div class="section-num">07</div>
+  <div class="slide-content" style="max-width:min(90vw,900px);margin:0 auto">
+    <div class="fade-in"><span class="badge" style="background:#07c160">企业微信集成</span></div>
+    <h2 class="reveal" style="margin-bottom:clamp(.8rem,2vh,1.5rem)">SmartSheet + SmartPage</h2>
+    <p class="reveal" style="margin-bottom:clamp(1rem,3vh,2rem)">实时同步带教进度，AI 定时报告生成与发布</p>
+    <div class="feat-grid">
+      <div class="feat-card reveal"><div class="icon">📊</div><h3>带教进度看板</h3><p>SmartSheet 3 张子表：阶段进度 / 验收明细 / 面谈记录。实时同步。</p><a href="https://doc.weixin.qq.com/smartsheet/s3_AIAAjHiMALACNyEtJzSffRCeWvz91_a?scode=AP4ArQclAAsHj0HxXpAIAAjHiMALA">SmartSheet →</a></div>
+      <div class="feat-card reveal"><div class="icon">📄</div><h3>学员分析报告</h3><p>SmartPage Markdown 智能文档。概览 + 四阶段闭环 + 面谈时间线 + 待跟进事项。</p><a href="https://doc.weixin.qq.com/smartpage/a1_AIAAjHiMALACN01bcznQYQOqhF0sf_a?scode=AP4ArQclAAsOZAJsckAIAAjHiMALA">张伟 SmartPage →</a></div>
+      <div class="feat-card reveal"><div class="icon">🤖</div><h3>定时 AI 报告</h3><p>Celery beat 定时拉取阶段数据，LLM 生成报告 → SmartPage 自动发布。企业微信同步推送。</p></div>
+    </div>
+  </div>
+</div>
+
+<!-- ═══ SLIDE 9 — 1v1 面谈闭环 ═══ -->
+<div class="slide slide-section">
+  <div class="section-num">08</div>
+  <div class="slide-content" style="max-width:min(90vw,900px);margin:0 auto">
+    <div class="fade-in"><span class="badge" style="background:#07c160">1v1 面谈</span></div>
+    <h2 class="reveal" style="margin-bottom:clamp(.8rem,2vh,1.5rem)">三环闭环 · 企业微信打通</h2>
+    <div class="big-list">
+      <li class="reveal"><span class="num">①</span><div><strong style="color:#fff">课前准备</strong><p>目标设定 + 推荐课件。关联阶段（ph-000~003），选择面谈类型（kickoff/regular/review）。</p></div></li>
+      <li class="reveal"><span class="num">②</span><div><strong style="color:#fff">面谈交互</strong><p>导师记录笔记 + 学员追问 + 行动项。企业微信导入面谈内容，wecom-cli 同步写入 SmartSheet。</p></div></li>
+      <li class="reveal"><span class="num">③</span><div><strong style="color:#fff">课后总结</strong><p>AI 自动汇总面谈要点（占位 → 正式 LLM）。教练评分（1-100）+ 下一步行动建议。SmartPage 报告同步。</p></div></li>
+    </div>
+    <p class="reveal" style="margin-top:clamp(.8rem,2vh,1.5rem);font-size:var(--small-size);text-align:center"><a href="http://10.32.16.47:3100/coach/students/lrn-zhang-wei" style="color:var(--c-accent)">张伟 · 面谈记录侧栏 →</a> &nbsp;|&nbsp; <a href="https://doc.weixin.qq.com/smartsheet/s3_AIAAjHiMALACNyEtJzSffRCeWvz91_a?scode=AP4ArQclAAsHj0HxXpAIAAjHiMALA" style="color:#07c160">SmartSheet 面谈子表 →</a></p>
+  </div>
+</div>
+
+<!-- ═══ SLIDE 10 — 数据流 ═══ -->
+<div class="slide slide-section">
+  <div class="section-num">09</div>
+  <div class="slide-content" style="text-align:center;max-width:min(90vw,900px);margin:0 auto">
+    <div class="fade-in"><span class="badge" style="background:var(--c-primary)">系统架构</span></div>
+    <h2 class="reveal" style="margin-bottom:clamp(.8rem,2vh,1.5rem)">服务端口与数据流</h2>
+    <div class="feat-grid">
+      <div class="feat-card reveal"><div class="icon">🖥️</div><h3>端口矩阵</h3><p style="font-size:var(--small-size);line-height:1.8"><b>8082</b> Dev nginx（Next.js + Flask）<br><b>3100</b> Coach Lab 交互验证<br><b>5800</b> Flask API 内部<br><b>3307</b> MySQL Dev<br><b>443</b> 生产 nginx + wecom 路由</p></div>
+      <div class="feat-card reveal"><div class="icon">🔄</div><h3>数据流</h3><p style="font-size:var(--small-size);line-height:1.8">Coach Lab → Flask API → MySQL<br>wecom-cli → SmartSheet/SmartPage<br>Celery beat → AI 报告 → 发布</p></div>
+      <div class="feat-card reveal"><div class="icon">👥</div><h3>角色体系</h3><p style="font-size:var(--small-size);line-height:1.8">role-admin 管理员<br>role-coach 带教导师<br>role-learner 学员<br>role-hr / role-manager</p></div>
+    </div>
+  </div>
+</div>
+
+<!-- ═══ SLIDE 11 — 四阶段全景 ═══ -->
+<div class="slide slide-quote">
+  <div>
+    <blockquote class="reveal">
+      入职培训 3 天 → 三个明白 3×60 天 → 专业培训跟踪
+      <cite>四阶段闭环 · 全程时间追踪 · 合规控制点校验</cite>
+    </blockquote>
+  </div>
+</div>
+
+<!-- ═══ SLIDE 12 — 产品资料库 ═══ -->
+<div class="slide slide-section">
+  <div class="section-num">10</div>
+  <div class="slide-content" style="text-align:center;max-width:min(90vw,700px);margin:0 auto">
+    <div class="fade-in"><span class="badge" style="background:var(--c-accent)">快速入口</span></div>
+    <h2 class="reveal" style="margin-bottom:clamp(.8rem,2vh,1.5rem)">Dev 环境链接总览</h2>
+    <div class="big-list" style="text-align:left">
+      <li class="reveal"><span class="num">🔗</span><div><strong style="color:#fff">培训门户</strong><p style="font-size:var(--small-size)"><a href="http://10.32.16.47:8082/courses.html" style="color:var(--c-accent)">courses.html</a> · <a href="http://10.32.16.47:8082/training-portal.html" style="color:var(--c-accent)">training-portal.html</a></p></div></li>
+      <li class="reveal"><span class="num">🔗</span><div><strong style="color:#fff">导师工作台</strong><p style="font-size:var(--small-size)"><a href="http://10.32.16.47:8082/coach.html" style="color:var(--c-accent)">coach.html</a> · <a href="http://10.32.16.47:3100/coach" style="color:var(--c-green)">Coach Lab (3100)</a></p></div></li>
+      <li class="reveal"><span class="num">🔗</span><div><strong style="color:#fff">知识挖掘</strong><p style="font-size:var(--small-size)"><a href="http://10.32.16.47:8082/ivd-knowledge-tree.html" style="color:var(--c-accent)">知识图谱</a> · <a href="http://10.32.16.47:8082/personal-growth-tree.html" style="color:var(--c-accent)">能力树</a> · <a href="http://10.32.16.47:8082/ivd-sandbox-dashboard.html" style="color:var(--c-accent)">沙盘推演</a></p></div></li>
+      <li class="reveal"><span class="num">🔗</span><div><strong style="color:#fff">企业微信</strong><p style="font-size:var(--small-size)"><a href="https://doc.weixin.qq.com/smartsheet/s3_AIAAjHiMALACNyEtJzSffRCeWvz91_a?scode=AP4ArQclAAsHj0HxXpAIAAjHiMALA" style="color:#07c160">SmartSheet</a> · <a href="https://doc.weixin.qq.com/smartpage/a1_AIAAjHiMALACN01bcznQYQOqhF0sf_a?scode=AP4ArQclAAsOZAJsckAIAAjHiMALA" style="color:#07c160">SmartPage</a></p></div></li>
+      <li class="reveal"><span class="num">🔗</span><div><strong style="color:#fff">全景总览</strong><p style="font-size:var(--small-size)"><a href="http://10.32.16.47:8082/feature-overview.html" style="color:var(--c-accent)">feature-overview.html</a></p></div></li>
+    </div>
+  </div>
+</div>
+
+<!-- ═══ SLIDE 13 — CLOSING ═══ -->
+<div class="slide slide-closing">
+  <h1 class="reveal">Thank You</h1>
+  <p class="reveal">AI-Coach · Sysmex Dev Environment</p>
+  <p class="reveal" style="margin-top:clamp(1rem,3vh,2rem);font-size:var(--small-size);opacity:.6">功能全景 Slide · 生成于 2026-07-22 · 基于 frontend-slides skill</p>
+</div>
+
+<!-- ═══ NAVIGATION ═══ -->
+<nav class="nav-dots">
+  <a href="#s1" title="Slide 1"></a><a href="#s2" title="Slide 2"></a><a href="#s3" title="Slide 3"></a>
+  <a href="#s4" title="Slide 4"></a><a href="#s5" title="Slide 5"></a><a href="#s6" title="Slide 6"></a>
+  <a href="#s7" title="Slide 7"></a><a href="#s8" title="Slide 8"></a><a href="#s9" title="Slide 9"></a>
+  <a href="#s10" title="Slide 10"></a><a href="#s11" title="Slide 11"></a><a href="#s12" title="Slide 12"></a>
+  <a href="#s13" title="Slide 13"></a>
+</nav>
+<div class="keyboard-hint">← → 键翻页 · 触屏滑动</div>
+<script>
+// Add IDs for nav dots
+document.querySelectorAll('.slide').forEach((s,i)=>s.id=`s${i+1}`);
+// Arrow key navigation
+document.addEventListener('keydown',e=>{
+  const slides=document.querySelectorAll('.slide');
+  const current=Math.round(window.scrollY/window.innerHeight);
+  let next=current;
+  if(e.key==='ArrowDown'||e.key==='ArrowRight')next=Math.min(current+1,slides.length-1);
+  if(e.key==='ArrowUp'||e.key==='ArrowLeft')next=Math.max(current-1,0);
+  if(next!==current){slides[next].scrollIntoView();e.preventDefault()}
+});
+// Highlight active nav dot
+const dots=document.querySelectorAll('.nav-dots a');
+const observer=new IntersectionObserver(entries=>{
+  entries.forEach(e=>{if(e.isIntersecting){dots.forEach(d=>d.classList.remove('active'));const idx=Array.from(document.querySelectorAll('.slide')).indexOf(e.target);if(dots[idx])dots[idx].classList.add('active')}})
+},{threshold:.5});
+document.querySelectorAll('.slide').forEach(s=>observer.observe(s));
+</script>
+</body>
+</html>
