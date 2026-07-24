@@ -1,0 +1,262 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>AI-Coach Sysmex Dev 环境功能全景</title>
+<style>
+:root {
+  --bg: #f8f9fb; --card: #fff; --text: #1e293b; --muted: #64748b;
+  --border: #e2e8f0; --primary: #0f63ee; --accent: #3e84f4;
+  --green: #10b981; --amber: #f59e0b; --purple: #8b5cf6; --red: #ef4444;
+}
+*{margin:0;padding:0;box-sizing:border-box}
+body{font-family:-apple-system,BlinkMacSystemFont,"Segoe UI","PingFang SC","Microsoft YaHei",sans-serif;background:var(--bg);color:var(--text);line-height:1.6}
+header{background:linear-gradient(135deg,#0f63ee,#3e84f4);color:#fff;padding:48px 24px;text-align:center}
+header h1{font-size:2rem;margin-bottom:8px}
+header p{opacity:.85;font-size:1.05rem}
+.container{max-width:1100px;margin:0 auto;padding:32px 20px}
+.section{margin-bottom:40px}
+.section-title{font-size:1.35rem;font-weight:700;margin-bottom:6px;display:flex;align-items:center;gap:10px}
+.section-title .dot{width:10px;height:10px;border-radius:50%;flex-shrink:0}
+.section-sub{color:var(--muted);font-size:.9rem;margin-bottom:20px}
+.grid{display:grid;grid-template-columns:repeat(auto-fill,minmax(320px,1fr));gap:16px}
+.card{background:var(--card);border:1px solid var(--border);border-radius:12px;padding:20px;transition:box-shadow .2s}
+.card:hover{box-shadow:0 4px 20px rgba(0,0,0,.08)}
+.card h3{font-size:1.05rem;margin-bottom:4px}
+.card .tag{display:inline-block;font-size:.72rem;padding:2px 8px;border-radius:4px;font-weight:600;margin-bottom:8px}
+.card .desc{color:var(--muted);font-size:.88rem;margin-bottom:12px;min-height:40px}
+.card .links{display:flex;flex-wrap:wrap;gap:6px}
+.card .links a{font-size:.78rem;padding:4px 12px;border-radius:6px;text-decoration:none;font-weight:500;transition:opacity .15s}
+.card .links a:hover{opacity:.8}
+.btn-dev{background:var(--primary);color:#fff}
+.btn-wecom{background:#07c160;color:#fff}
+.btn-blank{background:var(--border);color:var(--text)}
+.legend{display:flex;gap:16px;margin-bottom:24px;flex-wrap:wrap}
+.legend span{font-size:.82rem;display:flex;align-items:center;gap:6px}
+.legend .dot-sm{width:8px;height:8px;border-radius:2px}
+footer{text-align:center;padding:40px 20px;color:var(--muted);font-size:.85rem;border-top:1px solid var(--border);margin-top:40px}
+</style>
+</head>
+<body>
+
+<header>
+<h1>🧠 AI-Coach · Sysmex Dev 环境功能全景</h1>
+<p>培训端口 8082 ｜ Coaching 带教系统 ｜ 企业微信集成 ｜ 2026-07-22</p>
+</header>
+
+<div class="container">
+
+<div class="legend">
+  <span><span class="dot-sm" style="background:var(--primary)"></span> Dev 环境 (8082)</span>
+  <span><span class="dot-sm" style="background:#07c160"></span> 企业微信</span>
+</div>
+
+<!-- ═══ 一、培训端口 ═══ -->
+<div class="section">
+  <div class="section-title"><span class="dot" style="background:var(--primary)"></span>一、培训端口（8082 · Cook Web）</div>
+  <div class="section-sub">AI 驱动的课程学习、知识挖掘与策略模拟，面向一线销售与市场人员</div>
+
+  <div class="grid">
+
+    <!-- 1. 课程中心 -->
+    <div class="card">
+      <span class="tag" style="background:#eff6ff;color:var(--primary)">courses</span>
+      <h3>📚 课程中心</h3>
+      <div class="desc">按模块（入职培训/三个明白/专业自学）组织的课程列表。学员可浏览、搜索课程，查看学习进度。</div>
+      <div class="links">
+        <a class="btn-dev" href="http://10.32.16.47:8082/courses.html">🔗 courses.html</a>
+      </div>
+    </div>
+
+    <!-- 2. 视频课程 -->
+    <div class="card">
+      <span class="tag" style="background:#eff6ff;color:var(--primary)">video</span>
+      <h3>🎬 视频课程</h3>
+      <div class="desc">视频播放器，支持原生 HLS 播放。课件以视频形式呈现，包含章节导航与进度记录。</div>
+      <div class="links">
+        <a class="btn-dev" href="http://10.32.16.47:8082/video-player.html">🔗 video-player.html</a>
+        <a class="btn-dev" href="http://10.32.16.47:8082/video-manager.html">🔗 video-manager</a>
+      </div>
+    </div>
+
+    <!-- 3. 1v1 AI 课件 -->
+    <div class="card">
+      <span class="tag" style="background:#eff6ff;color:var(--primary)">chat player</span>
+      <h3>🤖 1v1 AI 课件（对话式学习）</h3>
+      <div class="desc">
+        基于课程大纲自动生成 1v1 AI 对话课件。支持 <b>读模式</b>（文字 Markdown 交互）和 <b>听模式</b>（语音 TTS 播放），AI 主动引导学习节奏。
+      </div>
+      <div class="links">
+        <a class="btn-dev" href="http://10.32.16.47:8082/c/">🔗 /c/ 课程播放器</a>
+      </div>
+    </div>
+
+    <!-- 4. 知识图谱 -->
+    <div class="card">
+      <span class="tag" style="background:#faf5ff;color:var(--purple)">knowledge</span>
+      <h3>🗺️ IVD 行业知识图谱</h3>
+      <div class="desc">
+        从课件知识挖掘来的垂直维度知识库，以 <b>3D 力导向图</b> 可视化呈现。节点为知识点，连线为关联关系。支持搜索、缩放、拖拽探索。
+      </div>
+      <div class="links">
+        <a class="btn-dev" href="http://10.32.16.47:8082/ivd-knowledge-tree.html">🔗 ivd-knowledge-tree</a>
+      </div>
+    </div>
+
+    <!-- 5. 个人能力成长 -->
+    <div class="card">
+      <span class="tag" style="background:#faf5ff;color:var(--purple)">growth</span>
+      <h3>🌱 个人能力提升图谱</h3>
+      <div class="desc">
+        基于 AI 学习内容，按能力维度（血液/尿液/凝血/免疫/生化/生科）可视化个人知识掌握度，3D 力导向图展示能力树。
+      </div>
+      <div class="links">
+        <a class="btn-dev" href="http://10.32.16.47:8082/personal-growth-tree.html">🔗 personal-growth-tree</a>
+      </div>
+    </div>
+
+    <!-- 6. 沙盘推演 -->
+    <div class="card">
+      <span class="tag" style="background:#fef3c7;color:var(--amber)">sandbox</span>
+      <h3>🎯 IVD 沙盘推演</h3>
+      <div class="desc">
+        3 年滚动沙盘模拟（2026-2028），覆盖 <b>市场策略、销售 S&OP、供应链</b>。D3 交互图表展示产品线趋势、竞争反制、集采冲击分析。
+      </div>
+      <div class="links">
+        <a class="btn-dev" href="http://10.32.16.47:8082/ivd-sandbox-dashboard.html">🔗 沙盘仪表盘</a>
+        <a class="btn-dev" href="http://10.32.16.47:8082/ivd-sandbox-model-docs.html">🔗 模型参数文档</a>
+      </div>
+    </div>
+
+  </div>
+</div>
+
+<!-- ═══ 二、Coaching 带教 ═══ -->
+<div class="section">
+  <div class="section-title"><span class="dot" style="background:var(--green)"></span>二、Coaching 带教系统（教练端 · 学员端）</div>
+  <div class="section-sub">四阶段闭环带教流程，从入职确认到专业培训全链路追踪，AI 辅助面谈与报告</div>
+
+  <div class="grid">
+
+    <!-- 7. 导师工作台 -->
+    <div class="card">
+      <span class="tag" style="background:#ecfdf5;color:var(--green)">coach</span>
+      <h3>👨‍🏫 导师工作台</h3>
+      <div class="desc">
+        导师管理在带学员列表（按待评分降序），超 48h 催办横幅，阶段进度统计。点击学员进入详情，查看四阶段闭环时间线、验收清单、1v1 面谈记录。
+      </div>
+      <div class="links">
+        <a class="btn-dev" href="http://10.32.16.47:8082/coach.html">🔗 coach.html</a>
+        <a class="btn-dev" href="http://10.32.16.47:3100/coach">🔗 coach-lab (3100)</a>
+      </div>
+    </div>
+
+    <!-- 8. 入职培训 -->
+    <div class="card">
+      <span class="tag" style="background:#ecfdf5;color:var(--green)">phase-0</span>
+      <h3>📋 入职培训（ph-000 · 3 天）</h3>
+      <div class="desc">
+        前置确认清单（19 项），纯确认制不评分：HR 讲解 7 项 → 上司 Brief 8 项 → 助理团队 4 项。确认即完成，自动衔接后续阶段。
+      </div>
+      <div class="links">
+        <a class="btn-dev" href="http://10.32.16.47:3100/coach/students/lrn-zhang-wei">🔗 张伟 · 入职交付确认</a>
+      </div>
+    </div>
+
+    <!-- 9. 三个明白 -->
+    <div class="card">
+      <span class="tag" style="background:#ecfdf5;color:var(--green)">phase-1~3</span>
+      <h3>🎓 「三个明白」带教（3×60 天）</h3>
+      <div class="desc">
+        ph-001 血球/尿液/凝血 → ph-002 免疫/生化/糖化/Alifax → ph-003 生命科学/招标/压货。38 项验收（exam/review/practice），四维评分（理论/实操/互评/导师），合规控制点追踪。
+      </div>
+      <div class="links">
+        <a class="btn-dev" href="http://10.32.16.47:3100/coach/students/lrn-zhang-wei">🔗 张伟 · 闭环时间线</a>
+      </div>
+    </div>
+
+    <!-- 10. 1v1 面谈 -->
+    <div class="card">
+      <span class="tag" style="background:#fef3c7;color:var(--amber)">1v1</span>
+      <h3>💬 1v1 面谈（三环闭环）</h3>
+      <div class="desc">
+        课前准备（目标设定+推荐课件）→ 面谈交互（笔记+行动项）→ 课后总结（AI 汇总+评分+下一步）。企业微信导入面谈内容，AI 自动生成汇总。
+      </div>
+      <div class="links">
+        <a class="btn-dev" href="http://10.32.16.47:3100/coach/students/lrn-zhang-wei">🔗 面谈记录侧栏</a>
+        <a class="btn-wecom" href="https://doc.weixin.qq.com/smartsheet/s3_AIAAjHiMALACNyEtJzSffRCeWvz91_a?scode=AP4ArQclAAsHj0HxXpAIAAjHiMALA">🔗 面谈 SmartSheet</a>
+      </div>
+    </div>
+
+    <!-- 11. 4维报告 -->
+    <div class="card">
+      <span class="tag" style="background:#fef3c7;color:var(--amber)">report</span>
+      <h3>📊 四维分析报告</h3>
+      <div class="desc">
+        阶段成绩趋势图（含及格线）、能力维度构成（理论/实操/导师评价）、面谈时间线、导师评语。echarts 可视化，暗色模式自适应。
+      </div>
+      <div class="links">
+        <a class="btn-dev" href="http://10.32.16.47:3100/report/lrn-wang-fang">🔗 王芳 · 分析报告</a>
+        <a class="btn-wecom" href="https://doc.weixin.qq.com/smartpage/a1_AIAAjHiMALACN01bcznQYQOqhF0sf_a?scode=AP4ArQclAAsOZAJsckAIAAjHiMALA">🔗 张伟 SmartPage 报告</a>
+      </div>
+    </div>
+
+    <!-- 12. 企微集成 -->
+    <div class="card">
+      <span class="tag" style="background:#eff6ff;color:#07c160">wecom</span>
+      <h3>📱 企业微信集成</h3>
+      <div class="desc">
+        <b>SmartSheet 进度看板</b>（3 张子表：阶段进度/验收明细/面谈记录）实时同步带教数据。<br>
+        <b>SmartPage 报告</b>（Markdown 智能文档）自动生成学员分析报告。<br>
+        <b>定时 AI 任务</b>：Celery beat 定时拉取阶段数据，生成报告并发布到 SmartPage。
+      </div>
+      <div class="links">
+        <a class="btn-wecom" href="https://doc.weixin.qq.com/smartsheet/s3_AIAAjHiMALACNyEtJzSffRCeWvz91_a?scode=AP4ArQclAAsHj0HxXpAIAAjHiMALA">🔗 带教进度看板</a>
+        <a class="btn-wecom" href="https://doc.weixin.qq.com/smartpage/a1_AIAAjHiMALACN01bcznQYQOqhF0sf_a?scode=AP4ArQclAAsOZAJsckAIAAjHiMALA">🔗 学员分析报告</a>
+      </div>
+    </div>
+
+  </div>
+</div>
+
+<!-- ═══ 三、架构总览 ═══ -->
+<div class="section">
+  <div class="section-title"><span class="dot" style="background:var(--red)"></span>三、系统架构与交互流程</div>
+  <div class="section-sub">各服务端口与数据流向</div>
+
+  <div class="grid">
+    <div class="card">
+      <h3>🖥️ 服务端口</h3>
+      <div class="desc" style="min-height:auto">
+        <table style="width:100%;font-size:.85rem;border-collapse:collapse">
+          <tr style="border-bottom:1px solid var(--border)"><td style="padding:6px 8px;font-weight:600">8082</td><td style="padding:6px 8px">Dev 环境 · nginx → Next.js + Flask API</td></tr>
+          <tr style="border-bottom:1px solid var(--border)"><td style="padding:6px 8px;font-weight:600">3100</td><td style="padding:6px 8px">Coach Lab · coaching 交互验证环境</td></tr>
+          <tr style="border-bottom:1px solid var(--border)"><td style="padding:6px 8px;font-weight:600">5800</td><td style="padding:6px 8px">Flask API（内部）</td></tr>
+          <tr style="border-bottom:1px solid var(--border)"><td style="padding:6px 8px;font-weight:600">3307</td><td style="padding:6px 8px">MySQL Dev 数据库</td></tr>
+          <tr><td style="padding:6px 8px;font-weight:600">443</td><td style="padding:6px 8px">生产 nginx（含 wecom/ 路由）</td></tr>
+        </table>
+      </div>
+    </div>
+
+    <div class="card">
+      <h3>🔄 数据流</h3>
+      <div class="desc" style="min-height:auto;font-size:.82rem">
+        <code>coach-lab (3100)</code> ← mock/http adapter → <code>Flask API (5800)</code> → <code>MySQL (3307)</code><br><br>
+        <code>wecom-cli</code> → SmartSheet / SmartPage 实时同步<br><br>
+        <code>Celery beat</code> → 定时任务 → AI 报告生成 → 企业微信发布
+      </div>
+    </div>
+  </div>
+</div>
+
+</div>
+
+<footer>
+  AI-Coach · Sysmex Dev 环境 · 生成于 2026-07-22 &nbsp;|&nbsp;
+  <a href="http://10.32.16.47:8082/courses.html" style="color:var(--primary)">培训门户</a> ·
+  <a href="http://10.32.16.47:3100/coach" style="color:var(--primary)">Coach Lab</a>
+</footer>
+
+</body>
+</html>

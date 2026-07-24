@@ -115,6 +115,7 @@ services:
       - ./personal-growth-tree.html:/usr/share/nginx/html/personal-growth-tree.html:ro
       - ./d3.v7.min.js:/usr/share/nginx/html/d3.v7.min.js:ro
       - ./courses.html:/usr/share/nginx/html/courses.html:ro
+      - ./coach.html:/usr/share/nginx/html/coach.html:ro
       - ./logout.html:/usr/share/nginx/html/logout.html:ro
       - ./login.html:/usr/share/nginx/html/login.html:ro
       - ./mentor.html:/usr/share/nginx/html/mentor.html:ro
@@ -124,7 +125,10 @@ services:
       - ./admin-training-enroll.html:/usr/share/nginx/html/admin-training-enroll.html:ro
       - ./course-entry.html:/usr/share/nginx/html/course-entry.html:ro
       - ./sysmex-login.html:/usr/share/nginx/html/sysmex-login.html:ro
+      - ./feature-overview.html:/usr/share/nginx/html/feature-overview.html:ro
+      - ./feature-slides.html:/usr/share/nginx/html/feature-slides.html:ro
       - ./logo.png:/usr/share/nginx/html/logo.png:ro
+      - ./favicon.svg:/usr/share/nginx/html/favicon.svg:ro
 
   ai-shifu-loki:
     image: grafana/loki:3.1.1

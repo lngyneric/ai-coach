@@ -77,6 +77,7 @@ services:
       - ./courses.html:/usr/share/nginx/html/courses.html:ro
       - ./logout.html:/usr/share/nginx/html/logout.html:ro
       - ./login.html:/usr/share/nginx/html/login.html:ro
+      - ./favicon.svg:/usr/share/nginx/html/favicon.svg:ro
       - ./logo.png:/usr/share/nginx/html/logo.png:ro
       - ./ivd-knowledge-tree.html:/usr/share/nginx/html/ivd-knowledge-tree.html:ro
       - ./ivd-sandbox-dashboard.html:/usr/share/nginx/html/ivd-sandbox-dashboard.html:ro

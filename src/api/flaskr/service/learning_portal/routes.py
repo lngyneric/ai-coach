@@ -281,6 +281,7 @@ def register_learning_portal_routes(
                     else None,
                     "status": s.status,
                     "current_phase_status": active_phase.status if active_phase else None,
+                    "pending_task_count": LearnerTask.query.filter_by(learner_bid=s.learner_bid, status="pending").count(),
                     "pending_score_count": pending_count,
                 }
             )
