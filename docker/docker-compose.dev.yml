@@ -104,6 +104,24 @@ services:
     restart: always
     volumes:
       - ./nginx.dev.conf:/etc/nginx/nginx.conf
+      - ./portal.html:/usr/share/nginx/html/portal.html:ro
+      - ./feature-overview.html:/usr/share/nginx/html/feature-overview.html:ro
+      - ./feature-slides.html:/usr/share/nginx/html/feature-slides.html:ro
+      - ./digital-human.html:/usr/share/nginx/html/digital-human.html:ro
+      - ./ai-qa.html:/usr/share/nginx/html/ai-qa.html:ro
+      - ./brand-vi.html:/usr/share/nginx/html/brand-vi.html:ro
+      - ./brand.html:/usr/share/nginx/html/brand.html:ro
+      - ./management-dashboard.html:/usr/share/nginx/html/management-dashboard.html:ro
+      - ./dashboard-engine.html:/usr/share/nginx/html/dashboard-engine.html:ro
+      - ./dashboard.html:/usr/share/nginx/html/dashboard.html:ro
+      - ./design-system.css:/usr/share/nginx/html/design-system.css:ro
+      - ./favicon.svg:/usr/share/nginx/html/favicon.svg:ro
+      - ./courses.html:/usr/share/nginx/html/courses.html:ro
+      - ./coach.html:/usr/share/nginx/html/coach.html:ro
+      - ./login.html:/usr/share/nginx/html/login.html:ro
+      - ./logout.html:/usr/share/nginx/html/logout.html:ro
+      - ./training-portal.html:/usr/share/nginx/html/training-portal.html:ro
+      - ./logo.png:/usr/share/nginx/html/logo.png:ro
 
   ai-shifu-loki:
     image: grafana/loki:3.1.1

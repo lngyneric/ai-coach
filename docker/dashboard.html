@@ -1,0 +1,231 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>带教看板 — AI-Coach</title>
+<link rel="icon" type="image/svg+xml" href="/favicon.svg">
+<style>
+:root{--brand:#0f63ee;--bg:#f8f9fb;--card:#fff;--text:#0f172a;--muted:#64748b;--border:#e2e8f0;--green:#10b981;--amber:#f59e0b;--purple:#8b5cf6;--red:#ef4444}
+*{margin:0;padding:0;box-sizing:border-box}
+body{font-family:'DM Sans','Noto Sans SC',sans-serif;background:var(--bg);color:var(--text);line-height:1.5}
+header{position:sticky;top:0;z-index:50;background:rgba(255,255,255,.9);backdrop-filter:blur(12px);border-bottom:1px solid var(--border);padding:0 20px;height:52px;display:flex;align-items:center;justify-content:space-between}
+header h2{font-size:1rem;font-weight:700}
+.container{max-width:1100px;margin:0 auto;padding:20px}
+.row{display:grid;grid-template-columns:repeat(auto-fit,minmax(320px,1fr));gap:16px;margin-bottom:20px}
+.card{background:var(--card);border:1px solid var(--border);border-radius:12px;padding:20px}
+.card h3{font-size:.95rem;font-weight:700;margin-bottom:12px;display:flex;align-items:center;gap:8px}
+.card h3 .dot{width:8px;height:8px;border-radius:50%;flex-shrink:0}
+
+/* Gantt */
+.gantt{display:flex;flex-direction:column;gap:8px}
+.gantt-row{display:flex;align-items:center;gap:8px;font-size:.8rem}
+.gantt-row .name{width:70px;text-align:right;flex-shrink:0;font-weight:500}
+.gantt-row .bar-wrap{flex:1;height:22px;background:#f1f5f9;border-radius:4px;overflow:hidden;position:relative}
+.gantt-row .bar{height:100%;border-radius:4px;display:flex;align-items:center;padding-left:8px;font-size:.68rem;font-weight:600;color:#fff;white-space:nowrap}
+.gantt-row .bar.done{background:var(--green)}
+.gantt-row .bar.active{background:var(--brand)}
+.gantt-row .bar.pending{background:var(--border);color:var(--muted)}
+.gantt-legends{display:flex;gap:12px;font-size:.7rem;color:var(--muted);margin-top:8px}
+.gantt-legends span{display:flex;align-items:center;gap:4px}
+.gantt-legends .sw{width:10px;height:10px;border-radius:2px}
+
+/* Progress bars */
+.prog-list{display:flex;flex-direction:column;gap:10px}
+.prog-item{display:flex;align-items:center;gap:8px;font-size:.82rem}
+.prog-item .label{width:75px;text-align:right;flex-shrink:0;font-weight:500}
+.prog-item .bar-outer{flex:1;height:14px;background:#f1f5f9;border-radius:7px;overflow:hidden}
+.prog-item .bar-inner{height:100%;border-radius:7px;transition:width .4s ease-out}
+.prog-item .pct{width:42px;text-align:right;font-size:.75rem;font-weight:600;color:var(--muted)}
+
+/* Funnel */
+.funnel{display:flex;flex-direction:column;gap:6px;max-width:400px;margin:0 auto}
+.funnel-step{display:flex;align-items:center;gap:8px;font-size:.8rem}
+.funnel-step .shape{height:28px;display:flex;align-items:center;justify-content:center;color:#fff;font-weight:700;font-size:.75rem;border-radius:4px;transition:width .4s ease-out;text-align:center;min-width:0}
+.funnel-step .label{min-width:60px;text-align:right;font-weight:500;flex-shrink:0}
+.funnel-step .count{font-size:.75rem;color:var(--muted);min-width:30px}
+
+/* pie */
+.pie-grid{display:grid;grid-template-columns:1fr 1fr;gap:12px}
+.pie-item{text-align:center}
+.pie-item canvas{max-width:120px;max-height:120px}
+.pie-item .legend{font-size:.72rem;color:var(--muted);margin-top:4px}
+
+@media(max-width:600px){.row{grid-template-columns:1fr}}
+</style>
+</head>
+<body>
+
+<header>
+  <a href="/portal.html" style="text-decoration:none;color:var(--text);font-weight:700;font-size:.85rem">← 返回门户</a>
+  <h2>📊 带教看板</h2>
+  <span style="font-size:.75rem;color:var(--muted)">数据更新时间: <span id="updateTime">—</span></span>
+</header>
+
+<div class="container">
+
+<!-- ══ ROW 1: Gantt + Progress ══ -->
+<div class="row">
+
+  <!-- Gantt chart -->
+  <div class="card">
+    <h3><span class="dot" style="background:var(--brand)"></span>阶段甘特图</h3>
+    <div class="gantt" id="gantt"></div>
+    <div class="gantt-legends">
+      <span><span class="sw" style="background:var(--green)"></span>已完成</span>
+      <span><span class="sw" style="background:var(--brand)"></span>进行中</span>
+      <span><span class="sw" style="background:var(--border)"></span>未开始</span>
+    </div>
+  </div>
+
+  <!-- Progress bars -->
+  <div class="card">
+    <h3><span class="dot" style="background:var(--amber)"></span>验收进度</h3>
+    <div class="prog-list" id="progress"></div>
+  </div>
+
+</div>
+
+<!-- ══ ROW 2: Funnel + pie ══ -->
+<div class="row">
+
+  <!-- Funnel -->
+  <div class="card">
+    <h3><span class="dot" style="background:var(--purple)"></span>培训漏斗</h3>
+    <div class="funnel" id="funnel"></div>
+  </div>
+
+  <!-- Pie -->
+  <div class="card">
+    <h3><span class="dot" style="background:var(--green)"></span>阶段分布</h3>
+    <div class="pie-grid">
+      <div class="pie-item"><canvas id="pie1"></canvas><div class="legend">按阶段状态</div></div>
+      <div class="pie-item"><canvas id="pie2"></canvas><div class="legend">按部门</div></div>
+    </div>
+  </div>
+
+</div>
+
+<!-- ══ ROW 3: 详情表 ══ -->
+<div class="card">
+  <h3><span class="dot" style="background:var(--brand)"></span>学员一览</h3>
+  <div style="overflow-x:auto">
+    <table style="width:100%;border-collapse:collapse;font-size:.82rem" id="table">
+      <thead><tr style="border-bottom:2px solid var(--border);text-align:left">
+        <th style="padding:8px">学员</th><th style="padding:8px">工号</th><th style="padding:8px">部门</th>
+        <th style="padding:8px">阶段</th><th style="padding:8px">状态</th><th style="padding:8px">验收</th><th style="padding:8px">总分</th>
+      </tr></thead>
+      <tbody id="tableBody"></tbody>
+    </table>
+  </div>
+</div>
+
+</div>
+
+<script>
+// ── Mock data (3 learners) ──
+const data = [
+  {name:'张伟',no:'sch11111',dept:'销售本部',phase:'ph-001',phaseName:'血球/尿液/凝血',status:'in_progress',
+   started:30, duration:60, done:3, total:12, score:29.6, passing:60,
+   exam:1, review:1, practice:1, examTotal:6, reviewTotal:3, practiceTotal:3},
+  {name:'李娜',no:'sch22222',dept:'销售本部',phase:'ph-002',phaseName:'免疫/生化/糖化/Alifax',status:'in_progress',
+   started:60, duration:60, done:7, total:17, score:63.7, passing:60,
+   exam:4, review:1, practice:2, examTotal:11, reviewTotal:3, practiceTotal:3},
+  {name:'王芳',no:'sch33333',dept:'市场本部',phase:'ph-003',phaseName:'已完成全部阶段',status:'completed',
+   started:185, duration:60, done:38, total:38, score:92.6, passing:60,
+   exam:28, review:5, practice:5, examTotal:28, reviewTotal:5, practiceTotal:5}
+];
+
+// ── Gantt ──
+const gantt = document.getElementById('gantt');
+data.forEach(d => {
+  const maxDays = 200;
+  const startPct = (d.started / maxDays) * 100;
+  const durPct = (d.duration / maxDays) * 100;
+  const compPct = d.status === 'completed' ? durPct : (d.started > 0 ? (d.done/d.total)*durPct : 0);
+  const cls = d.status === 'completed' ? 'done' : d.status === 'in_progress' ? 'active' : 'pending';
+  const label = d.done + '/' + d.total;
+  gantt.innerHTML += `<div class="gantt-row">
+    <span class="name">${d.name}</span>
+    <div class="bar-wrap">
+      <div style="margin-left:${startPct}%;width:${durPct}%" class="bar ${cls}">${label}</div>
+    </div>
+  </div>`;
+});
+
+// ── Progress ──
+const progress = document.getElementById('progress');
+const colors = ['#0f63ee','#10b981','#f59e0b'];
+data.forEach(d => {
+  progress.innerHTML += `<div class="prog-item">
+    <span class="label">${d.name}</span>
+    <div class="bar-outer"><div class="bar-inner" style="width:${(d.done/d.total)*100}%;background:${colors[data.indexOf(d)]}"></div></div>
+    <span class="pct">${d.done}/${d.total}</span>
+  </div>`;
+});
+
+// ── Funnel ──
+const funnel = document.getElementById('funnel');
+const totalLearners = 3;
+const onboardingDone = 3;
+const mentorshipActive = 2;
+const mentorshipDone = 1;
+const stages = [
+  {label:'全部学员', count:totalLearners, color:'#0f63ee', ratio:1},
+  {label:'入职完成', count:onboardingDone, color:'#10b981', ratio:onboardingDone/totalLearners},
+  {label:'带教中', count:mentorshipActive, color:'#f59e0b', ratio:mentorshipActive/totalLearners},
+  {label:'全部完成', count:mentorshipDone, color:'#8b5cf6', ratio:mentorshipDone/totalLearners}
+];
+stages.forEach(s => {
+  funnel.innerHTML += `<div class="funnel-step">
+    <span class="label">${s.label}</span>
+    <div class="shape" style="width:${s.ratio*100}%;background:${s.color};opacity:${.5+s.ratio*.5}">${s.count}</div>
+    <span class="count">${(s.ratio*100).toFixed(0)}%</span>
+  </div>`;
+});
+
+// ── Pie charts (simple canvas) ──
+function drawPie(canvasId, segments) {
+  const c = document.getElementById(canvasId);
+  const ctx = c.getContext('2d');
+  c.width = 240; c.height = 240;  // 2x for retina
+  c.style.width = '120px'; c.style.height = '120px';
+  const cx = 120, cy = 120, r = 90;
+  let start = -Math.PI/2;
+  const total = segments.reduce((a,s)=>a+s.v,0);
+  segments.forEach(s => {
+    const angle = (s.v/total)*Math.PI*2;
+    ctx.beginPath();
+    ctx.moveTo(cx,cy);
+    ctx.arc(cx,cy,r,start,start+angle);
+    ctx.fillStyle = s.c;
+    ctx.fill();
+    start += angle;
+  });
+}
+drawPie('pie1',[
+  {v:1,c:'#10b981',label:'已完成'},{v:2,c:'#0f63ee',label:'进行中'},{v:1,c:'#e2e8f0',label:'未开始'}
+]);
+drawPie('pie2',[
+  {v:2,c:'#0f63ee',label:'销售本部'},{v:1,c:'#8b5cf6',label:'市场本部'}
+]);
+
+// ── Table ──
+const tbody = document.getElementById('tableBody');
+const statusMap = {in_progress:'🟡 进行中',completed:'✅ 已完成',pending:'⚪ 未开始'};
+data.forEach(d => {
+  tbody.innerHTML += `<tr style="border-bottom:1px solid var(--border)">
+    <td style="padding:8px;font-weight:500">${d.name}</td>
+    <td style="padding:8px;color:var(--muted)">${d.no}</td>
+    <td style="padding:8px">${d.dept}</td>
+    <td style="padding:8px;font-size:.78rem">${d.phaseName}</td>
+    <td style="padding:8px">${statusMap[d.status]}</td>
+    <td style="padding:8px">${d.done}/${d.total}</td>
+    <td style="padding:8px;font-weight:600;color:${d.score>=d.passing?'var(--green)':'var(--red)'}">${d.score}</td>
+  </tr>`;
+});
+
+document.getElementById('updateTime').textContent = new Date().toLocaleString('zh-CN');
+</script>
+</body>
+</html>

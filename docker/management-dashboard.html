@@ -1,0 +1,83 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+<meta charset="UTF-8"><meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>管理层看板 · AI-Coach</title>
+<link rel="icon" type="image/svg+xml" href="/favicon.svg">
+<style>
+:root{--brand:#0f63ee;--bg:#f8f9fb;--card:#fff;--text:#0f172a;--muted:#64748b;--border:#e2e8f0;--green:#10b981;--amber:#f59e0b;--purple:#8b5cf6;--red:#ef4444}
+*{margin:0;padding:0;box-sizing:border-box}
+body{font-family:"DM Sans","Noto Sans SC",sans-serif;background:var(--bg);color:var(--text);line-height:1.5}
+header{position:sticky;top:0;z-index:50;background:rgba(255,255,255,.9);backdrop-filter:blur(12px);border-bottom:1px solid var(--border);padding:0 20px;height:52px;display:flex;align-items:center;justify-content:space-between}
+header h2{font-size:1rem;font-weight:700}
+.container{max-width:1100px;margin:0 auto;padding:20px}
+.kpi-grid{display:grid;grid-template-columns:repeat(4,1fr);gap:16px;margin-bottom:24px}
+.kpi{background:var(--card);border:1px solid var(--border);border-radius:12px;padding:20px;text-align:center}
+.kpi .value{font-size:2.5rem;font-weight:900;line-height:1}
+.kpi .label{font-size:.82rem;color:var(--muted);margin-top:4px}
+.kpi .delta{font-size:.72rem;margin-top:2px}.kpi .delta.up{color:var(--green)}.kpi .delta.down{color:var(--red)}
+.drill-section{margin-bottom:24px}.drill-section h3{font-size:.95rem;font-weight:700;margin-bottom:8px}
+.drill-table{width:100%;border-collapse:collapse;font-size:.82rem;background:var(--card);border:1px solid var(--border);border-radius:12px;overflow:hidden}
+.drill-table th{background:#f8fafc;padding:10px 12px;text-align:left;font-weight:600;font-size:.75rem;color:var(--muted);border-bottom:2px solid var(--border)}
+.drill-table td{padding:10px 12px;border-bottom:1px solid var(--border)}.drill-table tr:last-child td{border-bottom:none}
+.drill-table tr:hover{background:#f8fafc}.drill-table .link{color:var(--brand);font-weight:500;text-decoration:none;cursor:pointer}.drill-table .link:hover{text-decoration:underline}
+.bar-cell{display:flex;align-items:center;gap:6px}.bar-cell .bar{width:80px;height:6px;background:#f1f5f9;border-radius:3px;overflow:hidden}.bar-cell .bar div{height:100%;border-radius:3px}
+.tag{font-size:.72rem;padding:2px 8px;border-radius:4px;font-weight:600}.tag.green{background:#ecfdf5;color:var(--green)}.tag.amber{background:#fef3c7;color:var(--amber)}.tag.blue{background:#eff6ff;color:var(--brand)}.tag.gray{background:var(--bg);color:var(--muted)}
+.role-panel{display:none}.role-hr .hr-only,.role-dept .dept-only,.role-exec .exec-only,.role-trainer .trainer-only{display:block}
+@media(max-width:700px){.kpi-grid{grid-template-columns:repeat(2,1fr)}}
+</style>
+</head>
+<body>
+
+<header>
+  <a href="/portal.html" style="text-decoration:none;color:var(--text);font-weight:700;font-size:.85rem">← 门户</a>
+  <h2>📊 管理层看板</h2>
+  <div style="display:flex;align-items:center;gap:8px">
+    <span style="font-size:.75rem;color:var(--muted)">角色：</span>
+    <select id="roleSelect" onchange="switchRole()" style="font-size:.78rem;padding:4px 10px;border:1px solid var(--border);border-radius:6px;background:var(--card);cursor:pointer">
+      <option value="exec">🏢 高管</option>
+      <option value="hr" selected>👤 HR</option>
+      <option value="dept">🏭 部门负责人</option>
+      <option value="trainer">👨‍🏫 培训师</option>
+    </select>
+  </div>
+</header>
+
+<div class="container">
+<div class="kpi-grid">
+  <div class="kpi"><div class="value" style="color:var(--brand)">100%</div><div class="label">培训覆盖率</div><div class="delta up">3/3 人已纳入</div></div>
+  <div class="kpi"><div class="value" style="color:var(--amber)">67%</div><div class="label">阶段完成率</div><div class="delta up">2/3 人 ≥1 阶段</div></div>
+  <div class="kpi"><div class="value" style="color:var(--green)">61%</div><div class="label">验收合格率</div><div class="delta">41/67 项已通过</div></div>
+  <div class="kpi"><div class="value" style="color:var(--purple)">2.3</div><div class="label">人均面谈次数</div><div class="delta">共 7 场</div></div>
+</div>
+
+<div class="role-panel hr-only">
+  <div class="drill-section"><h3>📋 全员概览 · 点击下钻到明细</h3><table class="drill-table"><thead><tr><th>学员</th><th>工号</th><th>部门</th><th>当前阶段</th><th>状态</th><th>验收进度</th><th>总分</th><th>面谈</th><th>操作</th></tr></thead><tbody id="tbody"></tbody></table></div>
+  <div class="drill-section"><h3>🏢 部门汇总</h3><table class="drill-table"><thead><tr><th>部门</th><th>学员数</th><th>平均阶段完成</th><th>平均总分</th><th>面谈数</th></tr></thead><tbody><tr><td>销售本部</td><td>2</td><td>1/4</td><td>46.7</td><td>3</td></tr><tr><td>市场本部</td><td>1</td><td>4/4</td><td>92.6</td><td>0</td></tr></tbody></table></div>
+  <div class="drill-section"><h3>🔍 合规审计</h3><table class="drill-table"><thead><tr><th>学员</th><th>导师签字</th><th>记录同步</th><th>改进计划</th><th>转正建议</th></tr></thead><tbody><tr><td>张伟</td><td><span class="tag amber">待签</span></td><td><span class="tag green">已同步</span></td><td><span class="tag gray">无需</span></td><td>—</td></tr><tr><td>李娜</td><td><span class="tag green">已签</span></td><td><span class="tag green">已同步</span></td><td><span class="tag gray">无需</span></td><td>—</td></tr><tr><td>王芳</td><td><span class="tag green">已签</span></td><td><span class="tag green">已同步</span></td><td><span class="tag gray">无需</span></td><td><span class="tag green">推荐转正</span></td></tr></tbody></table></div>
+</div>
+
+<div class="role-panel dept-only">
+  <div class="drill-section"><h3>🏭 销售本部 · 学员明细</h3><table class="drill-table"><thead><tr><th>学员</th><th>工号</th><th>当前阶段</th><th>状态</th><th>验收进度</th><th>总分</th><th>操作</th></tr></thead><tbody id="tbodyDept"></tbody></table></div>
+</div>
+
+<div class="role-panel exec-only" style="text-align:center;padding:32px">
+  <p style="font-size:1.2rem;color:var(--muted);margin-bottom:16px">高管视图 · 仅显示汇总 KPI</p>
+  <a href="http://10.32.16.47:3107/report/lrn-wang-fang" style="color:var(--brand);font-weight:600">查看典型学员报告样例 →</a>
+</div>
+
+<div class="role-panel trainer-only">
+  <div class="drill-section"><h3>👨‍🏫 在带学员</h3><table class="drill-table"><thead><tr><th>学员</th><th>工号</th><th>阶段</th><th>验收</th><th>面谈</th><th>操作</th></tr></thead><tbody id="tbodyTrainer"></tbody></table></div>
+</div>
+
+</div>
+<script>
+const data=[{n:"张伟",no:"sch11111",d:"销售本部",ph:"血球/尿液/凝血",s:"in_progress",dn:3,tt:12,sc:29.6,ps:60,ss:2,l:"lrn-zhang-wei"},{n:"李娜",no:"sch22222",d:"销售本部",ph:"免疫/生化/糖化/Alifax",s:"in_progress",dn:7,tt:17,sc:63.7,ps:60,ss:1,l:"lrn-li-na"},{n:"王芳",no:"sch33333",d:"市场本部",ph:"全部完成",s:"completed",dn:38,tt:38,sc:92.6,ps:60,ss:0,l:"lrn-wang-fang"}];
+const st={in_progress:'<span class="tag amber">进行中</span>',completed:'<span class="tag green">已完成</span>'};
+const cl=["#0f63ee","#10b981","#f59e0b"],R="http://10.32.16.47:3107/report";
+function fill(id,f){var t=document.getElementById(id);if(!t)return;t.innerHTML="";data.filter(f||function(){return true}).forEach(function(d,i){var p=(d.dn/d.tt*100).toFixed(0);t.innerHTML+="<tr><td style="font-weight:500">"+d.n+"</td><td style="color:var(--muted)">"+d.no+"</td>"+(id=="tbody"?"<td>"+d.d+"</td>":"")+"<td style="font-size:.78rem">"+d.ph+"</td><td>"+st[d.s]+"</td><td><div class="bar-cell"><div class="bar"><div style="width:"+p+"%;background:"+cl[i]+""></div></div>"+d.dn+"/"+d.tt+"</div></td><td style="font-weight:600;color:"+(d.sc>=d.ps?"var(--green)":"var(--red)")+"">"+d.sc+"</td>"+(id=="tbody"?"<td>"+d.ss+"</td>":"")+"<td><a href=""+R+"/"+d.l+"" class="link" target="_blank">查看 →</a></td></tr>"})}
+function switchRole(){document.body.className="role-"+document.getElementById("roleSelect").value}
+fill("tbody");fill("tbodyDept",function(d){return d.d=="销售本部"});fill("tbodyTrainer");switchRole();
+</script>
+</body>
+</html>
