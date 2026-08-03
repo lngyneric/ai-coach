@@ -98,7 +98,7 @@ services:
   ai-shifu-nginx-dev-dev:
     image: nginx:latest
     ports:
-      - "127.0.0.1:${AI_SHIFU_WEB_PORT:-8080}:8080"
+      - "0.0.0.0:${AI_SHIFU_WEB_PORT:-8080}:8080"
     depends_on:
       - ai-shifu-cook-web-dev
       - ai-shifu-api-dev
