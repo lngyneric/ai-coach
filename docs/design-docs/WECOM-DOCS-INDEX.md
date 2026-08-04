@@ -1,0 +1,37 @@
+# AI-Coach 设计文档 · 企业微信 SmartPage 索引
+
+> 生成时间：2026-08-04 03:19
+
+| DESIGN-OVERVIEW | [SmartPage](https://doc.weixin.qq.com/smartpage/a1_AIAAjHiMALACNnXtM01phQguZLeRf_a?scode=AP4ArQclAAsFXKPz0LAIAAjHiMALA) | dcYP4thl3_rBfO1AJ9FnVdT8or-9CI55cpNCaOusCfKO0YqH78PM1PTr5vVSPzg6XnZ_ZpIN5Q9pt9YdoIp1QkSw |
+| TODOS | [SmartPage](https://doc.weixin.qq.com/smartpage/a1_AIAAjHiMALACNDLTmnCBpTvWEQyKv_a?scode=AP4ArQclAAsul6eZwzAIAAjHiMALA) | dcYXd-6gn_hFLCV5eDvoapOOzy3C4OVZ2q9pAscSjF9wtNKbRiCNAUhdP9RQ9-oxoF2AamOpGoyupGSjrteOgLBw |
+| ai-courseware-generation | [SmartPage](https://doc.weixin.qq.com/smartpage/a1_AIAAjHiMALACNCXe0O4KARQuzJU20_a?scode=AP4ArQclAAsPPzRtoaAIAAjHiMALA) | dcLp_-cjqKHai5mwqdBFP1hjPVq0KBB0iEfkqU62yvd1lR6F-Bx30dlxn2xAETC0LMnvm55m3iIgLRGuk2OP-y7Q |
+| content-gating-design | [SmartPage](https://doc.weixin.qq.com/smartpage/a1_AIAAjHiMALACNIgH1xXV3Sae84oxB_a?scode=AP4ArQclAAsjentL8SAIAAjHiMALA) | dcX17GTbWSyOPfwbDzaYzE8JLDbOYzDNmOFdaHT_v-b0Vth3TVtaMbj_rPAwp4tV0rq83mnwjEtFc1ze8zOI0qhQ |
+| data-migration-plan | [SmartPage](https://doc.weixin.qq.com/smartpage/a1_AIAAjHiMALACNypBBRwR0TeezYXfS_a?scode=AP4ArQclAAsr4bC5wIAIAAjHiMALA) | dcMYxGSGypiceMJbC174d5Yx5l6NpLpvVZE38_OcVJpVd6-I_KYo6JRXNd84m_RVhpp14p4YiGM9Ed1woaqbEOxA |
+| dev-db-structure | [SmartPage](https://doc.weixin.qq.com/smartpage/a1_AIAAjHiMALACNbs6cKEDTR6WGbLjS_a?scode=AP4ArQclAAs7MuovC1AIAAjHiMALA) | dc-_gJHRfTFQFOKazfKftufzGzSddVIbTk-IkdOBmSjX_l50SiHJ2S8BsyKBR2EcX8jc-8dYxhZlIvPVhtHuTOvA |
+| dev-schedule-aug-sep | [SmartPage](https://doc.weixin.qq.com/smartpage/a1_AIAAjHiMALACN0Fe08a9SSJejMY7n_a?scode=AP4ArQclAAsJKm2bKlAIAAjHiMALA) | dcwQjgkaazjXaR2p4lsVvlUcmZxh4021PiB7PRF2DPZ3YHNkDSR0wT_YvQvZhl3sneXY7i_we8Mxu0R22_5r-9Aw |
+| module1-company-rules | [SmartPage](https://doc.weixin.qq.com/smartpage/a1_AIAAjHiMALACNFcHzoWTKQXqsbISW_a?scode=AP4ArQclAAsgoMohyyAIAAjHiMALA) | dcn2Dx62tDhtqBIR5TnhsdeWgTyhRbmwKk7rHz_kcTJCbzAuue9Cz8OKxpkNHPAYrTWe6jA14hYjQ2QnFbIrCeUA |
+| module1-onboarding-procedure | [SmartPage](https://doc.weixin.qq.com/smartpage/a1_AIAAjHiMALACN0mf0lafQSFasiN0z_a?scode=AP4ArQclAAsWFcWfCDAIAAjHiMALA) | dcINCZ9ELjlej_zhoawPZweA-nrsTg1bmN8PJY4rjxznWs-EnUqcpoGnN-bZeRA8Kzg1wb7x_-rHHAoNzxQvIfDQ |
+| mysql-auth-unified | [SmartPage](https://doc.weixin.qq.com/smartpage/a1_AIAAjHiMALACNhSDYjah1Sf6509AV_a?scode=AP4ArQclAAs2oDo0g4AIAAjHiMALA) | dc03lzHwENW0dDz6BboXzA3V1-I0XO1PW-GNB7lgb6U22lj5q4Gig_7oMgeMrBXXZGi0aWSfOUSIjkAxXoeMDaig |
+| permission-model | [SmartPage](https://doc.weixin.qq.com/smartpage/a1_AIAAjHiMALACNjOyRtv4hTLOIKdbl_a?scode=AP4ArQclAAsB0Fd4x8AIAAjHiMALA) | dcXhPyAYgqy9d2dNxfBBCGVU09TWEfTEz1uE5XqwKAOzGo8L-SJ7lvJaQlDxJLprni0gcTfKp032aNES6J9gyhhw |
+| permission-responsive-design | [SmartPage](https://doc.weixin.qq.com/smartpage/a1_AIAAjHiMALACNIvbja1iqSCisVzl0_a?scode=AP4ArQclAAsYyE20LTAIAAjHiMALA) | dcxwcXZhW32Zxs4ik_84Edm61DMGNs3R0BMYxPlwZLVTR0QdLNHYLsjy7T6JFCUzMHqk2QyF2pcLC8WNwDY0y56w |
+| phase1-onboarding-module-design | [SmartPage](https://doc.weixin.qq.com/smartpage/a1_AIAAjHiMALACNMb617wsNQsiVzmc9_a?scode=AP4ArQclAAs1e16P4dAIAAjHiMALA) | dcwKfAgA0N5SjUQkxk-8DDTHPtaYCdvZr66czDSQ3-JtJxhKL_lHd_Rydk2GeHMazTv5gZNJEbi2WFUKwkuisx0A |
+| pre-phase-design | [SmartPage](https://doc.weixin.qq.com/smartpage/a1_AIAAjHiMALACNNBFpoWV9QpuMi07H_a?scode=AP4ArQclAAs0m11KvvAIAAjHiMALA) | dcVrE8ADE34ttby6-7P4cq9dqHq1TEw3UaqrFS5ehYGnaiCh3t5FDTLi8mBdWI2cIcG96oWVaFZsEZNbLXHW-_EQ |
+| req3-consolidated | [SmartPage](https://doc.weixin.qq.com/smartpage/a1_AIAAjHiMALACNTTW6WcfoTmmGj42L_a?scode=AP4ArQclAAswAxtvwuAIAAjHiMALA) | dcOQ7ofOmpvM0kmVR41Id_91byFU01mtHt9L4j9-xHYZhdEkhX_G_YMeCBKYHjZFU_sNJu2vM5mmDQYYAPNg93pw |
+| req3-full-coverage | [SmartPage](https://doc.weixin.qq.com/smartpage/a1_AIAAjHiMALACNxs4PcLUwTv0ntBG6_a?scode=AP4ArQclAAsbTpDlkaAIAAjHiMALA) | dcVI0bDAUbeRYqd1MZ2IJ_k-I2YzG_jP8brYm4AkKMI3fPrdvPhEPxQjQwajPwKuUkTu0d4EqaxnyWtEk5FDn3kQ |
+| req4-report-engine | [SmartPage](https://doc.weixin.qq.com/smartpage/a1_AIAAjHiMALACNcjaTWmWXRFeqLfAs_a?scode=AP4ArQclAAsijyiUMJAIAAjHiMALA) | dc71yH-RAHSPjTxpYOra9lhTpr2x8IXrT8BVRe-YCU3j6Lf6Gf_Mzf9GaFq6Jq3pN_cm_Tb_F_qf2FnhonnSp-AQ |
+| req5-consolidated | [SmartPage](https://doc.weixin.qq.com/smartpage/a1_AIAAjHiMALACN94953J6fQ4OnY0S0_a?scode=AP4ArQclAAs6tbhUodAIAAjHiMALA) | dcc0wZ9nvBXEOpyOdefLGJ43Oh5y-xRT5Kpr6AM9go0douVd4qDupm1dahvOg68Y79B-uWsFc-ZCZfbwpKVp-XdQ |
+| req5-integration | [SmartPage](https://doc.weixin.qq.com/smartpage/a1_AIAAjHiMALACNVNsKLhJRTlCW7uEH_a?scode=AP4ArQclAAs7Qn0hM1AIAAjHiMALA) | dcs91UIfWtXCLC-RQiZPRaM4JuC_2faZ8mUO9_RzXNV3geKeNtXvKD6ntBWz7l8CfSWm2Wue2c8swOwpkGNyyBHw |
+| req5-key-design | [SmartPage](https://doc.weixin.qq.com/smartpage/a1_AIAAjHiMALACNpOSkfUBzRWqzcrF6_a?scode=AP4ArQclAAsM1Vs8OdAIAAjHiMALA) | dcCtuy-p34vuw1wt_2babK2a9SF2BqxT__rQEtxpoZVs1QvYIOk5Ywd-e324fojUZ6fZByj7vShTjD2h0ok3noRA |
+| req5-summary | [SmartPage](https://doc.weixin.qq.com/smartpage/a1_AIAAjHiMALACNfPnK0jKwSf0hyhPF_a?scode=AP4ArQclAAs98K4W7ZAIAAjHiMALA) | dcu1NzJBN5wFL0yLGXybUB5TEQQTH2zSG05EC2DN7r1zT6WNID_CFIdWBrdK0LGofavIVKiOP1OKvh0c1PU6xBYQ |
+| req6-theme-permissions | [SmartPage](https://doc.weixin.qq.com/smartpage/a1_AIAAjHiMALACNPIwUmbM9TIm4w6oZ_a?scode=AP4ArQclAAslXvwKOqAIAAjHiMALA) | dcU4JCYCBbhMPganiSKu7wdXQpzV66qpDdUGYIaUnFao0fFATqUuvQ9RvfEbaRZ27r9E1lT6YT0EQIL0MnbQmekA |
+| req7-external-integration | [SmartPage](https://doc.weixin.qq.com/smartpage/a1_AIAAjHiMALACNOJ41Wv7FS8aYKKY1_a?scode=AP4ArQclAAsJUaCjUXAIAAjHiMALA) | dc7vVJreOicmYmFYipanx58YAu2VA1HGkyOapLNq9mMMCsO6L9ja-5aKPzbecR-k1qFz82J9vpH6uACDG60ZGSOA |
+| req8-ai-all | [SmartPage](https://doc.weixin.qq.com/smartpage/a1_AIAAjHiMALACNbz16jr97SqKaq9uG_a?scode=AP4ArQclAAsXFsr1JMAIAAjHiMALA) | dcg8y-_hq4AB--pvqYs11uOTS5-w3G0a0TEbCdmgcJCHdunJd3xnRLPG71p7cjeV1YNlcUe_Ldac1AlsKGf4WDvQ |
+| req8-ai-capabilities | [SmartPage](https://doc.weixin.qq.com/smartpage/a1_AIAAjHiMALACNstCDoSVMR4Oh67vd_a?scode=AP4ArQclAAsXCKVRd1AIAAjHiMALA) | dcRbdJkAt-FluCtKZqji1fUGvhpr8I2cuXS4gsC99uitdlrWZVRCKT1w_CIKcx1YctAazN6LOGRnk457m58xpYrg |
+| req8-ai-recommend | [SmartPage](https://doc.weixin.qq.com/smartpage/a1_AIAAjHiMALACNlwlNLwE3Rqq9IYW2_a?scode=AP4ArQclAAssvyz1gGAIAAjHiMALA) | dc5eeQMpCrrq9mcemGjyTaDQa2kLa4VTwDHpBzP-UWm3vNSBel6uMZRKB6ZNiiI46sqGsTOVUCml1Qd2dZ_c2eFg |
+| req8-courseware-gen | [SmartPage](https://doc.weixin.qq.com/smartpage/a1_AIAAjHiMALACNtaZB6HXeRaKokluA_a?scode=AP4ArQclAAsaJsmPQUAIAAjHiMALA) | dcPU3k87-m41TnVrXRB0jCjgt1gErsombuN-RHIhKNwRmzAW2OE4M4PZG1faU92Ujr2ZQNerFGGmmrX7GxDhERYQ |
+| req8-learning-path | [SmartPage](https://doc.weixin.qq.com/smartpage/a1_AIAAjHiMALACNfxIPOrKvTgyS5JhB_a?scode=AP4ArQclAAsBRcer2MAIAAjHiMALA) | dcmkLvtnlTVq2wFNFZPWfcQFCc6eJkWeb_0pawH9qC3GkNBpYMvukRWsT7bHHOYmLXjnBn-IjQ0yMotB0jncCxrg |
+| user-account-rules | [SmartPage](https://doc.weixin.qq.com/smartpage/a1_AIAAjHiMALACNC6OMrrHSQ1yweUAu_a?scode=AP4ArQclAAsDbUVai8AIAAjHiMALA) | dcidjKsZdw3AEqzPQs1h59mQclPxNsSmwgHp4uleHAjrViE6w0aIk02H0o5dRg4xls9rC_4iOWcm5o6YW3pwp_6Q |
+| user-lifecycle-stages | [SmartPage](https://doc.weixin.qq.com/smartpage/a1_AIAAjHiMALACNfOrpQvcATGylNaNO_a?scode=AP4ArQclAAsbJ1CcI5AIAAjHiMALA) | dcnJOmcaiglftQOX80ERwQVUOUHV3Tlua7uv6XlPKlsJ9z0R6j5ZtScktiZhhegfB5hMyrECI3dsfQUZFQxcDmfA |
+
+---
+成功 30 份 · 失败 0 份
