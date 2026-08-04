@@ -13,6 +13,7 @@ services:
       OTEL_SERVICE_NAME: ai-shifu-api-dev
       LOGIN_METHODS_ENABLED: employee
       DEFAULT_LOGIN_METHOD: employee
+      SQLALCHEMY_DATABASE_URI: mysql://root:ai-shifu@ai-shifu-mysql-dev:3306/ai-shifu_dev?charset=utf8mb4
       AAD_BYPASS: "1"
       AAD_AUTH_URL: ${AAD_AUTH_URL:-}
       REDIS_HOST: ai-shifu-redis-dev
@@ -40,6 +41,7 @@ services:
       REDIS_HOST: ai-shifu-redis-dev
       REDIS_PORT: 6379
       SKIP_LOAD_DOTENV: "1"
+      SQLALCHEMY_DATABASE_URI: mysql://root:ai-shifu@ai-shifu-mysql-dev:3306/ai-shifu_dev?charset=utf8mb4
       CELERY_BROKER_URL: redis://ai-shifu-redis-dev:6379/0
       CELERY_RESULT_BACKEND: redis://ai-shifu-redis-dev:6379/1
     depends_on:
@@ -60,6 +62,7 @@ services:
       REDIS_HOST: ai-shifu-redis-dev
       REDIS_PORT: 6379
       SKIP_LOAD_DOTENV: "1"
+      SQLALCHEMY_DATABASE_URI: mysql://root:ai-shifu@ai-shifu-mysql-dev:3306/ai-shifu_dev?charset=utf8mb4
       CELERY_BROKER_URL: redis://ai-shifu-redis-dev:6379/0
       CELERY_RESULT_BACKEND: redis://ai-shifu-redis-dev:6379/1
     depends_on:
