@@ -116,3 +116,11 @@ git merge dev
 | cook-web 崩溃循环 | `docker compose up -d ai-shifu-cook-web-dev`（NODE_OPTIONS 已移除 patched-watcher） |
 | 端口被占 | `ss -tlnp | grep 8082` 查占用 |
 | 外网访问不了 | 确认 nginx 绑 0.0.0.0（`ss -tlnp | grep 8082`） |
+
+## Subagent 运行看板
+
+- 访问：`http://<host>:8082/subagent-dashboard.html`（每 10s 自动刷新）
+- 数据：`subagent-status.json`（采集自 `~/.reasonix/projects/*/sessions/*.goal-state.json` + `ps` + P0 产物）
+- 手动刷新数据：`cd docker && python3 gen-subagent-status.py`
+- 自动刷新：cron 需 root 权限（当前用户无 crontab 权限）；如部署到有权限环境可加
+  `*/1 * * * * cd /home/sysmex/worktrees/ai-shifu-dev/docker && python3 gen-subagent-status.py >/dev/null 2>&1`
