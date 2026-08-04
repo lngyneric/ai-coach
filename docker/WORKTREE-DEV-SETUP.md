@@ -124,3 +124,10 @@ git merge dev
 - 手动刷新数据：`cd docker && python3 gen-subagent-status.py`
 - 自动刷新：cron 需 root 权限（当前用户无 crontab 权限）；如部署到有权限环境可加
   `*/1 * * * * cd /home/sysmex/worktrees/ai-shifu-dev/docker && python3 gen-subagent-status.py >/dev/null 2>&1`
+
+## 数据库隔离（方案B · 2026-08-04）
+
+- dev api/celery 连接：`mysql://root:ai-shifu@ai-shifu-mysql-dev:3306/ai-shifu_dev`（独立容器 172.18.0.4 + 独立库）
+- 生产库：`ai-shifu-mysql:3306/ai-shifu`（172.18.0.3）—— **dev 绝不连接**
+- 初始化：`mysqldump --no-data` 从生产导出 schema → 导入 `ai-shifu_dev` → 写入 `alembic_version`（当前 d2f4a7c9b8e1）
+- 变更 DB URI：改 `docker-compose.dev.yml` 中三个服务的 `SQLALCHEMY_DATABASE_URI`（api/worker/beat）
