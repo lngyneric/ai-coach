@@ -13,6 +13,7 @@ from pathlib import Path
 HOME = Path.home()
 STATUS_OUT = Path("/home/sysmex/worktrees/ai-shifu-dev/docker/subagent-status.json")
 PROJECTS = HOME / ".reasonix" / "projects"
+PI_SESSIONS = HOME / ".pi" / "agent" / "sessions"
 DOCS_DIRS = [
     Path("/home/sysmex/worktrees/coach-lab/docs"),
     Path("/home/sysmex/worktrees/ai-shifu-dev/docs/design-docs"),
@@ -85,15 +86,58 @@ def collect_artifacts() -> list:
             })
     return arts
 
+
+def collect_pi_subagent_calls() -> list:
+    """解析 Pi 会话 jsonl 中调用的 reasonix subagent 记录"""
+    calls = []
+    if not PI_SESSIONS.exists():
+        return calls
+    for proj_dir in PI_SESSIONS.iterdir():
+        if not proj_dir.is_dir():
+            continue
+        for f in sorted(proj_dir.glob("*.jsonl"), key=lambda p: p.stat().st_mtime, reverse=True)[:3]:
+            try:
+                for line in open(f, encoding="utf-8", errors="ignore"):
+                    d = json.loads(line)
+            except Exception:
+                continue
+            break  # 只取最新一个会话文件（已排序取第一个）
+        # 重新精确解析最新会话
+        latest = sorted(proj_dir.glob("*.jsonl"), key=lambda p: p.stat().st_mtime, reverse=True)[:1]
+        for f in latest:
+            try:
+                for line in open(f, encoding="utf-8", errors="ignore"):
+                    try:
+                        d = json.loads(line)
+                    except Exception:
+                        continue
+                    ts = d.get("timestamp", "")
+                    msg = d.get("message", {})
+                    for c in msg.get("content", []):
+                        if c.get("type") == "toolCall" and c.get("name") == "bash":
+                            cmd = c.get("arguments", {}).get("command", "")
+                            if "reasonix subagent run" in cmd:
+                                m = re.search(r"reasonix subagent run ([a-z0-9-]+)", cmd)
+                                calls.append({
+                                    "ts": ts[:16],
+                                    "subagent": m.group(1) if m else "?",
+                                    "cmd": " ".join(cmd.split())[:150],
+                                    "session_file": f.name[:30],
+                                })
+            except Exception:
+                continue
+    return calls
+
 def main():
     status = {
         "generated_at": now(),
         "running_subagents": get_running_subagents(),
         "sessions": collect_sessions(),
         "artifacts": collect_artifacts(),
+        "pi_subagent_calls": collect_pi_subagent_calls(),
     }
     STATUS_OUT.write_text(json.dumps(status, ensure_ascii=False, indent=2))
-    print(f"✅ {STATUS_OUT} ({len(status['running_subagents'])} running, {len(status['sessions'])} sessions, {len(status['artifacts'])} artifacts)")
+    print(f"✅ {STATUS_OUT} ({len(status['running_subagents'])} running, {len(status['sessions'])} sessions, {len(status['artifacts'])} arts, {len(status['pi_subagent_calls'])} pi calls)")
 
 if __name__ == "__main__":
     main()

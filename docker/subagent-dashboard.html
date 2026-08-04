@@ -44,6 +44,11 @@ h1 { font-size: 1.4rem; font-weight: 800; margin: 0 0 4px; }
 </section>
 
 <section style="margin-top:20px">
+  <h2 style="font-size:1rem">🟦 Pi 调用的 Subagent</h2>
+  <div id="pi-calls" class="card"></div>
+</section>
+
+<section style="margin-top:20px">
   <h2 style="font-size:1rem">📂 最近会话</h2>
   <div id="sessions" class="grid"></div>
 </section>
@@ -82,6 +87,12 @@ function render(d) {
         <div style="font-size:.76rem;color:var(--muted)">${p.cmd || ''}</div></div>`).join('')
     : `<div class="empty">当前无运行中的 subagent</div>`;
 
+  // pi calls
+  const pc = d.pi_subagent_calls || [];
+  document.getElementById('pi-calls').innerHTML = pc.length
+    ? pc.slice().reverse().map(x => `<div class="art">🤖 <b>${x.subagent}</b> · ${x.ts} · <span style="font-size:.72rem;color:var(--muted)">${x.cmd.slice(0, 70)}</span></div>`).join('')
+    : `<div class="empty">无 Pi subagent 调用记录</div>`;
+
   // sessions
   const s = d.sessions || [];
   document.getElementById('sessions').innerHTML = s.length
@@ -97,7 +108,7 @@ function render(d) {
     ? a.map(x => `<div class="art">📄 <b>${x.name}</b> · ${(x.size/1024).toFixed(1)}KB · ${x.mtime}</div>`).join('')
     : `<div class="empty">无产物</div>`;
 
-  document.getElementById('gen').textContent = `生成时间：${d.generated_at || '-'} · 运行中 ${r.length} 个 · 会话 ${s.length} 个`;
+  document.getElementById('gen').textContent = `生成时间：${d.generated_at || '-'} · 运行中 ${r.length} 个 · 会话 ${s.length} 个 · Pi 调用 ${(d.pi_subagent_calls || []).length} 次`;
 }
 
 load();
