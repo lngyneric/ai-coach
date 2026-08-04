@@ -113,6 +113,8 @@ services:
       - ./brand-vi.html:/usr/share/nginx/html/brand-vi.html:ro
       - ./brand.html:/usr/share/nginx/html/brand.html:ro
       - ./management-dashboard.html:/usr/share/nginx/html/management-dashboard.html:ro
+      - ./subagent-dashboard.html:/usr/share/nginx/html/subagent-dashboard.html:ro
+      - ./subagent-status.json:/usr/share/nginx/html/subagent-status.json:ro
       - ./dashboard-engine.html:/usr/share/nginx/html/dashboard-engine.html:ro
       - ./dashboard.html:/usr/share/nginx/html/dashboard.html:ro
       - ./design-system.css:/usr/share/nginx/html/design-system.css:ro

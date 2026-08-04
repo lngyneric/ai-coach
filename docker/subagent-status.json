@@ -1,0 +1,237 @@
+{
+  "generated_at": "2026-08-04 06:35:03",
+  "running_subagents": [],
+  "sessions": [
+    {
+      "dir": "sessions",
+      "status": "stopped",
+      "todos": [
+        {
+          "content": "生成 DESIGN-OVERVIEW.md + 合并零散文档",
+          "status": "completed",
+          "activeForm": "生成统一设计总览",
+          "level": 1
+        },
+        {
+          "content": "wecom-cli 批量生成 26 份 SmartPage",
+          "status": "completed",
+          "activeForm": "批量生成 SmartPage",
+          "level": 1
+        },
+        {
+          "content": "抽查渲染 + 生成 WECOM-DOCS-INDEX.md + 提交",
+          "status": "completed",
+          "activeForm": "验证与索引",
+          "level": 1
+        }
+      ],
+      "model": "opencode-go/deepseek-v4-flash",
+      "updated": "2026-08-04 05:34"
+    },
+    {
+      "dir": "sessions",
+      "status": "stopped",
+      "todos": [
+        {
+          "content": "Phase 1: 实测 dev 数据库权威结构",
+          "status": "completed",
+          "activeForm": "实测 dev 数据库权威结构"
+        },
+        {
+          "content": "docker exec 查 dev MySQL：表名/缺表/缺列实测",
+          "status": "completed",
+          "activeForm": "查表结构与缺失项",
+          "level": 1
+        },
+        {
+          "content": "拉取 coaching_phases/checklist 真实数据或确认空表",
+          "status": "completed",
+          "activeForm": "拉取阶段与验收项数据",
+          "level": 1
+        },
+        {
+          "content": "产出真实结构清单文档",
+          "status": "completed",
+          "activeForm": "产出真实结构清单",
+          "level": 1
+        },
+        {
+          "content": "Phase 2: 数据层对齐（类型+fixture+适配器）",
+          "status": "completed",
+          "activeForm": "数据层对齐"
+        },
+        {
+          "content": "types.ts 扩展两级阶段模型+session 字段+验收分类",
+          "status": "completed",
+          "activeForm": "扩展类型定义",
+          "level": 1
+        },
+        {
+          "content": "fixtures.ts 按 Phase 1-3 闭环重排",
+          "status": "completed",
+          "activeForm": "重排 fixtures",
+          "level": 1
+        },
+        {
+          "content": "httpAdapter 按真实表名字段名修正映射",
+          "status": "completed",
+          "activeForm": "修正适配器",
+          "level": 1
+        },
+        {
+          "content": "Phase 3: 阶段闭环 UI",
+          "status": "completed",
+          "activeForm": "阶段闭环 UI"
+        },
+        {
+          "content": "时间线按 Phase 1-3 闭环重排",
+          "status": "completed",
+          "activeForm": "重排时间线",
+          "level": 1
+        },
+        {
+          "content": "验收标准卡+合规控制点可视化",
+          "status": "completed",
+          "activeForm": "新增验收标准卡",
+          "level": 1
+        },
+        {
+          "content": "评分面板与小结表单对齐新结构+改进计划引导",
+          "status": "completed",
+          "activeForm": "对齐评分与小结",
+          "level": 1
+        },
+        {
+          "content": "Phase 4: 1v1 三环交互",
+          "status": "completed",
+          "activeForm": "1v1 三环交互"
+        },
+        {
+          "content": "面谈侧栏升级为课前-面谈-课后完整流",
+          "status": "completed",
+          "activeForm": "升级面谈侧栏",
+          "level": 1
+        },
+        {
+          "content": "面谈创建/总结走适配器+缺表降级",
+          "status": "completed",
+          "activeForm": "实现三环适配器",
+          "level": 1
+        },
+        {
+          "content": "Phase 5: 验证与报告更新",
+          "status": "completed",
+          "activeForm": "验证与报告"
+        },
+        {
+          "content": "重写 Playwright 走查覆盖新交互，全绿",
+          "status": "completed",
+          "activeForm": "扩充走查断言",
+          "level": 1
+        },
+        {
+          "content": "更新双份验证报告+同步主仓库",
+          "status": "completed",
+          "activeForm": "更新验证报告",
+          "level": 1
+        }
+      ],
+      "model": "opencode-go/deepseek-v4-flash",
+      "updated": "2026-07-22 08:48"
+    },
+    {
+      "dir": "sessions",
+      "status": "stopped",
+      "todos": [
+        {
+          "content": "数据库建表和改数据（coach_roles、user_role_assignments、course_enrollments.module）",
+          "status": "completed"
+        },
+        {
+          "content": "nginx 路由加 coach 块",
+          "status": "completed"
+        },
+        {
+          "content": "HTML 文件改 mentorship→coaching",
+          "status": "completed"
+        },
+        {
+          "content": "API 容器内改 routes.py + celery_app.py",
+          "status": "completed"
+        },
+        {
+          "content": "DEV 开发 → 先在 8082 上改代码、加功能",
+          "status": "completed"
+        },
+        {
+          "content": "DEV 验证 → 你确认没问题",
+          "status": "completed"
+        },
+        {
+          "content": "同步 PRD → 通过 git push main + docker compose up -d 推送 PRD",
+          "status": "completed"
+        }
+      ],
+      "model": "opencode-go/deepseek-v4-flash",
+      "updated": "2026-07-21 07:30"
+    },
+    {
+      "dir": "sessions",
+      "status": "stopped",
+      "todos": [
+        {
+          "content": "Phase 1a: 创建 .env.prod 生产配置文件",
+          "status": "completed",
+          "activeForm": "创建 .env.prod",
+          "level": 1
+        },
+        {
+          "content": "Phase 1b: 创建 docker-compose.prod.yml（独立 DB/Redis）",
+          "status": "completed",
+          "activeForm": "创建 prod compose",
+          "level": 1
+        },
+        {
+          "content": "Phase 1c: 导出生产数据到独立 volume",
+          "status": "completed",
+          "activeForm": "迁移生产数据",
+          "level": 1
+        },
+        {
+          "content": "Phase 2: 移除 docker cp，改为镜像构建部署",
+          "status": "completed",
+          "activeForm": "修改 deploy 脚本",
+          "level": 1
+        },
+        {
+          "content": "Phase 3: 建立分支规范 + 版本标签",
+          "status": "completed",
+          "activeForm": "Git 分支策略",
+          "level": 1
+        }
+      ],
+      "model": "opencode-go/deepseek-v4-flash",
+      "updated": "2026-07-14 07:24"
+    }
+  ],
+  "artifacts": [
+    {
+      "name": "P0-DESIGN-CORRECTION.md",
+      "path": "/home/sysmex/worktrees/coach-lab/docs/P0-DESIGN-CORRECTION.md",
+      "size": 14796,
+      "mtime": "2026-08-04 06:15"
+    },
+    {
+      "name": "P0-DESIGN-REVIEW.md",
+      "path": "/home/sysmex/worktrees/coach-lab/docs/P0-DESIGN-REVIEW.md",
+      "size": 2033,
+      "mtime": "2026-08-04 06:03"
+    },
+    {
+      "name": "P0-PERMISSION-MODEL-UPGRADE.md",
+      "path": "/home/sysmex/worktrees/coach-lab/docs/P0-PERMISSION-MODEL-UPGRADE.md",
+      "size": 8236,
+      "mtime": "2026-08-04 05:56"
+    }
+  ]
+}
