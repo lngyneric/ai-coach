@@ -8,7 +8,7 @@
 | # | 需求 | 文档 | 状态 |
 |---|------|------|------|
 | 1 | 统一门户招牌 | portal.html + brand-vi.html + design-system.css | ✅ |
-| 2 | 数据/人员可选 + 三平台合一 + 企微提醒 + 看板 | req3-consolidated.md + management-dashboard.html | ✅ |
+| 2 | 数据/人员可选 + 三平台合一 + 企微提醒 + 看板 | req2-data-permissions.md + management-dashboard.html | ✅ |
 | 3 | 全员覆盖 + 领导可查 + 历史归档 + 数据库重整 | req3-full-coverage.md + data-migration-plan.md | 🟡 |
 | 4 | 分析报告（总结→展开 + 部门征询 + 定制化） | req4-report-engine.md + ReportEnhancements.tsx | 🟡 |
 | 5 | 人·课件·报告整合 + 角色定制 | req5-consolidated.md + ProfileView(规划) | 🟡 |

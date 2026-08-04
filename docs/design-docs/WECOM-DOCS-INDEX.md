@@ -2,7 +2,7 @@
 
 > 生成时间：2026-08-04 03:19
 
-| DESIGN-OVERVIEW | [SmartPage](https://doc.weixin.qq.com/smartpage/a1_AIAAjHiMALACNnXtM01phQguZLeRf_a?scode=AP4ArQclAAsFXKPz0LAIAAjHiMALA) | dcYP4thl3_rBfO1AJ9FnVdT8or-9CI55cpNCaOusCfKO0YqH78PM1PTr5vVSPzg6XnZ_ZpIN5Q9pt9YdoIp1QkSw |
+| DESIGN-OVERVIEW | [SmartPage](https://doc.weixin.qq.com/smartpage/a1_AIAAjHiMALACNCVKtP8qDSZ0Nt1uX_a?scode=AP4ArQclAAs1q57IaGAIAAjHiMALA) | dclcZhPLlas0pWCBHgrK1Vjxa9Fl6IG4s_4kBIYut3_jSEpnNNb2dQEORtfxChn0Qs6ykQ_G_-GJASg8Wyh6MqSA |
 | TODOS | [SmartPage](https://doc.weixin.qq.com/smartpage/a1_AIAAjHiMALACNDLTmnCBpTvWEQyKv_a?scode=AP4ArQclAAsul6eZwzAIAAjHiMALA) | dcYXd-6gn_hFLCV5eDvoapOOzy3C4OVZ2q9pAscSjF9wtNKbRiCNAUhdP9RQ9-oxoF2AamOpGoyupGSjrteOgLBw |
 | ai-courseware-generation | [SmartPage](https://doc.weixin.qq.com/smartpage/a1_AIAAjHiMALACNCXe0O4KARQuzJU20_a?scode=AP4ArQclAAsPPzRtoaAIAAjHiMALA) | dcLp_-cjqKHai5mwqdBFP1hjPVq0KBB0iEfkqU62yvd1lR6F-Bx30dlxn2xAETC0LMnvm55m3iIgLRGuk2OP-y7Q |
 | content-gating-design | [SmartPage](https://doc.weixin.qq.com/smartpage/a1_AIAAjHiMALACNIgH1xXV3Sae84oxB_a?scode=AP4ArQclAAsjentL8SAIAAjHiMALA) | dcX17GTbWSyOPfwbDzaYzE8JLDbOYzDNmOFdaHT_v-b0Vth3TVtaMbj_rPAwp4tV0rq83mnwjEtFc1ze8zOI0qhQ |
