@@ -1,5 +1,5 @@
 x-ai-shifu-api-dev-image: &ai-shifu-api-dev-image
-  image: aishifu/ai-shifu-api:patched
+  image: aishifu/ai-shifu-api:patched-pdf2
 
 services:
   ai-shifu-api-dev:
