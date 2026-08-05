@@ -14,6 +14,7 @@ _DEFAULT_BROKER_URL = "redis://localhost:6379/0"
 _DEFAULT_BILLING_RENEWAL_CRON = "* * * * *"
 _DEFAULT_BILLING_BUCKET_EXPIRE_CRON = "* * * * *"
 _DEFAULT_BILLING_LOW_BALANCE_CRON = "0 * * * *"
+_DEFAULT_LEARN_PDF_EXPORT_CLEANUP_CRON = "0 * * * *"
 
 __CELERY_APP__: Celery | None = None
 
@@ -36,6 +37,7 @@ def create_celery_app(flask_app: Flask | None = None) -> Celery:
         include=(
             "flaskr.service.billing.tasks",
             "flaskr.service.learning_portal.tasks",
+            "flaskr.service.learn.tasks",
         ),
     )
     celery_app.conf.update(_build_celery_config(resolved_flask_app))
@@ -81,10 +83,12 @@ def _build_celery_config(flask_app: Flask) -> dict[str, Any]:
         "imports": (
             "flaskr.service.billing.tasks",
             "flaskr.service.learning_portal.tasks",
+            "flaskr.service.learn.tasks",
         ),
         "beat_schedule": {
             **_build_billing_beat_schedule(flask_app),
             **_build_portal_beat_schedule(),
+            **_build_learn_beat_schedule(flask_app),
         },
     }
 
@@ -190,9 +194,24 @@ def _build_portal_beat_schedule() -> dict[str, Any]:
     }
 
 
+def _build_learn_beat_schedule(flask_app: Flask) -> dict[str, Any]:
+    """Beat schedule for lesson learn background jobs."""
+    return {
+        "learn.cleanup_pdf_exports.schedule": {
+            "task": "learn.cleanup_pdf_exports",
+            "schedule": _resolve_billing_crontab(
+                flask_app,
+                "LEARN_PDF_EXPORT_CLEANUP_CRON",
+                _DEFAULT_LEARN_PDF_EXPORT_CLEANUP_CRON,
+            ),
+        },
+    }
+
+
 def _register_default_tasks() -> None:
     importlib.import_module("flaskr.service.billing.tasks")
     importlib.import_module("flaskr.service.learning_portal.tasks")
+    importlib.import_module("flaskr.service.learn.tasks")
 
 
 def _to_bool(value: Any) -> bool:

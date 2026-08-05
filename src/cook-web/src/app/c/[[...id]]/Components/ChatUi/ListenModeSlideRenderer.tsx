@@ -1985,7 +1985,7 @@ const ListenModeSlideRenderer = ({
             showPlayerCustomActions ? playerCustomActions : null
           }
           playerTexts={playerTexts}
-          showPlayer={!shouldRenderEmptyPpt}
+          playerEnabled={!shouldRenderEmptyPpt}
         />
         {shouldRenderManualFullscreenButton ? (
           <button
