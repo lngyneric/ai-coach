@@ -28,6 +28,11 @@ class UserInfo:
     user_avatar: str
     is_creator: bool
     is_operator: bool
+    is_certifier: bool = False
+    department: str = ""
+    supervisor_bid: str = ""
+    mentor_bid: str = ""
+    employee_no: str = ""
 
     def __init__(
         self,
@@ -42,6 +47,11 @@ class UserInfo:
         user_avatar=None,
         is_creator=False,
         is_operator=False,
+        is_certifier=False,
+        department="",
+        supervisor_bid="",
+        mentor_bid="",
+        employee_no="",
     ):
         self.user_id = user_id
         self.username = username
@@ -56,6 +66,11 @@ class UserInfo:
         self.user_avatar = user_avatar
         self.is_creator = is_creator
         self.is_operator = is_operator
+        self.is_certifier = is_certifier
+        self.department = department
+        self.supervisor_bid = supervisor_bid
+        self.mentor_bid = mentor_bid
+        self.employee_no = employee_no
 
     def __json__(self):
         return {
@@ -70,6 +85,11 @@ class UserInfo:
             "avatar": self.user_avatar,
             "is_creator": self.is_creator,
             "is_operator": self.is_operator,
+            "is_certifier": self.is_certifier,
+            "department": self.department,
+            "supervisor_bid": self.supervisor_bid,
+            "mentor_bid": self.mentor_bid,
+            "employee_no": self.employee_no,
         }
 
     def __html__(self):

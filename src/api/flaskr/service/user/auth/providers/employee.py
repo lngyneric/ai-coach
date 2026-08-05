@@ -39,6 +39,56 @@ from flaskr.service.user.consts import (
 logger = logging.getLogger(__name__)
 
 
+def _load_whitelist(app: Flask, key: str) -> set[str]:
+    """Read a whitelist config value into a normalized, lowercased set.
+
+    Accepts either a list of employee numbers or a comma/space-separated
+    string. Each element is itself split on commas/whitespace so mixed
+    separators work regardless of ``EnvVar(type=list)`` conversion.
+    All items are lowercased so whitelist matching is case-insensitive
+    (fixes R2; AAD employee numbers are case-insensitive).
+    """
+    raw = app.config.get(key, []) or []
+    items: set[str] = set()
+    if not isinstance(raw, (list, tuple, set)):
+        raw = [raw]
+    for item in raw:
+        for part in str(item).replace(",", " ").split():
+            part = part.strip().lower()
+            if part:
+                items.add(part)
+    return items
+
+
+def _resolve_role_grants(
+    employee_no: str,
+    *,
+    operator_whitelist: set[str],
+    creator_whitelist: set[str],
+    revoke_others: bool,
+    existing_is_operator: bool,
+    existing_is_creator: bool,
+) -> tuple[bool, bool]:
+    """Decide which role flags to persist for an employee-login user.
+
+    Rule (matches P0-DESIGN-CORRECTION.md D1):
+      - whitelist hit -> always grant (explicit operator/creator approval);
+      - otherwise keep the user's existing roles, unless ``revoke_others``
+        is enabled, in which case a user in neither whitelist is treated as
+        revoked (existing grants cleared, new grants denied).
+
+    Returns ``(grant_operator, grant_creator)``.
+    """
+    employee_no = (employee_no or "").strip().lower()
+    in_operator_whitelist = employee_no in operator_whitelist
+    in_creator_whitelist = employee_no in creator_whitelist
+    revoked = revoke_others and not (in_operator_whitelist or in_creator_whitelist)
+
+    grant_operator = in_operator_whitelist or (existing_is_operator and not revoked)
+    grant_creator = in_creator_whitelist or (existing_is_creator and not revoked)
+    return grant_operator, grant_creator
+
+
 class EmployeeAuthProvider(AuthProvider):
     """Authenticate via employee number + password against the internal AAD server."""
 
@@ -46,7 +96,7 @@ class EmployeeAuthProvider(AuthProvider):
     supports_challenge = False
 
     def verify(self, app: Flask, request: VerificationRequest) -> AuthResult:
-        employee_no = (request.identifier or "").strip()
+        employee_no = (request.identifier or "").strip().lower()
         password = request.code or ""
 
         if not employee_no or not password:
@@ -136,19 +186,40 @@ class EmployeeAuthProvider(AuthProvider):
             verified=True,
         )
 
-        # Auto-grant creator + operator roles for all employee-login users.
-        # Employees authenticate against enterprise AAD and are trusted.
-        creator_granted_now = False
+        # Whitelist-gated role grants for employee-login users:
+        #   - whitelist hit always grants (explicit operator/creator approval);
+        #   - otherwise keep the user's existing roles unless REVOKE_OTHERS is on.
+        # REVOKE_OTHERS defaults to False so existing grants are preserved.
         from flaskr.service.user.repository import mark_user_roles
         from flaskr.dao import db
 
-        needs_roles = not bool(aggregate.is_creator) or not bool(aggregate.is_operator)
+        operator_whitelist = _load_whitelist(app, "EMPLOYEE_OPERATOR_WHITELIST")
+        creator_whitelist = _load_whitelist(app, "EMPLOYEE_CREATOR_WHITELIST")
+        revoke_others = bool(app.config.get("EMPLOYEE_ROLE_REVOKE_OTHERS", False))
+        grant_operator, grant_creator = _resolve_role_grants(
+            employee_no,
+            operator_whitelist=operator_whitelist,
+            creator_whitelist=creator_whitelist,
+            revoke_others=revoke_others,
+            existing_is_operator=bool(aggregate.is_operator),
+            existing_is_creator=bool(aggregate.is_creator),
+        )
+
+        creator_granted_now = False
+        needs_roles = (
+            grant_creator != bool(aggregate.is_creator)
+            or grant_operator != bool(aggregate.is_operator)
+        )
         if needs_roles:
-            mark_user_roles(aggregate.user_bid, is_creator=True, is_operator=True)
+            mark_user_roles(
+                aggregate.user_bid,
+                is_creator=grant_creator,
+                is_operator=grant_operator,
+            )
             db.session.flush()
             # Re-fetch after role update so user_info reflects the new roles
             aggregate = load_user_aggregate(aggregate.user_bid)
-            creator_granted_now = True
+            creator_granted_now = grant_creator
 
         # Build the login token
         user_info = build_user_info_from_aggregate(aggregate)

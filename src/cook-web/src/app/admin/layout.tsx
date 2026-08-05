@@ -9,6 +9,7 @@ import { useTracking } from '@/c-common/hooks/useTracking';
 import { useEnvStore } from '@/c-store';
 import { EnvStoreState } from '@/c-types/store';
 import { useBillingOverview } from '@/hooks/useBillingData';
+import { useCoachPermissions } from '@/hooks/useCoachPermissions';
 import {
   useCreatorOnboardingStatus,
   useOnboarding,
@@ -38,6 +39,9 @@ const MainInterface = ({
   const isOperator = useUserStore(state =>
     Boolean(state.userInfo?.is_operator),
   );
+  // P0 5 级角色权限：manage_users（admin/hr）→ 运营/用户管理入口。
+  // 无后端响应时 hook 回退到 isOperator 逻辑，`canManageUsers` 与 `isOperator` 取「或」。
+  const { canManageUsers } = useCoachPermissions();
   const { trackEvent } = useTracking();
   const hasAuthenticatedAdminSession = isInitialized && isLoggedIn && !isGuest;
   const hasResolvedAdminSession =
@@ -108,8 +112,8 @@ const MainInterface = ({
   );
 
   const menuItems = useMemo(
-    () => buildAdminMenuItems({ t, isOperator }),
-    [isOperator, t],
+    () => buildAdminMenuItems({ t, isOperator, canManageUsers }),
+    [canManageUsers, isOperator, t],
   );
 
   const { data: billingOverview, isLoading: billingOverviewLoading } =

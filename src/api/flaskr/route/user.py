@@ -44,18 +44,17 @@ from flaskr.service.user.captcha import (
 from flaskr.service.user.verification_codes import consume_verification_code
 from ..service.feedback.funs import submit_feedback
 from ..service.user.auth import get_provider
-from ..service.user.auth.base import OAuthCallbackRequest, VerificationRequest
+from ..service.user.auth.base import VerificationRequest
 from ..service.user.post_auth import PostAuthContext, run_post_auth_extensions
 from ..service.user.onboarding import (
     ONBOARDING_VERSION,
     build_onboarding_status,
     complete_onboarding_scene,
 )
-from ..service.referral.service import extract_referral_post_auth_fields
-from ..service.common.dtos import OAuthStartDTO
 from .common import make_common_response, bypass_token_validation, by_pass_login_func
 from flaskr.dao import db
 from flaskr.i18n import set_language
+from flaskr.service.user.token_store import token_store
 
 
 def _extract_request_language(payload: dict | None = None) -> str | None:
@@ -85,14 +84,6 @@ def _request_client_ip() -> str:
     if "X-Forwarded-For" in request.headers:
         return request.headers["X-Forwarded-For"].split(",")[0].strip()
     return str(request.remote_addr or "").strip()
-
-
-def _extract_referral_post_auth_fields(payload: dict) -> dict[str, str]:
-    return extract_referral_post_auth_fields(
-        payload,
-        client_ip=_request_client_ip(),
-        user_agent=request.headers.get("User-Agent"),
-    )
 
 
 def optional_token_validation(f):
@@ -145,6 +136,27 @@ def register_user_handler(app: Flask, path_prefix: str) -> Flask:
         user = validate_user(app, token)
         set_language(user.language)
         request.user = user
+
+    @app.route(path_prefix + "/logout", methods=["POST"])
+    def logout():
+        """
+        Server-side logout (P2-3).
+
+        Revokes the current token so it can no longer authenticate: the
+        ``user_token`` row is deleted and any cache entry is dropped. The
+        token is read from the same sources as the auth middleware
+        (``Token`` header, ``?token=`` query param, or JSON body ``token``).
+        The request itself must carry a valid token (enforced by the
+        ``before_request`` auth middleware).
+        """
+        token = request.headers.get("Token", None)
+        if not token:
+            token = request.args.get("token", None)
+        if not token and request.is_json:
+            token = (request.get_json(silent=True) or {}).get("token", None)
+        if token:
+            token_store.revoke(current_app, token=str(token))
+        return make_common_response({"ok": True})
 
     @app.route(path_prefix + "/info", methods=["GET"])
     def info():
@@ -536,74 +548,6 @@ def register_user_handler(app: Flask, path_prefix: str) -> Flask:
 
         return make_common_response(send_email_code(app, email, client_ip, language))
 
-    def _handle_sms_login():
-        with app.app_context():
-            payload = request.get_json(silent=True)
-            payload = payload if isinstance(payload, dict) else {}
-            mobile = normalize_phone_identifier(payload.get("mobile", None))
-            sms_code = payload.get("sms_code", None)
-            course_id = payload.get("course_id", None)
-            language = payload.get("language", None)
-            login_context = payload.get("login_context", None)
-            referral_fields = _extract_referral_post_auth_fields(payload)
-            current_user = getattr(request, "user", None)
-            # Only pass an anonymous/guest token through SMS login so temporary
-            # learning records can be claimed. If a real authenticated account
-            # reaches the login page and verifies another phone number, this
-            # endpoint must behave as login, not implicit phone rebinding.
-            user_id = None
-            if current_user is not None and not (
-                getattr(current_user, "mobile", "")
-                or getattr(current_user, "email", "")
-            ):
-                user_id = current_user.user_id
-            if not mobile:
-                raise_param_error("mobile")
-            if not sms_code:
-                raise_param_error("sms_code")
-            provider = get_provider("phone")
-            auth_result = provider.verify(
-                app,
-                VerificationRequest(
-                    identifier=mobile,
-                    code=sms_code,
-                    metadata={
-                        "user_id": user_id,
-                        "course_id": course_id,
-                        "language": language,
-                        "login_context": login_context,
-                    },
-                ),
-            )
-            db.session.commit()
-            run_post_auth_extensions(
-                app,
-                PostAuthContext(
-                    user_id=auth_result.user.user_id,
-                    source="sms",
-                    login_context=login_context,
-                    created_new_user=bool(auth_result.is_new_user),
-                    creator_granted_now=bool(
-                        auth_result.metadata.get("creator_granted_now")
-                    ),
-                    language=language or getattr(auth_result.user, "language", None),
-                    **referral_fields,
-                ),
-            )
-            resp = make_response(make_common_response(auth_result.token))
-            return resp
-
-    @app.route(path_prefix + "/login_sms", methods=["POST"])
-    @bypass_token_validation
-    @optional_token_validation
-    def login_sms_api():
-        """
-        Login through SMS verification code for web clients
-        ---
-        tags:
-           - user
-        """
-        return _handle_sms_login()
 
     @app.route(path_prefix + "/get_profile", methods=["GET"])
     def get_profile():
@@ -835,90 +779,34 @@ def register_user_handler(app: Flask, path_prefix: str) -> Flask:
             raise_param_error("feedback")
         return make_common_response(submit_feedback(app, user_id, feedback, mail))
 
-    @app.route(path_prefix + "/oauth/google", methods=["GET"])
+    # -------- Employee (AAD) login route --------
+
+    @app.route(path_prefix + "/login_employee", methods=["POST"])
     @bypass_token_validation
-    def google_oauth_start():
-        provider = get_provider("google")
-        metadata = {}
-        redirect_uri = request.args.get("redirect_uri")
-        if redirect_uri:
-            metadata["redirect_uri"] = redirect_uri
-        login_context = request.args.get("login_context")
-        if login_context:
-            metadata["login_context"] = login_context
-        ui_language = request.args.get("language")
-        if ui_language:
-            metadata["language"] = ui_language
-        result = provider.begin_oauth(app, metadata)
-        dto = OAuthStartDTO(
-            authorization_url=result["authorization_url"],
-            state=result["state"],
-        )
-        return make_common_response(dto)
-
-    @app.route(path_prefix + "/oauth/google/callback", methods=["GET"])
-    @bypass_token_validation
-    @optional_token_validation
-    def google_oauth_callback():
-        provider = get_provider("google")
-        current_user = getattr(request, "user", None)
-        current_user_id = None
-        if current_user is not None:
-            current_user_id = getattr(current_user, "user_id", None)
-
-        callback_request = OAuthCallbackRequest(
-            state=request.args.get("state"),
-            code=request.args.get("code"),
-            raw_request_args=request.args.to_dict(flat=True),
-            current_user_id=current_user_id,
-        )
-        try:
-            auth_result = provider.handle_oauth_callback(app, callback_request)
-            db.session.commit()
-        except Exception:
-            db.session.rollback()
-            raise
-        run_post_auth_extensions(
-            app,
-            PostAuthContext(
-                user_id=auth_result.user.user_id,
-                source="google",
-                login_context=auth_result.metadata.get("login_context"),
-                created_new_user=bool(auth_result.is_new_user),
-                creator_granted_now=bool(
-                    auth_result.metadata.get("creator_granted_now")
-                ),
-                language=auth_result.metadata.get("language")
-                or getattr(auth_result.user, "language", None),
-            ),
-        )
-        return make_common_response(auth_result.token)
-
-    # -------- Password login routes --------
-
-    @app.route(path_prefix + "/login_password", methods=["POST"])
-    @bypass_token_validation
-    def login_password():
+    def login_employee():
         """
-        Login with password
+        Login with employee number + password against the internal AAD server.
         ---
         tags:
             - user
         """
-        identifier = request.get_json().get("identifier", None)
-        password = request.get_json().get("password", None)
-        language = request.get_json().get("language", None)
+        payload = request.get_json(silent=True) or {}
+        # Accept both "employeeNo" (docker/login.html) and "identifier" for
+        # API compatibility.
+        employee_no = payload.get("employeeNo") or payload.get("identifier")
+        password = payload.get("password") or payload.get("code")
+        language = payload.get("language", None)
         if language:
             try:
                 set_language(language)
             except Exception:
                 pass
-        if not identifier:
-            raise_param_error("identifier")
+        if not employee_no:
+            raise_param_error("employeeNo")
         if not password:
             raise_param_error("password")
-        provider = get_provider("password")
-        vr = VerificationRequest(identifier=identifier, code=password)
+        provider = get_provider("employee")
+        vr = VerificationRequest(identifier=employee_no, code=password)
         # TODO: Add rate-limiting and failed login attempt tracking
         # (record identifier, request.remote_addr, timestamp on failure)
         auth_result = provider.verify(app, vr)
@@ -927,7 +815,7 @@ def register_user_handler(app: Flask, path_prefix: str) -> Flask:
             app,
             PostAuthContext(
                 user_id=auth_result.user.user_id,
-                source="password",
+                source="employee",
                 login_context=None,
                 created_new_user=bool(auth_result.is_new_user),
                 creator_granted_now=bool(
@@ -937,6 +825,8 @@ def register_user_handler(app: Flask, path_prefix: str) -> Flask:
             ),
         )
         return make_common_response(auth_result.token)
+
+    # -------- Password login routes --------
 
     @app.route(path_prefix + "/set_password", methods=["POST"])
     def set_password():

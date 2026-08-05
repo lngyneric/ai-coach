@@ -72,7 +72,9 @@ class EnvVar:
                 )
         elif self.type is list:
             if isinstance(value, str):
-                return [item.strip() for item in value.split(",") if item.strip()]
+                # Split on commas and/or whitespace so space-separated lists
+                # (e.g. "a b c") work as well as comma-separated ("a,b,c").
+                return [item for item in re.split(r"[,\s]+", value) if item.strip()]
             return list(value)
         else:
             return str(value)
@@ -98,6 +100,19 @@ ENV_VARS: Dict[str, EnvVar] = {
         name="LOCAL_STORAGE_ROOT",
         default="storage",
         description="Filesystem directory used for local storage provider (relative to app working dir if not absolute).",
+        group="storage",
+    ),
+    "PDF_EXPORT_TEMP_DIR": EnvVar(
+        name="PDF_EXPORT_TEMP_DIR",
+        default="",
+        description="Optional filesystem root for lesson PDF export temp directories. Empty uses the system temp dir.",
+        group="storage",
+    ),
+    "PDF_EXPORT_TTL_SECONDS": EnvVar(
+        name="PDF_EXPORT_TTL_SECONDS",
+        default=10800,
+        type=int,
+        description="How long lesson PDF export temp files are retained before cleanup (seconds). Default: 10800 (3 hours).",
         group="storage",
     ),
     "ASK_MAX_HISTORY_LEN": EnvVar(
@@ -287,6 +302,40 @@ Default: "phone".""",
         default=10,
         type=int,
         description="HTTP timeout (seconds) for AAD server requests",
+        group="auth",
+    ),
+    "EMPLOYEE_OPERATOR_WHITELIST": EnvVar(
+        name="EMPLOYEE_OPERATOR_WHITELIST",
+        default=[],
+        type=list,
+        example="sch00068,sch11111",
+        description=(
+            "Employee numbers that get is_operator=1 on employee login. "
+            "Comma- or space-separated. Empty default keeps existing grants."
+        ),
+        group="auth",
+    ),
+    "EMPLOYEE_CREATOR_WHITELIST": EnvVar(
+        name="EMPLOYEE_CREATOR_WHITELIST",
+        default=[],
+        type=list,
+        example="sch00068,sch11111",
+        description=(
+            "Employee numbers that get is_creator=1 on employee login. "
+            "Comma- or space-separated. Empty default keeps existing grants."
+        ),
+        group="auth",
+    ),
+    "EMPLOYEE_ROLE_REVOKE_OTHERS": EnvVar(
+        name="EMPLOYEE_ROLE_REVOKE_OTHERS",
+        default=False,
+        type=bool,
+        example="false",
+        description=(
+            "When true, employee-login users outside both whitelists have "
+            "their existing operator/creator grants revoked on next login. "
+            "Default false preserves existing grants (safe migration)."
+        ),
         group="auth",
     ),
     "WECOM_CORP_ID": EnvVar(
@@ -661,6 +710,12 @@ Example: mysql://username:password@hostname:3306/database_name?charset=utf8mb4""
         name="BILLING_LOW_BALANCE_CRON",
         default="0 * * * *",
         description="Cron expression for scanning billing low-balance alerts.",
+        group="celery",
+    ),
+    "LEARN_PDF_EXPORT_CLEANUP_CRON": EnvVar(
+        name="LEARN_PDF_EXPORT_CLEANUP_CRON",
+        default="0 * * * *",
+        description="Cron expression for cleaning up expired lesson PDF export temp files.",
         group="celery",
     ),
     # Authentication Configuration

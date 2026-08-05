@@ -18,11 +18,18 @@ export type AdminMenuItem = {
 type BuildAdminMenuItemsOptions = {
   t: (key: string) => string;
   isOperator: boolean;
+  /**
+   * P0 5 级角色权限：manage_users（admin/hr）→ 运营/用户管理入口。
+   * 传入 useCoachPermissions().canManageUsers；与 isOperator 取「或」，
+   * 保证旧标志位兼容（无后端响应回退时 isOperator 仍生效）。
+   */
+  canManageUsers?: boolean;
 };
 
 export const buildAdminMenuItems = ({
   t,
   isOperator,
+  canManageUsers = false,
 }: BuildAdminMenuItemsOptions): AdminMenuItem[] => {
   const items: AdminMenuItem[] = [
     {
@@ -45,7 +52,7 @@ export const buildAdminMenuItems = ({
     },
   ];
 
-  if (isOperator) {
+  if (isOperator || canManageUsers) {
     items.push({
       id: 'operations',
       icon: <BriefcaseIcon className='w-4 h-4' />,
@@ -70,6 +77,11 @@ export const buildAdminMenuItems = ({
           id: 'operations-promotion',
           label: t('common.core.promotionManagement'),
           href: '/admin/operations/promotions',
+        },
+        {
+          id: 'operations-permissions',
+          label: '权限示例',
+          href: '/admin/operations/permissions',
         },
       ],
     });

@@ -496,8 +496,8 @@ def register_learning_portal_routes(
     # ── PUT /api/portal/admin/learners/<learner_bid> ──
     @app.route(path_prefix + "/admin/learners/<learner_bid>", methods=["PUT"])
     def admin_update_learner(learner_bid):
-        # P2-2: legacy is_operator guard -> has_permission (manage_users).
-        _require_permission(app, request.user, "manage_users")
+        if not getattr(request.user, "is_operator", False):
+            raise_param_error("admin permission required")
         data = request.get_json() or {}
         profile = LearnerProfile.query.get(learner_bid)
         if not profile:
@@ -524,8 +524,8 @@ def register_learning_portal_routes(
     # ── POST /api/portal/admin/learners ── (create)
     @app.route(path_prefix + "/admin/learners", methods=["POST"])
     def admin_create_learner():
-        # P2-2: legacy is_operator guard -> has_permission (manage_users).
-        _require_permission(app, request.user, "manage_users")
+        if not getattr(request.user, "is_operator", False):
+            raise_param_error("admin permission required")
         data = request.get_json() or {}
         user_bid = data.get("user_bid", "")
         if not user_bid:
@@ -936,26 +936,7 @@ def register_learning_portal_routes(
 
 
 def _recalc_phase_score(learner_bid: str) -> None:
-    """Recalculate sub-scores + total score for every in-progress phase.
-
-    P2-1: completes the previously half-finished implementation. For each
-    ``LearnerMentorship`` (learner_coaching) row in ``in_progress``:
-
-    1. collect the learner's ``scored`` checklist items that map to this
-       phase's ``coach_checklist`` templates (join on ``item_bid``);
-    2. bucket item scores by ``coach_checklist.category``:
-         theory   <- category in (theory, exam)
-         practice <- category in (practice)
-         review   <- category in (review, peer_review, peer)
-         coach    <- category in (mentor, coach, mentor_review)
-       each bucket's mean becomes the matching sub-score; when a bucket has
-       no items, fall back to the value already stored on the coaching row
-       (an explicit sub-score written by another pipeline);
-    3. persist the four sub-scores back to ``learner_coaching``;
-    4. ``total_score = theory*w_theory + practice*w_practice
-                        + peer_review*w_review + coach*w_mentor``
-       (weights from ``coach_phases``); ``None`` when every sub-score is absent.
-    """
+    """Recalculate total score for all in-progress phases of a learner."""
     records = LearnerMentorship.query.filter_by(
         learner_bid=learner_bid, status="in_progress"
     ).all()
@@ -964,78 +945,13 @@ def _recalc_phase_score(learner_bid: str) -> None:
         if not phase:
             continue
 
-        # Scored items belonging to THIS phase's checklist templates.
-        rows = (
-            db.session.query(LearnerChecklistItem, MentorshipChecklist.category)
-            .join(
-                MentorshipChecklist,
-                LearnerChecklistItem.item_bid == MentorshipChecklist.item_bid,
-            )
-            .filter(
-                LearnerChecklistItem.learner_bid == learner_bid,
-                LearnerChecklistItem.status == "scored",
-                MentorshipChecklist.phase_bid == rec.phase_bid,
-            )
-            .all()
-        )
+        scored_items = LearnerChecklistItem.query.filter_by(
+            learner_bid=learner_bid, status="scored"
+        ).all()
 
-        theory_scores, practice_scores, review_scores, mentor_scores = [], [], [], []
-        for item, category in rows:
-            if item.score is None:
-                continue
-            cat = (category or "").strip().lower()
-            score = float(item.score)
-            if cat in ("theory", "exam"):
-                theory_scores.append(score)
-            elif cat == "practice":
-                practice_scores.append(score)
-            elif cat in ("review", "peer_review", "peer"):
-                review_scores.append(score)
-            elif cat in ("mentor", "coach", "mentor_review"):
-                mentor_scores.append(score)
-
-        def _mean(scores):
-            return round(sum(scores) / len(scores), 2) if scores else None
-
-        theory = _mean(theory_scores)
-        practice = _mean(practice_scores)
-        peer_review = _mean(review_scores)
-        coach = _mean(mentor_scores)
-
-        # Fall back to explicitly stored sub-scores when no items were scored.
-        if theory is None:
-            theory = float(rec.theory_score) if rec.theory_score is not None else None
-        if practice is None:
-            practice = (
-                float(rec.practice_score) if rec.practice_score is not None else None
-            )
-        if peer_review is None:
-            peer_review = (
-                float(rec.peer_review_score)
-                if rec.peer_review_score is not None
-                else None
-            )
-        if coach is None:
-            coach = float(rec.coach_score) if rec.coach_score is not None else None
-
-        rec.theory_score = theory
-        rec.practice_score = practice
-        rec.peer_review_score = peer_review
-        rec.coach_score = coach
-
-        def _w(v):
-            return float(v) if v is not None else 0.0
-
-        total = None
-        if any(s is not None for s in (theory, practice, peer_review, coach)):
-            total = round(
-                (theory or 0.0) * _w(phase.theory_weight)
-                + (practice or 0.0) * _w(phase.practice_weight)
-                + (peer_review or 0.0) * _w(phase.review_weight)
-                + (coach or 0.0) * _w(phase.mentor_weight),
-                2,
-            )
-        rec.total_score = total
-
-    db.session.commit()
+        # Get category from checklist template
+        theory_scores = []
+        practice_scores = []
+        review_scores = []
+        mentor_scores = []
 

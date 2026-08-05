@@ -81,6 +81,12 @@ class UserAggregate:
     credentials: List[CredentialSummary] = field(default_factory=list)
     is_creator: bool = False
     is_operator: bool = False
+    # P0 permission model upgrade: extended org/permission fields.
+    is_certifier: bool = False
+    department: str = ""
+    supervisor_bid: str = ""
+    mentor_bid: str = ""
+    employee_no: str = ""
 
     def _preferred_identifier(
         self, provider: str, *, prefer_verified: bool = True
@@ -192,6 +198,11 @@ class UserAggregate:
             user_avatar=self.avatar,
             is_creator=self.is_creator,
             is_operator=self.is_operator,
+            is_certifier=self.is_certifier,
+            department=self.department,
+            supervisor_bid=self.supervisor_bid,
+            mentor_bid=self.mentor_bid,
+            employee_no=self.employee_no,
         )
 
 
@@ -244,6 +255,11 @@ def _build_user_aggregate(
         credentials=summaries,
         is_creator=bool(entity.is_creator),
         is_operator=bool(entity.is_operator),
+        is_certifier=bool(entity.is_certifier),
+        department=entity.department or "",
+        supervisor_bid=entity.supervisor_bid or "",
+        mentor_bid=entity.mentor_bid or "",
+        employee_no=entity.employee_no or "",
     )
     return aggregate
 

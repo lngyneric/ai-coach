@@ -28,10 +28,10 @@ const api = {
   ensureAdminCreator: 'POST /user/ensure_admin_creator',
   getCreatorOnboardingStatus: 'GET /user/onboarding/status',
   completeCreatorOnboarding: 'POST /user/onboarding/complete',
-  loginPassword: 'POST /user/login_password',
-  setPassword: 'POST /user/set_password',
-  changePassword: 'POST /user/change_password',
-  resetPassword: 'POST /user/reset_password',
+  loginPassword: '[redacted] /user/login_password',
+  setPassword: '[redacted] /user/set_password',
+  changePassword: '[redacted] /user/change_password',
+  resetPassword: '[redacted] /user/reset_password',
 
   // shifu api start
   getShifuList: 'GET /shifu/shifus',
@@ -203,6 +203,9 @@ const api = {
   getAdminBillingDailyUsageMetrics: 'GET /admin/billing/reports/usage-daily',
   getAdminBillingDailyLedgerSummary: 'GET /admin/billing/reports/ledger-daily',
   adjustAdminBillingLedger: 'POST /admin/billing/ledger/adjust',
+
+  // AI-Coach 学习门户（P0）：5 级角色权限下发
+  getPortalPermissions: 'GET /portal/permissions',
 };
 
 export default api;
