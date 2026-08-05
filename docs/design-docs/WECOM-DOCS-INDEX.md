@@ -1,6 +1,7 @@
 # AI-Coach 设计文档 · 企业微信 SmartPage 索引
 
 > 生成时间：2026-08-04 03:19
+| 2026-08-04-05-daily-report | [SmartPage](https://doc.weixin.qq.com/smartpage/a1_AIAAjHiMALACNS1MFeml7SgCVISOi_a?scode=AP4ArQclAAshLrvyyCAIAAjHiMALA) | dcUx2NTLtCshd2gV7kXvsROo4imv9idcRKNwHlGbtz0-3RiyEm45lQkHv-nO1NEAW0Hr4rwD3NClwI1vyKZgmpmw |
 
 | DESIGN-OVERVIEW | [SmartPage](https://doc.weixin.qq.com/smartpage/a1_AIAAjHiMALACNCVKtP8qDSZ0Nt1uX_a?scode=AP4ArQclAAs1q57IaGAIAAjHiMALA) | dclcZhPLlas0pWCBHgrK1Vjxa9Fl6IG4s_4kBIYut3_jSEpnNNb2dQEORtfxChn0Qs6ykQ_G_-GJASg8Wyh6MqSA |
 | TODOS | [SmartPage](https://doc.weixin.qq.com/smartpage/a1_AIAAjHiMALACNDLTmnCBpTvWEQyKv_a?scode=AP4ArQclAAsul6eZwzAIAAjHiMALA) | dcYXd-6gn_hFLCV5eDvoapOOzy3C4OVZ2q9pAscSjF9wtNKbRiCNAUhdP9RQ9-oxoF2AamOpGoyupGSjrteOgLBw |
