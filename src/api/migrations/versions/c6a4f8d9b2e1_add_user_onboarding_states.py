@@ -1,7 +1,7 @@
 """add user onboarding states
 
 Revision ID: c6a4f8d9b2e1
-Revises: 5a6b7c8d9e10
+Revises: d2f4a7c9b8e1
 Create Date: 2026-06-17 00:00:00.000000
 
 """
@@ -12,7 +12,7 @@ import sqlalchemy as sa
 
 # revision identifiers, used by Alembic.
 revision = "c6a4f8d9b2e1"
-down_revision = "5a6b7c8d9e10"
+down_revision = "d2f4a7c9b8e1"
 branch_labels = None
 depends_on = None
 
