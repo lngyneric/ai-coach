@@ -439,9 +439,14 @@ def register_learning_portal_routes(
     # ── POST /api/portal/tasks ──
     @app.route(path_prefix + "/tasks", methods=["POST"])
     def portal_create_task():
+        # W3-4 guard: task assignment is a coaching operation — requires
+        # create_session (admin/coach) AND the target learner must be in the
+        # caller's mentored scope (admin/hr scope-all exception preserved).
+        _require_permission(app, request.user, "create_session")
         data = request.get_json() or {}
         learner_bid = data.get("learner_bid", "")
         title = data.get("title", "")
+        _require_mentored_learner(app, request.user, learner_bid)
         task_type = data.get("task_type", "course")
         due_at = data.get("due_at")
 
@@ -575,6 +580,9 @@ def register_learning_portal_routes(
     # ── GET /api/portal/admin/phases ──
     @app.route(path_prefix + "/admin/phases", methods=["GET"])
     def admin_phases():
+        # W3-4 guard: phase configuration visible to roster viewers
+        # (admin/hr/dept_head/coach). learner → 403.
+        _require_permission(app, request.user, "view_all_students")
         phases = MentorshipPhase.query.order_by(MentorshipPhase.sort_order).all()
         return make_common_response(
             [
@@ -599,6 +607,8 @@ def register_learning_portal_routes(
     # ── PUT /api/portal/admin/phases/<phase_bid> ──
     @app.route(path_prefix + "/admin/phases/<phase_bid>", methods=["PUT"])
     def admin_update_phase(phase_bid):
+        # W3-4 guard: phase editing is a management operation (admin/hr).
+        _require_permission(app, request.user, "manage_users")
         data = request.get_json() or {}
         phase = MentorshipPhase.query.get(phase_bid)
         if not phase:
@@ -618,6 +628,9 @@ def register_learning_portal_routes(
     # ── GET /api/portal/admin/checklist/<phase_bid> ──
     @app.route(path_prefix + "/admin/checklist/<phase_bid>", methods=["GET"])
     def admin_checklist(phase_bid):
+        # W3-4 guard: checklist templates readable by anyone who can view any
+        # report (admin/hr/dept_head/coach). learner → 403.
+        _require_permission(app, request.user, "view_any_report")
         items = MentorshipChecklist.query.filter_by(phase_bid=phase_bid).order_by(
             MentorshipChecklist.sort_order
         ).all()
@@ -639,6 +652,9 @@ def register_learning_portal_routes(
     # ── POST /api/portal/admin/checklist ──
     @app.route(path_prefix + "/admin/checklist", methods=["POST"])
     def admin_create_checklist():
+        # W3-4 guard: checklist template management = content certification
+        # (admin/hr/dept_head). learner/coach → 403.
+        _require_permission(app, request.user, "certify_content")
         data = request.get_json() or {}
         item = MentorshipChecklist(
             item_bid=uuid.uuid4().hex,
@@ -655,6 +671,8 @@ def register_learning_portal_routes(
     # ── GET /api/portal/admin/stats ──
     @app.route(path_prefix + "/admin/stats", methods=["GET"])
     def admin_stats():
+        # W3-4 guard: KPI stats visible to view_kpi holders (admin/hr/dept/coach).
+        _require_permission(app, request.user, "view_kpi")
         total_learners = LearnerProfile.query.count()
         active_learners = LearnerProfile.query.filter_by(status="active").count()
         in_progress = LearnerMentorship.query.filter_by(status="in_progress").count()
@@ -847,6 +865,8 @@ def register_learning_portal_routes(
     @app.route(path_prefix + "/admin/enroll", methods=["POST"])
     def admin_enroll():
         """Assign a course to a user for a training module."""
+        # W3-4 guard: course assignment is a manage_users operation (admin/hr).
+        _require_permission(app, request.user, "manage_users")
         user_bid = request.get_json().get("user_bid")
         shifu_bid = request.get_json().get("shifu_bid")
         module = request.get_json().get("module")
@@ -875,6 +895,8 @@ def register_learning_portal_routes(
     @app.route(path_prefix + "/admin/enroll", methods=["DELETE"])
     def admin_unenroll():
         """Remove a course assignment."""
+        # W3-4 guard: unenroll is a manage_users operation (admin/hr).
+        _require_permission(app, request.user, "manage_users")
         user_bid = request.get_json().get("user_bid")
         shifu_bid = request.get_json().get("shifu_bid")
         if not user_bid or not shifu_bid:
@@ -911,6 +933,9 @@ def register_learning_portal_routes(
     @app.route(path_prefix + "/admin/enrollments", methods=["GET"])
     def admin_list_enrollments():
         """Admin: list enrollments for a user or all."""
+        # W3-4 guard: enrollment management is a manage_users operation
+        # (admin/hr). learner → 403 (was an open horizontal-privilege hole).
+        _require_permission(app, request.user, "manage_users")
         user_bid = request.args.get("user_bid", "")
         module = request.args.get("module", "")
         query = CourseEnrollment.query
