@@ -207,6 +207,24 @@ const api = {
 
   // AI-Coach 学习门户（P0）：5 级角色权限下发
   getPortalPermissions: 'GET /portal/permissions',
+
+  // AI-Coach 学习门户：portal 管理端（HR/dept/coach 数据域 API）
+  getPortalAdminLearners: 'GET /portal/admin/learners',
+  getPortalAdminStats: 'GET /portal/admin/stats',
+  getPortalAdminRoles: 'GET /portal/admin/roles',
+  getPortalMentorStudents: 'GET /portal/mentor/students',
+
+  // AI-Coach 面谈记录（coach_sessions）完整 CRUD
+  getCoachSessions: 'GET /coach/sessions',
+  createCoachSession: 'POST /coach/sessions',
+  getCoachSession: 'GET /coach/sessions/{session_bid}',
+  updateCoachSession: 'PUT /coach/sessions/{session_bid}',
+  summarizeCoachSession: 'POST /coach/sessions/{session_bid}/summarize',
+
+  // AI-Coach 报告 / 推荐 / 通用问答
+  getCoachReport: 'GET /coach/report/{learner_bid}',
+  getPortalRecommend: 'GET /portal/recommend',
+  chatCompletion: 'POST /chat',
 };
 
 export default api;

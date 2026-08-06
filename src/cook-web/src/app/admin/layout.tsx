@@ -1,7 +1,7 @@
 'use client';
 
 import React, { useCallback, useEffect, useMemo, useRef } from 'react';
-import { usePathname } from 'next/navigation';
+import { usePathname, useRouter } from 'next/navigation';
 import { useTranslation } from 'react-i18next';
 import api from '@/api';
 import { useDisclosure } from '@/c-common/hooks/useDisclosure';
@@ -31,6 +31,7 @@ const MainInterface = ({
   const { t, i18n } = useTranslation();
   const { t: tOnboarding } = useTranslation('module.onboarding');
   const pathname = usePathname();
+  const router = useRouter();
   const isInitialized = useUserStore(state => state.isInitialized);
   const isGuest = useUserStore(state => state.isGuest);
   const isLoggedIn = useUserStore(state => state.isLoggedIn);
@@ -39,14 +40,36 @@ const MainInterface = ({
   const isOperator = useUserStore(state =>
     Boolean(state.userInfo?.is_operator),
   );
-  // P0 5 级角色权限：manage_users（admin/hr）→ 运营/用户管理入口。
+  // P0 5 级角色权限：manage_users（admin/hr）→ HR 工作台入口。
   // 无后端响应时 hook 回退到 isOperator 逻辑，`canManageUsers` 与 `isOperator` 取「或」。
-  const { canManageUsers } = useCoachPermissions();
+  const {
+    canManageUsers,
+    canViewDeptOnly,
+    canCreateSession,
+    canViewAllStudents,
+    canViewKpi,
+    canAudit,
+    canCertifyContent,
+    isFallback,
+  } = useCoachPermissions();
   const { trackEvent } = useTracking();
   const hasAuthenticatedAdminSession = isInitialized && isLoggedIn && !isGuest;
   const hasResolvedAdminSession =
     hasAuthenticatedAdminSession && Boolean(currentUserId);
   const menuReady = hasResolvedAdminSession;
+
+  // 角色守卫（前端 UI 层；真实权限仍以后端 API 为准）：
+  // admin / hr / dept_head / coach 均可进入 /admin 框架（各自看到对应菜单），
+  // 纯 learner（无任何管理类 flag）重定向到 /courses（W3 缺口 3）。
+  const canAccessAdmin =
+    isOperator ||
+    canManageUsers ||
+    canViewDeptOnly ||
+    canCreateSession ||
+    canViewAllStudents ||
+    canViewKpi ||
+    canAudit ||
+    canCertifyContent;
 
   useEffect(() => {
     if (
@@ -62,6 +85,25 @@ const MainInterface = ({
     );
     window.location.href = `/login?redirect=${currentPath}`;
   }, [hasAuthenticatedAdminSession, isInitialized]);
+
+  // W3 缺口 3：/admin layout 角色守卫——纯 learner 不允许进入管理框架。
+  useEffect(() => {
+    if (
+      !isInitialized ||
+      !hasResolvedAdminSession ||
+      isFallback ||
+      canAccessAdmin
+    ) {
+      return;
+    }
+    router.replace('/courses');
+  }, [
+    canAccessAdmin,
+    hasResolvedAdminSession,
+    isFallback,
+    isInitialized,
+    router,
+  ]);
 
   useEffect(() => {
     document.title = t('common.core.adminTitle');
@@ -112,8 +154,15 @@ const MainInterface = ({
   );
 
   const menuItems = useMemo(
-    () => buildAdminMenuItems({ t, isOperator, canManageUsers }),
-    [canManageUsers, isOperator, t],
+    () =>
+      buildAdminMenuItems({
+        t,
+        isOperator,
+        canManageUsers,
+        canViewDeptOnly,
+        canCreateSession,
+      }),
+    [canCreateSession, canManageUsers, canViewDeptOnly, isOperator, t],
   );
 
   const { data: billingOverview, isLoading: billingOverviewLoading } =
