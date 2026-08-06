@@ -14,7 +14,9 @@ class LearnerProfile(db.Model):
     department = db.Column(db.String(100), nullable=True)
     position_name = db.Column(db.String(100), nullable=True)
     level = db.Column(db.String(20), nullable=True)
-    mentor_bid = db.Column(db.String(32), nullable=True, index=True)
+    # W3-3 rename: `mentor_bid` → `coach_bid` (the learner's assigned coach).
+    # Migration d3e5f7a9b1c2 renames the real column; value semantics unchanged.
+    coach_bid = db.Column(db.String(32), nullable=True, index=True)
     supervisor_bid = db.Column(db.String(32), nullable=True)
     onboarding_date = db.Column(db.Date, nullable=True)
     probation_end_date = db.Column(db.Date, nullable=True)

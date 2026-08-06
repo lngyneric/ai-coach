@@ -230,7 +230,7 @@ def visible_students_scope(app, user) -> str:
 
     - ``"all"``                  admin / hr (or legacy ``is_operator=1``)
     - ``"department:<dept>"``    dept_head within their own department
-    - ``"mentored:<user_bid>"``  coach (``learner_profiles.mentor_bid = user_bid``)
+    - ``"mentored:<user_bid>"``  coach (``learner_profiles.coach_bid = user_bid``)
     - ``"self:<user_bid>"``      learner / fallback
 
     Scope priority is ``ROLE_PRIORITY`` (first matching role wins). Safe

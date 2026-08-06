@@ -98,7 +98,7 @@ def collect_learner_context(learner_bid: str) -> dict[str, Any]:
         "profile": {
             "department": str(profile.department or "") if profile else "",
             "position_name": str(profile.position_name or "") if profile else "",
-            "mentor_bid": str(profile.mentor_bid or "") if profile else "",
+            "coach_bid": str(profile.coach_bid or "") if profile else "",
             "onboarding_date": str(profile.onboarding_date)
             if profile and profile.onboarding_date
             else "",

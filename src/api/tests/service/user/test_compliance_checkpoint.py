@@ -68,12 +68,12 @@ def _add_phase(phase_bid, code, sort_order, is_active=1):
     )
 
 
-def _add_learner(learner_bid, user_bid, mentor_bid=None):
+def _add_learner(learner_bid, user_bid, coach_bid=None):
     db.session.add(
         LearnerProfile(
             learner_bid=learner_bid,
             user_bid=user_bid,
-            mentor_bid=mentor_bid,
+            coach_bid=coach_bid,
             status="active",
             created_at=datetime(2026, 7, 1),
             updated_at=datetime(2026, 7, 1),
@@ -308,7 +308,7 @@ def _setup_checklist_api(app):
     _create_api_user(app, "usr-learner")
     with app.app_context():
         _add_phase("ph-001", "ph-001", 1)
-        _add_learner("ln-api", "usr-learner", mentor_bid="usr-coach")
+        _add_learner("ln-api", "usr-learner", coach_bid="usr-coach")
         _add_coaching("rec-api", "ln-api", "ph-001")
         db.session.commit()
 

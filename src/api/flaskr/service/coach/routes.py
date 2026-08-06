@@ -66,13 +66,13 @@ def _require_mentored_learner(app, user, learner_bid: str) -> None:
 
     Mirror of ``learning_portal.routes._require_mentored_learner``: admin/hr
     (scope ``all``) keep the exception; everyone else must be the learner's
-    own mentor (``LearnerProfile.mentor_bid == user.user_id``).
+    own mentor (``LearnerProfile.coach_bid == user.user_id``).
     """
     scope = visible_students_scope(app, user)
     if scope == "all":
         return
     profile = LearnerProfile.query.filter_by(learner_bid=learner_bid).first()
-    if profile is None or profile.mentor_bid != getattr(user, "user_id", None):
+    if profile is None or profile.coach_bid != getattr(user, "user_id", None):
         raise_param_error("coach: not the mentored learner")
 
 
@@ -103,7 +103,7 @@ def _require_checklist_view(app, user, learner_bid: str) -> None:
     user_id = getattr(user, "user_id", None)
     if profile is not None and profile.user_bid == user_id:
         return  # learner themself
-    if profile is not None and profile.mentor_bid == user_id:
+    if profile is not None and profile.coach_bid == user_id:
         return  # own mentor
     raise_param_error("coach: not allowed to view this checklist")
 

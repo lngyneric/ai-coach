@@ -2,6 +2,7 @@
 
 from __future__ import annotations
 
+import math
 import uuid
 from datetime import datetime, date
 
@@ -47,7 +48,7 @@ def _apply_students_scope(query, scope: str):
 
     - ``"all"``                    → no filter (admin / hr)
     - ``"department:<dept>"``      → ``LearnerProfile.department == dept``
-    - ``"mentored:<user_bid>"``    → ``LearnerProfile.mentor_bid == user_bid``
+    - ``"mentored:<user_bid>"``    → ``LearnerProfile.coach_bid == user_bid``
     - ``"self:<user_bid>"``        → ``LearnerProfile.user_bid == user_bid``
 
     Unknown / malformed scopes degrade to the empty filter (no rows) so a
@@ -59,8 +60,8 @@ def _apply_students_scope(query, scope: str):
         dept = scope.split(":", 1)[1]
         return query.filter(LearnerProfile.department == dept)
     if scope.startswith("mentored:"):
-        mentor_bid = scope.split(":", 1)[1]
-        return query.filter(LearnerProfile.mentor_bid == mentor_bid)
+        coach_bid = scope.split(":", 1)[1]
+        return query.filter(LearnerProfile.coach_bid == coach_bid)
     if scope.startswith("self:"):
         user_bid = scope.split(":", 1)[1]
         return query.filter(LearnerProfile.user_bid == user_bid)
@@ -74,14 +75,14 @@ def _require_mentored_learner(app, user, learner_bid: str) -> None:
     Rule (docs/P0-ACCEPTANCE-TEST-REPORT.md §六 D4 / §八.4):
     - admin / hr (scope ``all``) keep the exception and may act on any learner;
     - everyone else must be the learner's own mentor
-      (``LearnerProfile.mentor_bid == user.user_id``), i.e. the ``mentored:``
+      (``LearnerProfile.coach_bid == user.user_id``), i.e. the ``mentored:``
       data scope.
     """
     scope = visible_students_scope(app, user)
     if scope == "all":
         return
     profile = LearnerProfile.query.filter_by(learner_bid=learner_bid).first()
-    if profile is None or profile.mentor_bid != user.user_id:
+    if profile is None or profile.coach_bid != user.user_id:
         raise AppException("没有权限操作非带教学员的数据", PERMISSION_DENIED_CODE)
 
 
@@ -112,7 +113,7 @@ def register_learning_portal_routes(
                 "department": profile.department,
                 "position_name": profile.position_name,
                 "level": profile.level,
-                "mentor_bid": profile.mentor_bid,
+                "coach_bid": profile.coach_bid,
                 "supervisor_bid": profile.supervisor_bid,
                 "onboarding_date": str(profile.onboarding_date)
                 if profile.onboarding_date
@@ -139,7 +140,7 @@ def register_learning_portal_routes(
             "department",
             "position_name",
             "level",
-            "mentor_bid",
+            "coach_bid",
             "supervisor_bid",
         ):
             val = data.get(field)
@@ -204,8 +205,8 @@ def register_learning_portal_routes(
                 user_bid=user_bid, is_read=0
             ).count()
 
-        # Check if user is a mentor (has students assigned)
-        mentor_count = LearnerProfile.query.filter_by(mentor_bid=user_bid).count()
+        # Check if user is a coach (has students assigned)
+        mentor_count = LearnerProfile.query.filter_by(coach_bid=user_bid).count()
 
         return make_common_response(
             {
@@ -316,7 +317,7 @@ def register_learning_portal_routes(
         _require_permission(app, request.user, "view_all_students")
         user_bid = request.user.user_id
         students = (
-            LearnerProfile.query.filter_by(mentor_bid=user_bid)
+            LearnerProfile.query.filter_by(coach_bid=user_bid)
             .order_by(LearnerProfile.created_at.desc())
             .all()
         )
@@ -354,7 +355,7 @@ def register_learning_portal_routes(
     def mentor_pending_scores():
         _require_permission(app, request.user, "view_all_students")
         user_bid = request.user.user_id
-        students = LearnerProfile.query.filter_by(mentor_bid=user_bid).all()
+        students = LearnerProfile.query.filter_by(coach_bid=user_bid).all()
         learner_bids = [s.learner_bid for s in students]
         if not learner_bids:
             return make_common_response([])
@@ -401,7 +402,29 @@ def register_learning_portal_routes(
         # mentor. admin / hr (scope "all") keep the exception.
         _require_mentored_learner(app, request.user, item.learner_bid)
 
-        item.score = float(score) if score else None
+        # W3-3 scoring hardening:
+        # - ``score=0`` is a valid grade — the old `float(score) if score else None`
+        #   collapsed 0 into None (falsy), silently dropping a real score.
+        # - bounds come from the checklist template's ``max_score`` (default 5.0);
+        #   NaN / ±Inf and non-numeric payloads are rejected up front.
+        if score is None or str(score).strip() == "":
+            raise_param_error("score is required")
+        try:
+            score_value = float(score)
+        except (TypeError, ValueError):
+            raise_param_error("score must be a number")
+        if not math.isfinite(score_value):
+            raise_param_error("score must be a finite number")
+        checklist = MentorshipChecklist.query.get(item.item_bid)
+        max_score = (
+            float(checklist.max_score)
+            if checklist is not None and checklist.max_score is not None
+            else 5.0
+        )
+        if score_value < 0 or score_value > max_score:
+            raise_param_error(f"score must be between 0 and {max_score}")
+
+        item.score = score_value
         item.scored_by = user_bid
         item.comment = comment
         item.status = "scored"
@@ -482,7 +505,7 @@ def register_learning_portal_routes(
                         "department": s.department,
                         "position_name": s.position_name,
                         "level": s.level,
-                        "mentor_bid": s.mentor_bid,
+                        "coach_bid": s.coach_bid,
                         "status": s.status,
                         "onboarding_date": str(s.onboarding_date)
                         if s.onboarding_date
@@ -507,7 +530,7 @@ def register_learning_portal_routes(
             "department",
             "position_name",
             "level",
-            "mentor_bid",
+            "coach_bid",
             "supervisor_bid",
             "status",
         ):
@@ -542,7 +565,7 @@ def register_learning_portal_routes(
             department=data.get("department"),
             position_name=data.get("position_name"),
             level=data.get("level"),
-            mentor_bid=data.get("mentor_bid"),
+            coach_bid=data.get("coach_bid"),
             status="active",
         )
         db.session.add(profile)
@@ -936,10 +959,12 @@ def register_learning_portal_routes(
 
 
 def _recalc_phase_score(learner_bid: str) -> None:
-    """Recalculate sub-scores + total score for every in-progress phase.
+    """Recalculate sub-scores + total score for every active phase.
 
     P2-1: completes the previously half-finished implementation. For each
-    ``LearnerMentorship`` (learner_coaching) row in ``in_progress``:
+    ``LearnerMentorship`` (learner_coaching) row in ``pending``/``in_progress``
+    (W3-3: also cover ``pending`` so scoring always refreshes an active
+    phase):
 
     1. collect the learner's ``scored`` checklist items that map to this
        phase's ``coach_checklist`` templates (join on ``item_bid``);
@@ -956,9 +981,12 @@ def _recalc_phase_score(learner_bid: str) -> None:
                         + peer_review*w_review + coach*w_mentor``
        (weights from ``coach_phases``); ``None`` when every sub-score is absent.
     """
-    records = LearnerMentorship.query.filter_by(
-        learner_bid=learner_bid, status="in_progress"
-    ).all()
+    records = (
+        LearnerMentorship.query.filter(
+            LearnerMentorship.learner_bid == learner_bid,
+            LearnerMentorship.status.in_(("pending", "in_progress")),
+        ).all()
+    )
     for rec in records:
         phase = MentorshipPhase.query.get(rec.phase_bid)
         if not phase:

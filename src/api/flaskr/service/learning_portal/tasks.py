@@ -154,14 +154,14 @@ def score_reminder():
     reminded = set()
     for item in items:
         profile = LearnerProfile.query.get(item.learner_bid)
-        if profile and profile.mentor_bid not in reminded:
+        if profile and profile.coach_bid not in reminded:
             _notify(
-                user_bid=profile.mentor_bid,
+                user_bid=profile.coach_bid,
                 title="评分催办",
                 content="学员有待评分项已超过48小时，请及时评分",
                 notif_type="score_reminder",
             )
-            reminded.add(profile.mentor_bid)
+            reminded.add(profile.coach_bid)
 
     db.session.commit()
     return f"reminded {len(reminded)} mentors"

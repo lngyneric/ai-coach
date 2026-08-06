@@ -479,7 +479,7 @@ def test_admin_learners_dept_scope(app, test_client):
                     user_bid=lb,
                     employee_no=f"LP{i:04d}",
                     department=dept,
-                    mentor_bid=mentor,
+                    coach_bid=mentor,
                     status="active",
                     created_at=datetime(2026, 1, i),
                     updated_at=datetime(2026, 1, i),
@@ -501,7 +501,7 @@ def test_admin_learners_dept_scope(app, test_client):
 
 
 def test_admin_learners_mentored_scope(app, test_client):
-    """D3: coach only sees learners they mentor (mentor_bid == own user_bid)."""
+    """D3: coach only sees learners they mentor (coach_bid == own user_bid)."""
     from flaskr.service.learning_portal.models import LearnerProfile
 
     coach_bid = "usr-step9-coach2"
@@ -527,7 +527,7 @@ def test_admin_learners_mentored_scope(app, test_client):
                     user_bid=lb,
                     employee_no=f"M{i:04d}",
                     department="销售本部",
-                    mentor_bid=mentor,
+                    coach_bid=mentor,
                     status="active",
                     created_at=datetime(2026, 1, i),
                     updated_at=datetime(2026, 1, i),
@@ -544,7 +544,7 @@ def test_admin_learners_mentored_scope(app, test_client):
     assert payload["code"] == 0, payload
     data = payload["data"]
     assert data["total"] == 2, payload
-    assert all(item["mentor_bid"] == coach_bid for item in data["items"])
+    assert all(item["coach_bid"] == coach_bid for item in data["items"])
 
 
 def test_admin_learners_all_scope(app, test_client):
@@ -595,7 +595,7 @@ def test_admin_learners_all_scope(app, test_client):
 # ═══════════════════════════════════════════════════════════════════════
 #  P0 step 10 — D4: score / start ownership (coach horizontal privilege
 #  escalation). A coach may only score / start a phase for learners they
-#  mentor (LearnerProfile.mentor_bid == own user_bid); admin/hr (scope=all)
+#  coach (LearnerProfile.coach_bid == own user_bid); admin/hr (scope=all)
 #  keep the exception.
 # ═══════════════════════════════════════════════════════════════════════
 
@@ -614,7 +614,7 @@ def _reset_d4_tables(app):
     db.session.commit()
 
 
-def _seed_mentored_learner(app, learner_bid, mentor_bid, record_bid):
+def _seed_mentored_learner(app, learner_bid, coach_bid, record_bid):
     """Insert one LearnerProfile + one submitted checklist item for a learner."""
     from flaskr.service.learning_portal.models import (
         LearnerChecklistItem,
@@ -627,7 +627,7 @@ def _seed_mentored_learner(app, learner_bid, mentor_bid, record_bid):
             user_bid=learner_bid,
             employee_no="D4LP01",
             department="培训部",
-            mentor_bid=mentor_bid,
+            coach_bid=coach_bid,
             status="active",
             created_at=datetime(2026, 1, 1),
             updated_at=datetime(2026, 1, 1),
@@ -648,7 +648,7 @@ def _seed_mentored_learner(app, learner_bid, mentor_bid, record_bid):
 
 
 def test_score_ownership_allows_own_mentored(app, test_client):
-    """D4: coach may score a learner they mentor (mentor_bid == own user_bid)."""
+    """D4: coach may score a learner they mentor (coach_bid == own user_bid)."""
     coach_bid = "usr-d4-coach-ok"
     learner_bid = "usr-d4-lp-ok"
     record_bid = "rec-d4-ok"
@@ -733,7 +733,7 @@ def test_start_mentorship_denies_non_mentored(app, test_client):
                 user_bid=learner_bid,
                 employee_no="D4LP02",
                 department="培训部",
-                mentor_bid="usr-other-coach",
+                coach_bid="usr-other-coach",
                 status="active",
                 created_at=datetime(2026, 1, 1),
                 updated_at=datetime(2026, 1, 1),
