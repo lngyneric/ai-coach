@@ -30,6 +30,9 @@ class MentorshipPhase(db.Model):
     phase_bid = db.Column(db.String(32), primary_key=True)
     name = db.Column(db.String(100), nullable=False)
     code = db.Column(db.String(20), nullable=False)
+    # Course (shifu) bid linked to this phase. Nullable for backward compat;
+    # when set, phase notifications build WeCom textcard links as /c/{shifu_bid}.
+    shifu_bid = db.Column(db.String(32), nullable=True)
     description = db.Column(db.Text, nullable=True)
     sort_order = db.Column(db.Integer, default=0)
     duration_days = db.Column(db.Integer, default=60)
@@ -153,7 +156,11 @@ class TaskNotification(db.Model):
     notif_type = db.Column(db.String(20), nullable=True)
     related_bid = db.Column(db.String(32), nullable=True)
     is_read = db.Column(db.Integer, default=0)
-    created_at = db.Column(db.DateTime)
+    # server_default matches the real column DEFAULT CURRENT_TIMESTAMP. Without
+    # it the ORM emits an explicit NULL on INSERT (overriding the DB default),
+    # so task-created rows end up with created_at IS NULL — breaking the
+    # same-day dedup (phase_deadline_reminder) and the notifications ordering.
+    created_at = db.Column(db.DateTime, server_default=db.func.now())
 
 
 class CoachSession(db.Model):

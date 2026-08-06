@@ -73,11 +73,21 @@ def phase_deadline_reminder():
         if remaining in (7, 3, 1):
             profile = LearnerProfile.query.get(rec.learner_bid)
             if profile:
-                existing = TaskNotification.query.filter_by(
-                    user_bid=profile.user_bid,
-                    notif_type="phase_end",
-                    related_bid=rec.record_bid,
-                    created_at=date.today(),
+                # Card link bid: use the phase's course (shifu) bid when set so
+                # the WeCom textcard URL /c/{related_bid} points at a real course;
+                # fall back to the coaching record bid (legacy behavior).
+                card_bid = (phase.shifu_bid or "").strip() or rec.record_bid
+                today = date.today()
+                # Dedup within the same day. Use a half-open [today, tomorrow)
+                # window instead of created_at == today: the latter binds a DATE
+                # and MySQL coerces it to midnight, so real rows (e.g. 08:00)
+                # never matched and every run re-sent.
+                existing = TaskNotification.query.filter(
+                    TaskNotification.user_bid == profile.user_bid,
+                    TaskNotification.notif_type == "phase_end",
+                    TaskNotification.related_bid == card_bid,
+                    TaskNotification.created_at >= today,
+                    TaskNotification.created_at < today + timedelta(days=1),
                 ).first()
                 if not existing:
                     _notify(
@@ -85,7 +95,7 @@ def phase_deadline_reminder():
                         title="阶段截止提醒",
                         content=f"你的阶段「{phase.name}」还剩 {remaining} 天",
                         notif_type="phase_end",
-                        related_bid=rec.record_bid,
+                        related_bid=card_bid,
                     )
                     db.session.commit()
 
