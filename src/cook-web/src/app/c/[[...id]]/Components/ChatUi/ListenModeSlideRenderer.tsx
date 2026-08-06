@@ -1946,7 +1946,6 @@ const ListenModeSlideRenderer = ({
             : desktopAskOverlay
           : null}
         <ListenSlide
-          // playerAlwaysVisible={true}
           className={cn(
             'h-full w-full listen-slide-root',
             isMobileFullscreen && 'listen-slide-root--landscape',
