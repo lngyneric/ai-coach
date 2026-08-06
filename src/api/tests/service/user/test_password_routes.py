@@ -1,5 +1,7 @@
 import json
 
+import pytest
+
 
 def _post_json(client, path: str, payload: dict, headers: dict | None = None):
     resp = client.post(
@@ -81,6 +83,9 @@ def test_set_password_requires_login_and_verification_code(test_client, app):
     assert body2["code"] == 1017  # server.user.passwordAlreadySet
 
 
+@pytest.mark.skip(
+    reason="login_password endpoint removed in AAD login migration; login simplified to /login_employee"
+)
 def test_password_login_after_setting_password(test_client, app):
     import flaskr.service.user.phone_flow as phone_flow
 
@@ -113,6 +118,9 @@ def test_password_login_after_setting_password(test_client, app):
     assert body["data"]["userInfo"]["mobile"] == phone
 
 
+@pytest.mark.skip(
+    reason='login_sms endpoint removed (login simplified to AAD employee login)'
+)
 def test_sms_login_route_logs_in_with_phone_code(test_client):
     phone = "15500003333"
 

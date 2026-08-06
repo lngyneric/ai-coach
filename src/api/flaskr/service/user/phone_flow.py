@@ -202,6 +202,17 @@ def migrate_user_study_record(
 
 
 def init_first_course(app: Flask, user_id: str) -> bool:
+    """Bootstrap the first verified account as creator+operator (demo only).
+
+    Gated by ``ADMIN_LOGIN_GRANT_CREATOR_WITH_DEMO`` (default ``False``):
+    when the flag is off this returns ``False`` without touching any roles,
+    so visitor paths (phone/email/google) no longer implicitly grant
+    creator/operator (P0-REVIEW-PERMISSION-AAD A3). When the flag is on
+    (demo/staging) the original first-account bootstrap runs unchanged.
+    """
+    if not app.config.get("ADMIN_LOGIN_GRANT_CREATOR_WITH_DEMO", False):
+        return False
+
     # Ensure pending state changes are visible to subsequent queries
     db.session.flush()
 
@@ -286,6 +297,12 @@ def verify_phone_code(
 
     if FIX_CHECK_CODE is None:
         configure_fix_check_code(app.config.get("UNIVERSAL_VERIFICATION_CODE"))
+
+    # AAD strong-login control: phone login is off unless explicitly enabled
+    # (PHONE_LOGIN_ENABLED, default False). The phone provider has no HTTP
+    # route anymore; this is defense-in-depth for any restored channel.
+    if not app.config.get("PHONE_LOGIN_ENABLED", False):
+        raise_error("server.auth.phoneDisabled")
 
     code_key = app.config["REDIS_KEY_PREFIX_PHONE_CODE"] + phone
     if code != FIX_CHECK_CODE:

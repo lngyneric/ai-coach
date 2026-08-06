@@ -93,6 +93,11 @@ def test_google_unverified_email_does_not_consume_first_account_bootstrap(
 
     with app.app_context():
         _reset_user_auth_tables()
+        # Explicitly enable the demo bootstrap flag so this test can verify
+        # the first-account semantics (an unverified email must NOT consume
+        # the first-account slot). The default is off under AAD strong-login
+        # control (P0-REVIEW-PERMISSION-AAD A3).
+        app.config["ADMIN_LOGIN_GRANT_CREATOR_WITH_DEMO"] = True
         try:
             first_result = _run_google_callback(
                 app,
@@ -137,6 +142,8 @@ def test_google_unverified_email_does_not_consume_first_account_bootstrap(
             assert first_user.is_creator == 0
             assert first_user.is_operator == 0
         finally:
+            # Restore the default so the session-scoped app is not polluted.
+            app.config["ADMIN_LOGIN_GRANT_CREATOR_WITH_DEMO"] = False
             _reset_user_auth_tables()
 
 

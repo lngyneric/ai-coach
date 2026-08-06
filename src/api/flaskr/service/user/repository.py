@@ -10,6 +10,7 @@ from dataclasses import dataclass, field
 from typing import Any, Dict, List, Optional, Tuple
 
 from flask import Flask
+from sqlalchemy import text
 
 from flaskr.dao import db
 from flaskr.service.common.dtos import UserInfo
@@ -407,6 +408,61 @@ def ensure_user_aggregate(
     return aggregate, created
 
 
+DEFAULT_ROLE_LEARNER = "role-learner"
+
+
+def assign_default_role(
+    app: Flask,
+    user_bid: str,
+    role_bid: str = DEFAULT_ROLE_LEARNER,
+) -> bool:
+    """Idempotently assign a 5-level role to a user (default ``role-learner``).
+
+    New users get a default learner role so they are never role-less
+    (P0-REVIEW-PERMISSION-AAD A2 + D14: "每人至少一个角色"). Existing
+    assignments are preserved (the SELECT guard + UNIQUE ``uk_user_role``
+    make the insert idempotent across MySQL and SQLite). If
+    ``user_role_assignments`` is missing (bare DB before P0 DDL), the
+    assignment is skipped and ``False`` returned.
+
+    Returns ``True`` when a new assignment row was inserted, else ``False``.
+    """
+    user_bid = str(user_bid or "").strip()
+    role_bid = str(role_bid or "").strip()
+    if not user_bid or not role_bid:
+        return False
+
+    try:
+        existing = db.session.execute(
+            text(
+                "SELECT 1 FROM user_role_assignments "
+                "WHERE user_bid = :ub AND role_bid = :rb"
+            ),
+            {"ub": user_bid, "rb": role_bid},
+        ).first()
+        if existing:
+            return False
+
+        db.session.execute(
+            text(
+                "INSERT INTO user_role_assignments (user_bid, role_bid) "
+                "VALUES (:ub, :rb)"
+            ),
+            {"ub": user_bid, "rb": role_bid},
+        )
+        return True
+    except Exception as exc:  # noqa: BLE001 - best-effort, must not break login
+        # user_role_assignments / coach_roles may be missing on bare DBs
+        # (before the P0 DDL is applied). Default-role assignment is
+        # best-effort: log and continue so authentication never fails here.
+        logger.warning(
+            "assign_default_role skipped (table missing?): user_bid=%s err=%s",
+            user_bid,
+            exc,
+        )
+        return False
+
+
 def ensure_user_for_identifier(
     app: Flask,
     *,
@@ -414,7 +470,12 @@ def ensure_user_for_identifier(
     identifier: str,
     defaults: Optional[Dict[str, Any]] = None,
 ) -> Tuple[UserAggregate, bool]:
-    """Find or create a user aggregate bound to a provider identifier."""
+    """Find or create a user aggregate bound to a provider identifier.
+
+    When the user is created (``created=True``) a default ``role-learner``
+    assignment is written to ``user_role_assignments`` (idempotent), so a
+    newly authenticated account always has at least one 5-level role.
+    """
 
     defaults = defaults or {}
     normalized = _normalize_identifier(provider, identifier)
@@ -447,6 +508,8 @@ def ensure_user_for_identifier(
         "birthday": defaults.get("birthday"),
     }
     create_user_entity(user_bid=user_bid, **create_defaults)
+    db.session.flush()
+    assign_default_role(app, user_bid, DEFAULT_ROLE_LEARNER)
     db.session.flush()
     aggregate = load_user_aggregate(user_bid)
     if not aggregate:

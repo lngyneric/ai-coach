@@ -285,10 +285,10 @@ ENV_VARS: Dict[str, EnvVar] = {
     ),
     "LOGIN_METHODS_ENABLED": EnvVar(
         name="LOGIN_METHODS_ENABLED",
-        default="phone",
+        default="employee",
         description="""Login methods exposed to users.
 Values: "phone" | "email" | "google" | "employee" combinations (comma-separated)
-Default: "phone".""",
+Default: "employee" (AAD strong-login control).""",
         group="frontend",
     ),
     "AAD_AUTH_URL": EnvVar(
@@ -335,6 +335,44 @@ Default: "phone".""",
             "When true, employee-login users outside both whitelists have "
             "their existing operator/creator grants revoked on next login. "
             "Default false preserves existing grants (safe migration)."
+        ),
+        group="auth",
+    ),
+    "EMAIL_DOMAIN_ALLOWLIST": EnvVar(
+        name="EMAIL_DOMAIN_ALLOWLIST",
+        default=[],
+        type=list,
+        example="sysmex.internal",
+        description=(
+            "Comma- or space-separated email domains allowed to create/log in "
+            "via the email (AAD mailbox) channel. Empty default = allow all "
+            "domains (compat). When set, only matching domains are accepted "
+            "(AAD-LOGIN-CONTROL-DESIGN §二.1)."
+        ),
+        group="auth",
+    ),
+    "PHONE_LOGIN_ENABLED": EnvVar(
+        name="PHONE_LOGIN_ENABLED",
+        default=False,
+        type=bool,
+        example="false",
+        description=(
+            "Master switch for the phone (SMS) login channel. Default false "
+            "keeps the phone channel disabled under AAD strong-login control "
+            "(AAD-LOGIN-CONTROL-DESIGN §二.1); set true only for legacy/local "
+            "deployments that still need phone login."
+        ),
+        group="auth",
+    ),
+    "AAD_BYPASS": EnvVar(
+        name="AAD_BYPASS",
+        default=False,
+        type=bool,
+        example="false",
+        description=(
+            "When true, skip the AAD server round-trip and accept any password "
+            "for employee login. Dev/local only (local admin roles verify "
+            "locally); MUST be false/0 in production."
         ),
         group="auth",
     ),
@@ -882,13 +920,15 @@ Generate secure key: python -c "import secrets; print(secrets.token_urlsafe(32))
     ),
     "ADMIN_LOGIN_GRANT_CREATOR_WITH_DEMO": EnvVar(
         name="ADMIN_LOGIN_GRANT_CREATOR_WITH_DEMO",
-        default=True,
+        default=False,
         type=bool,
         description=(
             "When enabled, users logging in from the admin interface are "
             "automatically marked as creators and granted demo course "
-            "permissions (DEMO_SHIFU_BID / DEMO_EN_SHIFU_BID if configured). "
-            "Intended for demo and staging environments only."
+            "permissions (DEMO_SHIFU_BID / DEMO_EN_SHIFU_BID if configured), "
+            "and the first-account bootstrap (init_first_course) runs. "
+            "Intended for demo and staging environments only; default False "
+            "under AAD strong-login control (A7)."
         ),
         group="auth",
     ),

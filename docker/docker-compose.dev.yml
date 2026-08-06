@@ -16,6 +16,8 @@ services:
       SQLALCHEMY_DATABASE_URI: mysql://root:ai-shifu@ai-shifu-mysql-dev:3306/ai-shifu_dev?charset=utf8mb4
       AAD_BYPASS: "1"
       AAD_AUTH_URL: ${AAD_AUTH_URL:-}
+      EMAIL_DOMAIN_ALLOWLIST: ${EMAIL_DOMAIN_ALLOWLIST:-sysmex.internal}
+      PHONE_LOGIN_ENABLED: ${PHONE_LOGIN_ENABLED:-false}
       REDIS_HOST: ai-shifu-redis-dev
       REDIS_PORT: 6379
       SKIP_LOAD_DOTENV: "1"
@@ -87,8 +89,8 @@ services:
       - I18N_ROOT=/app/src/i18n
       - NEXT_TELEMETRY_DISABLED=1
       - NODE_OPTIONS=--max-old-space-size=2048
-      - NEXT_PUBLIC_LOGIN_METHODS_ENABLED=phone
-      - NEXT_PUBLIC_DEFAULT_LOGIN_METHOD=phone
+      - NEXT_PUBLIC_LOGIN_METHODS_ENABLED=employee
+      - NEXT_PUBLIC_DEFAULT_LOGIN_METHOD=employee
       - NEXT_PUBLIC_BRAND_NAME=${BRAND_NAME:-AI-Shifu}
     depends_on:
       - ai-shifu-api-dev

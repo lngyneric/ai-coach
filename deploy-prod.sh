@@ -23,6 +23,14 @@ echo "=== 2. 安全检查 ==="
 if grep -q "^AAD_BYPASS=\"1\"\|^AAD_BYPASS=1" docker/.env 2>/dev/null; then
     echo "  ⚠️  WARNING: AAD_BYPASS=1 (生产环境应关闭)"
 fi
+# 检查 ADMIN_LOGIN_GRANT_CREATOR_WITH_DEMO（生产应关闭 demo 自动授权）
+if grep -q "^ADMIN_LOGIN_GRANT_CREATOR_WITH_DEMO=\"True\"\|^ADMIN_LOGIN_GRANT_CREATOR_WITH_DEMO=True" docker/.env 2>/dev/null; then
+    echo "  ⚠️  WARNING: ADMIN_LOGIN_GRANT_CREATOR_WITH_DEMO=True (生产应关闭)"
+fi
+# 检查 PHONE_LOGIN_ENABLED（生产默认关闭手机登录通道）
+if grep -q "^PHONE_LOGIN_ENABLED=\"true\"\|^PHONE_LOGIN_ENABLED=true" docker/.env 2>/dev/null; then
+    echo "  ⚠️  WARNING: PHONE_LOGIN_ENABLED=true (生产建议关闭手机登录)"
+fi
 # 检查 SECRET_KEY 是否为默认值
 if grep -q "SECRET_KEY=\"ai-shifu\"\|SECRET_KEY=ai-shifu" docker/.env 2>/dev/null; then
     echo "  ⚠️  WARNING: SECRET_KEY 为默认值 (应改为随机密钥)"
