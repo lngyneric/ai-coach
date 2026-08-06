@@ -120,6 +120,7 @@ services:
       - ./management-dashboard.html:/usr/share/nginx/html/management-dashboard.html:ro
       - ./subagent-dashboard.html:/usr/share/nginx/html/subagent-dashboard.html:ro
       - ./subagent-status.json:/usr/share/nginx/html/subagent-status.json:ro
+      - /home/sysmex/worktrees/coach-lab/docs:/usr/share/nginx/html/artifacts:ro
       - ./dashboard-engine.html:/usr/share/nginx/html/dashboard-engine.html:ro
       - ./dashboard.html:/usr/share/nginx/html/dashboard.html:ro
       - ./design-system.css:/usr/share/nginx/html/design-system.css:ro

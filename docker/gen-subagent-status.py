@@ -87,61 +87,67 @@ def collect_artifacts() -> list:
     return arts
 
 
-def collect_pi_subagent_calls() -> list:
-    """解析 Pi 会话 jsonl 中调用的 reasonix subagent 记录"""
+def collect_pi_subagent_calls(running_map: dict) -> list:
+    """解析 Pi 会话 jsonl 中 nohup reasonix subagent run 的启动记录。
+
+    Pi 用 `nohup reasonix subagent run <name> ... &` 启动 subagent（无 PID 回显），
+    这里用「启动时间戳 HH:MM」与 ps 进程启动时间做匹配，推断该次拉起的
+    subagent 是否仍在运行（running）还是已完成/休眠（done）。
+    running_map: {pid: "HH:MM"}
+    """
     calls = []
     if not PI_SESSIONS.exists():
         return calls
-    for proj_dir in PI_SESSIONS.iterdir():
-        if not proj_dir.is_dir():
-            continue
-        for f in sorted(proj_dir.glob("*.jsonl"), key=lambda p: p.stat().st_mtime, reverse=True)[:3]:
-            try:
-                for line in open(f, encoding="utf-8", errors="ignore"):
+    latest = sorted(PI_SESSIONS.glob("*/*.jsonl"), key=lambda p: p.stat().st_mtime, reverse=True)[:1]
+    for f in latest:
+        try:
+            for line in open(f, encoding="utf-8", errors="ignore"):
+                try:
                     d = json.loads(line)
-            except Exception:
-                continue
-            break  # 只取最新一个会话文件（已排序取第一个）
-        # 重新精确解析最新会话
-        latest = sorted(proj_dir.glob("*.jsonl"), key=lambda p: p.stat().st_mtime, reverse=True)[:1]
-        for f in latest:
-            try:
-                for line in open(f, encoding="utf-8", errors="ignore"):
-                    try:
-                        d = json.loads(line)
-                    except Exception:
-                        continue
-                    ts = d.get("timestamp", "")
-                    msg = d.get("message", {})
-                    for c in msg.get("content", []):
-                        if c.get("type") == "toolCall" and c.get("name") == "bash":
-                            cmd = c.get("arguments", {}).get("command", "")
-                            if "reasonix subagent run" in cmd:
-                                m = re.search(r"reasonix subagent run ([a-z0-9-]+)", cmd)
-                                calls.append({
-                                    "ts": ts[:16],
-                                    "subagent": m.group(1) if m else "?",
-                                    "cmd": " ".join(cmd.split())[:150],
-                                    "session_file": f.name[:30],
-                                })
-            except Exception:
-                continue
+                except Exception:
+                    continue
+                ts = d.get("timestamp", "")
+                msg = d.get("message", {})
+                for c in msg.get("content", []):
+                    if c.get("type") == "toolCall" and c.get("name") == "bash":
+                        cmd = c.get("arguments", {}).get("command", "")
+                        if "reasonix subagent run" in cmd and "nohup" in cmd:
+                            m = re.search(r"reasonix subagent run ([a-z0-9-]+)", cmd)
+                            name = m.group(1) if m else "?"
+                            hhmm = ts[11:16] if len(ts) >= 16 else ""
+                            # 匹配运行中的进程（同 HH:MM 且命令含 name）
+                            matched = None
+                            for pid, (pstart, pcmd) in running_map.items():
+                                if pstart == hhmm and name in pcmd:
+                                    matched = pid
+                                    break
+                            calls.append({
+                                "ts": ts[:16],
+                                "subagent": name,
+                                "status": "running" if matched else "done",
+                                "pid": matched or "",
+                                "cmd": " ".join(cmd.split())[:150],
+                            })
+        except Exception:
+            continue
     return calls
 
+
 def main():
+    running_map = {}
+    for r in get_running_subagents():
+        running_map[r["pid"]] = (r["start"], r["cmd"])
     status = {
         "generated_at": now(),
-        "running_subagents": get_running_subagents(),
+        "running_subagents": list(running_map.values() and [{
+            "pid": pid, "start": start, "cmd": cmd,
+        } for pid, (start, cmd) in running_map.items()]),
         "sessions": collect_sessions(),
         "artifacts": collect_artifacts(),
-        "pi_subagent_calls": collect_pi_subagent_calls(),
+        "pi_subagent_calls": collect_pi_subagent_calls(running_map),
     }
     STATUS_OUT.write_text(json.dumps(status, ensure_ascii=False, indent=2))
     print(f"✅ {STATUS_OUT} ({len(status['running_subagents'])} running, {len(status['sessions'])} sessions, {len(status['artifacts'])} arts, {len(status['pi_subagent_calls'])} pi calls)")
 
 if __name__ == "__main__":
     main()
-
-if __name__ == "__main__" and os.environ.get("SUBAGENT_CRON") == "1":
-    import sys
-    sys.path.insert(0, os.path.dirname(os.path.abspath(__file__)))

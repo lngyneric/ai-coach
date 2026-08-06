@@ -89,8 +89,12 @@ function render(d) {
 
   // pi calls
   const pc = d.pi_subagent_calls || [];
+  const runCount = pc.filter(x => x.status === 'running').length;
   document.getElementById('pi-calls').innerHTML = pc.length
-    ? pc.slice().reverse().map(x => `<div class="art">🤖 <b>${x.subagent}</b> · ${x.ts} · <span style="font-size:.72rem;color:var(--muted)">${x.cmd.slice(0, 70)}</span></div>`).join('')
+    ? `<div style="font-size:.75rem;color:var(--muted);margin-bottom:8px">累计拉起 ${pc.length} 次 · 运行中 ${runCount} · 完成/休眠 ${pc.length - runCount}</div>` +
+      pc.slice().reverse().map(x => `<div class="art">🤖 <b>${x.subagent}</b> · ${x.ts}
+        ${x.status === 'running' ? '<span class="tag progress">● 运行中' + (x.pid ? ' PID ' + x.pid : '') + '</span>' : '<span class="tag stopped">✓ 完成</span>'}
+        <span style="font-size:.72rem;color:var(--muted)">${x.cmd.slice(0, 60)}</span></div>`).join('')
     : `<div class="empty">无 Pi subagent 调用记录</div>`;
 
   // sessions
@@ -105,10 +109,11 @@ function render(d) {
   // artifacts
   const a = d.artifacts || [];
   document.getElementById('artifacts').innerHTML = a.length
-    ? a.map(x => `<div class="art">📄 <b>${x.name}</b> · ${(x.size/1024).toFixed(1)}KB · ${x.mtime}</div>`).join('')
+    ? a.map(x => `<div class="art">📄 <b>${x.name}</b> · ${(x.size/1024).toFixed(1)}KB · ${x.mtime}
+        <a href="/artifacts/${x.name}" download style="float:right;font-size:.72rem;color:var(--brand);text-decoration:underline">⬇ 下载</a></div>`).join('')
     : `<div class="empty">无产物</div>`;
 
-  document.getElementById('gen').textContent = `生成时间：${d.generated_at || '-'} · 运行中 ${r.length} 个 · 会话 ${s.length} 个 · Pi 调用 ${(d.pi_subagent_calls || []).length} 次`;
+  document.getElementById('gen').textContent = `生成时间：${d.generated_at || '-'} · 运行中 ${r.length} 个 · 会话 ${s.length} 个 · Pi 累计拉起 ${(d.pi_subagent_calls || []).length} 次`;
 }
 
 load();
