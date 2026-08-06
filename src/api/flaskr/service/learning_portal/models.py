@@ -64,6 +64,36 @@ class LearnerMentorship(db.Model):
     total_score = db.Column(db.Numeric(5, 2), nullable=True)
     retry_count = db.Column(db.Integer, default=0)
     remark = db.Column(db.Text, nullable=True)
+    # W3 task 2 — compliance checkpoints (sign / sync / improvement).
+    # The phase is only marked `completed` when sign + sync + improvement
+    # are all satisfied; see `checklist_three_state` / `maybe_complete_checklist`.
+    sign_at = db.Column(db.DateTime, nullable=True)
+    signed_by = db.Column(db.String(32), nullable=True)
+    sync_at = db.Column(db.DateTime, nullable=True)
+    synced_by = db.Column(db.String(32), nullable=True)
+    sync_note = db.Column(db.Text, nullable=True)
+    created_at = db.Column(db.DateTime)
+    updated_at = db.Column(db.DateTime)
+
+
+class ChecklistImprovement(db.Model):
+    """W3 task 2 — improvement items found during the coach sync meeting.
+
+    One ``coach_checklist_improvements`` row per action agreed at the sync
+    (action + owner + due date). A coaching record's improvement checkpoint
+    is satisfied when none of its items is left ``pending``.
+    """
+
+    __tablename__ = "coach_checklist_improvements"
+
+    improvement_bid = db.Column(db.String(32), primary_key=True)
+    record_bid = db.Column(db.String(32), nullable=False, index=True)
+    action = db.Column(db.String(500), nullable=False)
+    owner_bid = db.Column(db.String(32), nullable=True)
+    owner_name = db.Column(db.String(100), nullable=True)
+    due_at = db.Column(db.DateTime, nullable=True)
+    status = db.Column(db.String(20), default="pending")
+    created_by = db.Column(db.String(32), nullable=True)
     created_at = db.Column(db.DateTime)
     updated_at = db.Column(db.DateTime)
 

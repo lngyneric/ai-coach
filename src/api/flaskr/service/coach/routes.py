@@ -18,6 +18,7 @@ commits, so a broken gateway never blocks session persistence.
 
 from __future__ import annotations
 
+import uuid
 from datetime import datetime
 from typing import Any
 
@@ -26,10 +27,16 @@ from flask import Flask, request
 from flaskr.dao import db
 from flaskr.framework.plugin.inject import inject
 from flaskr.route.common import make_common_response
-from flaskr.service.coach.permissions import has_permission
+from flaskr.service.coach.permissions import has_permission, visible_students_scope
 from flaskr.service.coach.summary import build_ai_summary_markdown, generate_ai_summary
 from flaskr.service.common.models import raise_param_error
-from flaskr.service.learning_portal.models import CoachSession
+from flaskr.service.learning_portal.models import (
+    CoachSession,
+    LearnerMentorship,
+    LearnerProfile,
+    ChecklistImprovement,
+    MentorshipPhase,
+)
 
 CREATE_SESSION_PERMISSION = "create_session"
 
@@ -52,6 +59,93 @@ def _require_coach_write(app, user) -> None:
     """Raise when the user may not create/edit coaching sessions."""
     if not has_permission(app, user, CREATE_SESSION_PERMISSION):
         raise_param_error("coach: create_session permission required")
+
+
+def _require_mentored_learner(app, user, learner_bid: str) -> None:
+    """Raise unless ``user`` may act on ``learner_bid``.
+
+    Mirror of ``learning_portal.routes._require_mentored_learner``: admin/hr
+    (scope ``all``) keep the exception; everyone else must be the learner's
+    own mentor (``LearnerProfile.mentor_bid == user.user_id``).
+    """
+    scope = visible_students_scope(app, user)
+    if scope == "all":
+        return
+    profile = LearnerProfile.query.filter_by(learner_bid=learner_bid).first()
+    if profile is None or profile.mentor_bid != getattr(user, "user_id", None):
+        raise_param_error("coach: not the mentored learner")
+
+
+def _require_learner_self(app, user, learner_bid: str) -> None:
+    """Raise unless ``user`` is the learner themself (for sign-off).
+
+    admin/hr (scope ``all``) keep the exception (consistent with the P0 data
+    scope); any other caller must own the learner profile.
+    """
+    scope = visible_students_scope(app, user)
+    if scope == "all":
+        return
+    profile = LearnerProfile.query.filter_by(learner_bid=learner_bid).first()
+    if profile is None or profile.user_bid != getattr(user, "user_id", None):
+        raise_param_error("coach: only the learner can sign-off")
+
+
+def _require_checklist_view(app, user, learner_bid: str) -> None:
+    """Raise unless ``user`` may view the checklist progress.
+
+    Allowed viewers: admin/hr (scope ``all``), the learner's own mentor, or
+    the learner themself.
+    """
+    scope = visible_students_scope(app, user)
+    if scope == "all":
+        return
+    profile = LearnerProfile.query.filter_by(learner_bid=learner_bid).first()
+    user_id = getattr(user, "user_id", None)
+    if profile is not None and profile.user_bid == user_id:
+        return  # learner themself
+    if profile is not None and profile.mentor_bid == user_id:
+        return  # own mentor
+    raise_param_error("coach: not allowed to view this checklist")
+
+
+def _get_coaching_record(record_bid: str) -> LearnerMentorship:
+    record = LearnerMentorship.query.filter_by(record_bid=record_bid).first()
+    if record is None:
+        raise_param_error("coach: coaching record not found")
+    return record
+
+
+def _checklist_view_payload(record: LearnerMentorship) -> dict[str, Any]:
+    """Assemble the three-state progress + improvements payload."""
+    from flaskr.service.learning_portal.tasks import checklist_three_state
+
+    phase = MentorshipPhase.query.get(record.phase_bid)
+    improvements = (
+        ChecklistImprovement.query.filter_by(record_bid=record.record_bid)
+        .order_by(ChecklistImprovement.created_at.asc())
+        .all()
+    )
+    state = checklist_three_state(record)
+    return {
+        "record_bid": record.record_bid,
+        "learner_bid": record.learner_bid,
+        "phase_bid": record.phase_bid,
+        "phase_name": phase.name if phase else None,
+        "status": record.status,
+        "checkpoints": state,
+        "improvements": [
+            {
+                "improvement_bid": i.improvement_bid,
+                "action": i.action,
+                "owner_bid": i.owner_bid,
+                "owner_name": i.owner_name,
+                "due_at": str(i.due_at) if i.due_at else None,
+                "status": i.status,
+                "created_by": i.created_by,
+            }
+            for i in improvements
+        ],
+    }
 
 
 def _apply_editable_fields(session: CoachSession, payload: dict[str, Any]) -> None:
@@ -191,6 +285,158 @@ def register_coach_routes(app: Flask, path_prefix: str = "/api/coach") -> None:
                 "summary_generated": bool(session.ai_summary),
                 "raw": parsed,
             }
+        )
+
+    # ------------------------------------------------------------------
+    # W3 task 2 — compliance checkpoints (sign / sync / improvement)
+    # ------------------------------------------------------------------
+
+    @app.route(path_prefix + "/checklist/<record_bid>", methods=["GET"])
+    def get_checklist_status(record_bid: str):
+        """Return the three-state compliance progress of a coaching record.
+
+        Viewable by the coach (mentor) or the learner themself.
+        """
+        record = _get_coaching_record(record_bid)
+        _require_checklist_view(app, request.user, record.learner_bid)
+        return make_common_response(_checklist_view_payload(record))
+
+    @app.route(path_prefix + "/checklist/<record_bid>/sign", methods=["POST"])
+    def sign_checklist(record_bid: str):
+        """Learner signs off that they understood / agree (idempotent).
+
+        Only the learner themself may sign. A second POST keeps the original
+        timestamp and simply returns the current state.
+        """
+        record = _get_coaching_record(record_bid)
+        _require_learner_self(app, request.user, record.learner_bid)
+
+        if record.sign_at is None:
+            record.sign_at = datetime.now()
+            record.signed_by = getattr(request.user, "user_id", None)
+            record.updated_at = datetime.now()
+        from flaskr.service.learning_portal.tasks import maybe_complete_checklist
+
+        maybe_complete_checklist(record)
+        db.session.commit()
+        return make_common_response(_checklist_view_payload(record))
+
+    @app.route(path_prefix + "/checklist/<record_bid>/sync", methods=["POST"])
+    def sync_checklist(record_bid: str):
+        """Coach records the face-to-face sync (confirmation + note, idempotent)."""
+        _require_coach_write(app, request.user)
+        record = _get_coaching_record(record_bid)
+        _require_mentored_learner(app, request.user, record.learner_bid)
+
+        payload = request.get_json(silent=True) or {}
+        note = str(payload.get("note") or "").strip()
+        if record.sync_at is None:
+            record.sync_at = datetime.now()
+            record.synced_by = getattr(request.user, "user_id", None)
+        if note:
+            record.sync_note = note
+        record.updated_at = datetime.now()
+
+        from flaskr.service.learning_portal.tasks import maybe_complete_checklist
+
+        maybe_complete_checklist(record)
+        db.session.commit()
+        return make_common_response(_checklist_view_payload(record))
+
+    @app.route(
+        path_prefix + "/checklist/<record_bid>/improvements", methods=["POST"]
+    )
+    def add_checklist_improvement(record_bid: str):
+        """Coach registers an improvement item found during the sync."""
+        _require_coach_write(app, request.user)
+        record = _get_coaching_record(record_bid)
+        _require_mentored_learner(app, request.user, record.learner_bid)
+
+        payload = request.get_json(silent=True) or {}
+        action = str(payload.get("action") or "").strip()
+        if not action:
+            raise_param_error("coach: action is required")
+        due_raw = str(payload.get("due_at") or "").strip()
+        due_at = None
+        if due_raw:
+            try:
+                due_at = datetime.fromisoformat(
+                    due_raw.replace("Z", "+00:00")
+                ).replace(tzinfo=None)
+            except ValueError:
+                raise_param_error("coach: due_at must be ISO datetime")
+
+        item = ChecklistImprovement(
+            improvement_bid=uuid.uuid4().hex,
+            record_bid=record.record_bid,
+            action=action,
+            owner_bid=str(payload.get("owner_bid") or "").strip() or None,
+            owner_name=str(payload.get("owner_name") or "").strip() or None,
+            due_at=due_at,
+            status="pending",
+            created_by=getattr(request.user, "user_id", None),
+            created_at=datetime.now(),
+            updated_at=datetime.now(),
+        )
+        db.session.add(item)
+
+        from flaskr.service.learning_portal.tasks import maybe_complete_checklist
+
+        maybe_complete_checklist(record)
+        db.session.commit()
+        return make_common_response(_checklist_view_payload(record))
+
+    @app.route(
+        path_prefix
+        + "/checklist/<record_bid>/improvements/<improvement_bid>/done",
+        methods=["POST"],
+    )
+    def done_checklist_improvement(record_bid: str, improvement_bid: str):
+        """Coach marks an improvement item as done (closes the improvement gate)."""
+        _require_coach_write(app, request.user)
+        record = _get_coaching_record(record_bid)
+        _require_mentored_learner(app, request.user, record.learner_bid)
+
+        item = ChecklistImprovement.query.filter_by(
+            improvement_bid=improvement_bid, record_bid=record.record_bid
+        ).first()
+        if item is None:
+            raise_param_error("coach: improvement not found")
+        if item.status != "done":
+            item.status = "done"
+            item.updated_at = datetime.now()
+
+        from flaskr.service.learning_portal.tasks import maybe_complete_checklist
+
+        maybe_complete_checklist(record)
+        db.session.commit()
+        return make_common_response(_checklist_view_payload(record))
+
+    @app.route(
+        path_prefix + "/checklist/<record_bid>/improvements", methods=["GET"]
+    )
+    def list_checklist_improvements(record_bid: str):
+        """List improvement items (coach mentor / learner themself)."""
+        record = _get_coaching_record(record_bid)
+        _require_checklist_view(app, request.user, record.learner_bid)
+        items = (
+            ChecklistImprovement.query.filter_by(record_bid=record.record_bid)
+            .order_by(ChecklistImprovement.created_at.asc())
+            .all()
+        )
+        return make_common_response(
+            [
+                {
+                    "improvement_bid": i.improvement_bid,
+                    "action": i.action,
+                    "owner_bid": i.owner_bid,
+                    "owner_name": i.owner_name,
+                    "due_at": str(i.due_at) if i.due_at else None,
+                    "status": i.status,
+                    "created_by": i.created_by,
+                }
+                for i in items
+            ]
         )
 
     @app.route(path_prefix + "/phases/advance", methods=["POST"])

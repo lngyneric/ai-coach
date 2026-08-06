@@ -23,6 +23,7 @@ from flaskr.service.learning_portal.models import (
     LearnerChecklistItem,
     LearnerTask,
     TaskNotification,
+    ChecklistImprovement,
 )
 from flaskr.service.learning_portal.wecom_push import push_wecom_notification
 
@@ -322,6 +323,94 @@ def phase_auto_advance():
         f"finished={result['finished']} "
         f"skipped={result['skipped']}"
     )
+
+
+# ---------------------------------------------------------------------------
+# W3 task 2 — compliance checkpoints (sign → sync → improvement)
+# ---------------------------------------------------------------------------
+
+
+def checklist_three_state(record) -> dict:
+    """Return the three-state compliance progress of a coaching record.
+
+    A ``learner_coaching`` phase only counts as ``completed`` once **all three**
+    checkpoints are satisfied (W3 requirement: sign + sync + improvement):
+
+    - ``sign``        — learner confirmed they understand/agree (``sign_at``)
+    - ``sync``        — coach held the face-to-face sync (``sync_at``)
+    - ``improvement`` — every registered improvement item is done (no open item)
+
+    Idempotent helpers: each checkpoint is set once (timestamp + actor); a
+    second POST returns the same state without duplicating work.
+    """
+    open_items = (
+        ChecklistImprovement.query.filter_by(
+            record_bid=record.record_bid, status="pending"
+        ).count()
+        if hasattr(record, "record_bid")
+        else 0
+    )
+    improvement_done = open_items == 0
+    return {
+        "sign": {
+            "done": record.sign_at is not None,
+            "at": str(record.sign_at) if record.sign_at else None,
+            "by": record.signed_by,
+        },
+        "sync": {
+            "done": record.sync_at is not None,
+            "at": str(record.sync_at) if record.sync_at else None,
+            "by": record.synced_by,
+        },
+        "improvement": {
+            "done": improvement_done,
+            "open_count": open_items,
+        },
+        "all_done": (
+            record.sign_at is not None
+            and record.sync_at is not None
+            and improvement_done
+        ),
+    }
+
+
+def maybe_complete_checklist(record) -> bool:
+    """Mark ``record`` completed when all three checkpoints are satisfied.
+
+    Called after every sign / sync / improvement operation (idempotent): when
+    the three-state gate finally passes, the coaching record is flipped to
+    ``completed`` (``completed_at=now``) and the learner gets an in-app + WeCom
+    notification. This is the seam that feeds W3 task 1 — the phase
+    auto-advance task only scans ``status == 'completed'`` records.
+
+    Returns True when the record transitioned to completed by this call.
+    """
+    if record.status == "completed":
+        return False
+    state = checklist_three_state(record)
+    if not state["all_done"]:
+        return False
+
+    now = datetime.utcnow()
+    record.status = "completed"
+    record.completed_at = now
+    record.updated_at = now
+    db.session.flush()
+
+    profile = LearnerProfile.query.get(record.learner_bid)
+    phase = MentorshipPhase.query.get(record.phase_bid)
+    if profile is not None:
+        _notify(
+            user_bid=profile.user_bid,
+            title="阶段合规确认完成",
+            content=(
+                f"你的阶段「{phase.name if phase else ''}」已通过"
+                "学员签字、导师同步、改进项全部完成确认"
+            ),
+            notif_type="checklist_complete",
+            related_bid=record.record_bid,
+        )
+    return True
 
 
 @shared_task(name="learning_portal.probation_check")
