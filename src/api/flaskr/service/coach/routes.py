@@ -1,15 +1,19 @@
-"""Coach session routes (W2, task 1) — AI summary generation triggers.
+"""Coach session routes (W2, task 1 + W2/W3 legacy closeout).
 
 Endpoints (all under the global ``before_request`` auth middleware):
 
-- ``GET  /api/coach/sessions/<session_bid>``        → single session (login only)
-- ``PUT  /api/coach/sessions/<session_bid>``        → update notes/topic; then
+- ``GET  /api/coach/sessions``                     → list, data-scope filtered
+- ``POST /api/coach/sessions``                     → create a coaching session
+- ``GET  /api/coach/sessions/<session_bid>``       → single session
+- ``PUT  /api/coach/sessions/<session_bid>``       → update notes/topic; then
   **auto-generate** ``ai_summary`` via the LLM (non-blocking on failure)
 - ``POST /api/coach/sessions/<session_bid>/summarize`` → explicitly regenerate
   ``ai_summary`` and persist it
 
 Write operations require the ``create_session`` permission (coach or above;
-admin/operator always passes — P0 permission model).
+admin/operator always passes — P0 permission model). ``GET`` single + ``PUT``
+also enforce the caller's data scope via ``visible_students_scope`` so a
+mentor can only read/edit their own mentored learners' sessions.
 
 The generation itself lives in ``flaskr.service.coach.summary`` and is a pure
 side-effect helper: on LLM failure it returns ``{}`` and the save still
@@ -195,40 +199,179 @@ def _persist_generated_summary(
         session.next_action = next_action
 
 
+def _serialize_session(session: CoachSession) -> dict[str, Any]:
+    """Project one ``CoachSession`` row to its API payload shape."""
+    return {
+        "session_bid": session.session_bid,
+        "learner_bid": session.learner_bid,
+        "mentor_bid": session.mentor_bid,
+        "phase_bid": session.phase_bid,
+        "session_type": session.session_type,
+        "session_date": str(session.session_date)
+        if session.session_date
+        else None,
+        "duration_minutes": session.duration_minutes,
+        "topic": session.topic,
+        "mentor_notes": session.mentor_notes,
+        "learner_notes": session.learner_notes,
+        "action_items": session.action_items,
+        "next_session_date": str(session.next_session_date)
+        if session.next_session_date
+        else None,
+        "status": session.status,
+        "coach_rating": session.coach_rating,
+        "ai_summary": session.ai_summary,
+        "next_action": session.next_action,
+    }
+
+
+def _require_session_scope(app, user, learner_bid: str) -> None:
+    """Raise unless ``user`` may access sessions belonging to ``learner_bid``.
+
+    Data-scope guard for session read/write, mirroring the portal data scope:
+
+    - admin/hr (scope ``all``) → always allowed;
+    - coach (``mentored:<coach_bid>``) → the learner must be their own mentee;
+    - dept_head (``department:<dept>``) → the learner must be in that dept;
+    - learner (``self:<user_bid>``) → only their own learner profile.
+    """
+    scope = visible_students_scope(app, user)
+    if scope == "all":
+        return
+    profile = LearnerProfile.query.filter_by(learner_bid=learner_bid).first()
+    if profile is None:
+        raise_param_error("coach: learner not found")
+    user_id = getattr(user, "user_id", None)
+    if scope.startswith("mentored:"):
+        if profile.coach_bid != user_id:
+            raise_param_error("coach: not the mentored learner")
+        return
+    if scope.startswith("department:"):
+        if profile.department != scope.split(":", 1)[1]:
+            raise_param_error("coach: learner not in the department scope")
+        return
+    if scope.startswith("self:"):
+        if profile.user_bid != user_id:
+            raise_param_error("coach: only the learner themself")
+        return
+    raise_param_error("coach: no permission to access this learner")
+
+
+def _apply_session_scope(query, scope: str):
+    """Filter a ``CoachSession`` query by a ``visible_students_scope`` string.
+
+    Sessions are scoped through their ``LearnerProfile`` row (a session has no
+    department / coach column of its own). Unknown scopes degrade to the empty
+    filter (``1 = 0``) so a misconfigured scope can never widen visibility.
+    """
+    if not scope or scope == "all":
+        return query
+    query = query.join(
+        LearnerProfile,
+        CoachSession.learner_bid == LearnerProfile.learner_bid,
+    )
+    if scope.startswith("department:"):
+        return query.filter(LearnerProfile.department == scope.split(":", 1)[1])
+    if scope.startswith("mentored:"):
+        return query.filter(
+            LearnerProfile.coach_bid == scope.split(":", 1)[1]
+        )
+    if scope.startswith("self:"):
+        return query.filter(
+            LearnerProfile.user_bid == scope.split(":", 1)[1]
+        )
+    return query.filter(db.text("1 = 0"))
+
+
 @inject
 def register_coach_routes(app: Flask, path_prefix: str = "/api/coach") -> None:
     app.logger.info("register coach routes %s", path_prefix)
 
+    @app.route(path_prefix + "/sessions", methods=["GET"])
+    def list_coach_sessions():
+        """List coaching sessions scoped to the caller's data scope.
+
+        Paging: ``page`` (1-based) + ``size`` (default 20, max 100).
+        """
+        try:
+            page = max(int(request.args.get("page", "1") or "1"), 1)
+            size = min(max(int(request.args.get("size", "20") or "20"), 1), 100)
+        except (TypeError, ValueError):
+            raise_param_error("coach: page/size must be integers")
+        scope = visible_students_scope(app, request.user)
+        query = CoachSession.query
+        query = _apply_session_scope(query, scope)
+        total = query.count()
+        items = (
+            query.order_by(CoachSession.session_date.desc())
+            .offset((page - 1) * size)
+            .limit(size)
+            .all()
+        )
+        return make_common_response(
+            {
+                "total": total,
+                "page": page,
+                "size": size,
+                "items": [_serialize_session(s) for s in items],
+            }
+        )
+
+    @app.route(path_prefix + "/sessions", methods=["POST"])
+    def create_coach_session():
+        """Create a coaching session.
+
+        Who may create (P0 permission model):
+        - anyone with ``create_session`` (coach / admin) whose data scope covers
+          the learner (coach → own mentees; admin/hr → all);
+        - the learner themself (``self`` scope) — e.g. self-reflection entry.
+        """
+        payload = request.get_json(silent=True) or {}
+        learner_bid = str(payload.get("learner_bid") or "").strip()
+        if not learner_bid:
+            raise_param_error("coach: learner_bid is required")
+
+        user_id = getattr(request.user, "user_id", None)
+        scope = visible_students_scope(app, request.user)
+        # The learner themself may create their own session (no create_session).
+        if scope.startswith("self:"):
+            profile = LearnerProfile.query.filter_by(
+                learner_bid=learner_bid
+            ).first()
+            if profile is not None and profile.user_bid == user_id:
+                pass
+            else:
+                _require_coach_write(app, request.user)
+                _require_session_scope(app, request.user, learner_bid)
+        else:
+            _require_coach_write(app, request.user)
+            _require_session_scope(app, request.user, learner_bid)
+
+        session = CoachSession(
+            session_bid=uuid.uuid4().hex,
+            learner_bid=learner_bid,
+            mentor_bid=str(payload.get("mentor_bid") or "").strip()
+            or user_id,
+            phase_bid=str(payload.get("phase_bid") or "").strip() or None,
+            session_type=str(payload.get("session_type") or "regular").strip()
+            or "regular",
+            session_date=datetime.now(),
+            status=str(payload.get("status") or "planned").strip() or "planned",
+        )
+        _apply_editable_fields(session, payload)
+        session.updated_at = datetime.now()
+        db.session.add(session)
+        db.session.commit()
+        return make_common_response(_serialize_session(session))
+
     @app.route(path_prefix + "/sessions/<session_bid>", methods=["GET"])
     def get_coach_session(session_bid: str):
-        """Return one coaching session (login required)."""
+        """Return one coaching session (data-scope checked)."""
         session = CoachSession.query.filter_by(session_bid=session_bid).first()
         if session is None:
             raise_param_error("coach: session not found")
-        return make_common_response(
-            {
-                "session_bid": session.session_bid,
-                "learner_bid": session.learner_bid,
-                "mentor_bid": session.mentor_bid,
-                "phase_bid": session.phase_bid,
-                "session_type": session.session_type,
-                "session_date": str(session.session_date)
-                if session.session_date
-                else None,
-                "duration_minutes": session.duration_minutes,
-                "topic": session.topic,
-                "mentor_notes": session.mentor_notes,
-                "learner_notes": session.learner_notes,
-                "action_items": session.action_items,
-                "next_session_date": str(session.next_session_date)
-                if session.next_session_date
-                else None,
-                "status": session.status,
-                "coach_rating": session.coach_rating,
-                "ai_summary": session.ai_summary,
-                "next_action": session.next_action,
-            }
-        )
+        _require_session_scope(app, request.user, session.learner_bid)
+        return make_common_response(_serialize_session(session))
 
     @app.route(path_prefix + "/sessions/<session_bid>", methods=["PUT"])
     def update_coach_session(session_bid: str):
@@ -238,6 +381,7 @@ def register_coach_routes(app: Flask, path_prefix: str = "/api/coach") -> None:
         session = CoachSession.query.filter_by(session_bid=session_bid).first()
         if session is None:
             raise_param_error("coach: session not found")
+        _require_session_scope(app, request.user, session.learner_bid)
 
         payload = request.get_json(silent=True) or {}
         _apply_editable_fields(session, payload)
@@ -271,6 +415,7 @@ def register_coach_routes(app: Flask, path_prefix: str = "/api/coach") -> None:
         session = CoachSession.query.filter_by(session_bid=session_bid).first()
         if session is None:
             raise_param_error("coach: session not found")
+        _require_session_scope(app, request.user, session.learner_bid)
 
         parsed = generate_ai_summary(app, session)
         _persist_generated_summary(app, session, parsed)
