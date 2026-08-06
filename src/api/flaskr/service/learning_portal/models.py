@@ -209,3 +209,38 @@ class CoachProfile(db.Model):
     status = db.Column(db.String(20), default="active")
     created_at = db.Column(db.DateTime)
     updated_at = db.Column(db.DateTime)
+
+
+class CoursePositionTag(db.Model):
+    """AI recommendation mapping — published course → job position tag (W2, task 4).
+
+    Backs ``GET /api/portal/recommend``: each row links one published course
+    (``shifu_bid``) to a job position with a match weight. The endpoint JOINs
+    this table with ``shifu_published_shifus`` and sorts by ``weight`` DESC.
+
+    Matches the real ``course_position_tags`` table created by migration
+    ``c1d2e3f4a5b6_add_course_position_tags``. ``shifu_bid`` has no hard FK
+    because the referenced table lives in the ``shifu`` service; the seed is
+    responsible for consistency.
+    """
+
+    __tablename__ = "course_position_tags"
+
+    id = db.Column(db.BigInteger, primary_key=True, autoincrement=True)
+    shifu_bid = db.Column(db.String(32), nullable=False, index=True)
+    position = db.Column(db.String(50), nullable=False, index=True)
+    position_name = db.Column(db.String(100), nullable=True)
+    tag = db.Column(db.String(100), nullable=True)
+    weight = db.Column(db.Integer, nullable=False, default=10)
+    is_active = db.Column(db.SmallInteger, nullable=False, default=1)
+    created_at = db.Column(db.DateTime)
+    updated_at = db.Column(db.DateTime)
+
+    __table_args__ = (
+        db.UniqueConstraint(
+            "shifu_bid",
+            "position",
+            name="uq_course_position_tags_shifu_position",
+        ),
+    )
+
