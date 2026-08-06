@@ -45,7 +45,11 @@ def _notify(*, user_bid, title, content, notif_type, related_bid=None):
     db.session.add(notif)
     try:
         push_wecom_notification(
-            user_bid=user_bid, title=title, content=content, notif_type=notif_type
+            user_bid=user_bid,
+            title=title,
+            content=content,
+            notif_type=notif_type,
+            related_bid=related_bid or "",
         )
     except Exception:  # noqa: BLE001 - side channel must not break the task
         logger.exception("WECOM push failed (non-fatal): user_bid=%s", user_bid)

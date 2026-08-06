@@ -407,6 +407,27 @@ Default: "employee" (AAD strong-login control).""",
         ),
         group="auth",
     ),
+    "WECOM_NOTIFY_BASE_URL": EnvVar(
+        name="WECOM_NOTIFY_BASE_URL",
+        default="",
+        description=(
+            "Base URL (scheme://host[:port]) used to build WeCom textcard links "
+            "for learning-portal notifications (W2). Course URL = {base}/c/{bid}. "
+            "Leave empty to keep plain-text push."
+        ),
+        group="auth",
+    ),
+    "WECOM_DEFAULT_PARTY": EnvVar(
+        name="WECOM_DEFAULT_PARTY",
+        default="",
+        description=(
+            "WeCom department id(s) to broadcast learning-portal notifications "
+            "to (comma-separated for multiple). When set, push by department "
+            "(toparty) instead of per-user mapping; e.g. 4 = 人事课. Leave empty "
+            "for per-user push."
+        ),
+        group="auth",
+    ),
     "BRAND_NAME": EnvVar(
         name="BRAND_NAME",
         default="AI-Shifu",
