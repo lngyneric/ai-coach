@@ -388,6 +388,25 @@ Default: "employee" (AAD strong-login control).""",
         description="企业微信应用 Secret for API access",
         group="auth",
     ),
+    "WECOM_AGENT_ID": EnvVar(
+        name="WECOM_AGENT_ID",
+        default="",
+        description=(
+            "企业微信应用 AgentId for message push (W1 WeCom notifications). "
+            "Leave empty to disable push."
+        ),
+        group="auth",
+    ),
+    "WECOM_NOTIFY_ENABLED": EnvVar(
+        name="WECOM_NOTIFY_ENABLED",
+        default=False,
+        type=bool,
+        description=(
+            "Enable WeCom app-message push for learning portal notifications (W1). "
+            "Default off; requires WECOM_CORP_ID / WECOM_SECRET / WECOM_AGENT_ID."
+        ),
+        group="auth",
+    ),
     "BRAND_NAME": EnvVar(
         name="BRAND_NAME",
         default="AI-Shifu",

@@ -22,8 +22,34 @@ from flaskr.service.learning_portal.models import (
     LearnerTask,
     TaskNotification,
 )
+from flaskr.service.learning_portal.wecom_push import push_wecom_notification
 
 logger = logging.getLogger(__name__)
+
+
+def _notify(*, user_bid, title, content, notif_type, related_bid=None):
+    """Write a TaskNotification row (in-app banner) and fire the W1 WeCom side-channel.
+
+    The DB write is byte-for-byte what the tasks did before; the WeCom push is
+    purely additive and must never break the pipeline (push_wecom_notification
+    never raises, and we also guard here as a belt-and-suspenders measure).
+    """
+    notif = TaskNotification(
+        notif_bid=__import__("uuid").uuid4().hex,
+        user_bid=user_bid,
+        title=title,
+        content=content,
+        notif_type=notif_type,
+        related_bid=related_bid,
+    )
+    db.session.add(notif)
+    try:
+        push_wecom_notification(
+            user_bid=user_bid, title=title, content=content, notif_type=notif_type
+        )
+    except Exception:  # noqa: BLE001 - side channel must not break the task
+        logger.exception("WECOM push failed (non-fatal): user_bid=%s", user_bid)
+    return notif
 
 
 @shared_task(name="learning_portal.phase_deadline_reminder")
@@ -50,15 +76,13 @@ def phase_deadline_reminder():
                     created_at=date.today(),
                 ).first()
                 if not existing:
-                    notif = TaskNotification(
-                        notif_bid=__import__("uuid").uuid4().hex,
+                    _notify(
                         user_bid=profile.user_bid,
-                        title=f"阶段截止提醒",
+                        title="阶段截止提醒",
                         content=f"你的阶段「{phase.name}」还剩 {remaining} 天",
                         notif_type="phase_end",
                         related_bid=rec.record_bid,
                     )
-                    db.session.add(notif)
                     db.session.commit()
 
     return f"checked {len(active)} active phases"
@@ -87,14 +111,12 @@ def daily_task_push():
         today_due = [t for t in tasks if t.due_at and t.due_at.date() == date.today()]
         overdue = [t for t in tasks if t.due_at and t.due_at.date() < date.today()]
 
-        notif = TaskNotification(
-            notif_bid=__import__("uuid").uuid4().hex,
+        _notify(
             user_bid=profile.user_bid,
             title="每日学习提醒",
             content=f"今日待办 {len(today_due)} 项，逾期 {len(overdue)} 项",
             notif_type="task_assign",
         )
-        db.session.add(notif)
         count += 1
 
     db.session.commit()
@@ -116,14 +138,12 @@ def score_reminder():
     for item in items:
         profile = LearnerProfile.query.get(item.learner_bid)
         if profile and profile.mentor_bid not in reminded:
-            notif = TaskNotification(
-                notif_bid=__import__("uuid").uuid4().hex,
+            _notify(
                 user_bid=profile.mentor_bid,
                 title="评分催办",
-                content=f"学员有待评分项已超过48小时，请及时评分",
+                content="学员有待评分项已超过48小时，请及时评分",
                 notif_type="score_reminder",
             )
-            db.session.add(notif)
             reminded.add(profile.mentor_bid)
 
     db.session.commit()
@@ -157,14 +177,12 @@ def probation_check():
             failed = [ph for ph in phases if ph.status != "passed"]
             msg = f"你还有 {len(failed)} 个阶段未完成，可能影响转正"
 
-        notif = TaskNotification(
-            notif_bid=__import__("uuid").uuid4().hex,
+        _notify(
             user_bid=p.user_bid,
             title="转正提醒",
             content=msg,
             notif_type="system",
         )
-        db.session.add(notif)
         checked += 1
 
     db.session.commit()
