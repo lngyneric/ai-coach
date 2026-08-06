@@ -192,3 +192,24 @@ def register_coach_routes(app: Flask, path_prefix: str = "/api/coach") -> None:
                 "raw": parsed,
             }
         )
+
+    @app.route(path_prefix + "/phases/advance", methods=["POST"])
+    def coach_phases_advance():
+        """W3: manually trigger the phase auto-advance scan (idempotent).
+
+        Coach (``create_session`` permission) and above may run the same
+        scan as the ``learning_portal.phase_auto_advance`` beat task. Repeated
+        calls are safe — an already-advanced learner owns an ``in_progress``
+        record and is skipped on the next run.
+        """
+        _require_coach_write(app, request.user)
+        from flaskr.service.learning_portal.tasks import advance_completed_phases
+
+        result = advance_completed_phases()
+        return make_common_response(
+            {
+                "advanced": result["advanced"],
+                "finished": result["finished"],
+                "skipped": result["skipped"],
+            }
+        )

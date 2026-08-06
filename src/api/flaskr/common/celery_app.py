@@ -191,6 +191,10 @@ def _build_portal_beat_schedule() -> dict[str, Any]:
             "task": "learning_portal.probation_check",
             "schedule": crontab(hour="7", minute="0"),
         },
+        "learning_portal.phase_auto_advance.schedule": {
+            "task": "learning_portal.phase_auto_advance",
+            "schedule": crontab(hour="6", minute="30"),
+        },
     }
 
 
