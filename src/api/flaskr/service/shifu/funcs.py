@@ -292,31 +292,39 @@ def shifu_permission_verification(
                 AiCourseAuth.status == 1,
             ).first()
             if auth:
+                normalized = []
                 try:
                     raw_auth_types = json.loads(auth.auth_type)
-                    normalized = []
                     if isinstance(raw_auth_types, (list, tuple, set)):
                         normalized = [str(item) for item in raw_auth_types]
                     elif isinstance(raw_auth_types, str):
                         normalized = [raw_auth_types]
-                    permissions = set()
-                    for item in normalized:
-                        lowered = item.lower()
-                        if lowered in {"view", "read", "readonly"} or lowered == "1":
-                            permissions.add("view")
-                        if lowered in {"edit", "write"} or lowered == "2":
-                            permissions.update({"view", "edit"})
-                        if lowered in {"publish"} or lowered == "4":
-                            permissions.add("publish")
-                    # Fallback to raw values if mapping failed
-                    permissions = permissions or set(normalized)
-                    result = auth_type in permissions
-                    redis.set(
-                        cache_key, json.dumps(list(permissions)), cache_key_expire
-                    )
-                    return result
+                    elif isinstance(raw_auth_types, (int, float)):
+                        normalized = [str(int(raw_auth_types))]
                 except (json.JSONDecodeError, TypeError):
-                    return False
+                    # Legacy plain-text auth_type (e.g. "view", "view,edit", "1")
+                    # -> split on comma and treat each part as a raw token
+                    normalized = [
+                        part.strip()
+                        for part in str(auth.auth_type or "").split(",")
+                        if part.strip()
+                    ]
+                permissions = set()
+                for item in normalized:
+                    lowered = item.lower()
+                    if lowered in {"view", "read", "readonly"} or lowered == "1":
+                        permissions.add("view")
+                    if lowered in {"edit", "write"} or lowered == "2":
+                        permissions.update({"view", "edit"})
+                    if lowered in {"publish"} or lowered == "4":
+                        permissions.add("publish")
+                # Fallback to raw values if mapping failed
+                permissions = permissions or set(normalized)
+                result = auth_type in permissions
+                redis.set(
+                    cache_key, json.dumps(list(permissions)), cache_key_expire
+                )
+                return result
             else:
                 return False
 
