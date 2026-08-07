@@ -196,3 +196,5 @@ docker/.env.prod
 docker/mysql_data_dev/
 docker/redis_data_dev/
 .next
+docker/.env.prod.bak-*
+docker/nginx.dev.conf.bak-*
