@@ -42,7 +42,24 @@ class UsageContext:
     billable: Optional[int] = None
 
 
+def _is_billing_usage_enabled(app: Flask) -> bool:
+    """Read the master usage-billing switch.
+
+    Defaults to False (internal-system free policy): all usage is recorded
+    for audit but never billed. The value is read from the app config so
+    ``BILL_USAGE_ENABLED`` (registered in ``flaskr.common.config``) is
+    honoured in every environment.
+    """
+    try:
+        return bool(app.config.get("BILL_USAGE_ENABLED", False))
+    except Exception:
+        return False
+
+
 def _resolve_billable(app: Flask, *, context: UsageContext, usage_scene: int) -> int:
+    if not _is_billing_usage_enabled(app):
+        # Internal-system free policy: record usage for audit, never bill.
+        return 0
     if context.billable is not None:
         return int(context.billable)
     if context.shifu_bid and is_builtin_demo_shifu(app, context.shifu_bid):

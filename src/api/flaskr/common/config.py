@@ -172,6 +172,13 @@ ENV_VARS: Dict[str, EnvVar] = {
         description="Enable the creator billing runtime surface (Cook Web /admin/billing and /api/billing/*). Leave off until billing is configured for the environment.",
         group="frontend",
     ),
+    "BILL_USAGE_ENABLED": EnvVar(
+        name="BILL_USAGE_ENABLED",
+        default=False,
+        type=bool,
+        description="Master switch for LLM/TTS usage billing. When False (default; internal-system free policy) every usage record is persisted for audit but forced billable=0 (recorded, never billed/charged). Set True only when an environment is externally billed.",
+        group="frontend",
+    ),
     "HOME_URL": EnvVar(
         name="HOME_URL",
         default="/",
