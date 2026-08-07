@@ -17,7 +17,7 @@ Provide one of:
 - Terminology and tone constraints.
 - Non-negotiable source fragments.
 - `course_profile` object.
-- `delivery_constraints` object.
+- `delivery_constraints` object (may include `domain`: `general` | `medical_ivd`).
 - `target_language` (BCP-47 recommended, for example `fr-FR`, `ja-JP`, `zh-CN`).
 - `bilingual_output` (`true|false`).
 - `term_policy` (`preserve|translate|mixed`).
@@ -41,6 +41,7 @@ Provide one of:
 
 ```json
 {
+  "domain": "general|medical_ivd",
   "interaction_density": "low|medium|high",
   "platform_limits": ["no_iframe", "markdown_only"],
   "must_cover_topics": ["topic-a", "topic-b"],
@@ -48,6 +49,8 @@ Provide one of:
   "non_negotiable_fragments": ["exact quote or code block id"]
 }
 ```
+
+`domain` defaults to `general`. `"domain": "medical_ivd"` activates the medical-vertical segmentation rules (reference-value immutability, terminology unification, system-based segmentation, gradeable acceptance) and the mandatory IVD knowledge-graph lookup — see `pedagogy.md#medical-vertical-segmentation-rules` and `ivd-knowledge.md`.
 
 ### Minimal Input Payload Example
 

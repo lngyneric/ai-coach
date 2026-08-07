@@ -108,6 +108,45 @@ Every segment should include transferable signals for downstream script quality:
 
 If structure is weak, output a fallback segmentation and mark uncertain spans for focused reruns.
 
+### Medical Vertical Segmentation Rules (医学垂类分段规则)
+
+Applies when `delivery_constraints.domain == "medical_ivd"` (IVD / 检验医学 vertical). When active, the rules below **override the generic defaults above** for the listed aspects. In a medical vertical, professional correctness outranks generic pedagogy: **a wrong reference value is a teaching incident** (错误参考值 = 教学事故).
+
+1. **Reference-value spans are immutable.** Any segment carrying a numeric reference range, unit, or normal value is marked `preserve_block: true` and tagged `immutable` in its transfer signals. Never paraphrase, round, or "simplify" a reference range; keep number, unit, and exponent verbatim. Examples that MUST stay exact:
+   - `RBC 4.5–5.5×10¹²/L`
+   - `WBC 4.0–10.0×10⁹/L`
+   - `PLT 125–350×10⁹/L`
+
+2. **Terminology unification table.** Use only the authoritative names below for medical-vertical segments; **synonym substitution is forbidden** (e.g. do not write "红血球" for RBC, or "血红蛋白量" for HGB). If the knowledge-graph lookup (`scripts/ivd-lookup.py`) returns a different canonical term, the graph wins.
+
+   | 中文全称 | 缩写 | English full name |
+   |---|---|---|
+   | 红细胞计数 | RBC | Red Blood Cell Count |
+   | 白细胞计数 | WBC | White Blood Cell Count |
+   | 血小板计数 | PLT | Platelet Count |
+   | 血红蛋白 | HGB | Hemoglobin |
+   | 血细胞比容 | HCT | Hematocrit |
+   | 平均红细胞体积 | MCV | Mean Corpuscular Volume |
+   | 网织红细胞 | RET | Reticulocyte |
+   | 凝血酶原时间 | PT | Prothrombin Time |
+   | 活化部分凝血活酶时间 | APTT | Activated Partial Thromboplastin Time |
+   | 纤维蛋白原 | FIB | Fibrinogen |
+   | 国际标准化比值 | INR | International Normalized Ratio |
+   | D-二聚体 | D-Dimer | D-Dimer |
+   | 尿比重 | SG | Specific Gravity |
+
+3. **Segment by test system, not by mental model.** Split along the six IVD systems — 血液 (hematology) / 凝血 (coagulation) / 尿液 (urinalysis) / 免疫 (immunoassay) / 生化 (biochemistry) / 分子 (molecular) — **before** applying any generic semantic-shift logic. A hematology concept must not be merged into a coagulation lesson even if the narrative flows that way; system membership is resolved from the knowledge graph, not from prose.
+
+4. **Segmentation unit = knowledge ontology / test item.** Each lesson candidate resolves exactly **one assessable knowledge point**: one test item (e.g. "WBC 五分类的计数原理") or one sub-concept of a test item. The core question must be answerable in a graded form, not open-ended reflection.
+
+5. **Zero error tolerance + gradeable acceptance items.** Every reference value, unit, and term must be verifiable. Map each lesson's acceptance to a gradeable item and carry it in the segment's transfer signals:
+   - `exam` — recall a reference value / unit / terminology;
+   - `review` — interpret a given result (e.g. given a CBC report, judge it normal or abnormal);
+   - `practice` — apply to a case (e.g. compute or categorize from given values).
+   Reject any lesson whose core point cannot be assessed in at least one of these three forms.
+
+6. **Mandatory knowledge-graph lookup before segmentation.** Run `python3 scripts/ivd-lookup.py "<检验项目/系统/术语>"` to confirm terminology, reference values, and system membership **before** segmenting. See `references/ivd-knowledge.md` for usage and the built-in reference-value table. Fallback: if the graph has no entry for a span, mark the span `uncertain` (high), keep the source wording verbatim, and flag it for human confirmation — **never invent a reference value or unit**.
+
 ## Optimization Methodology
 
 ### Principles
