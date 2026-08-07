@@ -108,8 +108,11 @@ services:
       - ai-shifu-cook-web-dev
       - ai-shifu-api-dev
     restart: always
+    command: /bin/sh -c "envsubst '$${OPENCODE_API_KEY}' < /etc/nginx/nginx.conf.tpl > /etc/nginx/nginx.conf && exec nginx -g 'daemon off;'"
+    environment:
+      - OPENCODE_API_KEY=${OPENCODE_API_KEY}
     volumes:
-      - ./nginx.dev.conf:/etc/nginx/nginx.conf
+      - ./nginx.dev.conf:/etc/nginx/nginx.conf.tpl
       - ./portal.html:/usr/share/nginx/html/portal.html:ro
       - ./feature-overview.html:/usr/share/nginx/html/feature-overview.html:ro
       - ./feature-slides.html:/usr/share/nginx/html/feature-slides.html:ro
