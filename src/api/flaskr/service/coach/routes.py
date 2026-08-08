@@ -11,7 +11,9 @@ Endpoints (all under the global ``before_request`` auth middleware):
   ``ai_summary`` and persist it
 
 Write operations require the ``create_session`` permission (coach or above;
-admin/operator always passes — P0 permission model). ``GET`` single + ``PUT``
+admin/operator always passes — P0 permission model); checklist confirmation
+(sync / improvements / done) uses ``confirm_checklist`` so HR can confirm
+checklists (B4, P0-PERMISSION-GAP-AUDIT D-G5). ``GET`` single + ``PUT``
 also enforce the caller's data scope via ``visible_students_scope`` so a
 mentor can only read/edit their own mentored learners' sessions.
 
@@ -33,7 +35,7 @@ from flaskr.framework.plugin.inject import inject
 from flaskr.route.common import make_common_response
 from flaskr.service.coach.permissions import has_permission, visible_students_scope
 from flaskr.service.coach.summary import build_ai_summary_markdown, generate_ai_summary
-from flaskr.service.common.models import raise_param_error
+from flaskr.service.common.models import AppException, raise_param_error
 from flaskr.service.learning_portal.models import (
     CoachSession,
     LearnerMentorship,
@@ -43,6 +45,10 @@ from flaskr.service.learning_portal.models import (
 )
 
 CREATE_SESSION_PERMISSION = "create_session"
+CONFIRM_CHECKLIST_PERMISSION = "confirm_checklist"
+
+# Permission denied business code (matches learning_portal PERMISSION_DENIED_CODE).
+PERMISSION_DENIED_CODE = 403
 
 # Fields the mentor/client can update through PUT (subset of the real table).
 _EDITABLE_FIELDS = (
@@ -60,9 +66,9 @@ _EDITABLE_FIELDS = (
 
 
 def _require_coach_write(app, user) -> None:
-    """Raise when the user may not create/edit coaching sessions."""
+    """Raise a 403 business error when the user may not create/edit sessions."""
     if not has_permission(app, user, CREATE_SESSION_PERMISSION):
-        raise_param_error("coach: create_session permission required")
+        raise AppException("没有权限执行此操作", PERMISSION_DENIED_CODE)
 
 
 def _require_mentored_learner(app, user, learner_bid: str) -> None:
@@ -77,7 +83,7 @@ def _require_mentored_learner(app, user, learner_bid: str) -> None:
         return
     profile = LearnerProfile.query.filter_by(learner_bid=learner_bid).first()
     if profile is None or profile.coach_bid != getattr(user, "user_id", None):
-        raise_param_error("coach: not the mentored learner")
+        raise AppException("没有权限操作非带教学员的数据", PERMISSION_DENIED_CODE)
 
 
 def _require_learner_self(app, user, learner_bid: str) -> None:
@@ -91,7 +97,7 @@ def _require_learner_self(app, user, learner_bid: str) -> None:
         return
     profile = LearnerProfile.query.filter_by(learner_bid=learner_bid).first()
     if profile is None or profile.user_bid != getattr(user, "user_id", None):
-        raise_param_error("coach: only the learner can sign-off")
+        raise AppException("只有学员本人才能确认", PERMISSION_DENIED_CODE)
 
 
 def _require_checklist_view(app, user, learner_bid: str) -> None:
@@ -109,7 +115,18 @@ def _require_checklist_view(app, user, learner_bid: str) -> None:
         return  # learner themself
     if profile is not None and profile.coach_bid == user_id:
         return  # own mentor
-    raise_param_error("coach: not allowed to view this checklist")
+    raise AppException("没有权限查看此清单", PERMISSION_DENIED_CODE)
+
+
+def _require_checklist_confirm(app, user) -> None:
+    """Raise a 403 business error unless the user may confirm checklists.
+
+    B4 (P0-PERMISSION-GAP-AUDIT D-G5): checklist confirmation must use the
+    ``confirm_checklist`` key — HR holds it but not ``create_session``, so the
+    old ``create_session`` guard wrongly locked HR out of the design matrix.
+    """
+    if not has_permission(app, user, CONFIRM_CHECKLIST_PERMISSION):
+        raise AppException("没有权限执行此操作", PERMISSION_DENIED_CODE)
 
 
 def _get_coaching_record(record_bid: str) -> LearnerMentorship:
@@ -244,17 +261,17 @@ def _require_session_scope(app, user, learner_bid: str) -> None:
     user_id = getattr(user, "user_id", None)
     if scope.startswith("mentored:"):
         if profile.coach_bid != user_id:
-            raise_param_error("coach: not the mentored learner")
+            raise AppException("没有权限操作非带教学员的数据", PERMISSION_DENIED_CODE)
         return
     if scope.startswith("department:"):
         if profile.department != scope.split(":", 1)[1]:
-            raise_param_error("coach: learner not in the department scope")
+            raise AppException("学员不在本部门数据范围内", PERMISSION_DENIED_CODE)
         return
     if scope.startswith("self:"):
         if profile.user_bid != user_id:
-            raise_param_error("coach: only the learner themself")
+            raise AppException("仅限本人操作", PERMISSION_DENIED_CODE)
         return
-    raise_param_error("coach: no permission to access this learner")
+    raise AppException("没有权限访问该学员数据", PERMISSION_DENIED_CODE)
 
 
 def _apply_session_scope(query, scope: str):
@@ -469,7 +486,7 @@ def register_coach_routes(app: Flask, path_prefix: str = "/api/coach") -> None:
     @app.route(path_prefix + "/checklist/<record_bid>/sync", methods=["POST"])
     def sync_checklist(record_bid: str):
         """Coach records the face-to-face sync (confirmation + note, idempotent)."""
-        _require_coach_write(app, request.user)
+        _require_checklist_confirm(app, request.user)
         record = _get_coaching_record(record_bid)
         _require_mentored_learner(app, request.user, record.learner_bid)
 
@@ -493,7 +510,7 @@ def register_coach_routes(app: Flask, path_prefix: str = "/api/coach") -> None:
     )
     def add_checklist_improvement(record_bid: str):
         """Coach registers an improvement item found during the sync."""
-        _require_coach_write(app, request.user)
+        _require_checklist_confirm(app, request.user)
         record = _get_coaching_record(record_bid)
         _require_mentored_learner(app, request.user, record.learner_bid)
 
@@ -538,7 +555,7 @@ def register_coach_routes(app: Flask, path_prefix: str = "/api/coach") -> None:
     )
     def done_checklist_improvement(record_bid: str, improvement_bid: str):
         """Coach marks an improvement item as done (closes the improvement gate)."""
-        _require_coach_write(app, request.user)
+        _require_checklist_confirm(app, request.user)
         record = _get_coaching_record(record_bid)
         _require_mentored_learner(app, request.user, record.learner_bid)
 

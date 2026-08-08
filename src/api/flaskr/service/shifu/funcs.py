@@ -242,6 +242,41 @@ def upload_url(app, user_id: str, url: str) -> str:
             raise_error("server.file.fileUploadFailed")
 
 
+def _is_admin_user(app, user_id: str) -> bool:
+    """True when ``user_id`` is an admin of any course content.
+
+    B2 (P0-PERMISSION-GAP-AUDIT D-G1): the 5-level role model grants a
+    ``role-admin`` full ``view/edit/publish`` access to every course,
+    independent of ``ai_course_auth``. The check is defensive: environments
+    whose test DB has no ``coach_roles`` table fall back to the legacy
+    ``is_operator=1`` flag.
+    Consistent with B6 (P0-PERMISSION-GAP-AUDIT D-G4): the legacy flag only
+    counts when the user holds NO 5-level role — a user with any role is
+    never short-circuited by ``is_operator``.
+    """
+    roles = None
+    try:
+        from flaskr.service.coach.permissions import resolve_user_roles
+
+        roles = resolve_user_roles(app, user_id)
+        if any(role.get("role_bid") == "role-admin" for role in roles):
+            return True
+    except Exception:  # pragma: no cover - defensive (no coach_roles table)
+        roles = None
+    # B6 semantics: has roles but no role-admin -> definitely not an admin.
+    if roles is not None and roles:
+        return False
+    try:
+        from flaskr.service.user.repository import get_user_entity_by_bid
+
+        entity = get_user_entity_by_bid(user_id)
+        if entity is not None and entity.is_operator:
+            return True
+    except Exception:  # pragma: no cover - defensive
+        pass
+    return False
+
+
 def shifu_permission_verification(
     app,
     user_id: str,
@@ -276,6 +311,11 @@ def shifu_permission_verification(
                 return auth_type in cached_auth_types
             except (json.JSONDecodeError, TypeError):
                 redis.delete(cache_key)
+        # B2 (D-G1): admin / role-admin bypass — no per-course auth required.
+        if _is_admin_user(app, user_id):
+            all_auth_types = ["view", "edit", "publish"]
+            redis.set(cache_key, json.dumps(all_auth_types), cache_key_expire)
+            return True
         # If it is not in the cache, query the database
         creator_bid = get_shifu_creator_bid(app, shifu_id)
         if creator_bid and creator_bid == user_id:

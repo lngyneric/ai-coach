@@ -258,7 +258,7 @@ def _seed_users(app):
                 "(role_bid, name, permissions, is_active) VALUES "
                 "('role-admin', 'admin', '[\"all\"]', 1),"
                 "('role-coach', 'coach',"
-                " '[\"create_session\",\"view_own_report\"]', 1),"
+                " '[\"create_session\",\"confirm_checklist\",\"view_own_report\"]', 1),"
                 "('role-learner', 'learner',"
                 " '[\"learner:read\",\"learner:write\",\"view_own_report\"]', 1)"
             )

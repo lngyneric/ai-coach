@@ -330,7 +330,19 @@ def register_shifu_routes(app: Flask, path_prefix="/api/shifu"):
 
     def _require_operator() -> None:
         if not getattr(request.user, "is_operator", False):
-            raise_error("server.shifu.noPermission")
+            # B8 (P0-PERMISSION-GAP-AUDIT D-G4): unify the operations gate with
+            # the 5-level role model — HR (role-hr / manage_users) may enter
+            # the operations backend too; otherwise keep 401 for the shifu stack.
+            from flaskr.service.coach.permissions import has_permission
+
+            try:
+                allowed = has_permission(app, request.user, "manage_users")
+            except Exception:
+                # Environments without the coach_roles tables (focused unit
+                # tests) can't resolve roles — deny rather than crash.
+                allowed = False
+            if not allowed:
+                raise_error("server.shifu.noPermission")
 
     def _normalize_contacts(raw_contacts: object) -> list[str]:
         """Split and normalize contact identifiers from request payloads."""

@@ -22,28 +22,41 @@ from flask import Flask, current_app, request
 
 from flaskr.framework.plugin.inject import inject
 from flaskr.route.common import make_common_response
-from flaskr.service.coach.permissions import has_permission
+from flaskr.service.coach.permissions import has_permission, visible_students_scope
 from flaskr.service.coach.report import (
     build_report_markdown,
     build_rule_based_report,
     collect_learner_context,
     generate_ai_report,
 )
-from flaskr.service.common.models import raise_param_error
+from flaskr.service.common.models import AppException, raise_param_error
 from flaskr.service.learning_portal.models import LearnerProfile
 
 VIEW_ANY_REPORT = "view_any_report"
 VIEW_OWN_REPORT = "view_own_report"
 
+# Permission denied business code (matches learning_portal PERMISSION_DENIED_CODE).
+PERMISSION_DENIED_CODE = 403
+
 
 def _may_view_report(user: Any, learner_bid: str) -> bool:
     """True when ``user`` may view the report for ``learner_bid``.
 
-    - ``view_any_report`` holders always pass;
+    - ``view_any_report`` holders pass, EXCEPT a ``dept_head`` whose data
+      scope is ``department:<dept>`` must stay inside their own department
+      (B5, P0-PERMISSION-GAP-AUDIT D-G8-1);
     - learners may view their own profile (match by ``user_bid`` on the
       ``learner_profiles`` row, or by the learner_bid == user.user_id).
     """
     if has_permission(current_app, user, VIEW_ANY_REPORT):
+        scope = visible_students_scope(current_app, user)
+        if scope.startswith("department:"):
+            dept = scope.split(":", 1)[1]
+            profile = LearnerProfile.query.filter_by(
+                learner_bid=learner_bid
+            ).first()
+            if profile is None or profile.department != dept:
+                return False
         return True
     if not has_permission(current_app, user, VIEW_OWN_REPORT):
         return False
@@ -81,7 +94,7 @@ def register_report_routes(app: Flask, path_prefix: str = "/api/coach") -> None:
                 description: report markdown + structured fields
         """
         if not _may_view_report(request.user, learner_bid):
-            raise_param_error("coach: no permission to view this learner report")
+            raise AppException("没有权限查看该学员报告", PERMISSION_DENIED_CODE)
 
         source = (request.args.get("source") or "auto").strip().lower()
         ctx = collect_learner_context(learner_bid)

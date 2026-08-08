@@ -315,12 +315,13 @@ def register_learning_portal_routes(
     @app.route(path_prefix + "/mentor/students", methods=["GET"])
     def mentor_students():
         _require_permission(app, request.user, "view_all_students")
-        user_bid = request.user.user_id
-        students = (
-            LearnerProfile.query.filter_by(coach_bid=user_bid)
-            .order_by(LearnerProfile.created_at.desc())
-            .all()
-        )
+        # B1 (P0-PERMISSION-GAP-AUDIT D-G2): consume visible_students_scope
+        # exactly like ``admin/learners`` so admin/hr see everyone, dept_head
+        # see their own department and coach see their mentees.
+        scope = visible_students_scope(app, request.user)
+        query = LearnerProfile.query.order_by(LearnerProfile.created_at.desc())
+        query = _apply_students_scope(query, scope)
+        students = query.all()
         result = []
         for s in students:
             active_phase = (
@@ -354,8 +355,10 @@ def register_learning_portal_routes(
     @app.route(path_prefix + "/mentor/pending-scores", methods=["GET"])
     def mentor_pending_scores():
         _require_permission(app, request.user, "view_all_students")
-        user_bid = request.user.user_id
-        students = LearnerProfile.query.filter_by(coach_bid=user_bid).all()
+        # B1 (D-G2): same data-scope fix as ``mentor/students``.
+        scope = visible_students_scope(app, request.user)
+        query = _apply_students_scope(LearnerProfile.query, scope)
+        students = query.all()
         learner_bids = [s.learner_bid for s in students]
         if not learner_bids:
             return make_common_response([])
@@ -673,10 +676,32 @@ def register_learning_portal_routes(
     def admin_stats():
         # W3-4 guard: KPI stats visible to view_kpi holders (admin/hr/dept/coach).
         _require_permission(app, request.user, "view_kpi")
-        total_learners = LearnerProfile.query.count()
-        active_learners = LearnerProfile.query.filter_by(status="active").count()
-        in_progress = LearnerMentorship.query.filter_by(status="in_progress").count()
-        passed = LearnerMentorship.query.filter_by(status="passed").count()
+        # B1 (P0-PERMISSION-GAP-AUDIT D-G8-2): scope the KPI counts the same
+        # way as ``admin/learners`` so a dept_head sees only their department
+        # and a coach only their mentees (previously global counts leaked
+        # every learner's KPI to dept/coach).
+        scope = visible_students_scope(app, request.user)
+        learners_query = _apply_students_scope(LearnerProfile.query, scope)
+        total_learners = learners_query.count()
+        active_learners = learners_query.filter_by(status="active").count()
+        learner_bids = [
+            row[0]
+            for row in learners_query.with_entities(
+                LearnerProfile.learner_bid
+            ).all()
+        ]
+        if learner_bids:
+            in_progress = LearnerMentorship.query.filter(
+                LearnerMentorship.learner_bid.in_(learner_bids),
+                LearnerMentorship.status == "in_progress",
+            ).count()
+            passed = LearnerMentorship.query.filter(
+                LearnerMentorship.learner_bid.in_(learner_bids),
+                LearnerMentorship.status == "passed",
+            ).count()
+        else:
+            in_progress = 0
+            passed = 0
         return make_common_response(
             {
                 "total_learners": total_learners,
@@ -720,34 +745,22 @@ def register_learning_portal_routes(
     # ── PUT /api/portal/admin/roles/<user_bid> ──
     @app.route(path_prefix + "/admin/roles/<user_bid>", methods=["PUT"])
     def admin_update_roles(user_bid):
-        """Grant/revoke legacy flags and 5-level roles (requires manage_users)."""
+        """Grant/revoke 5-level roles (requires manage_users).
+
+        B6 (P0-PERMISSION-GAP-AUDIT D-G4): ``user_role_assignments`` is the
+        single source of truth. The legacy ``is_creator`` / ``is_operator``
+        flags are no longer written here (older clients sending
+        grant_operator/revoke_operator etc. are ignored); see the retirement
+        schedule in docs/P0-PERMISSION-MODEL-UPGRADE.md §十.
+        """
         _require_permission(app, request.user, "manage_users")
 
         data = request.get_json() or {}
-        from flaskr.service.user.repository import mark_user_roles
-
-        grant_creator = data.get("grant_creator")
-        grant_operator = data.get("grant_operator")
-        revoke_creator = data.get("revoke_creator")
-        revoke_operator = data.get("revoke_operator")
         grant_roles = data.get("grant_roles") or []
         revoke_roles = data.get("revoke_roles") or []
 
-        kwargs = {}
-        if grant_creator is True:
-            kwargs["is_creator"] = True
-        if grant_operator is True:
-            kwargs["is_operator"] = True
-        if revoke_creator is True:
-            kwargs["is_creator"] = False
-        if revoke_operator is True:
-            kwargs["is_operator"] = False
-
-        if not kwargs and not grant_roles and not revoke_roles:
+        if not grant_roles and not revoke_roles:
             raise_param_error("no role changes specified")
-
-        if kwargs:
-            mark_user_roles(user_bid, **kwargs)
 
         # Grant 5-level roles (idempotent insert into user_role_assignments).
         for role_bid in grant_roles:
@@ -791,7 +804,6 @@ def register_learning_portal_routes(
 
         return make_common_response({
             "ok": True,
-            **kwargs,
             "roles": [
                 {"role_bid": r["role_bid"], "name": r["name"]}
                 for r in resolve_user_roles(app, user_bid)

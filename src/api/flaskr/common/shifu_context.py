@@ -89,7 +89,12 @@ def _get_shifu_creator_bid_cached(app, shifu_bid: str) -> Optional[str]:
         return get_shifu_creator_bid(app, shifu_bid)
 
     try:
-        prefix = app.config.get("REDIS_KEY_PREFIX", "ai-shifu")
+        # C2 (ROLE-ACCESS-TEST-REPORT): REDIS_KEY_PREFIX is configured with a
+        # trailing ":" ("ai-shifu:"), so strip it before joining to avoid the
+        # legacy "ai-shifu::shifu_creator:" double-colon key.
+        prefix = str(
+            app.config.get("REDIS_KEY_PREFIX", "ai-shifu") or "ai-shifu"
+        ).rstrip(":")
         cache_key = f"{prefix}:shifu_creator:{shifu_bid}"
         raw = cache_provider.get(cache_key)
         if raw is not None:

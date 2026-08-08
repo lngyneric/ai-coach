@@ -212,14 +212,20 @@ def has_permission(app, user, permission: str) -> bool:
     """
     if user is None or not permission:
         return False
-    if _user_bool(user, "is_operator"):
-        return True
 
     user_bid = _user_bid(user)
-    for role in resolve_user_roles(app, user_bid):
+    roles = resolve_user_roles(app, user_bid)
+    for role in roles:
         permissions = role.get("permissions") or set()
         if PERMISSION_ALL in permissions or permission in permissions:
             return True
+
+    # Legacy fallback (B6, P0-PERMISSION-GAP-AUDIT D-G4): ``is_operator=1``
+    # only counts as admin when the user has NO 5-level role assignment, so
+    # ``user_role_assignments`` stays the source of truth while legacy flags
+    # are retired. A user holding a role never falls through to the flag.
+    if not roles and _user_bool(user, "is_operator"):
+        return True
     return False
 
 
@@ -240,8 +246,6 @@ def visible_students_scope(app, user) -> str:
     user_bid = _user_bid(user)
     if not user_bid:
         return SCOPE_SELF  # cannot identify → most restrictive scope
-    if _user_bool(user, "is_operator"):
-        return SCOPE_ALL
 
     roles = resolve_user_roles(app, user_bid)
     role_bids = {role.get("role_bid") for role in roles}
@@ -259,6 +263,10 @@ def visible_students_scope(app, user) -> str:
             return f"{SCOPE_MENTORED}:{user_bid}"
         # role-learner (and any unknown role) → self only
         return f"{SCOPE_SELF}:{user_bid}"
+
+    # Legacy fallback (B6, D-G4): is_operator=1 without any role assignment.
+    if not role_bids and _user_bool(user, "is_operator"):
+        return SCOPE_ALL
     return f"{SCOPE_SELF}:{user_bid}"
 
 
@@ -271,12 +279,16 @@ def get_user_permissions(app, user) -> List[str]:
     casing. This is the backing data for ``GET /api/portal/permissions``.
     """
     keys: Set[str] = set()
-    has_all = _user_bool(user, "is_operator")
-    for role in resolve_user_roles(app, _user_bid(user)):
+    roles = resolve_user_roles(app, _user_bid(user))
+    has_all = False
+    for role in roles:
         permissions = role.get("permissions") or set()
         keys.update(permissions)
         if PERMISSION_ALL in permissions:
             has_all = True
+    # Legacy fallback (B6, D-G4): is_operator=1 with no role assignment.
+    if not roles and _user_bool(user, "is_operator"):
+        has_all = True
     if has_all:
         keys.update(ALL_PERMISSION_KEYS)
         keys.add(PERMISSION_ALL)

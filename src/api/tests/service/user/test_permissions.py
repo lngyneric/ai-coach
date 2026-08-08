@@ -111,6 +111,14 @@ def test_has_permission_admin_operator_always_true(monkeypatch):
     assert perms.has_permission(None, user, "not-a-real-key") is True
 
 
+def test_has_permission_operator_ignored_when_roles_present(monkeypatch):
+    """B6: is_operator=1 no longer short-circuits when the user has a role."""
+    monkeypatch.setattr(perms, "resolve_user_roles", lambda app, bid: [_ROLE_LEARNER])
+    user = _MockUser(is_operator=True)
+    assert perms.has_permission(None, user, "manage_users") is False
+    assert perms.has_permission(None, user, "view_own_report") is True
+
+
 def test_has_permission_admin_role_wildcard(monkeypatch):
     monkeypatch.setattr(perms, "resolve_user_roles", lambda app, bid: [_ROLE_ADMIN])
     user = _MockUser()
@@ -247,6 +255,14 @@ def test_get_permissions_operator_full_set(monkeypatch):
     keys = perms.get_user_permissions(None, _MockUser(is_operator=True))
     for key in perms.ALL_PERMISSION_KEYS:
         assert key in keys
+
+
+def test_get_permissions_operator_ignored_when_roles_present(monkeypatch):
+    """B6: is_operator=1 no longer bypasses when the user holds a role."""
+    monkeypatch.setattr(perms, "resolve_user_roles", lambda app, bid: [_ROLE_LEARNER])
+    keys = perms.get_user_permissions(None, _MockUser(is_operator=True))
+    assert "all" not in keys
+    assert keys == ["learner:read", "learner:write", "view_own_report"]
 
 
 def test_get_permissions_learner_union(monkeypatch):

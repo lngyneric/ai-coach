@@ -2374,12 +2374,16 @@ def _clear_shifu_permission_cache(app: Flask, user_id: str, shifu_bid: str) -> N
 
 def _clear_shifu_creator_cache(app: Flask, shifu_bid: str) -> None:
     prefixes = {
-        get_config("REDIS_KEY_PREFIX") or "",
+        str(get_config("REDIS_KEY_PREFIX") or "").rstrip(":"),
         "ai-shifu",
     }
     for prefix in prefixes:
+        if not prefix:
+            continue
         cache_key = f"{prefix}:shifu_creator:{shifu_bid}"
         redis.delete(cache_key)
+        # C2: also drop the legacy double-colon key written by older code.
+        redis.delete(f"{prefix}::shifu_creator:{shifu_bid}")
 
 
 def _update_course_creator_bid(
