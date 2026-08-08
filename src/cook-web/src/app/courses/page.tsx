@@ -27,7 +27,9 @@ const COURSE_CATEGORIES = [
 ] as const;
 
 // ── Course Card ──────────────────────────────────────────────────
-function CourseCard({ shifu }: { shifu: Shifu }) {
+type CourseBadge = 'required' | 'recommended';
+
+function CourseCard({ shifu, badge }: { shifu: Shifu; badge?: CourseBadge }) {
   const isVideo = (shifu.keywords || []).some((k: string) => /视频|video/i.test(k));
   const courseUrl = isVideo ? `/video-player.html?bid=${shifu.bid}` : `/c/${shifu.bid}`;
   return (
@@ -44,6 +46,12 @@ function CourseCard({ shifu }: { shifu: Shifu }) {
           </div>
           {shifu.description && <p className="text-xs text-slate-500 line-clamp-2 leading-relaxed mt-1">{shifu.description}</p>}
           <div className="flex items-center gap-2 mt-auto pt-2">
+            {badge === 'required' && (
+              <Badge variant="default" className="text-xs font-normal">必修</Badge>
+            )}
+            {badge === 'recommended' && (
+              <Badge variant="outline" className="text-xs font-normal bg-blue-50 text-blue-700 border-blue-200">推荐</Badge>
+            )}
             <Badge variant="secondary" className="text-xs font-normal">{shifu.tts_enabled ? '🎧 语音' : '📖 阅读'}</Badge>
           </div>
         </CardContent>
@@ -144,6 +152,9 @@ export default function CoursesPage() {
   const [activeCategory, setActiveCategory] = useState<string | null>(null);
   const [showEnrollModal, setShowEnrollModal] = useState(false);
   const [greeting, setGreeting] = useState('');
+  // 三态标注（闭环 3）：必修来自 my_enrollments，推荐来自 /portal/recommend
+  const [requiredBids, setRequiredBids] = useState<Set<string>>(new Set());
+  const [recommendedBids, setRecommendedBids] = useState<Set<string>>(new Set());
 
   const isAdmin = userInfo?.is_operator || userInfo?.is_creator;
 
@@ -174,6 +185,35 @@ export default function CoursesPage() {
     if (isInitialized && !isGuest) fetchCourses();
     else if (isInitialized) setLoading(false);
   }, [isInitialized, isGuest, fetchCourses]);
+
+  // 三态标注：并行拉取我的分配（必修）+ 岗位推荐（推荐），失败不影响列表
+  const fetchStateBadges = useCallback(async () => {
+    try {
+      const [enrollments, rec] = await Promise.all([
+        request.get('/api/portal/enrollments'),
+        api.getPortalRecommend({ limit: 20 }),
+      ]);
+      const enrolledBids: string[] = (enrollments || [])
+        .map((e: any) => e?.shifu_bid)
+        .filter(Boolean);
+      const recBids: string[] = ((rec as any)?.courses || [])
+        .map((c: any) => c?.shifu_bid)
+        .filter(Boolean);
+      setRequiredBids(new Set(enrolledBids));
+      setRecommendedBids(new Set(recBids));
+    } catch (err) {
+      console.warn('Failed to load enrollment/recommendation state:', err);
+    }
+  }, []);
+
+  useEffect(() => {
+    if (isInitialized && !isGuest) fetchStateBadges();
+  }, [isInitialized, isGuest, fetchStateBadges]);
+
+  const badgeFor = (bid: string): CourseBadge | undefined =>
+    requiredBids.has(bid) ? 'required'
+      : recommendedBids.has(bid) ? 'recommended'
+      : undefined;
 
   const getCoursesByCategory = (categoryId: string) => {
     return shifus.filter(s => {
@@ -290,7 +330,7 @@ export default function CoursesPage() {
                   </div>
                   {catCourses.length > 0 ? (
                     <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4 gap-4">
-                      {catCourses.map(s => <CourseCard key={s.bid} shifu={s} />)}
+                      {catCourses.map(s => <CourseCard key={s.bid} shifu={s} badge={badgeFor(s.bid)} />)}
                     </div>
                   ) : (
                     <Card className="border-slate-200 border-dashed"><CardContent className="p-8 flex flex-col items-center justify-center text-center">
@@ -304,7 +344,7 @@ export default function CoursesPage() {
             {otherCourses.length > 0 && (
               <section>
                 <div className="flex items-center justify-between mb-4"><div><h3 className="text-base font-semibold text-slate-900 flex items-center gap-2"><span>📂</span> 其他课程</h3></div></div>
-                <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4 gap-4">{otherCourses.map(s => <CourseCard key={s.bid} shifu={s} />)}</div>
+                <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4 gap-4">{otherCourses.map(s => <CourseCard key={s.bid} shifu={s} badge={badgeFor(s.bid)} />)}</div>
               </section>
             )}
             {shifus.length === 0 && (
