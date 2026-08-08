@@ -34,6 +34,7 @@ def test_create_celery_app_reuses_flask_config() -> None:
         BILLING_RENEWAL_CRON="*/2 * * * *",
         BILLING_BUCKET_EXPIRE_CRON="*/15 * * * *",
         BILLING_LOW_BALANCE_CRON="30 * * * *",
+        LEARN_PDF_EXPORT_CLEANUP_CRON="15 * * * *",
     )
 
     celery_app = celery_app_module.create_celery_app(flask_app=flask_app)
@@ -56,6 +57,7 @@ def test_create_celery_app_reuses_flask_config() -> None:
     assert "billing.aggregate_daily_ledger_summary" in celery_app.tasks
     assert "billing.rebuild_daily_aggregates" in celery_app.tasks
     assert "billing.verify_domain_binding" in celery_app.tasks
+    assert "learn.cleanup_pdf_exports" in celery_app.tasks
 
     beat_schedule = celery_app.conf.beat_schedule
     assert beat_schedule["billing.dispatch_due_renewal_events.schedule"]["task"] == (
@@ -80,6 +82,14 @@ def test_create_celery_app_reuses_flask_config() -> None:
     _assert_cron_schedule(
         beat_schedule["billing.send_low_balance_alert.schedule"]["schedule"],
         minute="30",
+        hour="*",
+    )
+    assert beat_schedule["learn.cleanup_pdf_exports.schedule"]["task"] == (
+        "learn.cleanup_pdf_exports"
+    )
+    _assert_cron_schedule(
+        beat_schedule["learn.cleanup_pdf_exports.schedule"]["schedule"],
+        minute="15",
         hour="*",
     )
 
@@ -304,6 +314,11 @@ def test_create_celery_app_uses_default_billing_beat_crons() -> None:
     )
     _assert_cron_schedule(
         beat_schedule["billing.send_low_balance_alert.schedule"]["schedule"],
+        minute="0",
+        hour="*",
+    )
+    _assert_cron_schedule(
+        beat_schedule["learn.cleanup_pdf_exports.schedule"]["schedule"],
         minute="0",
         hour="*",
     )

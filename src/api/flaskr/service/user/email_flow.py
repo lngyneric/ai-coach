@@ -37,6 +37,62 @@ def configure_fix_check_code(value: Optional[str]) -> None:
     FIX_CHECK_CODE = value
 
 
+def _load_email_domain_allowlist(app: Flask) -> set[str]:
+    """Normalize ``EMAIL_DOMAIN_ALLOWLIST`` into a lowercased set.
+
+    Accepts a list, a tuple/set, or a comma/space-separated string. The
+    project's enhanced ``Config`` stores a list value as its ``str()`` repr
+    in ``os.environ`` (``__setitem__`` stringifies) and reads it back through
+    ``EnvVar(type=list)``, so ``app.config.get`` may return either a real
+    list or a stringified list like ``"['a.com','b.com']"`` — both are
+    handled here. An empty/absent value means "allow all domains" (compat
+    mode, tests and bare deployments).
+    """
+    items: set[str] = set()
+    for part in _coerce_domain_parts(app.config.get("EMAIL_DOMAIN_ALLOWLIST", [])):
+        part = part.strip().lower()
+        if part:
+            items.add(part)
+    return items
+
+
+def _coerce_domain_parts(value: Any) -> list[str]:
+    """Flatten a config value into a flat list of raw domain strings."""
+    out: list[str] = []
+    if isinstance(value, (list, tuple, set)):
+        for item in value:
+            out.extend(_coerce_domain_parts(item))
+        return out
+    text = str(value or "").strip()
+    if not text:
+        return out
+    if text.startswith("[") and text.endswith("]"):
+        try:
+            import ast
+
+            parsed = ast.literal_eval(text)
+        except Exception:
+            parsed = None
+        if parsed is not None:
+            return _coerce_domain_parts(parsed)
+    return [part for part in text.replace(",", " ").split() if part]
+
+
+def _validate_email_domain(app: Flask, email: str) -> None:
+    """Reject emails whose domain is not on ``EMAIL_DOMAIN_ALLOWLIST``.
+
+    When the allowlist is empty (default) every domain is accepted; when set
+    (e.g. ``sysmex.internal``), only matching domains may be used to create or
+    log into an account (AAD-LOGIN-CONTROL-DESIGN §二.1 email channel).
+    """
+    domain_allowlist = _load_email_domain_allowlist(app)
+    if not domain_allowlist:
+        return
+    domain = (email or "").rsplit("@", 1)[-1].strip().lower() if email else ""
+    if not domain or domain not in domain_allowlist:
+        raise_error("server.auth.emailDomainNotAllowed")
+
+
 def _is_within_seconds(value: datetime.datetime, *, seconds: int) -> bool:
     if value is None:
         return False
@@ -98,6 +154,7 @@ def verify_email_code(
         configure_fix_check_code(app.config.get("UNIVERSAL_VERIFICATION_CODE"))
 
     email_key = (email or "").strip()
+    _validate_email_domain(app, email_key)
     code_key = app.config["REDIS_KEY_PREFIX_MAIL_CODE"] + email_key
     if code != FIX_CHECK_CODE:
         cached = redis.get(code_key)

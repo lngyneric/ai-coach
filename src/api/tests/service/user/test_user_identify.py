@@ -1,5 +1,7 @@
 import uuid
 
+import pytest
+
 
 class _FakeRedis:
     def get(self, key):
@@ -49,6 +51,7 @@ def test_phone_flow_sets_user_identify(app):
     with app.app_context():
         app.config["UNIVERSAL_VERIFICATION_CODE"] = "9999"
         app.config["ADMIN_LOGIN_GRANT_CREATOR_WITH_DEMO"] = False
+        app.config["PHONE_LOGIN_ENABLED"] = True
 
         # Monkeypatch redis in module scope
         phone_flow.redis = _FakeRedis()
@@ -64,8 +67,13 @@ def test_phone_flow_sets_user_identify(app):
             entity = UserEntity.query.filter_by(user_bid=token.userInfo.user_id).first()
             assert entity is not None
             assert entity.user_identify == phone
-            assert entity.is_creator == 1
-            assert entity.is_operator == 1
+            # AAD strong-login control: no implicit creator/operator bootstrap
+            # unless ADMIN_LOGIN_GRANT_CREATOR_WITH_DEMO is on (default off).
+            assert entity.is_creator == 0
+            assert entity.is_operator == 0
+            # (Default role-learner assignment is covered by
+            # test_default_role_assignment.py — the shared test DB has no
+            # user_role_assignments table to assert against here.)
         finally:
             _reset_user_auth_tables()
 
@@ -77,6 +85,9 @@ def test_email_flow_sets_user_identify(app):
     with app.app_context():
         app.config["UNIVERSAL_VERIFICATION_CODE"] = "9999"
         app.config["ADMIN_LOGIN_GRANT_CREATOR_WITH_DEMO"] = False
+        # email domain allowlist is enforced only when non-empty; exercise the
+        # allow-list pass-through for the example.com domain.
+        app.config["EMAIL_DOMAIN_ALLOWLIST"] = ["example.com"]
         email_flow.redis = _FakeRedis()
 
         _reset_user_auth_tables()
@@ -101,6 +112,7 @@ def test_phone_flow_verifies_code_from_db_when_cache_missing(app):
     with app.app_context():
         app.config["UNIVERSAL_VERIFICATION_CODE"] = "9999"
         app.config["ADMIN_LOGIN_GRANT_CREATOR_WITH_DEMO"] = False
+        app.config["PHONE_LOGIN_ENABLED"] = True
         phone_flow.redis = _FakeRedis()
 
         phone = "15500002222"
@@ -137,7 +149,10 @@ def test_phone_flow_bootstrap_sets_draft_owner_for_published_demo(app):
 
     with app.app_context():
         app.config["UNIVERSAL_VERIFICATION_CODE"] = "9999"
-        app.config["ADMIN_LOGIN_GRANT_CREATOR_WITH_DEMO"] = False
+        # Bootstrap path is explicitly enabled here to test init_first_course
+        # demo behavior (first account becomes creator+operator).
+        app.config["ADMIN_LOGIN_GRANT_CREATOR_WITH_DEMO"] = True
+        app.config["PHONE_LOGIN_ENABLED"] = True
         phone_flow.redis = _FakeRedis()
 
         _reset_user_auth_tables()
@@ -210,3 +225,46 @@ def test_email_flow_verifies_code_from_db_when_cache_missing(app):
         updated = UserVerifyCode.query.filter_by(id=record.id).first()
         assert updated is not None
         assert updated.verify_code_used == 1
+
+
+def test_phone_flow_disabled_raises_phone_disabled(app):
+    """AAD strong-login control: PHONE_LOGIN_ENABLED=False blocks phone login."""
+    import flaskr.service.user.phone_flow as phone_flow
+
+    with app.app_context():
+        app.config["UNIVERSAL_VERIFICATION_CODE"] = "9999"
+        app.config["PHONE_LOGIN_ENABLED"] = False
+        phone_flow.redis = _FakeRedis()
+
+        _reset_user_auth_tables()
+        try:
+            with pytest.raises(Exception) as excinfo:
+                phone_flow.verify_phone_code(
+                    app, user_id=None, phone="15500009999", code="9999"
+                )
+            assert "phoneDisabled" in str(excinfo.value)
+        finally:
+            _reset_user_auth_tables()
+
+
+def test_email_flow_rejects_domain_outside_allowlist(app):
+    """AAD strong-login control: email outside EMAIL_DOMAIN_ALLOWLIST rejected."""
+    import flaskr.service.user.email_flow as email_flow
+
+    with app.app_context():
+        app.config["UNIVERSAL_VERIFICATION_CODE"] = "9999"
+        app.config["EMAIL_DOMAIN_ALLOWLIST"] = ["sysmex.internal"]
+        email_flow.redis = _FakeRedis()
+
+        _reset_user_auth_tables()
+        try:
+            with pytest.raises(Exception) as excinfo:
+                email_flow.verify_email_code(
+                    app,
+                    user_id=None,
+                    email="user@gmail.com",
+                    code="9999",
+                )
+            assert "emailDomainNotAllowed" in str(excinfo.value)
+        finally:
+            _reset_user_auth_tables()

@@ -40,8 +40,12 @@ FROM python:3.11-slim
 ENV SHARED_I18N_ROOT=/app/i18n
 
 # Install FFmpeg for audio processing (pydub dependency)
+# WeasyPrint (lesson PDF export) requires Pango/cairo libs + CJK fonts
 RUN apt-get update && \
-    apt-get install -y --no-install-recommends ffmpeg && \
+    apt-get install -y --no-install-recommends ffmpeg \
+        libpango-1.0-0 libpangocairo-1.0-0 libpangoft2-1.0-0 \
+        libharfbuzz0b libharfbuzz-subset0 libffi8 \
+        fonts-noto-cjk fonts-noto-color-emoji && \
     apt-get clean && \
     rm -rf /var/lib/apt/lists/*
 

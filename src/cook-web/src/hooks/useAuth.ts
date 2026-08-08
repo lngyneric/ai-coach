@@ -97,7 +97,7 @@ export function useAuth(options: UseAuthOptions = {}) {
   const handleLoginError = (
     code: number,
     message?: string,
-    context?: 'email' | 'sms',
+    context?: 'email' | 'sms' | 'employee',
   ) => {
     // Skip token expiration as it's handled by retry logic
     if (code === 1005) return;
@@ -219,8 +219,47 @@ export function useAuth(options: UseAuthOptions = {}) {
     }
   };
 
+  // Employee (AAD) login — the primary enterprise entry under AAD
+  // strong-login control. POST /api/user/login_employee {employeeNo, password}.
+  const loginWithEmployee = async (
+    employeeNo: string,
+    password: string,
+    language: string,
+  ) => {
+    try {
+      const response = await callWithTokenRefresh(() =>
+        apiService.loginEmployee({
+          employeeNo,
+          password,
+          language,
+          login_context: options.loginContext,
+        }),
+      );
+
+      const success = await processLoginResponse(response, 'employee');
+      if (!success) {
+        handleLoginError(
+          response.code,
+          response.message || response.msg,
+          'employee',
+        );
+      }
+
+      return response;
+    } catch (error: any) {
+      toast({
+        title: t('module.auth.failed'),
+        description: error.message || t('common.core.networkError'),
+        variant: 'destructive',
+      });
+      options.onError?.(error);
+      throw error;
+    }
+  };
+
   return {
     loginWithSmsCode,
+    loginWithEmployee,
     sendSmsCode,
     callWithTokenRefresh,
   };

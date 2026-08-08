@@ -1,7 +1,6 @@
 'use client';
 import { use } from 'react';
 import dynamic from 'next/dynamic';
-import { useSearchParams } from 'next/navigation';
 import Loading from '@/components/loading';
 import MobileUnsupportedDialog from '@/components/MobileUnsupportedDialog';
 import { getLessonIdFromQuery } from '@/c-utils/urlUtils';
@@ -17,10 +16,16 @@ const ShifuRoot = dynamic(() => import('@/components/shifu-root'), {
 
 type ShifuPageParams = { id: string };
 
+// useSearchParams() 需要 Suspense 边界，且与 use() 混用会抛错；
+// 本页面纯客户端渲染，直接用 window.location.search 解析更可靠。
+function getInitialLessonId(): string {
+  if (typeof window === 'undefined') return '';
+  return getLessonIdFromQuery(new URLSearchParams(window.location.search));
+}
+
 export default function Page({ params }: { params: Promise<ShifuPageParams> }) {
   const { id } = use(params);
-  const searchParams = useSearchParams();
-  const initialLessonId = getLessonIdFromQuery(searchParams);
+  const initialLessonId = getInitialLessonId();
 
   return (
     <>
@@ -34,3 +39,4 @@ export default function Page({ params }: { params: Promise<ShifuPageParams> }) {
     </>
   );
 }
+

@@ -6,6 +6,7 @@ describe('auth api definitions', () => {
     expect(api.verifyCaptcha).toBe('POST /user/captcha/verify');
     expect(api.sendSmsCode).toBe('POST /user/send_sms_code');
     expect(api.smsLogin).toBe('POST /user/login_sms');
+    expect(api.loginEmployee).toBe('POST /user/login_employee');
     expect(Object.prototype.hasOwnProperty.call(api, 'verifySmsCode')).toBe(
       false,
     );

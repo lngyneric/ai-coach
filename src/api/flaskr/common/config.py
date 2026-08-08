@@ -72,7 +72,9 @@ class EnvVar:
                 )
         elif self.type is list:
             if isinstance(value, str):
-                return [item.strip() for item in value.split(",") if item.strip()]
+                # Split on commas and/or whitespace so space-separated lists
+                # (e.g. "a b c") work as well as comma-separated ("a,b,c").
+                return [item for item in re.split(r"[,\s]+", value) if item.strip()]
             return list(value)
         else:
             return str(value)
@@ -98,6 +100,19 @@ ENV_VARS: Dict[str, EnvVar] = {
         name="LOCAL_STORAGE_ROOT",
         default="storage",
         description="Filesystem directory used for local storage provider (relative to app working dir if not absolute).",
+        group="storage",
+    ),
+    "PDF_EXPORT_TEMP_DIR": EnvVar(
+        name="PDF_EXPORT_TEMP_DIR",
+        default="",
+        description="Optional filesystem root for lesson PDF export temp directories. Empty uses the system temp dir.",
+        group="storage",
+    ),
+    "PDF_EXPORT_TTL_SECONDS": EnvVar(
+        name="PDF_EXPORT_TTL_SECONDS",
+        default=10800,
+        type=int,
+        description="How long lesson PDF export temp files are retained before cleanup (seconds). Default: 10800 (3 hours).",
         group="storage",
     ),
     "ASK_MAX_HISTORY_LEN": EnvVar(
@@ -155,6 +170,13 @@ ENV_VARS: Dict[str, EnvVar] = {
         default=False,
         type=bool,
         description="Enable the creator billing runtime surface (Cook Web /admin/billing and /api/billing/*). Leave off until billing is configured for the environment.",
+        group="frontend",
+    ),
+    "BILL_USAGE_ENABLED": EnvVar(
+        name="BILL_USAGE_ENABLED",
+        default=False,
+        type=bool,
+        description="Master switch for LLM/TTS usage billing. When False (default; internal-system free policy) every usage record is persisted for audit but forced billable=0 (recorded, never billed/charged). Set True only when an environment is externally billed.",
         group="frontend",
     ),
     "HOME_URL": EnvVar(
@@ -270,10 +292,10 @@ ENV_VARS: Dict[str, EnvVar] = {
     ),
     "LOGIN_METHODS_ENABLED": EnvVar(
         name="LOGIN_METHODS_ENABLED",
-        default="phone",
+        default="employee",
         description="""Login methods exposed to users.
 Values: "phone" | "email" | "google" | "employee" combinations (comma-separated)
-Default: "phone".""",
+Default: "employee" (AAD strong-login control).""",
         group="frontend",
     ),
     "AAD_AUTH_URL": EnvVar(
@@ -289,6 +311,78 @@ Default: "phone".""",
         description="HTTP timeout (seconds) for AAD server requests",
         group="auth",
     ),
+    "EMPLOYEE_OPERATOR_WHITELIST": EnvVar(
+        name="EMPLOYEE_OPERATOR_WHITELIST",
+        default=[],
+        type=list,
+        example="sch00068,sch11111",
+        description=(
+            "Employee numbers that get is_operator=1 on employee login. "
+            "Comma- or space-separated. Empty default keeps existing grants."
+        ),
+        group="auth",
+    ),
+    "EMPLOYEE_CREATOR_WHITELIST": EnvVar(
+        name="EMPLOYEE_CREATOR_WHITELIST",
+        default=[],
+        type=list,
+        example="sch00068,sch11111",
+        description=(
+            "Employee numbers that get is_creator=1 on employee login. "
+            "Comma- or space-separated. Empty default keeps existing grants."
+        ),
+        group="auth",
+    ),
+    "EMPLOYEE_ROLE_REVOKE_OTHERS": EnvVar(
+        name="EMPLOYEE_ROLE_REVOKE_OTHERS",
+        default=False,
+        type=bool,
+        example="false",
+        description=(
+            "When true, employee-login users outside both whitelists have "
+            "their existing operator/creator grants revoked on next login. "
+            "Default false preserves existing grants (safe migration)."
+        ),
+        group="auth",
+    ),
+    "EMAIL_DOMAIN_ALLOWLIST": EnvVar(
+        name="EMAIL_DOMAIN_ALLOWLIST",
+        default=[],
+        type=list,
+        example="sysmex.internal",
+        description=(
+            "Comma- or space-separated email domains allowed to create/log in "
+            "via the email (AAD mailbox) channel. Empty default = allow all "
+            "domains (compat). When set, only matching domains are accepted "
+            "(AAD-LOGIN-CONTROL-DESIGN §二.1)."
+        ),
+        group="auth",
+    ),
+    "PHONE_LOGIN_ENABLED": EnvVar(
+        name="PHONE_LOGIN_ENABLED",
+        default=False,
+        type=bool,
+        example="false",
+        description=(
+            "Master switch for the phone (SMS) login channel. Default false "
+            "keeps the phone channel disabled under AAD strong-login control "
+            "(AAD-LOGIN-CONTROL-DESIGN §二.1); set true only for legacy/local "
+            "deployments that still need phone login."
+        ),
+        group="auth",
+    ),
+    "AAD_BYPASS": EnvVar(
+        name="AAD_BYPASS",
+        default=False,
+        type=bool,
+        example="false",
+        description=(
+            "When true, skip the AAD server round-trip and accept any password "
+            "for employee login. Dev/local only (local admin roles verify "
+            "locally); MUST be false/0 in production."
+        ),
+        group="auth",
+    ),
     "WECOM_CORP_ID": EnvVar(
         name="WECOM_CORP_ID",
         default="",
@@ -299,6 +393,46 @@ Default: "phone".""",
         name="WECOM_SECRET",
         default="",
         description="企业微信应用 Secret for API access",
+        group="auth",
+    ),
+    "WECOM_AGENT_ID": EnvVar(
+        name="WECOM_AGENT_ID",
+        default="",
+        description=(
+            "企业微信应用 AgentId for message push (W1 WeCom notifications). "
+            "Leave empty to disable push."
+        ),
+        group="auth",
+    ),
+    "WECOM_NOTIFY_ENABLED": EnvVar(
+        name="WECOM_NOTIFY_ENABLED",
+        default=False,
+        type=bool,
+        description=(
+            "Enable WeCom app-message push for learning portal notifications (W1). "
+            "Default off; requires WECOM_CORP_ID / WECOM_SECRET / WECOM_AGENT_ID."
+        ),
+        group="auth",
+    ),
+    "WECOM_NOTIFY_BASE_URL": EnvVar(
+        name="WECOM_NOTIFY_BASE_URL",
+        default="",
+        description=(
+            "Base URL (scheme://host[:port]) used to build WeCom textcard links "
+            "for learning-portal notifications (W2). Course URL = {base}/c/{bid}. "
+            "Leave empty to keep plain-text push."
+        ),
+        group="auth",
+    ),
+    "WECOM_DEFAULT_PARTY": EnvVar(
+        name="WECOM_DEFAULT_PARTY",
+        default="",
+        description=(
+            "WeCom department id(s) to broadcast learning-portal notifications "
+            "to (comma-separated for multiple). When set, push by department "
+            "(toparty) instead of per-user mapping; e.g. 4 = 人事课. Leave empty "
+            "for per-user push."
+        ),
         group="auth",
     ),
     "BRAND_NAME": EnvVar(
@@ -663,6 +797,12 @@ Example: mysql://username:password@hostname:3306/database_name?charset=utf8mb4""
         description="Cron expression for scanning billing low-balance alerts.",
         group="celery",
     ),
+    "LEARN_PDF_EXPORT_CLEANUP_CRON": EnvVar(
+        name="LEARN_PDF_EXPORT_CLEANUP_CRON",
+        default="0 * * * *",
+        description="Cron expression for cleaning up expired lesson PDF export temp files.",
+        group="celery",
+    ),
     # Authentication Configuration
     "SECRET_KEY": EnvVar(
         name="SECRET_KEY",
@@ -827,13 +967,15 @@ Generate secure key: python -c "import secrets; print(secrets.token_urlsafe(32))
     ),
     "ADMIN_LOGIN_GRANT_CREATOR_WITH_DEMO": EnvVar(
         name="ADMIN_LOGIN_GRANT_CREATOR_WITH_DEMO",
-        default=True,
+        default=False,
         type=bool,
         description=(
             "When enabled, users logging in from the admin interface are "
             "automatically marked as creators and granted demo course "
-            "permissions (DEMO_SHIFU_BID / DEMO_EN_SHIFU_BID if configured). "
-            "Intended for demo and staging environments only."
+            "permissions (DEMO_SHIFU_BID / DEMO_EN_SHIFU_BID if configured), "
+            "and the first-account bootstrap (init_first_course) runs. "
+            "Intended for demo and staging environments only; default False "
+            "under AAD strong-login control (A7)."
         ),
         group="auth",
     ),

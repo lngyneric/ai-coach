@@ -29,13 +29,9 @@ export const LogoWithText = ({ direction, size = 64 }) => {
   }, [logoSquareUrl, logoVertical]);
 
   const wideWidth = useMemo(() => {
-    if (
-      typeof wideLogoSrc === 'object' &&
-      'width' in wideLogoSrc &&
-      wideLogoSrc.width &&
-      wideLogoSrc.height
-    ) {
-      return Math.round((size * wideLogoSrc.width) / wideLogoSrc.height);
+    const wls = wideLogoSrc as any;
+    if (typeof wls === 'object' && wls && 'width' in wls && wls.width && wls.height) {
+      return Math.round((size * wls.width) / wls.height);
     }
     return Math.round(size * (imgLogoRow.width / imgLogoRow.height));
   }, [size, wideLogoSrc]);

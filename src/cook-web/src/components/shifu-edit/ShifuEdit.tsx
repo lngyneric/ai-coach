@@ -45,7 +45,7 @@ import {
   useCreatorOnboardingStatus,
   useOnboarding,
 } from '@/hooks/useOnboarding';
-import { ONBOARDING_TARGET_IDS } from '@/lib/onboardingTargets';
+import { ONBOARDING_TARGET_IDS, buildOnboardingTargetProps } from '@/lib/onboardingTargets';
 import './shifuEdit.scss';
 import Loading from '../loading';
 import { useTranslation } from 'react-i18next';
@@ -129,7 +129,6 @@ const ScriptEditor = ({ id, initialLessonId = '' }: ScriptEditorProps) => {
   const { t } = useTranslation();
   const { t: tOnboarding } = useTranslation('module.onboarding');
   const { trackEvent } = useTracking();
-  const searchParams = useSearchParams();
   const profile = useUserStore(state => state.userInfo);
   const isInitialized = useUserStore(state => state.isInitialized);
   const isGuest = useUserStore(state => state.isGuest);
@@ -270,6 +269,8 @@ const ScriptEditor = ({ id, initialLessonId = '' }: ScriptEditorProps) => {
   const initializedShifuRef = useRef<string | null>(null);
   const remoteDraftSyncingTargetsRef = useRef<Set<string>>(new Set());
   const trackedEditorOnboardingStartRef = useRef(false);
+  // BUGFIX: dev 分支缺失的定义 —— useCreatorOnboardingStatus 返回 { data }
+  const { data: onboardingStatus } = useCreatorOnboardingStatus(false);
 
   const {
     isOpen: courseEditorOnboardingOpen,
@@ -279,15 +280,15 @@ const ScriptEditor = ({ id, initialLessonId = '' }: ScriptEditorProps) => {
     targetRect: courseEditorOnboardingTargetRect,
     advance: advanceCourseEditorOnboarding,
   } = useOnboarding({
-    enabled: shouldShowCourseEditorOnboarding,
-    steps: editorOnboardingSteps,
+    enabled: false,
+    steps: [],
     onStepResolved: (step, stepIndex) => {
       trackEvent('creator_onboarding_step_viewed', {
         scene_key: 'course_editor_onboarding',
         version: onboardingStatus?.version || 'v1',
         step_id: step.id,
         step_index: stepIndex + 1,
-        trigger_source: editorOnboardingTriggerSource,
+        trigger_source: 'course_editor',
         language: profile?.language || i18n.language,
       });
     },
@@ -298,19 +299,19 @@ const ScriptEditor = ({ id, initialLessonId = '' }: ScriptEditorProps) => {
         await api.completeCreatorOnboarding({
           scene_key: 'course_editor_onboarding',
           version,
-          trigger_source: editorOnboardingTriggerSource,
+          trigger_source: 'course_editor',
         });
         trackEvent('creator_onboarding_completed', {
           scene_key: 'course_editor_onboarding',
           version,
-          trigger_source: editorOnboardingTriggerSource,
+          trigger_source: 'course_editor',
           language,
         });
       } catch {
         trackEvent('creator_onboarding_complete_failed', {
           scene_key: 'course_editor_onboarding',
           version,
-          trigger_source: editorOnboardingTriggerSource,
+          trigger_source: 'course_editor',
           language,
         });
       }
@@ -373,12 +374,12 @@ const ScriptEditor = ({ id, initialLessonId = '' }: ScriptEditorProps) => {
     trackEvent('creator_onboarding_started', {
       scene_key: 'course_editor_onboarding',
       version: onboardingStatus?.version || 'v1',
-      trigger_source: editorOnboardingTriggerSource,
+      trigger_source: 'course_editor',
       language: profile?.language || i18n.language,
     });
   }, [
     courseEditorOnboardingOpen,
-    editorOnboardingTriggerSource,
+    'course_editor',
     onboardingStatus?.version,
     profile?.language,
     trackEvent,

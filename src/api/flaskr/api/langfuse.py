@@ -10,10 +10,32 @@ from flaskr.common.log import thread_local
 
 
 class MockClient:
+    _scalar_attrs = {
+        "trace_id",
+        "id",
+        "name",
+        "version",
+        "user_id",
+        "session_id",
+        "timestamp",
+        "input",
+        "output",
+        "metadata",
+        "status",
+        "start_time",
+        "end_time",
+    }
+
     def __init__(self, *args, **kwargs):
         pass
 
     def __getattr__(self, name):
+        # Scalar attributes are read as values (e.g. span.trace_id) and must
+        # NOT return a callable — otherwise the value leaks into usage records
+        # as a function object and breaks column persistence (Data too long).
+        if name in self._scalar_attrs:
+            return ""
+
         def method(*args, **kwargs):
             return self
 

@@ -28,6 +28,10 @@ def metering_app():
         },
         SQLALCHEMY_TRACK_MODIFICATIONS=False,
         TZ="UTC",
+        # Billing-chain tests exercise the billable path, so enable the master
+        # switch explicitly. The default (unset/False = internal free policy)
+        # is covered by the dedicated free-policy tests below.
+        BILL_USAGE_ENABLED=True,
     )
     dao.db.init_app(app)
     with app.app_context():
@@ -334,3 +338,120 @@ def test_record_tts_usage_marks_builtin_demo_course_non_billable(
     assert record is not None
     assert record.billable == 0
     assert captured == []
+
+
+
+def test_internal_free_policy_forces_llm_billable_zero(metering_app):
+    """Internal-system free policy (BILL_USAGE_ENABLED default False) forces
+    billable=0 even when the caller explicitly passes billable=1, while the
+    usage record is still persisted for audit."""
+    with metering_app.app_context():
+        metering_app.config["BILL_USAGE_ENABLED"] = False
+        usage_bid = record_llm_usage(
+            metering_app,
+            UsageContext(
+                user_bid="user-free-1",
+                shifu_bid="shifu-free-1",
+                usage_scene=BILL_USAGE_SCENE_PROD,
+                billable=1,
+            ),
+            provider="openai",
+            model="gpt-test",
+            is_stream=False,
+            input=9,
+            output=11,
+            total=20,
+        )
+        record = BillUsageRecord.query.filter_by(usage_bid=usage_bid).first()
+
+    assert usage_bid
+    assert record is not None
+    assert record.billable == 0  # recorded but never billed
+    assert record.total == 20  # audit data preserved
+
+
+def test_internal_free_policy_forces_tts_billable_zero(metering_app):
+    with metering_app.app_context():
+        metering_app.config["BILL_USAGE_ENABLED"] = False
+        usage_bid = record_tts_usage(
+            metering_app,
+            UsageContext(
+                user_bid="user-free-tts-1",
+                shifu_bid="shifu-free-tts-1",
+                usage_scene=BILL_USAGE_SCENE_PREVIEW,
+                billable=1,
+            ),
+            provider="minimax",
+            model="speech-01",
+            is_stream=True,
+            input=22,
+            output=22,
+            total=22,
+            word_count=22,
+            duration_ms=1600,
+            record_level=0,
+            segment_count=1,
+        )
+        record = BillUsageRecord.query.filter_by(usage_bid=usage_bid).first()
+
+    assert usage_bid
+    assert record is not None
+    assert record.billable == 0
+    assert record.total == 22
+
+
+def test_internal_free_policy_does_not_enqueue_settlement(
+    metering_app,
+    monkeypatch: pytest.MonkeyPatch,
+):
+    captured: list[str] = []
+    monkeypatch.setattr(
+        "flaskr.service.metering.recorder._enqueue_usage_settlement",
+        lambda _app, *, usage_bid: captured.append(usage_bid),
+    )
+
+    with metering_app.app_context():
+        metering_app.config["BILL_USAGE_ENABLED"] = False
+        record_llm_usage(
+            metering_app,
+            UsageContext(
+                user_bid="user-free-noenqueue-1",
+                shifu_bid="shifu-free-noenqueue-1",
+                usage_scene=BILL_USAGE_SCENE_PROD,
+                billable=1,
+            ),
+            provider="openai",
+            model="gpt-test",
+            is_stream=False,
+            input=4,
+            output=6,
+            total=10,
+        )
+
+    assert captured == []
+
+
+def test_billing_usage_enabled_true_respects_explicit_billable(metering_app):
+    """When the master switch is True the explicit billable flag is honoured."""
+    with metering_app.app_context():
+        metering_app.config["BILL_USAGE_ENABLED"] = True
+        usage_bid = record_llm_usage(
+            metering_app,
+            UsageContext(
+                user_bid="user-billed-1",
+                shifu_bid="shifu-billed-1",
+                usage_scene=BILL_USAGE_SCENE_PROD,
+                billable=1,
+            ),
+            provider="openai",
+            model="gpt-test",
+            is_stream=False,
+            input=7,
+            output=13,
+            total=20,
+        )
+        record = BillUsageRecord.query.filter_by(usage_bid=usage_bid).first()
+
+    assert usage_bid
+    assert record is not None
+    assert record.billable == 1

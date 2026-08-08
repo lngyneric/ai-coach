@@ -83,13 +83,15 @@ Some concepts span multiple references files. Use this table to locate the autho
 | Visuals | — | `references/pedagogy.md#visual-text-coordination` | `references/data-contracts.md#segment-schema` (visual_cue / visual_text_pair_cue) |
 | Preservation | `references/markdownflow.md#preservation` | `references/pedagogy.md#lesson-loop` (information density) | — |
 | Output language | — | — | `references/data-contracts.md#language-resolution` |
+| IVD knowledge (medical vertical) | — | `references/pedagogy.md#medical-vertical-segmentation-rules` | `references/ivd-knowledge.md` + `scripts/ivd-lookup.py` |
+| Segmentation feedback loop (L3) | — | `references/segmentation-eval.md#quality-score` | `references/segmentation-eval.md` + `scripts/segmentation-eval.py` |
 
 ## Authoring Control Inputs
 
 Use these optional controls across all phases:
 
 - `course_profile` (json): audience and pedagogical parameters.
-- `delivery_constraints` (json): platform limits, topic policy, and non-negotiable fragments.
+- `delivery_constraints` (json): platform limits, topic policy, and non-negotiable fragments. Set `"domain": "medical_ivd"` to activate the medical-vertical segmentation rules and knowledge-graph lookup — see `references/pedagogy.md#medical-vertical-segmentation-rules` and `references/ivd-knowledge.md`.
 - `target_language` (BCP-47 string, e.g. `zh-CN` / `en-US` / `fr-FR`): explicit output language; takes priority over prompt-language detection. Full priority order in `references/data-contracts.md#language-resolution`.
 
 Field-level schemas with example JSON in `references/data-contracts.md#recommended-object-shapes`.
@@ -233,7 +235,7 @@ Agent 回复：
   - Lesson 02 ✅ 有内容
 
   可以直接使用：
-  - 课程预览：http://localhost:8080/c/a27a833a...?preview=true
+  - 课程预览：http://eu.sysmex.com.cn/c/a27a833a...?preview=true
 
   需要更新某节课、全部重新生成、还是直接使用？
 ```
@@ -248,6 +250,8 @@ Turn messy course source material into a reliable intermediate structure for dow
 
 See `references/pedagogy.md#segmentation-methodology` for the full methodology (cleanup, immutable-block marking, semantic segmentation, lesson-boundary proposal, source linking).
 
+**Medical vertical (IVD / 检验医学)**: when `delivery_constraints.domain == "medical_ivd"`, apply `references/pedagogy.md#medical-vertical-segmentation-rules` and run `python3 scripts/ivd-lookup.py "<检验项目/系统/术语>"` for every reference-value / terminology span **before** segmenting — confirms canonical terms, exact reference values, and system membership. See `references/ivd-knowledge.md`. If a span is not grounded by the knowledge graph or the built-in reference table, mark it `uncertain` (high) and flag it for human confirmation — never invent a value.
+
 ### Outputs
 
 Segment list per `references/data-contracts.md#segment-schema` (each segment carries id, type, core point, preservation flag, source span, and transfer signals), plus lesson boundary candidates with one core question each.
@@ -257,6 +261,8 @@ Segment list per `references/data-contracts.md#segment-schema` (each segment car
 - Segment output covers all valid source spans in traceable order.
 - `transfer_signals` object populated and usable downstream (schema per `references/data-contracts.md#segment-schema`).
 - Preservation, one-core-question, and information-fidelity constraints pass — see `references/markdownflow.md#preservation` and `references/pedagogy.md#lesson-loop`.
+- Medical vertical (`domain == "medical_ivd"`): every reference-value / terminology span is grounded by `scripts/ivd-lookup.py`; reference-value spans carry `preserve_block: true` and `immutable` in their transfer signals.
+- Feedback loop (L3, optional): after deployment, run `scripts/segmentation-eval.py` on learner progress to rank lessons by completion/stick rate and flag `poor` lessons for re-segmentation — see `references/segmentation-eval.md`.
 
 ---
 
@@ -396,15 +402,15 @@ Full flow in `references/cli/cli-reference.md#authentication`.
 
 ### Local Deployment (sysmex / self-hosted)
 
-When the user is targeting a local Docker instance (e.g. `localhost:8080`) instead of the SaaS platform:
+When the user is targeting a local Docker instance (e.g. `eu.sysmex.com.cn`) instead of the SaaS platform:
 
 ```bash
 # Option 1: Set SHIFU_BASE_URL once
-export SHIFU_BASE_URL=http://localhost:8080
+export SHIFU_BASE_URL=http://eu.sysmex.com.cn
 
 # Option 2: Pass --base-url on every command
 python3 {skillDir}/scripts/shifu-cli.py login --method employee \
-  --employee-no <id> --password <pwd> --base-url http://localhost:8080
+  --employee-no <id> --password <pwd> --base-url http://eu.sysmex.com.cn
 ```
 
 Login uses the employee AAD provider. For local testing without the AAD server reachable, set `AAD_BYPASS=1` in the API environment (bypasses the external AAD call).
@@ -416,7 +422,7 @@ python3 {skillDir}/scripts/shifu-cli.py import --new --course-dir <dir>
 python3 {skillDir}/scripts/shifu-cli.py publish <shifu_bid>
 ```
 
-Verification URLs use the `SHIFU_BASE_URL` prefix (e.g. `http://localhost:8080/c/<bid>`).
+Verification URLs use the `SHIFU_BASE_URL` prefix (e.g. `http://eu.sysmex.com.cn/c/<bid>`).
 
 MDF conversion (text → MarkdownFlow) requires `GEN_MDF_API_URL` and `GEN_MDF_APP_ID` configured in the API's `.env`. A minimal local proxy is available at `{skillDir}/scripts/mdf-proxy.py` (run `python3 mdf-proxy.py` on port 8801, then set `GEN_MDF_API_URL=http://host.docker.internal:8801` and `GEN_MDF_APP_ID=local-dev`).
 

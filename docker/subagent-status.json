@@ -1,0 +1,511 @@
+{
+  "generated_at": "2026-08-06 05:31:59",
+  "running_subagents": [],
+  "sessions": [
+    {
+      "dir": "sessions",
+      "status": "unknown",
+      "todos": [
+        {
+          "content": "定位 trace_id 函数对象根因（MockClient.__getattr__）",
+          "status": "completed",
+          "activeForm": "定位 trace_id bug 根因"
+        },
+        {
+          "content": "修复 langfuse.py MockClient 标量属性返回空串",
+          "status": "completed",
+          "activeForm": "修复 MockClient"
+        },
+        {
+          "content": "重建 aishifu/ai-shifu-api:patched 镜像 + 重启 dev 服务",
+          "status": "completed",
+          "activeForm": "重建镜像并重启"
+        },
+        {
+          "content": "补齐 dev 库缺列（is_certifier/creator_activated_at）+ 验证登录",
+          "status": "completed",
+          "activeForm": "补齐 dev 库列"
+        }
+      ],
+      "model": "opencode-go/deepseek-v4-flash",
+      "updated": "2026-08-05 01:05"
+    },
+    {
+      "dir": "sessions",
+      "status": "stopped",
+      "todos": [
+        {
+          "content": "Phase 1: 实测 dev 数据库权威结构",
+          "status": "completed",
+          "activeForm": "实测 dev 数据库权威结构"
+        },
+        {
+          "content": "docker exec 查 dev MySQL：表名/缺表/缺列实测",
+          "status": "completed",
+          "activeForm": "查表结构与缺失项",
+          "level": 1
+        },
+        {
+          "content": "拉取 coaching_phases/checklist 真实数据或确认空表",
+          "status": "completed",
+          "activeForm": "拉取阶段与验收项数据",
+          "level": 1
+        },
+        {
+          "content": "产出真实结构清单文档",
+          "status": "completed",
+          "activeForm": "产出真实结构清单",
+          "level": 1
+        },
+        {
+          "content": "Phase 2: 数据层对齐（类型+fixture+适配器）",
+          "status": "completed",
+          "activeForm": "数据层对齐"
+        },
+        {
+          "content": "types.ts 扩展两级阶段模型+session 字段+验收分类",
+          "status": "completed",
+          "activeForm": "扩展类型定义",
+          "level": 1
+        },
+        {
+          "content": "fixtures.ts 按 Phase 1-3 闭环重排",
+          "status": "completed",
+          "activeForm": "重排 fixtures",
+          "level": 1
+        },
+        {
+          "content": "httpAdapter 按真实表名字段名修正映射",
+          "status": "completed",
+          "activeForm": "修正适配器",
+          "level": 1
+        },
+        {
+          "content": "Phase 3: 阶段闭环 UI",
+          "status": "completed",
+          "activeForm": "阶段闭环 UI"
+        },
+        {
+          "content": "时间线按 Phase 1-3 闭环重排",
+          "status": "completed",
+          "activeForm": "重排时间线",
+          "level": 1
+        },
+        {
+          "content": "验收标准卡+合规控制点可视化",
+          "status": "completed",
+          "activeForm": "新增验收标准卡",
+          "level": 1
+        },
+        {
+          "content": "评分面板与小结表单对齐新结构+改进计划引导",
+          "status": "completed",
+          "activeForm": "对齐评分与小结",
+          "level": 1
+        },
+        {
+          "content": "Phase 4: 1v1 三环交互",
+          "status": "completed",
+          "activeForm": "1v1 三环交互"
+        },
+        {
+          "content": "面谈侧栏升级为课前-面谈-课后完整流",
+          "status": "completed",
+          "activeForm": "升级面谈侧栏",
+          "level": 1
+        },
+        {
+          "content": "面谈创建/总结走适配器+缺表降级",
+          "status": "completed",
+          "activeForm": "实现三环适配器",
+          "level": 1
+        },
+        {
+          "content": "Phase 5: 验证与报告更新",
+          "status": "completed",
+          "activeForm": "验证与报告"
+        },
+        {
+          "content": "重写 Playwright 走查覆盖新交互，全绿",
+          "status": "completed",
+          "activeForm": "扩充走查断言",
+          "level": 1
+        },
+        {
+          "content": "更新双份验证报告+同步主仓库",
+          "status": "completed",
+          "activeForm": "更新验证报告",
+          "level": 1
+        }
+      ],
+      "model": "opencode-go/deepseek-v4-flash",
+      "updated": "2026-07-22 08:48"
+    },
+    {
+      "dir": "sessions",
+      "status": "stopped",
+      "todos": [
+        {
+          "content": "数据库建表和改数据（coach_roles、user_role_assignments、course_enrollments.module）",
+          "status": "completed"
+        },
+        {
+          "content": "nginx 路由加 coach 块",
+          "status": "completed"
+        },
+        {
+          "content": "HTML 文件改 mentorship→coaching",
+          "status": "completed"
+        },
+        {
+          "content": "API 容器内改 routes.py + celery_app.py",
+          "status": "completed"
+        },
+        {
+          "content": "DEV 开发 → 先在 8082 上改代码、加功能",
+          "status": "completed"
+        },
+        {
+          "content": "DEV 验证 → 你确认没问题",
+          "status": "completed"
+        },
+        {
+          "content": "同步 PRD → 通过 git push main + docker compose up -d 推送 PRD",
+          "status": "completed"
+        }
+      ],
+      "model": "opencode-go/deepseek-v4-flash",
+      "updated": "2026-07-21 07:30"
+    },
+    {
+      "dir": "sessions",
+      "status": "stopped",
+      "todos": [
+        {
+          "content": "Phase 1a: 创建 .env.prod 生产配置文件",
+          "status": "completed",
+          "activeForm": "创建 .env.prod",
+          "level": 1
+        },
+        {
+          "content": "Phase 1b: 创建 docker-compose.prod.yml（独立 DB/Redis）",
+          "status": "completed",
+          "activeForm": "创建 prod compose",
+          "level": 1
+        },
+        {
+          "content": "Phase 1c: 导出生产数据到独立 volume",
+          "status": "completed",
+          "activeForm": "迁移生产数据",
+          "level": 1
+        },
+        {
+          "content": "Phase 2: 移除 docker cp，改为镜像构建部署",
+          "status": "completed",
+          "activeForm": "修改 deploy 脚本",
+          "level": 1
+        },
+        {
+          "content": "Phase 3: 建立分支规范 + 版本标签",
+          "status": "completed",
+          "activeForm": "Git 分支策略",
+          "level": 1
+        }
+      ],
+      "model": "opencode-go/deepseek-v4-flash",
+      "updated": "2026-07-14 07:24"
+    }
+  ],
+  "artifacts": [
+    {
+      "name": "P0-PERMISSION-MODEL-UPGRADE.md",
+      "path": "/home/sysmex/worktrees/coach-lab/docs/P0-PERMISSION-MODEL-UPGRADE.md",
+      "size": 9197,
+      "mtime": "2026-08-06 02:33"
+    },
+    {
+      "name": "P0-REVIEW-PERMISSION-AAD.md",
+      "path": "/home/sysmex/worktrees/coach-lab/docs/P0-REVIEW-PERMISSION-AAD.md",
+      "size": 20131,
+      "mtime": "2026-08-06 02:33"
+    },
+    {
+      "name": "P0-ACCEPTANCE-TEST-REPORT.md",
+      "path": "/home/sysmex/worktrees/coach-lab/docs/P0-ACCEPTANCE-TEST-REPORT.md",
+      "size": 30994,
+      "mtime": "2026-08-05 09:07"
+    },
+    {
+      "name": "P0-REVIEW-STEP9-D1D3.md",
+      "path": "/home/sysmex/worktrees/coach-lab/docs/P0-REVIEW-STEP9-D1D3.md",
+      "size": 5958,
+      "mtime": "2026-08-05 08:02"
+    },
+    {
+      "name": "P0-EXECUTION-8-FRONTEND.md",
+      "path": "/home/sysmex/worktrees/coach-lab/docs/P0-EXECUTION-8-FRONTEND.md",
+      "size": 14764,
+      "mtime": "2026-08-05 06:31"
+    },
+    {
+      "name": "P0-EXECUTION-7-ROUTES.md",
+      "path": "/home/sysmex/worktrees/coach-lab/docs/P0-EXECUTION-7-ROUTES.md",
+      "size": 11487,
+      "mtime": "2026-08-05 06:07"
+    }
+  ],
+  "pi_subagent_calls": [
+    {
+      "ts": "2026-08-04T06:00",
+      "subagent": "p0-permission-designer",
+      "status": "done",
+      "pid": "",
+      "cmd": "cd /home/sysmex/worktrees/coach-lab # 后台运行 subagent nohup reasonix subagent run p0-permission-designer --max-steps 20 --dir /home/sysmex/worktrees/coa"
+    },
+    {
+      "ts": "2026-08-04T06:01",
+      "subagent": "p0-permission-designer",
+      "status": "done",
+      "pid": "",
+      "cmd": "cd /home/sysmex/worktrees/coach-lab # 编辑 profile 补充 effort reasonix subagent edit p0-permission-designer \\ --effort high \\ --description \"P0 权限模型升级设计："
+    },
+    {
+      "ts": "2026-08-04T06:07",
+      "subagent": "p0-permission-designer",
+      "status": "done",
+      "pid": "",
+      "cmd": "cd /home/sysmex/worktrees/coach-lab # 后台运行 subagent 查看真实结构 nohup reasonix subagent run p0-permission-designer --max-steps 25 --dir /home/sysmex/worktr"
+    },
+    {
+      "ts": "2026-08-04T06:09",
+      "subagent": "p0-permission-designer",
+      "status": "done",
+      "pid": "",
+      "cmd": "cd /home/sysmex/worktrees/coach-lab # 提高 max_steps 重新运行（subagent 会读取已保存的进度？不，直接重新跑，但提示它快速完成） nohup reasonix subagent run p0-permission-designer --max-"
+    },
+    {
+      "ts": "2026-08-04T06:21",
+      "subagent": "p0-permission-designer",
+      "status": "done",
+      "pid": "",
+      "cmd": "# 准备执行任务：验证现状 + 修复 employee.py 登录授权 cat > /tmp/p0-task1.md << 'EOF' ## P0 执行任务 1：验证 + 修复 employee 登录自动授权 ### 背景 P0-DESIGN-CORRECTION.md D1：dev 代码 empl"
+    },
+    {
+      "ts": "2026-08-04T06:35",
+      "subagent": "p0-permission-designer",
+      "status": "done",
+      "pid": "",
+      "cmd": "cat > /tmp/p0-task2.md << 'EOF' ## P0 执行任务 2：实际修改 employee.py（已获用户授权） ### 已确认决策 1. ✅ 授权修改 /home/sysmex/worktrees/ai-shifu-dev/src/api/flaskr/service/u"
+    },
+    {
+      "ts": "2026-08-04T06:39",
+      "subagent": "p0-permission-designer",
+      "status": "done",
+      "pid": "",
+      "cmd": "cat > /tmp/p0-task3.md << 'EOF' ## 任务：修改 employee.py 登录授权（已授权，直接改代码，不要调研） 目标文件：/home/sysmex/worktrees/ai-shifu-dev/src/api/flaskr/service/user/auth/pr"
+    },
+    {
+      "ts": "2026-08-04T08:09",
+      "subagent": "p0-permission-designer",
+      "status": "done",
+      "pid": "",
+      "cmd": "cat > /tmp/p0-review.md << 'EOF' ## 任务：Review pi 执行的操作过程（只读审查，不改代码） 背景：P0 权限模型升级。分工规则：pi 只调整数据和验证，代码修改应由 subagent 执行。但第1步 pi 直接改了代码，需审查其合规性与正确性。 ### 审"
+    },
+    {
+      "ts": "2026-08-04T08:38",
+      "subagent": "p0-permission-designer",
+      "status": "done",
+      "pid": "",
+      "cmd": "cat > /tmp/p0-redo.md << 'EOF' ## 任务：重新执行 P0 第 1 步（已授权代码修改） 背景：pi 之前的代码修改已回滚（git 工作树干净）。现在由你（SubAgent）负责代码修改。分工：pi 只调数据，subagent 改代码。 ### Review 关键发现（"
+    },
+    {
+      "ts": "2026-08-04T09:10",
+      "subagent": "p0-permission-designer",
+      "status": "done",
+      "pid": "",
+      "cmd": "cat > /tmp/p0-apply.md << 'EOF' ## 任务：应用补丁 + 精简登录为仅 AAD OAuth（已授权，可直接写 ai-shifu-dev） ### 背景与授权 - 沙箱已配置 allow_write=[\"/home/sysmex/worktrees/ai-shifu-d"
+    },
+    {
+      "ts": "2026-08-04T09:29",
+      "subagent": "p0-permission-designer",
+      "status": "done",
+      "pid": "",
+      "cmd": "cat > /tmp/p0-gitapply.md << 'EOF' ## 任务：直接应用 0004 补丁到 ai-shifu-dev 并复验（已授权写权限） 沙箱已配置 allow_write=[\"/home/sysmex/worktrees/ai-shifu-dev\"]，你现在**可以直接修改 "
+    },
+    {
+      "ts": "2026-08-04T09:43",
+      "subagent": "p0-permission-designer",
+      "status": "done",
+      "pid": "",
+      "cmd": "cat > /tmp/p0-step3.md << 'EOF' ## 任务：P0 第 3 步 — ORM UserEntity 补列映射（已授权写 ai-shifu-dev） ### 背景 P0-DESIGN-CORRECTION.md D10：UserEntity（src/api/flaskr/s"
+    },
+    {
+      "ts": "2026-08-04T12:50",
+      "subagent": "p0-permission-designer",
+      "status": "done",
+      "pid": "",
+      "cmd": "cat > /tmp/p0-step3-apply.md << 'EOF' ## 任务：应用 P0 第 3 步 ORM patch（已授权写 ai-shifu-dev，直接 git apply） ### 背景 P0-EXECUTION-3-ORM.md 已产出 3 个 ORM patch（docs/"
+    },
+    {
+      "ts": "2026-08-05T03:53",
+      "subagent": "p0-permission-designer",
+      "status": "done",
+      "pid": "",
+      "cmd": "cat > /tmp/p0-step6.md << 'EOF' ## 任务：P0 第 6 步 — 新建 service/coach/permissions.py（已授权写 ai-shifu-dev） ### 背景（dev 数据已就绪） - coach_db 真实库 = coach-mysql:330"
+    },
+    {
+      "ts": "2026-08-05T05:23",
+      "subagent": "p0-permission-designer",
+      "status": "done",
+      "pid": "",
+      "cmd": "cat > /tmp/p0-step7.md << 'EOF' ## 任务：P0 第 7 步 — 接口守卫 + admin/roles 扩展 + /api/portal/permissions 路由（已授权写 ai-shifu-dev） ### 背景 - P0 第 6 步已完成：service/co"
+    },
+    {
+      "ts": "2026-08-05T06:16",
+      "subagent": "p0-permission-designer",
+      "status": "done",
+      "pid": "",
+      "cmd": "cat > /tmp/p0-step8.md << 'EOF' ## 任务：P0 第 8 步 — 前端 5 级角色枚举 + useCoachPermissions hook + 权限下发接入（已授权写 ai-shifu-dev） ### 背景 - 后端已完成：service/coach/permis"
+    },
+    {
+      "ts": "2026-08-05T06:48",
+      "subagent": "p0-permission-designer",
+      "status": "done",
+      "pid": "",
+      "cmd": "cat > /tmp/fix-shifu-admin.md << 'EOF' ## 任务：修复 shifu/admin.py 语法错误（导致 shifu 插件加载失败，/admin/ 页面 404）（已授权写 ai-shifu-dev） ### 症状 - 容器日志：`load plugin: shi"
+    },
+    {
+      "ts": "2026-08-05T07:07",
+      "subagent": "p0-permission-designer",
+      "status": "done",
+      "pid": "",
+      "cmd": "cat > /tmp/apply-shifu.md << 'EOF' ## 任务：把 shifu 修复 patch 应用到 worktree（已授权，参考你之前成功的 docker rw 挂载方式） ### 背景 shifu 修复已在运行容器生效，但 worktree 源码未落盘（沙箱只读）。3 个"
+    },
+    {
+      "ts": "2026-08-05T07:18",
+      "subagent": "p0-permission-designer",
+      "status": "done",
+      "pid": "",
+      "cmd": "cat > /tmp/e2e-p0.md << 'EOF' ## 任务：P0 第 9 步 — 端到端验收测试 + 生成测试报告（已授权） ### 背景（全部就绪） - dev API 容器已加载 P0 代码（coach/permissions.py + portal 路由 + shifu 修复） -"
+    },
+    {
+      "ts": "2026-08-05T07:41",
+      "subagent": "p0-permission-designer",
+      "status": "done",
+      "pid": "",
+      "cmd": "cat > /tmp/fix-d123.md << 'EOF' ## 任务：修复 P0 验收阻塞 D1/D2/D3（已授权写 ai-shifu-dev，用 docker rw 挂载方式落盘） ### 背景 P0-ACCEPTANCE-TEST-REPORT.md 验收发现 3 个 P0 阻塞。dev"
+    },
+    {
+      "ts": "2026-08-05T08:15",
+      "subagent": "p0-permission-designer",
+      "status": "done",
+      "pid": "",
+      "cmd": "cat > /tmp/fix-d4.md << 'EOF' ## 任务：修复 P1 D4 — 评分归属校验（coach 横向越权评分）（已授权写 ai-shifu-dev，用 docker rw 挂载落盘） ### 背景 P0-ACCEPTANCE-TEST-REPORT.md 发现 D4：`men"
+    },
+    {
+      "ts": "2026-08-05T08:48",
+      "subagent": "p0-permission-designer",
+      "status": "done",
+      "pid": "",
+      "cmd": "cat > /tmp/fix-p2.md << 'EOF' ## 任务：修复 P2 遗留 4 项（已授权写 ai-shifu-dev，用 docker rw 挂载落盘 + docker cp 容器同步） ### 背景 P0-ACCEPTANCE-TEST-REPORT.md 记录的 P2 遗留。de"
+    },
+    {
+      "ts": "2026-08-05T09:25",
+      "subagent": "p0-permission-designer",
+      "status": "done",
+      "pid": "",
+      "cmd": "cat > /tmp/step1-mdflow.md << 'EOF' ## 任务：Step 1 — markdown-flow 后端升级 0.2.76 → 0.3.1（已授权写 ai-shifu-dev） ### 基线 - 当前镜像 patched-p0 可回滚；requirements.txt "
+    },
+    {
+      "ts": "2026-08-05T13:31",
+      "subagent": "p0-permission-designer",
+      "status": "done",
+      "pid": "",
+      "cmd": "cat > /tmp/step1-apply.md << 'EOF' ## 任务：应用 mdflow 0.3.1 升级 patch 到 ai-shifu-dev 并完成镜像重建（已授权写，用 docker rw 挂载方式落盘） ### 背景 Step 1 调研完成，patch 已验证可应用： - /"
+    },
+    {
+      "ts": "2026-08-05T14:03",
+      "subagent": "p0-permission-designer",
+      "status": "done",
+      "pid": "",
+      "cmd": "cat > /tmp/step2-ui.md << 'EOF' ## 任务：Step 2 — 前端 markdown-flow-ui 0.1.117 → 0.2.8（已授权写 ai-shifu-dev） ### 背景 - Step 1 已完成：后端 markdown-flow 0.3.1（容器 pa"
+    },
+    {
+      "ts": "2026-08-05T14:42",
+      "subagent": "p0-permission-designer",
+      "status": "done",
+      "pid": "",
+      "cmd": "cat > /tmp/merge-pdf.md << 'EOF' ## 任务：提取 feat/pdf-backend-export 的 PDF 功能并合并到 dev，验证 HTML + PDF（已授权写 ai-shifu-dev） ### 关键约束（重要） ⚠️ **不要全量 merge feat "
+    },
+    {
+      "ts": "2026-08-05T15:34",
+      "subagent": "p0-permission-designer",
+      "status": "done",
+      "pid": "",
+      "cmd": "cat > /tmp/fix-alembic.md << 'EOF' ## 任务：修复 alembic revision 链断裂（dev 502 根因）（已授权写 ai-shifu-dev） ### 根因 - /home/sysmex/worktrees/ai-shifu-dev/src/api/m"
+    },
+    {
+      "ts": "2026-08-05T17:30",
+      "subagent": "p0-permission-designer",
+      "status": "done",
+      "pid": "",
+      "cmd": "cat > /tmp/finalize.md << 'EOF' ## 任务：dev 收尾 — commit migration 修复 + 重建 PDF 镜像 + 终验 HTML/PDF（已授权写 ai-shifu-dev） ### 背景 - alembic migration 修复已在 worktr"
+    },
+    {
+      "ts": "2026-08-06T00:53",
+      "subagent": "p0-permission-designer",
+      "status": "done",
+      "pid": "",
+      "cmd": "cat > /tmp/fix-pdf-brand.md << 'EOF' ## 任务：PDF 水印品牌名 \"AI 师傅\" → \"AI-Coach\"（已授权写 ai-shifu-dev） ### 位置 /home/sysmex/worktrees/ai-shifu-dev/src/api/flaskr"
+    },
+    {
+      "ts": "2026-08-06T01:01",
+      "subagent": "p0-permission-designer",
+      "status": "done",
+      "pid": "",
+      "cmd": "cat > /tmp/fix-legacy.md << 'EOF' ## 任务：清理遗留代码问题（已授权写 ai-shifu-dev） ### 背景 dev 环境正常（login 200，课件权限已修）。处理 2 个代码类遗留： ### 遗留 3：死代码清理 - 文件：/home/sysmex/wo"
+    },
+    {
+      "ts": "2026-08-06T01:09",
+      "subagent": "p0-permission-designer",
+      "status": "done",
+      "pid": "",
+      "cmd": "cat > /tmp/fix-legacy2.md << 'EOF' ## 任务：清理遗留（正确路径版）（已授权写 ai-shifu-dev） ### 遗留 3：死代码（上次路径错误） **正确路径**：/home/sysmex/worktrees/ai-shifu-dev/src/cook-web"
+    },
+    {
+      "ts": "2026-08-06T01:41",
+      "subagent": "p0-permission-designer",
+      "status": "done",
+      "pid": "",
+      "cmd": "cat > /tmp/aad-implement.md << 'EOF' ## 任务：AAD 强身份登录 + 账户强控制实现（已授权写 ai-shifu-dev） ### 设计要求（3 点） 1. **learner 创建流程**：员工号 + AAD 邮箱双验证登录 - employee provi"
+    },
+    {
+      "ts": "2026-08-06T01:56",
+      "subagent": "p0-permission-designer",
+      "status": "done",
+      "pid": "",
+      "cmd": "cat > /tmp/aad-impl2.md << 'EOF' ## 任务：实现 AAD 强登录控制（明确授权写 ai-shifu-dev，必须用 docker rw 挂载落盘） ### 授权说明 用户已明确要求实现。ai-shifu-dev 沙箱只读，**必须沿用 P0-EXECUTION 系列"
+    },
+    {
+      "ts": "2026-08-06T02:57",
+      "subagent": "p0-permission-designer",
+      "status": "done",
+      "pid": "",
+      "cmd": "cat > /tmp/git-commit.md << 'EOF' ## 任务：提交 ai-shifu-dev 未提交变更（29 个文件） ### 背景 29 个未提交变更，包含： - AAD 强登录控制（config.py/email_flow/phone_flow/repository.py/l"
+    },
+    {
+      "ts": "2026-08-06T03:21",
+      "subagent": "p0-permission-designer",
+      "status": "done",
+      "pid": "",
+      "cmd": "cat > /tmp/w1-wecom.md << 'EOF' ## 任务：W1 企微推送通道实现（已授权写 ai-shifu-dev） ### 背景 learning_portal/tasks.py 有 4 个 Celery 任务（phase_deadline_reminder/score_rem"
+    },
+    {
+      "ts": "2026-08-06T05:13",
+      "subagent": "p0-permission-designer",
+      "status": "done",
+      "pid": "",
+      "cmd": "cat > /tmp/wecom-upgrade.md << 'EOF' ## 任务：wecom_push 升级（textcard + toparty）（已授权写 ai-shifu-dev） ### 背景 `src/api/flaskr/service/learning_portal/wecom_p"
+    }
+  ]
+}

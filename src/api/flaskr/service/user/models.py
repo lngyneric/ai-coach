@@ -163,6 +163,39 @@ class UserInfo(db.Model):
         comment="Operator flag: 0=regular user, 1=operator",
         index=True,
     )
+    # Extended permission / org-chain fields (P0 permission model upgrade).
+    # Columns already exist in the canonical `user_users` table (coach_db 实测).
+    is_certifier = Column(
+        SmallInteger,
+        nullable=False,
+        default=0,
+        comment="Certifier flag: 0=regular user, 1=certifier",
+        index=True,
+    )
+    department = Column(
+        String(100),
+        nullable=False,
+        default="",
+        comment="Department name for department-level data isolation",
+    )
+    supervisor_bid = Column(
+        String(32),
+        nullable=False,
+        default="",
+        comment="Supervisor user_bid for org-chain traversal",
+    )
+    mentor_bid = Column(
+        String(32),
+        nullable=False,
+        default="",
+        comment="Mentor user_bid bound to this learner",
+    )
+    employee_no = Column(
+        String(50),
+        nullable=False,
+        default="",
+        comment="Enterprise employee number",
+    )
     api_key = Column(
         String(64),
         nullable=False,

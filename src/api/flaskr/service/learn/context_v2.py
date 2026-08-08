@@ -27,6 +27,7 @@ from markdown_flow import (
     BlockType,
     InteractionParser,
     replace_variables_in_text,
+    USER_ANSWER_CONTEXT_KEY,
 )
 from markdown_flow.llm import LLMResult
 from flask import Flask
@@ -483,11 +484,12 @@ class MdflowContextV2:
         current_app.logger.info(f"build_context_from_blocks variables: {variables}")
 
         for generated_block in blocks:
-            if (
-                generated_block.type == BLOCK_TYPE_MDCONTENT_VALUE
-                and generated_block.position < len(block_list)
+            if generated_block.position < 0 or generated_block.position >= len(
+                block_list
             ):
-                block = block_list[generated_block.position]
+                continue
+            block = block_list[generated_block.position]
+            if generated_block.type == BLOCK_TYPE_MDCONTENT_VALUE:
                 message_list.append(
                     {
                         "role": "user",
@@ -503,6 +505,35 @@ class MdflowContextV2:
                         "content": generated_block.generated_content or "",
                     }
                 )
+            elif generated_block.type == BLOCK_TYPE_MDINTERACTION_VALUE:
+                interaction = InteractionParser().parse(block.content or "")
+                if interaction.get("variable"):
+                    # Variable interaction (e.g. ?[%{{var}} A | B]): hand the
+                    # raw syntax to markdown-flow, whose
+                    # _transform_context_messages expands it into
+                    # {user: <value>} + {assistant: "ok"} using `variables`.
+                    message_list.append(
+                        {
+                            "role": "assistant",
+                            "content": block.content or "",
+                        }
+                    )
+                else:
+                    # No-variable interaction (e.g. plain button choice
+                    # ?[A | B | C]): hand the raw syntax to markdown-flow with
+                    # the learner's answer attached via USER_ANSWER_CONTEXT_KEY.
+                    # The library expands it into {user: answer} +
+                    # {assistant: "ok"}, or skips the turn when the answer is
+                    # empty (never answered).
+                    message_list.append(
+                        {
+                            "role": "assistant",
+                            "content": block.content or "",
+                            USER_ANSWER_CONTEXT_KEY: (
+                                generated_block.generated_content or ""
+                            ).strip(),
+                        }
+                    )
         return message_list
 
 
@@ -2765,6 +2796,36 @@ class RunScriptContextV2:
                 )
                 return
             if not parsed_interaction.get("variable"):
+                # No-variable interaction (markdown-flow >= 0.3.0): call
+                # process() with the user input so the library normalizes the
+                # answer (button display -> value, free text passed through)
+                # into metadata["answer"]. Persist the normalized value so the
+                # context rebuild feeds the canonical answer back to the LLM.
+                validate_result = mdflow_context.process(
+                    block_index=run_script_info.block_position,
+                    mode=ProcessMode.COMPLETE,
+                    user_input=user_input_param,
+                    context=message_list,
+                    variables=user_profile,
+                )
+                if validate_result is not None:
+                    metadata = getattr(validate_result, "metadata", None) or {}
+                    if metadata.get("interaction_type") == "non_assignment_button":
+                        answer_values = metadata.get("answer")
+                        if isinstance(answer_values, list):
+                            normalized_answer = ",".join(
+                                str(value)
+                                for value in answer_values
+                                if value is not None
+                            )
+                        elif answer_values is None:
+                            normalized_answer = ""
+                        else:
+                            normalized_answer = str(answer_values)
+                        if normalized_answer != (
+                            generated_block.generated_content or ""
+                        ):
+                            generated_block.generated_content = normalized_answer
                 self._can_continue = True
                 self._run_type = RunType.OUTPUT
                 self._current_attend.status = LEARN_STATUS_IN_PROGRESS

@@ -26,6 +26,7 @@ import { uploadFile } from '@/lib/file';
 import { getResolvedBaseURL } from '@/c-utils/envUtils';
 import { normalizeShifuDetail } from '@/lib/shifu-normalize';
 import { resolveContactMode } from '@/lib/resolve-contact-mode';
+import { ONBOARDING_TARGET_IDS, buildOnboardingTargetProps } from '@/lib/onboardingTargets';
 import {
   type AudioSegment,
   mergeAudioSegmentByUniqueKey,

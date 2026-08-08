@@ -14,6 +14,7 @@ _DEFAULT_BROKER_URL = "redis://localhost:6379/0"
 _DEFAULT_BILLING_RENEWAL_CRON = "* * * * *"
 _DEFAULT_BILLING_BUCKET_EXPIRE_CRON = "* * * * *"
 _DEFAULT_BILLING_LOW_BALANCE_CRON = "0 * * * *"
+_DEFAULT_LEARN_PDF_EXPORT_CLEANUP_CRON = "0 * * * *"
 
 __CELERY_APP__: Celery | None = None
 
@@ -33,7 +34,11 @@ def create_celery_app(flask_app: Flask | None = None) -> Celery:
     celery_app = Celery(
         resolved_flask_app.import_name,
         task_cls=FlaskTask,
-        include=("flaskr.service.billing.tasks",),
+        include=(
+            "flaskr.service.billing.tasks",
+            "flaskr.service.learning_portal.tasks",
+            "flaskr.service.learn.tasks",
+        ),
     )
     celery_app.conf.update(_build_celery_config(resolved_flask_app))
     celery_app.flask_app = resolved_flask_app  # type: ignore[attr-defined]
@@ -75,8 +80,16 @@ def _build_celery_config(flask_app: Flask) -> dict[str, Any]:
         "task_ignore_result": False,
         "broker_connection_retry_on_startup": True,
         "timezone": flask_app.config.get("TZ", "UTC"),
-        "imports": ("flaskr.service.billing.tasks",),
-        "beat_schedule": _build_billing_beat_schedule(flask_app),
+        "imports": (
+            "flaskr.service.billing.tasks",
+            "flaskr.service.learning_portal.tasks",
+            "flaskr.service.learn.tasks",
+        ),
+        "beat_schedule": {
+            **_build_billing_beat_schedule(flask_app),
+            **_build_portal_beat_schedule(),
+            **_build_learn_beat_schedule(flask_app),
+        },
     }
 
 
@@ -158,8 +171,51 @@ def _load_flask_app() -> Flask:
     return app_module.create_app()
 
 
+def _build_portal_beat_schedule() -> dict[str, Any]:
+    """Beat schedule for learning portal scheduled tasks."""
+    from celery.schedules import crontab
+    return {
+        "learning_portal.daily_task_push.schedule": {
+            "task": "learning_portal.daily_task_push",
+            "schedule": crontab(hour="9", minute="0"),
+        },
+        "learning_portal.score_reminder.schedule": {
+            "task": "learning_portal.score_reminder",
+            "schedule": crontab(hour="*", minute="30"),
+        },
+        "learning_portal.phase_deadline_reminder.schedule": {
+            "task": "learning_portal.phase_deadline_reminder",
+            "schedule": crontab(hour="8", minute="0"),
+        },
+        "learning_portal.probation_check.schedule": {
+            "task": "learning_portal.probation_check",
+            "schedule": crontab(hour="7", minute="0"),
+        },
+        "learning_portal.phase_auto_advance.schedule": {
+            "task": "learning_portal.phase_auto_advance",
+            "schedule": crontab(hour="6", minute="30"),
+        },
+    }
+
+
+def _build_learn_beat_schedule(flask_app: Flask) -> dict[str, Any]:
+    """Beat schedule for lesson learn background jobs."""
+    return {
+        "learn.cleanup_pdf_exports.schedule": {
+            "task": "learn.cleanup_pdf_exports",
+            "schedule": _resolve_billing_crontab(
+                flask_app,
+                "LEARN_PDF_EXPORT_CLEANUP_CRON",
+                _DEFAULT_LEARN_PDF_EXPORT_CLEANUP_CRON,
+            ),
+        },
+    }
+
+
 def _register_default_tasks() -> None:
     importlib.import_module("flaskr.service.billing.tasks")
+    importlib.import_module("flaskr.service.learning_portal.tasks")
+    importlib.import_module("flaskr.service.learn.tasks")
 
 
 def _to_bool(value: Any) -> bool:
@@ -168,13 +224,3 @@ def _to_bool(value: Any) -> bool:
     if isinstance(value, str):
         return value.strip().lower() in {"1", "true", "yes", "on"}
     return bool(value)
-
-
-@celery_app.task(bind=True, max_retries=3, default_retry_delay=300)
-def scheduled_coach_sync(self):
-    """Scheduled task: sync coach/learner data from WeChat Work smart table."""
-    from flaskr.service.myenroll.coach_sync import run_sync
-    try:
-        return run_sync(sync_type="auto")
-    except Exception as e:
-        self.retry(exc=e)

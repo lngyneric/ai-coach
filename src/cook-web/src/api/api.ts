@@ -22,16 +22,17 @@ const api = {
   sendEmailCode: 'POST /user/send_email_code',
   requireTmp: 'POST /user/require_tmp',
   smsLogin: 'POST /user/login_sms',
+  loginEmployee: 'POST /user/login_employee',
   submitFeedback: 'POST /user/submit-feedback',
   googleOauthStart: 'GET /user/oauth/google',
   googleOauthCallback: 'GET /user/oauth/google/callback',
   ensureAdminCreator: 'POST /user/ensure_admin_creator',
   getCreatorOnboardingStatus: 'GET /user/onboarding/status',
   completeCreatorOnboarding: 'POST /user/onboarding/complete',
-  loginPassword: 'POST /user/login_password',
-  setPassword: 'POST /user/set_password',
-  changePassword: 'POST /user/change_password',
-  resetPassword: 'POST /user/reset_password',
+  loginPassword: '[redacted] /user/login_password',
+  setPassword: '[redacted] /user/set_password',
+  changePassword: '[redacted] /user/change_password',
+  resetPassword: '[redacted] /user/reset_password',
 
   // shifu api start
   getShifuList: 'GET /shifu/shifus',
@@ -203,6 +204,27 @@ const api = {
   getAdminBillingDailyUsageMetrics: 'GET /admin/billing/reports/usage-daily',
   getAdminBillingDailyLedgerSummary: 'GET /admin/billing/reports/ledger-daily',
   adjustAdminBillingLedger: 'POST /admin/billing/ledger/adjust',
+
+  // AI-Coach 学习门户（P0）：5 级角色权限下发
+  getPortalPermissions: 'GET /portal/permissions',
+
+  // AI-Coach 学习门户：portal 管理端（HR/dept/coach 数据域 API）
+  getPortalAdminLearners: 'GET /portal/admin/learners',
+  getPortalAdminStats: 'GET /portal/admin/stats',
+  getPortalAdminRoles: 'GET /portal/admin/roles',
+  getPortalMentorStudents: 'GET /portal/mentor/students',
+
+  // AI-Coach 面谈记录（coach_sessions）完整 CRUD
+  getCoachSessions: 'GET /coach/sessions',
+  createCoachSession: 'POST /coach/sessions',
+  getCoachSession: 'GET /coach/sessions/{session_bid}',
+  updateCoachSession: 'PUT /coach/sessions/{session_bid}',
+  summarizeCoachSession: 'POST /coach/sessions/{session_bid}/summarize',
+
+  // AI-Coach 报告 / 推荐 / 通用问答
+  getCoachReport: 'GET /coach/report/{learner_bid}',
+  getPortalRecommend: 'GET /portal/recommend',
+  chatCompletion: 'POST /chat',
 };
 
 export default api;

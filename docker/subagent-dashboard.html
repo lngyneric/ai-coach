@@ -1,0 +1,123 @@
+<!DOCTYPE html>
+<html lang="zh-CN" data-theme="dark">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Subagent 运行看板 — reasonix</title>
+<link rel="icon" type="image/svg+xml" href="/favicon.svg">
+<link rel="stylesheet" href="/design-system.css">
+<style>
+body { font-family: var(--font, 'DM Sans', 'Noto Sans SC', sans-serif); background: var(--bg, #f8f9fb); color: var(--text, #0f172a); margin: 0; padding: 24px; }
+h1 { font-size: 1.4rem; font-weight: 800; margin: 0 0 4px; }
+.sub { color: var(--muted, #64748b); font-size: .8rem; margin-bottom: 20px; }
+.grid { display: grid; grid-template-columns: repeat(auto-fill, minmax(340px, 1fr)); gap: 14px; }
+.card { background: var(--card, #fff); border: 1px solid var(--border, #e2e8f0); border-radius: var(--radius, 12px); padding: 14px 16px; }
+.card h3 { font-size: .92rem; font-weight: 700; margin: 0 0 8px; display: flex; align-items: center; gap: 8px; }
+.dot { width: 9px; height: 9px; border-radius: 50%; display: inline-block; }
+.dot.running { background: #10b981; box-shadow: 0 0 6px #10b981; animation: pulse 1.2s infinite; }
+.dot.stopped { background: #64748b; }
+.dot.completed { background: #10b981; }
+.dot.failed { background: #ef4444; }
+@keyframes pulse { 50% { opacity: .4; } }
+.meta { font-size: .72rem; color: var(--muted, #64748b); margin-bottom: 8px; }
+.todo { font-size: .78rem; padding: 3px 0; display: flex; gap: 6px; align-items: baseline; }
+.todo.done { color: var(--muted, #64748b); text-decoration: line-through; }
+.todo .mk { font-size: .72rem; }
+.art { font-size: .78rem; padding: 4px 0; border-bottom: 1px dashed var(--border, #e2e8f0); }
+.art:last-child { border-bottom: none; }
+.art b { color: var(--brand, #0f63ee); }
+.tag { font-size: .68rem; padding: 2px 8px; border-radius: 6px; background: var(--bg2, #f1f5f9); }
+.tag.progress { background: #ecfdf5; color: #059669; }
+.tag.stopped { background: #f1f5f9; color: #64748b; }
+.empty { color: var(--muted, #64748b); font-size: .8rem; padding: 16px; text-align: center; border: 1px dashed var(--border); border-radius: var(--radius); }
+#footer { margin-top: 18px; font-size: .72rem; color: var(--muted); display: flex; gap: 14px; align-items: center; }
+.refresh-btn { font-size: .72rem; padding: 3px 10px; border: 1px solid var(--border); border-radius: 6px; background: var(--card); cursor: pointer; }
+</style>
+</head>
+<body>
+<h1>🤖 Subagent 运行看板</h1>
+<div class="sub">reasonix subagent 状态 · 每 10 秒自动刷新</div>
+
+<section>
+  <h2 style="font-size:1rem">▶ 运行中</h2>
+  <div id="running" class="grid"></div>
+</section>
+
+<section style="margin-top:20px">
+  <h2 style="font-size:1rem">🟦 Pi 调用的 Subagent</h2>
+  <div id="pi-calls" class="card"></div>
+</section>
+
+<section style="margin-top:20px">
+  <h2 style="font-size:1rem">📂 最近会话</h2>
+  <div id="sessions" class="grid"></div>
+</section>
+
+<section style="margin-top:20px">
+  <h2 style="font-size:1rem">📄 P0 产物</h2>
+  <div id="artifacts" class="card"></div>
+</section>
+
+<div id="footer">
+  <span id="gen">加载中…</span>
+  <button class="refresh-btn" onclick="load()">⟳ 刷新</button>
+</div>
+
+<script>
+async function load() {
+  try {
+    const res = await fetch('/subagent-status.json', { cache: 'no-store' });
+    const d = await res.json();
+    render(d);
+  } catch (e) {
+    document.getElementById('running').innerHTML = `<div class="empty">⚠️ 无法读取 subagent-status.json（${e.message}）</div>`;
+  }
+}
+
+const statusTag = (s) => s === 'running' ? '<span class="tag progress">● 运行中</span>' : s === 'completed' ? '<span class="tag progress">✓ 完成</span>' : s === 'failed' ? '<span class="tag" style="background:#fef2f2;color:#dc2626">✗ 失败</span>' : `<span class="tag stopped">${s}</span>`;
+
+function render(d) {
+  const dot = (s) => `<span class="dot ${s === 'running' ? 'running' : s === 'completed' ? 'completed' : s === 'failed' ? 'failed' : 'stopped'}"></span>`;
+
+  // running
+  const r = d.running_subagents || [];
+  document.getElementById('running').innerHTML = r.length
+    ? r.map(p => `<div class="card"><h3>${dot('running')} PID ${p.pid}</h3>
+        <div class="meta">CPU ${p.cpu}% · MEM ${p.mem}% · 启动 ${p.start}</div>
+        <div style="font-size:.76rem;color:var(--muted)">${p.cmd || ''}</div></div>`).join('')
+    : `<div class="empty">当前无运行中的 subagent</div>`;
+
+  // pi calls
+  const pc = d.pi_subagent_calls || [];
+  const runCount = pc.filter(x => x.status === 'running').length;
+  document.getElementById('pi-calls').innerHTML = pc.length
+    ? `<div style="font-size:.75rem;color:var(--muted);margin-bottom:8px">累计拉起 ${pc.length} 次 · 运行中 ${runCount} · 完成/休眠 ${pc.length - runCount}</div>` +
+      pc.slice().reverse().map(x => `<div class="art">🤖 <b>${x.subagent}</b> · ${x.ts}
+        ${x.status === 'running' ? '<span class="tag progress">● 运行中' + (x.pid ? ' PID ' + x.pid : '') + '</span>' : '<span class="tag stopped">✓ 完成</span>'}
+        <span style="font-size:.72rem;color:var(--muted)">${x.cmd.slice(0, 60)}</span></div>`).join('')
+    : `<div class="empty">无 Pi subagent 调用记录</div>`;
+
+  // sessions
+  const s = d.sessions || [];
+  document.getElementById('sessions').innerHTML = s.length
+    ? s.map(x => `<div class="card"><h3>${dot(x.status)} ${x.dir.slice(0, 26)}… ${statusTag(x.status)}</h3>
+        <div class="meta">${x.model || ''} · 更新 ${x.updated}</div>
+        ${(x.todos || []).map(t => `<div class="todo ${t.status === 'completed' ? 'done' : ''}"><span class="mk">${t.status === 'completed' ? '✅' : '⏳'}</span>${t.content}</div>`).join('')}
+      </div>`).join('')
+    : `<div class="empty">无会话记录</div>`;
+
+  // artifacts
+  const a = d.artifacts || [];
+  document.getElementById('artifacts').innerHTML = a.length
+    ? a.map(x => `<div class="art">📄 <b>${x.name}</b> · ${(x.size/1024).toFixed(1)}KB · ${x.mtime}
+        <a href="/artifacts/${x.name}" download style="float:right;font-size:.72rem;color:var(--brand);text-decoration:underline">⬇ 下载</a></div>`).join('')
+    : `<div class="empty">无产物</div>`;
+
+  document.getElementById('gen').textContent = `生成时间：${d.generated_at || '-'} · 运行中 ${r.length} 个 · 会话 ${s.length} 个 · Pi 累计拉起 ${(d.pi_subagent_calls || []).length} 次`;
+}
+
+load();
+setInterval(load, 10000);
+</script>
+</body>
+</html>

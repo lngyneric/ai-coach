@@ -29,6 +29,9 @@ def metering_billing_boundary_app():
         },
         SQLALCHEMY_TRACK_MODIFICATIONS=False,
         TZ="UTC",
+        # Billing-boundary tests assert the billable path (usage only, no
+        # wallet writes), so enable the master switch explicitly.
+        BILL_USAGE_ENABLED=True,
     )
     dao.db.init_app(app)
     with app.app_context():

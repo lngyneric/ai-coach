@@ -10,6 +10,8 @@ type PreviewSettingsModalProps = {
   targetId?: string;
 };
 
+const debugAllowed = false;
+
 const PreviewSettingsModal = ({ targetId }: PreviewSettingsModalProps) => {
   const { t } = useTranslation();
   const { currentShifu, actions } = useShifu();

@@ -119,6 +119,7 @@ urllib3==2.5.0
 virtualenv==20.26.6
 waitress==3.0.1
 watchdog==6.0.0
+weasyprint==66.0
 Werkzeug==3.1.4
 websocket-client==1.8.0
 wrapt==1.16.0
@@ -127,4 +128,4 @@ zope.event==5.0
 zope.interface==7.1.1
 bcrypt==4.2.1
 --extra-index-url https://pypi.org/simple/
-markdown-flow==0.2.76
+markdown-flow==0.3.1

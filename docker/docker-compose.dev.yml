@@ -1,5 +1,5 @@
 x-ai-shifu-api-dev-image: &ai-shifu-api-dev-image
-  image: aishifu/ai-shifu-api:patched
+  image: aishifu/ai-shifu-api:patched-pdf2
 
 services:
   ai-shifu-api-dev:
@@ -13,8 +13,11 @@ services:
       OTEL_SERVICE_NAME: ai-shifu-api-dev
       LOGIN_METHODS_ENABLED: employee
       DEFAULT_LOGIN_METHOD: employee
+      SQLALCHEMY_DATABASE_URI: mysql://root:ai-shifu@ai-shifu-mysql-dev:3306/ai-shifu_dev?charset=utf8mb4
       AAD_BYPASS: "1"
       AAD_AUTH_URL: ${AAD_AUTH_URL:-}
+      EMAIL_DOMAIN_ALLOWLIST: ${EMAIL_DOMAIN_ALLOWLIST:-sysmex.internal}
+      PHONE_LOGIN_ENABLED: ${PHONE_LOGIN_ENABLED:-false}
       REDIS_HOST: ai-shifu-redis-dev
       REDIS_PORT: 6379
       SKIP_LOAD_DOTENV: "1"
@@ -40,6 +43,7 @@ services:
       REDIS_HOST: ai-shifu-redis-dev
       REDIS_PORT: 6379
       SKIP_LOAD_DOTENV: "1"
+      SQLALCHEMY_DATABASE_URI: mysql://root:ai-shifu@ai-shifu-mysql-dev:3306/ai-shifu_dev?charset=utf8mb4
       CELERY_BROKER_URL: redis://ai-shifu-redis-dev:6379/0
       CELERY_RESULT_BACKEND: redis://ai-shifu-redis-dev:6379/1
     depends_on:
@@ -60,6 +64,7 @@ services:
       REDIS_HOST: ai-shifu-redis-dev
       REDIS_PORT: 6379
       SKIP_LOAD_DOTENV: "1"
+      SQLALCHEMY_DATABASE_URI: mysql://root:ai-shifu@ai-shifu-mysql-dev:3306/ai-shifu_dev?charset=utf8mb4
       CELERY_BROKER_URL: redis://ai-shifu-redis-dev:6379/0
       CELERY_RESULT_BACKEND: redis://ai-shifu-redis-dev:6379/1
     depends_on:
@@ -84,12 +89,13 @@ services:
       - I18N_ROOT=/app/src/i18n
       - NEXT_TELEMETRY_DISABLED=1
       - NODE_OPTIONS=--max-old-space-size=2048
-      - NEXT_PUBLIC_LOGIN_METHODS_ENABLED=phone
-      - NEXT_PUBLIC_DEFAULT_LOGIN_METHOD=phone
+      - NEXT_PUBLIC_LOGIN_METHODS_ENABLED=employee
+      - NEXT_PUBLIC_DEFAULT_LOGIN_METHOD=employee
       - NEXT_PUBLIC_BRAND_NAME=${BRAND_NAME:-AI-Shifu}
     depends_on:
       - ai-shifu-api-dev
     volumes:
+      - ../src/cook-web/patched-watcher.js:/app/patched-watcher.js:ro
       - ../src/cook-web/public:/app/public
       - ../src/cook-web/src:/app/src
       - ../src/i18n:/app/src/i18n
@@ -97,38 +103,48 @@ services:
   ai-shifu-nginx-dev-dev:
     image: nginx:latest
     ports:
-      - "0.0.0.0:${AI_SHIFU_WEB_PORT:-8082}:8080"
+      - "0.0.0.0:${AI_SHIFU_WEB_PORT:-8080}:8080"
     depends_on:
       - ai-shifu-cook-web-dev
       - ai-shifu-api-dev
+    restart: always
+    command: /bin/sh -c "envsubst '$${OPENCODE_API_KEY}' < /etc/nginx/nginx.conf.tpl > /etc/nginx/nginx.conf && exec nginx -g 'daemon off;'"
     environment:
       - OPENCODE_API_KEY=${OPENCODE_API_KEY}
-    entrypoint: ["/bin/sh", "/entrypoint.sh"]
-    restart: always
     volumes:
-      - ./nginx.dev.conf:/etc/nginx/nginx.conf
-      - ./nginx-dev-entrypoint.sh:/entrypoint.sh:ro
-      # Static H5 pages
-      - ./ivd-knowledge-tree.html:/usr/share/nginx/html/ivd-knowledge-tree.html:ro
-      - ./ivd-sandbox-model-docs.html:/usr/share/nginx/html/ivd-sandbox-model-docs.html:ro
-      - ./ivd-sandbox-dashboard.html:/usr/share/nginx/html/ivd-sandbox-dashboard.html:ro
-      - ./personal-growth-tree.html:/usr/share/nginx/html/personal-growth-tree.html:ro
-      - ./d3.v7.min.js:/usr/share/nginx/html/d3.v7.min.js:ro
+      - ./nginx.dev.conf:/etc/nginx/nginx.conf.tpl
+      - ./portal.html:/usr/share/nginx/html/portal.html:ro
+      - ./feature-overview.html:/usr/share/nginx/html/feature-overview.html:ro
+      - ./feature-slides.html:/usr/share/nginx/html/feature-slides.html:ro
+      - ./digital-human.html:/usr/share/nginx/html/digital-human.html:ro
+      - ./ai-qa.html:/usr/share/nginx/html/ai-qa.html:ro
+      - ./brand-vi.html:/usr/share/nginx/html/brand-vi.html:ro
+      - ./brand.html:/usr/share/nginx/html/brand.html:ro
+      - ./management-dashboard.html:/usr/share/nginx/html/management-dashboard.html:ro
+      - ./subagent-dashboard.html:/usr/share/nginx/html/subagent-dashboard.html:ro
+      - ./subagent-status.json:/usr/share/nginx/html/subagent-status.json:ro
+      - /home/sysmex/worktrees/coach-lab/docs:/usr/share/nginx/html/artifacts:ro
+      - ./dashboard-engine.html:/usr/share/nginx/html/dashboard-engine.html:ro
+      - ./dashboard.html:/usr/share/nginx/html/dashboard.html:ro
+      - ./design-system.css:/usr/share/nginx/html/design-system.css:ro
+      - ./favicon.svg:/usr/share/nginx/html/favicon.svg:ro
       - ./courses.html:/usr/share/nginx/html/courses.html:ro
       - ./coach.html:/usr/share/nginx/html/coach.html:ro
-      - ./logout.html:/usr/share/nginx/html/logout.html:ro
       - ./login.html:/usr/share/nginx/html/login.html:ro
-      - ./mentor.html:/usr/share/nginx/html/mentor.html:ro
+      - ./logout.html:/usr/share/nginx/html/logout.html:ro
       - ./training-portal.html:/usr/share/nginx/html/training-portal.html:ro
       - ./video-player.html:/usr/share/nginx/html/video-player.html:ro
       - ./video-manager.html:/usr/share/nginx/html/video-manager.html:ro
-      - ./admin-training-enroll.html:/usr/share/nginx/html/admin-training-enroll.html:ro
+      - ./ivd-knowledge-tree.html:/usr/share/nginx/html/ivd-knowledge-tree.html:ro
+      - ./personal-growth-tree.html:/usr/share/nginx/html/personal-growth-tree.html:ro
+      - ./ivd-sandbox-dashboard.html:/usr/share/nginx/html/ivd-sandbox-dashboard.html:ro
+      - ./ivd-sandbox-model-docs.html:/usr/share/nginx/html/ivd-sandbox-model-docs.html:ro
       - ./course-entry.html:/usr/share/nginx/html/course-entry.html:ro
       - ./sysmex-login.html:/usr/share/nginx/html/sysmex-login.html:ro
-      - ./feature-overview.html:/usr/share/nginx/html/feature-overview.html:ro
-      - ./feature-slides.html:/usr/share/nginx/html/feature-slides.html:ro
+      - ./admin-training-enroll.html:/usr/share/nginx/html/admin-training-enroll.html:ro
+      - ./mentor.html:/usr/share/nginx/html/mentor.html:ro
+      - ./d3.v7.min.js:/usr/share/nginx/html/d3.v7.min.js:ro
       - ./logo.png:/usr/share/nginx/html/logo.png:ro
-      - ./favicon.svg:/usr/share/nginx/html/favicon.svg:ro
 
   ai-shifu-loki:
     image: grafana/loki:3.1.1

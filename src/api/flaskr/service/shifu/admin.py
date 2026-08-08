@@ -2,6 +2,7 @@ from __future__ import annotations
 
 import math
 from datetime import datetime, timedelta
+from dataclasses import dataclass
 from decimal import Decimal, InvalidOperation
 from typing import Any, Dict, Iterable, Optional, Sequence, Set
 
@@ -114,7 +115,6 @@ from flaskr.service.shifu.consts import (
 
 from flaskr.service.shifu.demo_courses import is_builtin_demo_course
 
-from flaskr.service.shifu.course_activity import load_course_activity_map
 from flaskr.service.shifu.demo_courses import (
     is_builtin_demo_course,
     load_builtin_demo_titles,
@@ -1527,6 +1527,49 @@ def _load_operator_user_or_raise(user_bid: str) -> UserEntity:
 
 
 def _load_latest_shifus(
+    model,
+    *,
+    shifu_bid: str,
+    course_name: str,
+    creator_bids: Optional[Set[str]],
+    start_time: Optional[datetime],
+    end_time: Optional[datetime],
+    updated_start_time: Optional[datetime],
+    updated_end_time: Optional[datetime],
+    attach_prompt_flags: bool = False,
+):
+    is_mapped_model = hasattr(model, "__mapper__")
+    latest_subquery = db.session.query(db.func.max(model.id).label("max_id")).filter(
+        model.deleted == 0
+    )
+    if shifu_bid:
+        latest_subquery = latest_subquery.filter(model.shifu_bid == shifu_bid)
+    latest_subquery = latest_subquery.group_by(model.shifu_bid).subquery()
+    latest_rows = db.session.query(model).filter(
+        model.id.in_(db.session.query(latest_subquery.c.max_id))
+    )
+    if is_mapped_model:
+        latest_rows = latest_rows.options(defer(model.llm_system_prompt))
+    if course_name:
+        latest_rows = latest_rows.filter(model.title.ilike(f"%{course_name}%"))
+    if creator_bids is not None:
+        if not creator_bids:
+            return []
+        latest_rows = latest_rows.filter(model.created_user_bid.in_(creator_bids))
+    if start_time:
+        latest_rows = latest_rows.filter(model.created_at >= start_time)
+    if end_time:
+        latest_rows = latest_rows.filter(model.created_at <= end_time)
+    if updated_start_time:
+        latest_rows = latest_rows.filter(model.updated_at >= updated_start_time)
+    if updated_end_time:
+        latest_rows = latest_rows.filter(model.updated_at <= updated_end_time)
+
+    rows = latest_rows.order_by(model.updated_at.desc(), model.id.desc()).all()
+    if is_mapped_model and attach_prompt_flags:
+        _attach_course_prompt_flags(model, rows)
+    return rows
+
 
 def _assert_operator_user_grant_target_supported(user: UserEntity) -> None:
     if bool(getattr(user, "is_creator", False)) or bool(
@@ -2342,13 +2385,17 @@ def _clear_shifu_permission_cache(app: Flask, user_id: str, shifu_bid: str) -> N
 
 def _clear_shifu_creator_cache(app: Flask, shifu_bid: str) -> None:
     prefixes = {
-        app.config.get("REDIS_KEY_PREFIX", "") or "",
-        get_config("REDIS_KEY_PREFIX") or "",
+        str(app.config.get("REDIS_KEY_PREFIX", "") or "").rstrip(":"),
+        str(get_config("REDIS_KEY_PREFIX") or "").rstrip(":"),
         "ai-shifu",
     }
     for prefix in prefixes:
+        if not prefix:
+            continue
         cache_key = f"{prefix}:shifu_creator:{shifu_bid}"
         redis.delete(cache_key)
+        # C2: also drop the legacy double-colon key written by older code.
+        redis.delete(f"{prefix}::shifu_creator:{shifu_bid}")
 
 
 def _update_course_creator_bid(shifu_bid: str, creator_user_bid: str) -> None:

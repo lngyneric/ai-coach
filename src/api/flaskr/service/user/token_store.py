@@ -113,4 +113,21 @@ class TokenStoreProvider:
         return TokenLookupResult(user_id=expected_user_id)
 
 
+    def revoke(self, app: Flask, *, token: str) -> None:
+        """Invalidate a token so it can no longer authenticate.
+
+        P2-3: drops the cache entry (if any) and deletes the persistent
+        ``user_token`` row(s). Idempotent — revoking twice, or revoking an
+        already-expired token, is a no-op.
+        """
+        if not token:
+            return
+        try:
+            self._cache.delete(self._cache_key(app, token))
+        except Exception:
+            pass
+        UserTokenModel.query.filter(UserTokenModel.token == token).delete()
+        db.session.commit()
+
+
 token_store = TokenStoreProvider()

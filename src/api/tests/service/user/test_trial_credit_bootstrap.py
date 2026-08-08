@@ -25,10 +25,8 @@ from flaskr.service.billing.models import (
 )
 from flaskr.service.user.consts import USER_STATE_REGISTERED
 from flaskr.service.user.models import UserInfo as UserEntity
-from flaskr.service.user.password_utils import hash_password
 from flaskr.service.user.repository import (
     create_user_entity,
-    set_password_hash,
     upsert_credential,
 )
 from flaskr.service.user.token_store import token_store
@@ -87,6 +85,7 @@ def user_trial_client(monkeypatch, tmp_path):
         REDIS_KEY_PREFIX_IP_BAN="test:ipban:",
         REDIS_KEY_PREFIX_IP_LIMIT="test:iplimit:",
         ADMIN_LOGIN_GRANT_CREATOR_WITH_DEMO=False,
+        AAD_BYPASS="1",
         ENVERIMENT="prod",
         TZ="UTC",
     )
@@ -165,30 +164,28 @@ def _assert_trial_bootstrapped(user_bid: str) -> None:
     assert ledgers[0].source_type == CREDIT_SOURCE_TYPE_SUBSCRIPTION
 
 
-def test_sms_login_admin_login_bootstraps_trial_once(
+def test_employee_login_bootstraps_trial_once(
     user_trial_client,
 ):
+    """Employee (AAD) whitelist login grants creator and bootstraps trial once.
+
+    login_sms was removed when login was simplified to AAD employee login, so
+    this test drives the same post-auth trial bootstrap through
+    /api/user/login_employee with the creator whitelist granting the role.
+    """
     app = user_trial_client.application
-    app.config["ADMIN_LOGIN_GRANT_CREATOR_WITH_DEMO"] = True
-    phone = f"155{uuid.uuid4().int % 100000000:08d}"
+    employee_no = f"sch{uuid.uuid4().int % 100000:05d}"
+    app.config["EMPLOYEE_CREATOR_WHITELIST"] = [employee_no]
 
     first_response = _post_json(
         user_trial_client,
-        "/api/user/login_sms",
-        {
-            "mobile": phone,
-            "sms_code": "9999",
-            "login_context": "admin",
-        },
+        "/api/user/login_employee",
+        {"employeeNo": employee_no, "password": "whatever"},
     )
     second_response = _post_json(
         user_trial_client,
-        "/api/user/login_sms",
-        {
-            "mobile": phone,
-            "sms_code": "9999",
-            "login_context": "admin",
-        },
+        "/api/user/login_employee",
+        {"employeeNo": employee_no, "password": "whatever"},
     )
 
     assert first_response.status_code == 200
@@ -197,7 +194,9 @@ def test_sms_login_admin_login_bootstraps_trial_once(
     assert second_response.get_json(force=True)["code"] == 0
 
     with app.app_context():
-        user = UserEntity.query.filter_by(user_identify=phone, deleted=0).first()
+        user = UserEntity.query.filter_by(
+            user_identify=employee_no, deleted=0
+        ).first()
         assert user is not None
         assert user.is_creator == 1
         _assert_trial_bootstrapped(user.user_bid)
@@ -248,38 +247,32 @@ def test_ensure_admin_creator_bootstraps_trial_for_existing_user_once(
         )
 
 
-def test_password_login_existing_creator_does_not_bootstrap_trial_again(
+def test_employee_login_existing_creator_does_not_bootstrap_trial_again(
     user_trial_client,
 ):
+    """Employee login of an existing creator does not re-bootstrap trial.
+
+    login_password was removed when login was simplified to AAD employee login,
+    so this test reuses /api/user/login_employee against a pre-seeded employee
+    user that is already a creator.
+    """
     app = user_trial_client.application
-    email = f"{uuid.uuid4().hex[:10]}@example.com"
-    password = "Abcd1234"
+    employee_no = f"sch{uuid.uuid4().int % 100000:05d}"
 
     with app.app_context():
         user_bid = _seed_registered_user(
             app,
-            identifier=email,
-            provider_name="email",
-            subject_format="email",
+            identifier=employee_no,
+            provider_name="employee",
+            subject_format="employee_no",
             is_creator=True,
         )
-        password_credential = upsert_credential(
-            app,
-            user_bid=user_bid,
-            provider_name="password",
-            subject_id=email,
-            subject_format="email",
-            identifier=email,
-            metadata={},
-            verified=True,
-        )
-        set_password_hash(password_credential, hash_password(password))
         dao.db.session.commit()
 
     response = _post_json(
         user_trial_client,
-        "/api/user/login_password",
-        {"identifier": email, "password": password},
+        "/api/user/login_employee",
+        {"employeeNo": employee_no, "password": "whatever"},
     )
 
     assert response.status_code == 200
@@ -298,38 +291,32 @@ def test_password_login_existing_creator_does_not_bootstrap_trial_again(
         )
 
 
-def test_password_login_non_creator_does_not_grant_trial(
+def test_employee_login_non_creator_does_not_grant_trial(
     user_trial_client,
 ):
+    """Employee login of a non-creator (not whitelisted) does not grant trial.
+
+    login_password was removed when login was simplified to AAD employee login,
+    so this test reuses /api/user/login_employee against a pre-seeded employee
+    user that is not a creator and not on the creator whitelist.
+    """
     app = user_trial_client.application
-    email = f"{uuid.uuid4().hex[:10]}@example.com"
-    password = "Abcd1234"
+    employee_no = f"sch{uuid.uuid4().int % 100000:05d}"
 
     with app.app_context():
         user_bid = _seed_registered_user(
             app,
-            identifier=email,
-            provider_name="email",
-            subject_format="email",
+            identifier=employee_no,
+            provider_name="employee",
+            subject_format="employee_no",
             is_creator=False,
         )
-        password_credential = upsert_credential(
-            app,
-            user_bid=user_bid,
-            provider_name="password",
-            subject_id=email,
-            subject_format="email",
-            identifier=email,
-            metadata={},
-            verified=True,
-        )
-        set_password_hash(password_credential, hash_password(password))
         dao.db.session.commit()
 
     response = _post_json(
         user_trial_client,
-        "/api/user/login_password",
-        {"identifier": email, "password": password},
+        "/api/user/login_employee",
+        {"employeeNo": employee_no, "password": "whatever"},
     )
 
     assert response.status_code == 200

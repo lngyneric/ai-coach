@@ -2,25 +2,88 @@
 
 from __future__ import annotations
 
+import math
 import uuid
 from datetime import datetime, date
 
 from flask import Flask, request
+from sqlalchemy import text
 from flaskr.dao import db
 from flaskr.framework.plugin.inject import inject
 from flaskr.route.common import make_common_response
-from flaskr.service.common.models import raise_param_error
+from flaskr.service.common.models import AppException, raise_param_error
+from flaskr.service.coach.permissions import (
+    get_user_permissions,
+    has_permission,
+    resolve_user_roles,
+    visible_students_scope,
+)
 from flaskr.service.learning_portal.models import (
     LearnerProfile,
-    LearnerCoaching,
-    CoachingPhase,
-    CoachingChecklist,
+    LearnerMentorship,
+    MentorshipPhase,
+    MentorshipChecklist,
     LearnerChecklistItem,
     LearnerTask,
     TaskNotification,
     CourseEnrollment,
 )
 from flaskr.util.uuid import generate_id
+
+
+# Permission denied business code (HTTP-agnostic, matches frontend `code !== 0`).
+PERMISSION_DENIED_CODE = 403
+
+
+def _require_permission(app, user, permission: str) -> None:
+    """Raise a 403-style business error when the user lacks ``permission``."""
+    if not has_permission(app, user, permission):
+        raise AppException("没有权限执行此操作", PERMISSION_DENIED_CODE)
+
+
+def _apply_students_scope(query, scope: str):
+    """Filter a ``LearnerProfile`` query by a ``visible_students_scope`` string.
+
+    Handles the exact strings returned by ``visible_students_scope``:
+
+    - ``"all"``                    → no filter (admin / hr)
+    - ``"department:<dept>"``      → ``LearnerProfile.department == dept``
+    - ``"mentored:<user_bid>"``    → ``LearnerProfile.coach_bid == user_bid``
+    - ``"self:<user_bid>"``        → ``LearnerProfile.user_bid == user_bid``
+
+    Unknown / malformed scopes degrade to the empty filter (no rows) so a
+    misconfigured scope can never widen visibility beyond ``all``.
+    """
+    if not scope or scope == "all":
+        return query
+    if scope.startswith("department:"):
+        dept = scope.split(":", 1)[1]
+        return query.filter(LearnerProfile.department == dept)
+    if scope.startswith("mentored:"):
+        coach_bid = scope.split(":", 1)[1]
+        return query.filter(LearnerProfile.coach_bid == coach_bid)
+    if scope.startswith("self:"):
+        user_bid = scope.split(":", 1)[1]
+        return query.filter(LearnerProfile.user_bid == user_bid)
+    # Unknown scope → return nothing (safe degradation).
+    return query.filter(db.text("1 = 0"))
+
+
+def _require_mentored_learner(app, user, learner_bid: str) -> None:
+    """Raise a 403 business error unless ``user`` may act on ``learner_bid``.
+
+    Rule (docs/P0-ACCEPTANCE-TEST-REPORT.md §六 D4 / §八.4):
+    - admin / hr (scope ``all``) keep the exception and may act on any learner;
+    - everyone else must be the learner's own mentor
+      (``LearnerProfile.coach_bid == user.user_id``), i.e. the ``mentored:``
+      data scope.
+    """
+    scope = visible_students_scope(app, user)
+    if scope == "all":
+        return
+    profile = LearnerProfile.query.filter_by(learner_bid=learner_bid).first()
+    if profile is None or profile.coach_bid != user.user_id:
+        raise AppException("没有权限操作非带教学员的数据", PERMISSION_DENIED_CODE)
 
 
 @inject
@@ -96,16 +159,16 @@ def register_learning_portal_routes(
         user_bid = request.user.user_id
         profile = LearnerProfile.query.filter_by(user_bid=user_bid).first()
 
-        coachings = []
+        mentorships = []
         if profile:
             records = (
-                LearnerCoaching.query.filter_by(learner_bid=profile.learner_bid)
-                .order_by(LearnerCoaching.created_at.desc())
+                LearnerMentorship.query.filter_by(learner_bid=profile.learner_bid)
+                .order_by(LearnerMentorship.created_at.desc())
                 .all()
             )
             for r in records:
-                phase = CoachingPhase.query.get(r.phase_bid)
-                coachings.append(
+                phase = MentorshipPhase.query.get(r.phase_bid)
+                mentorships.append(
                     {
                         "record_bid": r.record_bid,
                         "phase_bid": r.phase_bid,
@@ -143,18 +206,18 @@ def register_learning_portal_routes(
             ).count()
 
         # Check if user is a coach (has students assigned)
-        coach_count = LearnerProfile.query.filter_by(coach_bid=user_bid).count()
+        mentor_count = LearnerProfile.query.filter_by(coach_bid=user_bid).count()
 
         return make_common_response(
             {
-                "coachings": coachings,
+                "mentorships": mentorships,
                 "pending_tasks": tasks,
                 "unread_notifications": notif_count,
-                "coach_student_count": coach_count,
-                "total_courses": LearnerCoaching.query.filter_by(
+                "mentor_student_count": mentor_count,
+                "total_courses": LearnerMentorship.query.filter_by(
                     learner_bid=profile.learner_bid if profile else ""
                 ).count(),
-                "completed_courses": LearnerCoaching.query.filter_by(
+                "completed_courses": LearnerMentorship.query.filter_by(
                     learner_bid=profile.learner_bid if profile else "",
                     status="passed",
                 ).count(),
@@ -248,22 +311,24 @@ def register_learning_portal_routes(
     #  导师端 API
     # ═══════════════════════════════════════════════
 
-    # ── GET /api/portal/coach/students ──
-    @app.route(path_prefix + "/coach/students", methods=["GET"])
-    def coach_students():
-        user_bid = request.user.user_id
-        students = (
-            LearnerProfile.query.filter_by(coach_bid=user_bid)
-            .order_by(LearnerProfile.created_at.desc())
-            .all()
-        )
+    # ── GET /api/portal/mentor/students ──
+    @app.route(path_prefix + "/mentor/students", methods=["GET"])
+    def mentor_students():
+        _require_permission(app, request.user, "view_all_students")
+        # B1 (P0-PERMISSION-GAP-AUDIT D-G2): consume visible_students_scope
+        # exactly like ``admin/learners`` so admin/hr see everyone, dept_head
+        # see their own department and coach see their mentees.
+        scope = visible_students_scope(app, request.user)
+        query = LearnerProfile.query.order_by(LearnerProfile.created_at.desc())
+        query = _apply_students_scope(query, scope)
+        students = query.all()
         result = []
         for s in students:
             active_phase = (
-                LearnerCoaching.query.filter_by(
+                LearnerMentorship.query.filter_by(
                     learner_bid=s.learner_bid, status="in_progress"
                 )
-                .order_by(LearnerCoaching.created_at.desc())
+                .order_by(LearnerMentorship.created_at.desc())
                 .first()
             )
             pending_count = LearnerChecklistItem.query.filter_by(
@@ -281,17 +346,19 @@ def register_learning_portal_routes(
                     else None,
                     "status": s.status,
                     "current_phase_status": active_phase.status if active_phase else None,
-                    "pending_task_count": LearnerTask.query.filter_by(learner_bid=s.learner_bid, status="pending").count(),
                     "pending_score_count": pending_count,
                 }
             )
         return make_common_response(result)
 
-    # ── GET /api/portal/coach/pending-scores ──
-    @app.route(path_prefix + "/coach/pending-scores", methods=["GET"])
-    def coach_pending_scores():
-        user_bid = request.user.user_id
-        students = LearnerProfile.query.filter_by(coach_bid=user_bid).all()
+    # ── GET /api/portal/mentor/pending-scores ──
+    @app.route(path_prefix + "/mentor/pending-scores", methods=["GET"])
+    def mentor_pending_scores():
+        _require_permission(app, request.user, "view_all_students")
+        # B1 (D-G2): same data-scope fix as ``mentor/students``.
+        scope = visible_students_scope(app, request.user)
+        query = _apply_students_scope(LearnerProfile.query, scope)
+        students = query.all()
         learner_bids = [s.learner_bid for s in students]
         if not learner_bids:
             return make_common_response([])
@@ -317,11 +384,12 @@ def register_learning_portal_routes(
             ]
         )
 
-    # ── POST /api/portal/coaching/items/<record_bid>/score ──
+    # ── POST /api/portal/mentorship/items/<record_bid>/score ──
     @app.route(
-        path_prefix + "/coaching/items/<record_bid>/score", methods=["POST"]
+        path_prefix + "/mentorship/items/<record_bid>/score", methods=["POST"]
     )
-    def coach_score_item(record_bid):
+    def mentor_score_item(record_bid):
+        _require_permission(app, request.user, "score")
         user_bid = request.user.user_id
         data = request.get_json() or {}
         score = data.get("score")
@@ -333,7 +401,33 @@ def register_learning_portal_routes(
         if item.status != "submitted":
             raise_param_error("item is not in submitted status")
 
-        item.score = float(score) if score else None
+        # D4 fix: score ownership — a coach may only score learners they
+        # mentor. admin / hr (scope "all") keep the exception.
+        _require_mentored_learner(app, request.user, item.learner_bid)
+
+        # W3-3 scoring hardening:
+        # - ``score=0`` is a valid grade — the old `float(score) if score else None`
+        #   collapsed 0 into None (falsy), silently dropping a real score.
+        # - bounds come from the checklist template's ``max_score`` (default 5.0);
+        #   NaN / ±Inf and non-numeric payloads are rejected up front.
+        if score is None or str(score).strip() == "":
+            raise_param_error("score is required")
+        try:
+            score_value = float(score)
+        except (TypeError, ValueError):
+            raise_param_error("score must be a number")
+        if not math.isfinite(score_value):
+            raise_param_error("score must be a finite number")
+        checklist = MentorshipChecklist.query.get(item.item_bid)
+        max_score = (
+            float(checklist.max_score)
+            if checklist is not None and checklist.max_score is not None
+            else 5.0
+        )
+        if score_value < 0 or score_value > max_score:
+            raise_param_error(f"score must be between 0 and {max_score}")
+
+        item.score = score_value
         item.scored_by = user_bid
         item.comment = comment
         item.status = "scored"
@@ -348,9 +442,14 @@ def register_learning_portal_routes(
     # ── POST /api/portal/tasks ──
     @app.route(path_prefix + "/tasks", methods=["POST"])
     def portal_create_task():
+        # W3-4 guard: task assignment is a coaching operation — requires
+        # create_session (admin/coach) AND the target learner must be in the
+        # caller's mentored scope (admin/hr scope-all exception preserved).
+        _require_permission(app, request.user, "create_session")
         data = request.get_json() or {}
         learner_bid = data.get("learner_bid", "")
         title = data.get("title", "")
+        _require_mentored_learner(app, request.user, learner_bid)
         task_type = data.get("task_type", "course")
         due_at = data.get("due_at")
 
@@ -391,9 +490,15 @@ def register_learning_portal_routes(
     # ── GET /api/portal/admin/learners ──
     @app.route(path_prefix + "/admin/learners", methods=["GET"])
     def admin_learners():
+        # D2: permission guard — learner without `view_all_students` is 403.
+        _require_permission(app, request.user, "view_all_students")
         page = int(request.args.get("page", "1"))
         size = int(request.args.get("size", "20"))
+        # D3: data-scope filter — admin/hr=all, dept_head=department,
+        # coach=mentored, learner=self (though learner is blocked by D2).
+        scope = visible_students_scope(app, request.user)
         query = LearnerProfile.query.order_by(LearnerProfile.created_at.desc())
+        query = _apply_students_scope(query, scope)
         total = query.count()
         items = query.offset((page - 1) * size).limit(size).all()
         return make_common_response(
@@ -422,8 +527,8 @@ def register_learning_portal_routes(
     # ── PUT /api/portal/admin/learners/<learner_bid> ──
     @app.route(path_prefix + "/admin/learners/<learner_bid>", methods=["PUT"])
     def admin_update_learner(learner_bid):
-        if not getattr(request.user, "is_operator", False):
-            raise_param_error("admin permission required")
+        # P2-2: legacy is_operator guard -> has_permission (manage_users).
+        _require_permission(app, request.user, "manage_users")
         data = request.get_json() or {}
         profile = LearnerProfile.query.get(learner_bid)
         if not profile:
@@ -450,8 +555,8 @@ def register_learning_portal_routes(
     # ── POST /api/portal/admin/learners ── (create)
     @app.route(path_prefix + "/admin/learners", methods=["POST"])
     def admin_create_learner():
-        if not getattr(request.user, "is_operator", False):
-            raise_param_error("admin permission required")
+        # P2-2: legacy is_operator guard -> has_permission (manage_users).
+        _require_permission(app, request.user, "manage_users")
         data = request.get_json() or {}
         user_bid = data.get("user_bid", "")
         if not user_bid:
@@ -478,7 +583,10 @@ def register_learning_portal_routes(
     # ── GET /api/portal/admin/phases ──
     @app.route(path_prefix + "/admin/phases", methods=["GET"])
     def admin_phases():
-        phases = CoachingPhase.query.order_by(CoachingPhase.sort_order).all()
+        # W3-4 guard: phase configuration visible to roster viewers
+        # (admin/hr/dept_head/coach). learner → 403.
+        _require_permission(app, request.user, "view_all_students")
+        phases = MentorshipPhase.query.order_by(MentorshipPhase.sort_order).all()
         return make_common_response(
             [
                 {
@@ -492,7 +600,7 @@ def register_learning_portal_routes(
                     "theory_weight": float(p.theory_weight) if p.theory_weight else None,
                     "practice_weight": float(p.practice_weight) if p.practice_weight else None,
                     "review_weight": float(p.review_weight) if p.review_weight else None,
-                    "coach_weight": float(p.coach_weight) if p.coach_weight else None,
+                    "mentor_weight": float(p.mentor_weight) if p.mentor_weight else None,
                     "is_active": bool(p.is_active),
                 }
                 for p in phases
@@ -502,13 +610,15 @@ def register_learning_portal_routes(
     # ── PUT /api/portal/admin/phases/<phase_bid> ──
     @app.route(path_prefix + "/admin/phases/<phase_bid>", methods=["PUT"])
     def admin_update_phase(phase_bid):
+        # W3-4 guard: phase editing is a management operation (admin/hr).
+        _require_permission(app, request.user, "manage_users")
         data = request.get_json() or {}
-        phase = CoachingPhase.query.get(phase_bid)
+        phase = MentorshipPhase.query.get(phase_bid)
         if not phase:
             raise_param_error("phase not found")
         for field in (
             "name", "description", "duration_days", "passing_score",
-            "theory_weight", "practice_weight", "review_weight", "coach_weight",
+            "theory_weight", "practice_weight", "review_weight", "mentor_weight",
         ):
             val = data.get(field)
             if val is not None:
@@ -521,8 +631,11 @@ def register_learning_portal_routes(
     # ── GET /api/portal/admin/checklist/<phase_bid> ──
     @app.route(path_prefix + "/admin/checklist/<phase_bid>", methods=["GET"])
     def admin_checklist(phase_bid):
-        items = CoachingChecklist.query.filter_by(phase_bid=phase_bid).order_by(
-            CoachingChecklist.sort_order
+        # W3-4 guard: checklist templates readable by anyone who can view any
+        # report (admin/hr/dept_head/coach). learner → 403.
+        _require_permission(app, request.user, "view_any_report")
+        items = MentorshipChecklist.query.filter_by(phase_bid=phase_bid).order_by(
+            MentorshipChecklist.sort_order
         ).all()
         return make_common_response(
             [
@@ -542,8 +655,11 @@ def register_learning_portal_routes(
     # ── POST /api/portal/admin/checklist ──
     @app.route(path_prefix + "/admin/checklist", methods=["POST"])
     def admin_create_checklist():
+        # W3-4 guard: checklist template management = content certification
+        # (admin/hr/dept_head). learner/coach → 403.
+        _require_permission(app, request.user, "certify_content")
         data = request.get_json() or {}
-        item = CoachingChecklist(
+        item = MentorshipChecklist(
             item_bid=uuid.uuid4().hex,
             phase_bid=data.get("phase_bid", ""),
             name=data.get("name", ""),
@@ -558,75 +674,121 @@ def register_learning_portal_routes(
     # ── GET /api/portal/admin/stats ──
     @app.route(path_prefix + "/admin/stats", methods=["GET"])
     def admin_stats():
-        total_learners = LearnerProfile.query.count()
-        active_learners = LearnerProfile.query.filter_by(status="active").count()
-        in_progress = LearnerCoaching.query.filter_by(status="in_progress").count()
-        passed = LearnerCoaching.query.filter_by(status="passed").count()
+        # W3-4 guard: KPI stats visible to view_kpi holders (admin/hr/dept/coach).
+        _require_permission(app, request.user, "view_kpi")
+        # B1 (P0-PERMISSION-GAP-AUDIT D-G8-2): scope the KPI counts the same
+        # way as ``admin/learners`` so a dept_head sees only their department
+        # and a coach only their mentees (previously global counts leaked
+        # every learner's KPI to dept/coach).
+        scope = visible_students_scope(app, request.user)
+        learners_query = _apply_students_scope(LearnerProfile.query, scope)
+        total_learners = learners_query.count()
+        active_learners = learners_query.filter_by(status="active").count()
+        learner_bids = [
+            row[0]
+            for row in learners_query.with_entities(
+                LearnerProfile.learner_bid
+            ).all()
+        ]
+        if learner_bids:
+            in_progress = LearnerMentorship.query.filter(
+                LearnerMentorship.learner_bid.in_(learner_bids),
+                LearnerMentorship.status == "in_progress",
+            ).count()
+            passed = LearnerMentorship.query.filter(
+                LearnerMentorship.learner_bid.in_(learner_bids),
+                LearnerMentorship.status == "passed",
+            ).count()
+        else:
+            in_progress = 0
+            passed = 0
         return make_common_response(
             {
                 "total_learners": total_learners,
                 "active_learners": active_learners,
-                "in_progress_coachings": in_progress,
-                "passed_coachings": passed,
+                "in_progress_mentorships": in_progress,
+                "passed_mentorships": passed,
             }
         )
 
     # ── GET /api/portal/admin/roles ──
     @app.route(path_prefix + "/admin/roles", methods=["GET"])
     def admin_list_roles():
-        """List all users with their role flags (requires is_operator)."""
-        if not getattr(request.user, "is_operator", False):
-            raise_param_error("admin permission required")
+        """List users with legacy flags (is_creator/is_operator) + 5-level roles."""
+        _require_permission(app, request.user, "manage_users")
 
         page = int(request.args.get("page", "1"))
         size = int(request.args.get("size", "50"))
-        from flaskr.service.user.models import UserEntity
+        from flaskr.service.user.models import UserInfo as UserEntity
         query = UserEntity.query.order_by(UserEntity.id.desc())
         total = query.count()
         users = query.offset((page - 1) * size).limit(size).all()
+        items = []
+        for u in users:
+            roles = resolve_user_roles(app, u.user_bid)
+            items.append({
+                "user_bid": u.user_bid,
+                "nickname": u.nickname,
+                "is_creator": bool(u.is_creator),
+                "is_operator": bool(u.is_operator),
+                "roles": [
+                    {"role_bid": r["role_bid"], "name": r["name"]}
+                    for r in roles
+                ],
+            })
         return make_common_response({
             "total": total,
             "page": page,
-            "items": [
-                {
-                    "user_bid": u.user_bid,
-                    "nickname": u.nickname,
-                    "is_creator": bool(u.is_creator),
-                    "is_operator": bool(u.is_operator),
-                }
-                for u in users
-            ],
+            "items": items,
         })
 
     # ── PUT /api/portal/admin/roles/<user_bid> ──
     @app.route(path_prefix + "/admin/roles/<user_bid>", methods=["PUT"])
     def admin_update_roles(user_bid):
-        """Grant or revoke creator/operator roles (requires is_operator)."""
-        if not getattr(request.user, "is_operator", False):
-            raise_param_error("admin permission required")
+        """Grant/revoke 5-level roles (requires manage_users).
+
+        B6 (P0-PERMISSION-GAP-AUDIT D-G4): ``user_role_assignments`` is the
+        single source of truth. The legacy ``is_creator`` / ``is_operator``
+        flags are no longer written here (older clients sending
+        grant_operator/revoke_operator etc. are ignored); see the retirement
+        schedule in docs/P0-PERMISSION-MODEL-UPGRADE.md §十.
+        """
+        _require_permission(app, request.user, "manage_users")
 
         data = request.get_json() or {}
-        from flaskr.service.user.repository import mark_user_roles
+        grant_roles = data.get("grant_roles") or []
+        revoke_roles = data.get("revoke_roles") or []
 
-        grant_creator = data.get("grant_creator")
-        grant_operator = data.get("grant_operator")
-        revoke_creator = data.get("revoke_creator")
-        revoke_operator = data.get("revoke_operator")
-
-        kwargs = {}
-        if grant_creator is True:
-            kwargs["is_creator"] = True
-        if grant_operator is True:
-            kwargs["is_operator"] = True
-        if revoke_creator is True:
-            kwargs["is_creator"] = False
-        if revoke_operator is True:
-            kwargs["is_operator"] = False
-
-        if not kwargs:
+        if not grant_roles and not revoke_roles:
             raise_param_error("no role changes specified")
 
-        mark_user_roles(user_bid, **kwargs)
+        # Grant 5-level roles (idempotent insert into user_role_assignments).
+        for role_bid in grant_roles:
+            existing = db.session.execute(
+                text(
+                    "SELECT 1 FROM user_role_assignments "
+                    "WHERE user_bid = :ub AND role_bid = :rb"
+                ),
+                {"ub": user_bid, "rb": role_bid},
+            ).first()
+            if not existing:
+                db.session.execute(
+                    text(
+                        "INSERT INTO user_role_assignments (user_bid, role_bid) "
+                        "VALUES (:ub, :rb)"
+                    ),
+                    {"ub": user_bid, "rb": role_bid},
+                )
+
+        # Revoke 5-level roles.
+        for role_bid in revoke_roles:
+            db.session.execute(
+                text(
+                    "DELETE FROM user_role_assignments "
+                    "WHERE user_bid = :ub AND role_bid = :rb"
+                ),
+                {"ub": user_bid, "rb": role_bid},
+            )
         db.session.commit()
 
         # Notify user
@@ -642,23 +804,50 @@ def register_learning_portal_routes(
 
         return make_common_response({
             "ok": True,
-            **kwargs,
+            "roles": [
+                {"role_bid": r["role_bid"], "name": r["name"]}
+                for r in resolve_user_roles(app, user_bid)
+            ],
         })
 
-    # ── POST /api/portal/coaching/start ──
-    @app.route(path_prefix + "/coaching/start", methods=["POST"])
-    def portal_start_coaching():
+    # ── GET /api/portal/permissions ──
+    @app.route(path_prefix + "/permissions", methods=["GET"])
+    def portal_my_permissions():
+        """Return the current user's roles + permission keys + data scope."""
+        user = request.user
+        user_bid = getattr(user, "user_id", None) or getattr(user, "user_bid", "")
+        roles = resolve_user_roles(app, user_bid)
+        return make_common_response(
+            {
+                "roles": [
+                    {"role_bid": r["role_bid"], "name": r["name"]}
+                    for r in roles
+                ],
+                "permissions": get_user_permissions(app, user),
+                "data_scope": visible_students_scope(app, user),
+            }
+        )
+
+    # ── POST /api/portal/mentorship/start ──
+    @app.route(path_prefix + "/mentorship/start", methods=["POST"])
+    def portal_start_mentorship():
+        _require_permission(app, request.user, "create_session")
         data = request.get_json() or {}
         learner_bid = data.get("learner_bid", "")
         phase_bid = data.get("phase_bid", "")
 
-        existing = LearnerCoaching.query.filter_by(
+        # D4 fix (same class of horizontal privilege escalation): a coach may
+        # only start a phase for a learner they mentor; admin / hr (scope
+        # "all") keep the exception.
+        _require_mentored_learner(app, request.user, learner_bid)
+
+        existing = LearnerMentorship.query.filter_by(
             learner_bid=learner_bid, phase_bid=phase_bid, status="in_progress"
         ).first()
         if existing:
             raise_param_error("phase already in progress")
 
-        record = LearnerCoaching(
+        record = LearnerMentorship(
             record_bid=uuid.uuid4().hex,
             learner_bid=learner_bid,
             phase_bid=phase_bid,
@@ -670,7 +859,7 @@ def register_learning_portal_routes(
         # Notify
         profile = LearnerProfile.query.get(learner_bid)
         if profile:
-            phase = CoachingPhase.query.get(phase_bid)
+            phase = MentorshipPhase.query.get(phase_bid)
             notif = TaskNotification(
                 notif_bid=uuid.uuid4().hex,
                 user_bid=profile.user_bid,
@@ -688,12 +877,14 @@ def register_learning_portal_routes(
     @app.route(path_prefix + "/admin/enroll", methods=["POST"])
     def admin_enroll():
         """Assign a course to a user for a training module."""
+        # W3-4 guard: course assignment is a manage_users operation (admin/hr).
+        _require_permission(app, request.user, "manage_users")
         user_bid = request.get_json().get("user_bid")
         shifu_bid = request.get_json().get("shifu_bid")
         module = request.get_json().get("module")
         if not all([user_bid, shifu_bid, module]):
             raise_param_error("user_bid, shifu_bid, module are required")
-        if module not in ("onboarding", "coaching", "intensive", "leadership"):
+        if module not in ("onboarding", "mentorship", "intensive", "leadership"):
             raise_param_error("invalid module")
 
         enrollment = CourseEnrollment(
@@ -716,6 +907,8 @@ def register_learning_portal_routes(
     @app.route(path_prefix + "/admin/enroll", methods=["DELETE"])
     def admin_unenroll():
         """Remove a course assignment."""
+        # W3-4 guard: unenroll is a manage_users operation (admin/hr).
+        _require_permission(app, request.user, "manage_users")
         user_bid = request.get_json().get("user_bid")
         shifu_bid = request.get_json().get("shifu_bid")
         if not user_bid or not shifu_bid:
@@ -752,6 +945,9 @@ def register_learning_portal_routes(
     @app.route(path_prefix + "/admin/enrollments", methods=["GET"])
     def admin_list_enrollments():
         """Admin: list enrollments for a user or all."""
+        # W3-4 guard: enrollment management is a manage_users operation
+        # (admin/hr). learner → 403 (was an open horizontal-privilege hole).
+        _require_permission(app, request.user, "manage_users")
         user_bid = request.args.get("user_bid", "")
         module = request.args.get("module", "")
         query = CourseEnrollment.query
@@ -798,154 +994,113 @@ def register_learning_portal_routes(
         db.session.commit()
         return make_common_response({"progress_pct": enrollment.progress_pct})
 
-    # ── GET /api/portal/coach/phase-detail/<learner_bid> ──
-    @app.route(path_prefix + "/coach/phase-detail/<learner_bid>", methods=["GET"])
-    def coach_phase_detail(learner_bid):
-        """Get detailed phase progress for a learner."""
-        records = LearnerCoaching.query.filter_by(learner_bid=learner_bid).order_by(LearnerCoaching.created_at).all()
-        result = []
-        for rec in records:
-            phase = CoachingPhase.query.get(rec.phase_bid)
-            items = LearnerChecklistItem.query.filter_by(learner_bid=learner_bid).all()
-            scored = sum(1 for i in items if i.status == "scored")
-            total = len(items) or 1
-            result.append({
-                "phase_bid": rec.phase_bid,
-                "phase_name": phase.name if phase else "",
-                "status": rec.status,
-                "theory_score": float(rec.theory_score or 0),
-                "practice_score": float(rec.practice_score or 0),
-                "coach_score": float(rec.coach_score or 0),
-                "total_score": float(rec.total_score or 0),
-                "checklist_progress": f"{scored}/{len(items)}",
-                "checklist_pct": round(scored / total * 100, 1),
-                "started_at": str(rec.started_at or ""),
-                "completed_at": str(rec.completed_at or ""),
-                "coach_summary": rec.coach_summary or "",
-                "learner_feedback": rec.learner_feedback or "",
-                "improvement_plan": rec.improvement_plan or "",
-            })
-        return make_common_response(result)
-
-    # ── POST /api/portal/coach/phase-summary/<record_bid> ──
-    @app.route(path_prefix + "/coach/phase-summary/<record_bid>", methods=["POST"])
-    def coach_phase_summary(record_bid):
-        """Submit phase summary and evaluation."""
-        data = request.get_json() or {}
-        rec = LearnerCoaching.query.get(record_bid)
-        if not rec:
-            raise_param_error("phase record not found")
-        if "coach_summary" in data:
-            rec.coach_summary = data["coach_summary"]
-        if "learner_feedback" in data:
-            rec.learner_feedback = data["learner_feedback"]
-        if "improvement_plan" in data:
-            rec.improvement_plan = data["improvement_plan"]
-        if data.get("complete"):
-            rec.status = "completed"
-            rec.completed_at = datetime.utcnow()
-        rec.updated_at = datetime.utcnow()
-        db.session.commit()
-        return make_common_response({"ok": True})
-
-    # ── POST /api/portal/coach/session ──
-    @app.route(path_prefix + "/coach/session", methods=["POST"])
-    def create_coach_session():
-        """Record a coaching session."""
-        import uuid
-        data = request.get_json() or {}
-        session = CoachSession(
-            session_bid=uuid.uuid4().hex[:32],
-            learner_bid=data["learner_bid"],
-            coach_bid=request.user.user_id,
-            phase_bid=data.get("phase_bid", ""),
-            session_type=data.get("session_type", "regular"),
-            session_date=datetime.utcnow(),
-            duration_minutes=data.get("duration", 0),
-            topic=data.get("topic", ""),
-            coach_notes=data.get("coach_notes", ""),
-            learner_notes=data.get("learner_notes", ""),
-            action_items=data.get("action_items", ""),
-        )
-        db.session.add(session)
-        db.session.commit()
-        return make_common_response({"session_bid": session.session_bid})
-
-    # ── GET /api/portal/coach/sessions/<learner_bid> ──
-    @app.route(path_prefix + "/coach/sessions/<learner_bid>", methods=["GET"])
-    def get_coach_sessions(learner_bid):
-        """Get coaching session history."""
-        sessions = CoachSession.query.filter_by(learner_bid=learner_bid).order_by(CoachSession.session_date.desc()).limit(50).all()
-        return make_common_response([{
-            "session_bid": s.session_bid,
-            "session_type": s.session_type,
-            "session_date": str(s.session_date),
-            "duration": s.duration_minutes,
-            "topic": s.topic,
-            "coach_notes": s.coach_notes,
-            "action_items": s.action_items,
-            "status": s.status,
-        } for s in sessions])
-
-    # ── GET /api/portal/coach/report/<learner_bid> ──
-    @app.route(path_prefix + "/coach/report/<learner_bid>", methods=["GET"])
-    def coach_report(learner_bid):
-        """Generate coaching analysis report."""
-        profile = LearnerProfile.query.filter_by(user_bid=learner_bid).first()
-        records = LearnerCoaching.query.filter_by(learner_bid=learner_bid).order_by(LearnerCoaching.created_at).all()
-        sessions = CoachSession.query.filter_by(learner_bid=learner_bid).order_by(CoachSession.session_date).all()
-        items = LearnerChecklistItem.query.filter_by(learner_bid=learner_bid).all()
-        total_items = len(items)
-        scored_items = sum(1 for i in items if i.status == "scored")
-        passed_items = sum(1 for i in items if i.status == "scored" and (i.score or 0) >= 3)
-        phases = []
-        for rec in records:
-            phase = CoachingPhase.query.get(rec.phase_bid)
-            phases.append({
-                "name": phase.name if phase else "",
-                "status": rec.status,
-                "total_score": float(rec.total_score or 0),
-                "passing_score": float(phase.passing_score) if phase else 60,
-                "theory_score": float(rec.theory_score or 0),
-                "practice_score": float(rec.practice_score or 0),
-                "coach_score": float(rec.coach_score or 0),
-                "coach_summary": rec.coach_summary or "",
-                "started_at": str(rec.started_at or ""),
-                "completed_at": str(rec.completed_at or ""),
-            })
-        return make_common_response({
-            "learner_name": profile.name if profile else "",
-            "learner_bid": learner_bid,
-            "total_phases": len(records),
-            "completed_phases": sum(1 for r in records if r.status == "completed"),
-            "in_progress_phases": sum(1 for r in records if r.status == "in_progress"),
-            "checklist_total": total_items,
-            "checklist_scored": scored_items,
-            "checklist_passed": passed_items,
-            "checklist_pass_rate": round(passed_items / total_items * 100, 1) if total_items else 0,
-            "session_count": len(sessions),
-            "phases": phases,
-            "generated_at": str(datetime.utcnow()),
-        })
-
 
 def _recalc_phase_score(learner_bid: str) -> None:
-    """Recalculate total score for all in-progress phases of a learner."""
-    records = LearnerCoaching.query.filter_by(
-        learner_bid=learner_bid, status="in_progress"
-    ).all()
+    """Recalculate sub-scores + total score for every active phase.
+
+    P2-1: completes the previously half-finished implementation. For each
+    ``LearnerMentorship`` (learner_coaching) row in ``pending``/``in_progress``
+    (W3-3: also cover ``pending`` so scoring always refreshes an active
+    phase):
+
+    1. collect the learner's ``scored`` checklist items that map to this
+       phase's ``coach_checklist`` templates (join on ``item_bid``);
+    2. bucket item scores by ``coach_checklist.category``:
+         theory   <- category in (theory, exam)
+         practice <- category in (practice)
+         review   <- category in (review, peer_review, peer)
+         coach    <- category in (mentor, coach, mentor_review)
+       each bucket's mean becomes the matching sub-score; when a bucket has
+       no items, fall back to the value already stored on the coaching row
+       (an explicit sub-score written by another pipeline);
+    3. persist the four sub-scores back to ``learner_coaching``;
+    4. ``total_score = theory*w_theory + practice*w_practice
+                        + peer_review*w_review + coach*w_mentor``
+       (weights from ``coach_phases``); ``None`` when every sub-score is absent.
+    """
+    records = (
+        LearnerMentorship.query.filter(
+            LearnerMentorship.learner_bid == learner_bid,
+            LearnerMentorship.status.in_(("pending", "in_progress")),
+        ).all()
+    )
     for rec in records:
-        phase = CoachingPhase.query.get(rec.phase_bid)
+        phase = MentorshipPhase.query.get(rec.phase_bid)
         if not phase:
             continue
 
-        scored_items = LearnerChecklistItem.query.filter_by(
-            learner_bid=learner_bid, status="scored"
-        ).all()
+        # Scored items belonging to THIS phase's checklist templates.
+        rows = (
+            db.session.query(LearnerChecklistItem, MentorshipChecklist.category)
+            .join(
+                MentorshipChecklist,
+                LearnerChecklistItem.item_bid == MentorshipChecklist.item_bid,
+            )
+            .filter(
+                LearnerChecklistItem.learner_bid == learner_bid,
+                LearnerChecklistItem.status == "scored",
+                MentorshipChecklist.phase_bid == rec.phase_bid,
+            )
+            .all()
+        )
 
-        # Get category from checklist template
-        theory_scores = []
-        practice_scores = []
-        review_scores = []
-        coach_scores = []
+        theory_scores, practice_scores, review_scores, mentor_scores = [], [], [], []
+        for item, category in rows:
+            if item.score is None:
+                continue
+            cat = (category or "").strip().lower()
+            score = float(item.score)
+            if cat in ("theory", "exam"):
+                theory_scores.append(score)
+            elif cat == "practice":
+                practice_scores.append(score)
+            elif cat in ("review", "peer_review", "peer"):
+                review_scores.append(score)
+            elif cat in ("mentor", "coach", "mentor_review"):
+                mentor_scores.append(score)
+
+        def _mean(scores):
+            return round(sum(scores) / len(scores), 2) if scores else None
+
+        theory = _mean(theory_scores)
+        practice = _mean(practice_scores)
+        peer_review = _mean(review_scores)
+        coach = _mean(mentor_scores)
+
+        # Fall back to explicitly stored sub-scores when no items were scored.
+        if theory is None:
+            theory = float(rec.theory_score) if rec.theory_score is not None else None
+        if practice is None:
+            practice = (
+                float(rec.practice_score) if rec.practice_score is not None else None
+            )
+        if peer_review is None:
+            peer_review = (
+                float(rec.peer_review_score)
+                if rec.peer_review_score is not None
+                else None
+            )
+        if coach is None:
+            coach = float(rec.coach_score) if rec.coach_score is not None else None
+
+        rec.theory_score = theory
+        rec.practice_score = practice
+        rec.peer_review_score = peer_review
+        rec.coach_score = coach
+
+        def _w(v):
+            return float(v) if v is not None else 0.0
+
+        total = None
+        if any(s is not None for s in (theory, practice, peer_review, coach)):
+            total = round(
+                (theory or 0.0) * _w(phase.theory_weight)
+                + (practice or 0.0) * _w(phase.practice_weight)
+                + (peer_review or 0.0) * _w(phase.review_weight)
+                + (coach or 0.0) * _w(phase.mentor_weight),
+                2,
+            )
+        rec.total_score = total
+
+    db.session.commit()
 

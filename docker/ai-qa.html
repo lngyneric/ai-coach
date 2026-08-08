@@ -1,0 +1,109 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>AI 智能问答 · AI-Coach</title>
+<link rel="icon" type="image/svg+xml" href="/favicon.svg">
+<style>
+:root{--brand:#0f63ee;--bg:#f8f9fb;--card:#fff;--text:#0f172a;--muted:#64748b;--border:#e2e8f0;--green:#10b981}
+*{margin:0;padding:0;box-sizing:border-box}
+body{font-family:'DM Sans','Noto Sans SC',sans-serif;background:var(--bg);color:var(--text)}
+header{position:sticky;top:0;z-index:50;background:rgba(255,255,255,.9);backdrop-filter:blur(12px);border-bottom:1px solid var(--border);padding:0 20px;height:52px;display:flex;align-items:center;justify-content:space-between}
+header h2{font-size:1rem;font-weight:700}
+.container{max-width:750px;margin:0 auto;padding:20px}
+
+/* chat bubbles */
+.chat{display:flex;flex-direction:column;gap:12px;margin-bottom:80px}
+.bubble{max-width:85%;padding:12px 16px;border-radius:14px;font-size:.9rem;line-height:1.55;animation:fadeIn .3s ease}
+.bubble.ai{background:var(--card);border:1px solid var(--border);align-self:flex-start;border-bottom-left-radius:4px}
+.bubble.user{background:var(--brand);color:#fff;align-self:flex-end;border-bottom-right-radius:4px}
+.bubble.ai .label{font-size:.7rem;color:var(--muted);margin-bottom:4px;display:flex;align-items:center;gap:4px}
+.bubble.ai a{color:var(--brand)}
+@keyframes fadeIn{from{opacity:0;transform:translateY(6px)}to{opacity:1;transform:translateY(0)}}
+
+/* quick buttons */
+.quick-btns{display:flex;flex-wrap:wrap;gap:6px;margin-bottom:12px}
+.quick-btns button{font-size:.75rem;padding:6px 14px;border:1px solid var(--border);border-radius:99px;background:var(--card);cursor:pointer;transition:all .15s;white-space:nowrap}
+.quick-btns button:hover{border-color:var(--brand);color:var(--brand);background:#eff6ff}
+
+/* input */
+.input-bar{position:fixed;bottom:0;left:0;right:0;background:var(--card);border-top:1px solid var(--border);padding:12px 20px;display:flex;gap:8px;max-width:750px;margin:0 auto}
+.input-bar input{flex:1;padding:10px 16px;border:1px solid var(--border);border-radius:99px;font-size:.88rem;outline:none;transition:border-color .15s}
+.input-bar input:focus{border-color:var(--brand)}
+.input-bar button{padding:10px 20px;border:none;border-radius:99px;background:var(--brand);color:#fff;font-weight:600;cursor:pointer;font-size:.88rem}
+.input-bar button:hover{opacity:.9}
+</style>
+</head>
+<body>
+
+<header>
+  <a href="/portal.html" style="text-decoration:none;color:var(--text);font-weight:700;font-size:.85rem">← 门户</a>
+  <h2>🤖 AI 智能问答</h2>
+  <span style="font-size:.7rem;color:var(--muted)">培训政策 · 产品知识</span>
+</header>
+
+<div class="container">
+  <div class="quick-btns" id="quickBtns"></div>
+  <div class="chat" id="chat"></div>
+</div>
+
+<div class="input-bar">
+  <input id="qInput" placeholder="输入问题，如：入职培训需要几天？" onkeydown="if(event.key==='Enter')ask()">
+  <button onclick="ask()">发送</button>
+</div>
+
+<script>
+// ── Knowledge Base ──
+const KB = {
+  '入职培训': '入职培训带教为期 **3 天**，分三条主线：HR 讲解 7 项（合同/手册/组织架构/MBO/参观/总监/SharePoint）、上司 Brief 8 项、助理团队 4 项，共 19 项确认清单。全部确认后进入下一阶段。',
+  '试用期': '试用期通常为 **6 个月**（与劳动合同一致）。试用期内完成四阶段闭环（入职培训→三个明白带教→评估→转正），总分达标且导师签字后可申请转正。',
+  '转正': '转正条件：四阶段全部完成（ph-000~ph-003），总评分 ≥ 60 分，导师填写转正建议（pass/extend/reject），HR 安排评估会议。转正后进入独立上岗阶段。',
+  '阶段': '带教分为 4 个阶段：ph-000 入职交付确认（3天/19项确认）、ph-001 血球/尿液/凝血（60天/12项验收）、ph-002 免疫/生化/糖化/Alifax（60天/17项验收）、ph-003 生命科学/招标/压货（60天/9项验收）。每阶段总分 ≥ 60 分通过。',
+  '评分': '验收项按 0-5 分评分，≥3 分为通过。四维权重：理论 40% + 实操 30% + 互评 20% + 导师评价 10%。导师在评分面板内可见学员提交内容后打分。',
+  '面谈': '1v1 面谈采用三环闭环：课前准备（目标+推荐课件）→ 面谈交互（笔记+行动项）→ 课后总结（AI 汇总+评分+下一步）。面谈类型：kickoff（启动）、regular（常规）、review（复盘）。',
+  '催办': '验收项提交后超过 **48 小时** 未评分，系统自动标记 🔴 并在工作台显示催办横幅。阶段截止前 7/3/1 天分别发送提醒。',
+  '企业微信': '培训进度通过 SmartSheet 实时同步到企业微信。导师可在企业微信中查看看板。AI 定时报告通过 SmartPage 自动推送到企业微信。',
+  '合规': '培训合规三项控制点：① 导师签字确认（coachSummary 填写即达成）② 学习记录同步培训档案（有 scored 验收项即达成）③ 验收未通过（总分 < 60）需制定改进计划。',
+  '血球': '血球产品属于 ph-001 第一阶段，涵盖血球三个明白考试、血球产品政策学习、血球任务数字确认。属于必考项，满分 5 分。',
+  '凝血': '凝血产品属于 ph-001 第一阶段，涵盖凝血三个明白考试、凝血产品政策学习、凝血任务数字确认。共 3 项验收，均为必考。',
+  '免疫': '免疫产品属于 ph-002 第二阶段，涵盖免疫培训考试、免疫产品政策学习、免疫任务数字确认。满分 5 分。',
+  'default': '我目前可以回答关于培训政策（入职/试用期/转正/阶段/评分/面谈/催办/合规）和产品知识（血球/尿液/凝血/免疫/生化/糖化/Alifax/生科）的问题。请尝试更具体地提问，例如"入职培训需要几天？"或"评分标准是什么？"。'
+};
+
+const GREETING = '你好！我是 AI-Coach 智能问答助手 🤖。我可以回答关于**培训政策**（入职、试用期、转正、评分、面谈、催办）和**产品知识**（血球、尿液、凝血、免疫、生化、糖化、Alifax、生科）的问题。请直接提问，或点击下方快捷问题。';
+
+const QUICK = ['入职培训需要几天？','试用期多久？','怎么转正？','评分标准是什么？','面谈怎么进行？','什么是合规控制点？'];
+
+function addBubble(text, role) {
+  const d = document.getElementById('chat');
+  const cls = role === 'ai' ? 'ai' : 'user';
+  const label = role === 'ai' ? '<div class="label">🤖 AI-Coach 助手</div>' : '';
+  d.innerHTML += `<div class="bubble ${cls}">${label}${text.replace(/\n/g,'<br>').replace(/\*\*(.*?)\*\*/g,'<b>$1</b>')}</div>`;
+  d.scrollTop = d.scrollHeight;
+}
+
+function answer(q) {
+  const lower = q.toLowerCase();
+  for (const [key, val] of Object.entries(KB)) {
+    if (lower.includes(key)) return val;
+  }
+  return KB['default'];
+}
+
+function ask(q) {
+  const input = document.getElementById('qInput');
+  const text = q || input.value.trim();
+  if (!text) return;
+  addBubble(text, 'user');
+  input.value = '';
+  setTimeout(() => addBubble(answer(text), 'ai'), 400);
+}
+
+// Init
+addBubble(GREETING, 'ai');
+const btns = document.getElementById('quickBtns');
+QUICK.forEach(q => { const b = document.createElement('button'); b.textContent = q; b.onclick = () => ask(q); btns.appendChild(b); });
+</script>
+</body>
+</html>

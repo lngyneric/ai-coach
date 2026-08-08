@@ -13,6 +13,7 @@ import {
 } from '@/components/ui/Card';
 import { PhoneLogin } from '@/components/auth/PhoneLogin';
 import { EmailLogin } from '@/components/auth/EmailLogin';
+import { EmployeeLogin } from '@/components/auth/EmployeeLogin';
 import { FeedbackForm } from '@/components/auth/FeedbackForm';
 import Image, { type StaticImageData } from 'next/image';
 import LanguageSelect from '@/components/language-select';
@@ -32,7 +33,7 @@ const brandName = typeof process !== 'undefined' && process.env?.NEXT_PUBLIC_BRA
   ? process.env.NEXT_PUBLIC_BRAND_NAME
   : 'sysmex';
 
-type LoginMethod = 'phone' | 'email' | 'google' | 'password';
+type LoginMethod = 'phone' | 'email' | 'google' | 'password' | 'employee';
 
 export default function AuthPage() {
   const router = useRouter();
@@ -83,6 +84,7 @@ export default function AuthPage() {
   const isPhoneEnabled = normalizedMethods.includes('phone');
   const isEmailEnabled = normalizedMethods.includes('email');
   const isGoogleEnabled = normalizedMethods.includes('google');
+  const isEmployeeEnabled = normalizedMethods.includes('employee');
   const isPasswordEnabled = normalizedMethods.includes('password');
 
   const availableMethods = useMemo<LoginMethod[]>(() => {
@@ -91,8 +93,15 @@ export default function AuthPage() {
     if (isEmailEnabled) methods.push('email');
     if (isGoogleEnabled) methods.push('google');
     if (isPasswordEnabled) methods.push('password');
+    if (isEmployeeEnabled) methods.push('employee');
     return methods;
-  }, [isEmailEnabled, isGoogleEnabled, isPhoneEnabled, isPasswordEnabled]);
+  }, [
+    isEmailEnabled,
+    isEmployeeEnabled,
+    isGoogleEnabled,
+    isPhoneEnabled,
+    isPasswordEnabled,
+  ]);
 
   const initialLoginMethod = useMemo<LoginMethod>(() => {
     const normalizedDefault = defaultMethod as LoginMethod;
@@ -353,6 +362,13 @@ export default function AuthPage() {
               supportEmailIdentifier={isEmailEnabled}
             />
           );
+        case 'employee':
+          return (
+            <EmployeeLogin
+              onLoginSuccess={handleAuthSuccess}
+              loginContext={loginContext}
+            />
+          );
         default:
           return null;
       }
@@ -483,7 +499,9 @@ export default function AuthPage() {
                                   ? t('module.auth.email')
                                   : method === 'password'
                                     ? t('module.auth.passwordTab')
-                                    : t('module.auth.googleTab')}
+                                    : method === 'employee'
+                                      ? t('module.auth.employeeTab')
+                                      : t('module.auth.googleTab')}
                             </TabsTrigger>
                           ))}
                         </TabsList>
