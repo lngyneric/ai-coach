@@ -29,6 +29,19 @@ const COURSE_CATEGORIES = [
 // ── Course Card ──────────────────────────────────────────────────
 type CourseBadge = 'required' | 'recommended';
 
+// portal/courses 返回字段兜底：该接口历史字段集为 bid/name/description/tts_enabled，
+// keywords/avatar 补齐后仍可能缺值，统一给默认值，保证三态分组/分类匹配/卡片渲染不崩。
+function normalizePortalCourse(c: any): Shifu {
+  return {
+    bid: c?.bid || '',
+    name: c?.name || '未命名课程',
+    description: c?.description || '',
+    keywords: Array.isArray(c?.keywords) ? c.keywords : [],
+    avatar: c?.avatar || '',
+    tts_enabled: Boolean(c?.tts_enabled),
+  };
+}
+
 function CourseCard({ shifu, badge }: { shifu: Shifu; badge?: CourseBadge }) {
   const isVideo = (shifu.keywords || []).some((k: string) => /视频|video/i.test(k));
   const courseUrl = isVideo ? `/video-player.html?bid=${shifu.bid}` : `/c/${shifu.bid}`;
@@ -175,8 +188,11 @@ export default function CoursesPage() {
   const fetchCourses = useCallback(async () => {
     setLoading(true);
     try {
-      const { items } = await api.getShifuList({ page_index: 1, page_size: 50, archived: false });
-      setShifus(items || []);
+      // 数据源切换（学员课程 401 修复）：/api/shifu/shifus 带 is_creator 守卫，
+      // 普通学员业务码 401 → 课程列表为空；/api/portal/courses 对学员开放。
+      const data = await request.get('/api/portal/courses');
+      const items = Array.isArray(data) ? data : [];
+      setShifus(items.map(normalizePortalCourse));
     } catch (err) { console.error('Failed to fetch courses:', err); }
     finally { setLoading(false); }
   }, []);
