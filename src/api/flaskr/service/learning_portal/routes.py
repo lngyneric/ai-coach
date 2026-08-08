@@ -325,10 +325,19 @@ def register_learning_portal_routes(
         """List shifus, optionally filtered by category slug."""
         category_slug = (request.args.get("category") or "").strip().lower()
         from flaskr.service.shifu.models import DraftShifu
+        from flaskr.service.shifu.utils import get_shifu_res_url_dict
+
+        # 每个 shifu_bid 取最新 draft revision（draft_shifus 保存历史修订，
+        # 直接全查会重复返回同一课程的旧版本，与 get_shifu_draft_list 一致去重）
+        latest_subquery = (
+            db.session.query(db.func.max(DraftShifu.id))
+            .filter(DraftShifu.deleted == 0)
+            .group_by(DraftShifu.shifu_bid)
+        ).subquery()
 
         if not category_slug:
             items = (
-                DraftShifu.query.filter(DraftShifu.deleted == 0)
+                DraftShifu.query.filter(DraftShifu.id.in_(latest_subquery))
                 .order_by(DraftShifu.id.desc())
                 .all()
             )
@@ -347,11 +356,16 @@ def register_learning_portal_routes(
             items = (
                 DraftShifu.query.filter(
                     DraftShifu.shifu_bid.in_(bids),
-                    DraftShifu.deleted == 0,
+                    DraftShifu.id.in_(latest_subquery),
                 )
                 .order_by(DraftShifu.id.desc())
                 .all()
             ) if bids else []
+
+        # avatar_res_bid → 资源 URL（与 get_shifu_draft_list 返回一致）
+        res_url_map = get_shifu_res_url_dict(
+            [s.avatar_res_bid for s in items if s.avatar_res_bid]
+        )
 
         return make_common_response([
             {
@@ -359,6 +373,12 @@ def register_learning_portal_routes(
                 "name": s.title,
                 "description": getattr(s, "description", ""),
                 "tts_enabled": bool(s.tts_enabled) if hasattr(s, 'tts_enabled') else False,
+                "keywords": [
+                    kw.strip()
+                    for kw in (s.keywords or "").split(",")
+                    if kw.strip()
+                ],
+                "avatar": res_url_map.get(s.avatar_res_bid, ""),
             }
             for s in items
         ])
