@@ -198,3 +198,5 @@ docker/redis_data_dev/
 .next
 docker/.env.prod.bak-*
 docker/nginx.dev.conf.bak-*
+docker/*.bak_vod
+docker/nginx.conf.bak*
