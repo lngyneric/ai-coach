@@ -7,7 +7,7 @@ import uuid
 from datetime import datetime, date
 
 from flask import Flask, request
-from sqlalchemy import text
+from sqlalchemy import or_, text
 from flaskr.dao import db
 from flaskr.framework.plugin.inject import inject
 from flaskr.route.common import make_common_response
@@ -33,6 +33,21 @@ from flaskr.util.uuid import generate_id
 
 # Permission denied business code (HTTP-agnostic, matches frontend `code !== 0`).
 PERMISSION_DENIED_CODE = 403
+
+# role tag → fuzzy keywords used to match learner_profiles.department /
+# position_name (closed-loop-2 batch assignment). Codes align with P1P2 Q2;
+# keywords mirror recommend.py's position fuzzy map. Unknown tags degrade to
+# a literal substring match of the tag itself.
+_ROLE_MATCH_KEYWORDS: dict[str, tuple[str, ...]] = {
+    "sales": ("销售", "sales", "客服", "客户"),
+    "production": ("生产", "production", "产线", "制造", "车间"),
+    "hr": ("人事", "hr", "人资", "招聘"),
+    "qc": ("质检", "qc", "质量"),
+    "management": ("管理", "management", "经理", "领导", "主管"),
+    "medical": ("检验", "medical", "实验室", "流式"),
+    "digital": ("数字化", "digital", "智能体"),
+    "general": ("通用", "general", "入职", "新员工"),
+}
 
 
 def _require_permission(app, user, permission: str) -> None:
@@ -84,6 +99,81 @@ def _require_mentored_learner(app, user, learner_bid: str) -> None:
     profile = LearnerProfile.query.filter_by(learner_bid=learner_bid).first()
     if profile is None or profile.coach_bid != user.user_id:
         raise AppException("没有权限操作非带教学员的数据", PERMISSION_DENIED_CODE)
+
+
+def _match_learners_by_role(role_tag: str) -> set[str]:
+    """Return the ``user_bid`` set of learners matching a role tag.
+
+    Matching is a case-insensitive substring test against
+    ``learner_profiles.department`` and ``learner_profiles.position_name``
+    (closed-loop 2, PORTAL-COURSE-ALIGNMENT). Unknown / empty tags degrade to
+    an empty set (never an error).
+    """
+    tag = str(role_tag or "").strip().lower()
+    if not tag:
+        return set()
+    keywords = _ROLE_MATCH_KEYWORDS.get(tag, (tag,))
+    conditions = []
+    for kw in keywords:
+        pattern = f"%{kw}%"
+        conditions.append(LearnerProfile.department.like(pattern))
+        conditions.append(LearnerProfile.position_name.like(pattern))
+    rows = (
+        LearnerProfile.query.with_entities(LearnerProfile.user_bid)
+        .filter(or_(*conditions))
+        .all()
+    )
+    return {row[0] for row in rows if row[0]}
+
+
+def _batch_enroll_by_role(
+    app, trainer_bid: str, shifu_bid: str, module: str, role_tags: list[str]
+) -> dict:
+    """Batch-assign a course to every learner matching any role tag.
+
+    Already-enrolled users (unique ``(user_bid, shifu_bid)``) are skipped.
+    Returns ``{"enrolled": N, "skipped": M, "errors": [...]}``; a DB failure
+    rolls back the whole batch and surfaces the message in ``errors`` (the
+    endpoint still returns a 0 business code, consistent with single-enroll).
+    """
+    matched: set[str] = set()
+    for role_tag in role_tags:
+        matched |= _match_learners_by_role(role_tag)
+
+    enrolled = 0
+    skipped = 0
+    now = datetime.utcnow()
+    for user_bid in sorted(matched):
+        exists = CourseEnrollment.query.filter_by(
+            user_bid=user_bid, shifu_bid=shifu_bid
+        ).first()
+        if exists is not None:
+            skipped += 1
+            continue
+        db.session.add(
+            CourseEnrollment(
+                user_bid=user_bid,
+                shifu_bid=shifu_bid,
+                trainer_bid=trainer_bid,
+                module=module,
+                status="active",
+                created_at=now,
+                updated_at=now,
+            )
+        )
+        enrolled += 1
+    try:
+        db.session.commit()
+    except Exception as exc:  # noqa: BLE001
+        db.session.rollback()
+        app.logger.error(
+            "[portal] batch enroll failed for course %s role_tags=%s: %s",
+            shifu_bid,
+            role_tags,
+            exc,
+        )
+        return {"enrolled": 0, "skipped": 0, "errors": [str(exc)]}
+    return {"enrolled": enrolled, "skipped": skipped, "errors": []}
 
 
 @inject
@@ -876,16 +966,38 @@ def register_learning_portal_routes(
 
     @app.route(path_prefix + "/admin/enroll", methods=["POST"])
     def admin_enroll():
-        """Assign a course to a user for a training module."""
+        """Assign a course to a user for a training module.
+
+        Two modes (closed-loop 2, PORTAL-COURSE-ALIGNMENT):
+        - single: ``{"user_bid", "shifu_bid", "module"}`` (unchanged behavior);
+        - batch:  ``{"role_tags": [...], "shifu_bid", "module"}`` — assign the
+          course to every learner whose department / position_name matches any
+          role tag; returns ``{"enrolled", "skipped", "errors"}``.
+        """
         # W3-4 guard: course assignment is a manage_users operation (admin/hr).
         _require_permission(app, request.user, "manage_users")
-        user_bid = request.get_json().get("user_bid")
-        shifu_bid = request.get_json().get("shifu_bid")
-        module = request.get_json().get("module")
-        if not all([user_bid, shifu_bid, module]):
-            raise_param_error("user_bid, shifu_bid, module are required")
+        data = request.get_json(force=True) or {}
+        shifu_bid = data.get("shifu_bid")
+        module = data.get("module")
         if module not in ("onboarding", "mentorship", "intensive", "leadership"):
             raise_param_error("invalid module")
+
+        # Batch mode: role_tags present → ignore user_bid, assign by position.
+        role_tags = data.get("role_tags")
+        if role_tags is not None:
+            if not isinstance(role_tags, list) or not role_tags:
+                raise_param_error("role_tags must be a non-empty array")
+            if not shifu_bid:
+                raise_param_error("shifu_bid is required")
+            result = _batch_enroll_by_role(
+                app, request.user.user_id, shifu_bid, module, role_tags
+            )
+            return make_common_response(result)
+
+        # Single mode (legacy, unchanged).
+        user_bid = data.get("user_bid")
+        if not all([user_bid, shifu_bid, module]):
+            raise_param_error("user_bid, shifu_bid, module are required")
 
         enrollment = CourseEnrollment(
             user_bid=user_bid,
