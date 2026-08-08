@@ -215,8 +215,14 @@ export default function CoursesPage() {
       : recommendedBids.has(bid) ? 'recommended'
       : undefined;
 
+  // 三态分组（闭环 3）：仅在渲染层重排，复用 fetchCourses / fetchStateBadges 数据，不重复抓取。
+  // 必修 = admin 分配；推荐 = 岗位匹配且非必修；其余 = 全部课程（走原分类逻辑）。
+  const requiredCourses = shifus.filter(s => requiredBids.has(s.bid));
+  const recommendedCourses = shifus.filter(s => recommendedBids.has(s.bid) && !requiredBids.has(s.bid));
+  const restCourses = shifus.filter(s => !requiredBids.has(s.bid) && !recommendedBids.has(s.bid));
+
   const getCoursesByCategory = (categoryId: string) => {
-    return shifus.filter(s => {
+    return restCourses.filter(s => {
       const name = (s.name || '').toLowerCase();
       const desc = (s.description || '').toLowerCase();
       const kw = (s.keywords || []).join(' ').toLowerCase();
@@ -231,7 +237,7 @@ export default function CoursesPage() {
     }).slice(0, 6);
   };
 
-  const otherCourses = shifus.filter(s => {
+  const otherCourses = restCourses.filter(s => {
     const name = (s.name || '').toLowerCase();
     const desc = (s.description || '').toLowerCase();
     const kw = (s.keywords || []).join(' ').toLowerCase();
@@ -317,6 +323,39 @@ export default function CoursesPage() {
           </div>
         ) : (
           <div className="space-y-10">
+            {/* 三态分组 · 必修（置顶展示，空组隐藏） */}
+            {requiredCourses.length > 0 && (
+              <section>
+                <div className="flex items-center justify-between mb-4">
+                  <div>
+                    <h3 className="text-base font-semibold text-slate-900 flex items-center gap-2"><span>📌</span> 必修课程</h3>
+                    <p className="text-xs text-slate-500 mt-0.5">企业为你分配的必修课程，请按计划完成学习</p>
+                  </div>
+                </div>
+                <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4 gap-4">
+                  {requiredCourses.map(s => <CourseCard key={s.bid} shifu={s} badge="required" />)}
+                </div>
+              </section>
+            )}
+
+            {/* 三态分组 · 为你推荐（第二组，空组隐藏） */}
+            {recommendedCourses.length > 0 && (
+              <section>
+                <div className="flex items-center justify-between mb-4">
+                  <div>
+                    <h3 className="text-base font-semibold text-slate-900 flex items-center gap-2"><span>✨</span> 为你推荐</h3>
+                    <p className="text-xs text-slate-500 mt-0.5">根据你的岗位为你匹配的课程</p>
+                  </div>
+                </div>
+                <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4 gap-4">
+                  {recommendedCourses.map(s => <CourseCard key={s.bid} shifu={s} badge="recommended" />)}
+                </div>
+              </section>
+            )}
+
+            {/* 三态分组 · 全部课程（其余课程走原分类逻辑；无其余课程时整组隐藏） */}
+            {restCourses.length > 0 && (
+            <>
             {(activeCategory ? COURSE_CATEGORIES.filter(c => c.id === activeCategory) : COURSE_CATEGORIES).map(cat => {
               const catCourses = getCoursesByCategory(cat.id);
               if (catCourses.length === 0 && activeCategory !== cat.id) return null;
@@ -346,6 +385,8 @@ export default function CoursesPage() {
                 <div className="flex items-center justify-between mb-4"><div><h3 className="text-base font-semibold text-slate-900 flex items-center gap-2"><span>📂</span> 其他课程</h3></div></div>
                 <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4 gap-4">{otherCourses.map(s => <CourseCard key={s.bid} shifu={s} badge={badgeFor(s.bid)} />)}</div>
               </section>
+            )}
+            </>
             )}
             {shifus.length === 0 && (
               <Card className="border-slate-200 border-dashed"><CardContent className="p-12 flex flex-col items-center justify-center text-center">
