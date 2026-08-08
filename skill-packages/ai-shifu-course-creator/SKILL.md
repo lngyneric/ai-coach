@@ -85,6 +85,8 @@ Some concepts span multiple references files. Use this table to locate the autho
 | Output language | — | — | `references/data-contracts.md#language-resolution` |
 | IVD knowledge (medical vertical) | — | `references/pedagogy.md#medical-vertical-segmentation-rules` | `references/ivd-knowledge.md` + `scripts/ivd-lookup.py` |
 | Segmentation feedback loop (L3) | — | `references/segmentation-eval.md#quality-score` | `references/segmentation-eval.md` + `scripts/segmentation-eval.py` |
+| Business task breakdown (P1) | — | `references/task-driven-design.md` (五步拆解 + 场景示例) | `references/task-driven-design.md#课程路径` + `course-designer` Bloom 目标 |
+| Lesson-type templates (P2) | `references/lesson-type-templates.md` (per-type MDF skeleton) | `references/pedagogy.md` (ABT / scaffolding / diagnostic feedback) | `references/lesson-type-templates.md#通用约束` |
 
 ## Authoring Control Inputs
 
@@ -118,11 +120,55 @@ These are the five red-line rules every Teaching Prompt and Course Prompt must s
 
 5. **Output language must be resolved before any prompt content.** Run Language Resolution per `references/data-contracts.md#language-resolution` before producing Teaching Prompt or Course Prompt content. The user's invocation language counts as `prompt_language_detection` (priority 4) and must be used when no higher-priority directive exists. Examples in this skill and in `references/` are written in English for canonical illustration only — do NOT let example language override the resolved output language. If the user invokes in Chinese, all interactions, option labels, downstream text, and the Course Prompt itself must be in Chinese.
 
+## Entry Q&A 引导（创建课程入口）
+
+Before any Segmentation / Orchestration work, when the user is **creating a new course** (or restructuring an existing one), run the four-question selection flow below to determine the business task, lesson type, and course scale. Output the structured `entry_summary` (attached to `course_profile`) — it feeds P1 task breakdown and P2 lesson-type templates. Full decision table and rules in `docs/P1P2-DESIGN.md#一、入口` and `references/task-driven-design.md` / `references/lesson-type-templates.md`.
+
+**Q1 课程要解决的业务任务？**（单选）
+- `A 新员工上岗` → onboarding
+- `B 销售能力提升` → practice / product
+- `C 合规要求` → compliance
+- `D 操作技能` → practice
+- `E 知识更新` → product / case
+- `F 管理能力` → case
+
+**Q2 目标学员角色？**（单选，决定 role tag）
+`sales` / `production` / `hr` / `qc` / `management` / `medical` / `general`
+
+**Q3 期望产出？**（单选）
+- `A 能独立完成某操作` → 强化 practice 演练段
+- `B 通过考核` → 补 compliance 考核段
+- `C 改变某行为` → 强化 case 案例段
+- `D 掌握某知识体系` → 强化 product 认知段
+
+**Q4 课程规模？**（单选）
+- `single 单课`（≤3 课）→ 主课型 MDF 骨架
+- `series 系列`（3-8 课）→ 主课型 + 强化课型分段组合
+- `system 体系`（多系列）→ 每个系列各走一遍 P1，合并岗位胜任路径
+
+**决策规则表（Q1 × Q3 → 课型）**：完整 13 组合见 `references/lesson-type-templates.md` 与 `docs/P1P2-DESIGN.md#决策规则表`；此处给速查——新员工上岗→onboarding；销售→practice(+product)；合规→compliance；操作→practice；知识更新→product(+case)；管理→case。产出含「能独立操作」追加 practice，含「通过考核」补 compliance，含「改变行为」追加 case，含「掌握知识体系」补 product。
+
+```json
+// entry_summary → 追加到 course_profile（示例）
+{
+  "business_task": "new-sales",
+  "audience_role": "sales",
+  "expected_output": "independent-operation",
+  "course_scale": "series",
+  "primary_lesson_type": "practice",
+  "reinforce_lesson_type": "product",
+  "task_breakdown_template": "销售首单成交"
+}
+```
+
 ## Pipeline Overview
 
-The stages are **not** a flat linear pipeline. **Orchestration is an end-to-end driver** that internally calls Segmentation and Generation. Only Optimization and Deployment actually run in linear sequence after Orchestration completes.
+The stages are **not** a flat linear pipeline. **Orchestration is an end-to-end driver** that internally calls Segmentation and Generation. Only Optimization and Deployment actually run in linear sequence after Orchestration completes. Entry Q&A precedes the pipeline; Exit tagging follows Deployment.
 
 ```
+Entry Q&A (business task → lesson type → task template)
+   │  entry_summary → course_profile
+   ▼
 Raw material
    │
    ▼
@@ -138,10 +184,38 @@ Optimization                              (audit + optimize)
         ▼
 Deployment                                (build + import + publish to platform)
         │
+        ├── Exit tagging                  (lesson_type / task / role → course_position_tags)
+        │
         ╰─ optional ─▶ Analytics          (post-deployment data queries on live courses)
 ```
 
 Segmentation, Generation, and Optimization can each be invoked standalone — see [Usage Paths](#usage-paths) Path B for the sub-paths (Segment only / Generate only / Optimize only). Analytics is a separate post-deployment path — see Path E.
+
+## 课程 Tag 出口（Exit Tagging）
+
+After the course is generated / updated (Optimization output) and deployed, generate the three tag classes below and write them to `course_position_tags` so learners get role/task matched recommendations on login (see `references/task-driven-design.md#四、出口` and `docs/P1P2-DESIGN.md#四、出口`). Tag values derive from `entry_summary` (Q1/Q2/Q3 answers), not from guessing.
+
+| Tag 类型 | 格式 | 来源 | 示例 |
+|---|---|---|---|
+| 课型 tag | `lesson_type:<课型>` | 主课型（Q1×Q3） | `lesson_type:practice` |
+| 任务 tag | `task:<业务任务>` | Q1 业务任务 code | `task:new-sales` |
+| 岗位 tag | `role:<岗位>` | Q2 学员角色码 | `role:sales` |
+
+**写表方案（零代码改动，对接现有 `/api/portal/recommend`）**
+
+```
+course_position_tags 行：
+  shifu_bid     = <课程 BID>
+  position      = role tag（sales/production/hr/qc/management/medical/general）
+  position_name = role 中文名
+  tag           = "lesson_type:<type>|task:<task>"   ← 组合串（竖线分隔）
+  weight        = 10 基础；task 契合 +5；lesson_type 契合 +3
+  is_active     = 1
+```
+
+- 推荐引擎现有 `position` 精确匹配 → `weight` DESC 排序，**无需修改代码**。
+- 同一课程适用多岗位时写多行（position 不同）；同一 `(shifu_bid, position)` 更新时 upsert。
+- 推荐权重规则表（L1 岗位精确 10 / L2 课型契合 13 / L3 任务契合 15 / general 兜底）见 `references/task-driven-design.md#推荐权重规则表`。
 
 ## Usage Paths
 
