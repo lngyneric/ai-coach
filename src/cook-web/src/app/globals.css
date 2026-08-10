@@ -1,0 +1,215 @@
+@import '@fontsource/inter/index.css';
+@import 'tailwindcss';
+@config "../../tailwind.config.ts";
+
+body,
+html {
+  font-family: var(--font-geist-sans);
+  font-size: 16px;
+  -webkit-font-smoothing: subpixel-antialiased;
+  -moz-osx-font-smoothing: auto;
+}
+
+:root {
+  --app-viewport-block-unit: 1dvh;
+}
+
+/* Listen mode layout bounds live in global CSS to avoid CSS Modules purity errors */
+html.listen-mode,
+body.listen-mode {
+  height: 100%;
+  min-height: auto;
+}
+
+body.listen-mode #root {
+  height: calc(var(--app-viewport-block-unit, 1dvh) * 100);
+  min-height: auto;
+}
+
+html.listen-mode-vh-fallback,
+body.listen-mode-vh-fallback,
+body.listen-mode-vh-fallback #root {
+  --app-viewport-block-unit: 1vh;
+}
+
+@layer base {
+  :root {
+    --font-geist-sans:
+      ui-sans-serif, system-ui, -apple-system, BlinkMacSystemFont, 'Segoe UI',
+      'Roboto', 'Helvetica Neue', Arial, 'Noto Sans', 'Liberation Sans',
+      sans-serif, 'Apple Color Emoji', 'Segoe UI Emoji', 'Segoe UI Symbol',
+      'Noto Color Emoji';
+    --font-geist-mono:
+      ui-monospace, SFMono-Regular, Menlo, Monaco, Consolas, 'Liberation Mono',
+      'Courier New', monospace;
+    --background: #fefefe;
+    --foreground: #030712;
+    --card: #ffffff;
+    --card-foreground: #030712;
+    --popover: #ffffff;
+    --popover-foreground: #030712;
+    --primary: #0f63ee;
+    --primary-lighter: #3e84f4;
+    --primary-foreground: #f9fafb;
+    --secondary: #f3f4f6;
+    --secondary-foreground: #111827;
+    --muted: #f3f4f6;
+    --muted-foreground: #6b7280;
+    --accent: #f3f4f6;
+    --accent-foreground: #111827;
+    --destructive: #ef4444;
+    --destructive-foreground: #f9fafb;
+    --border: #e5e7eb;
+    --input: #e5e7eb;
+    --ring: var(--primary);
+    --radius: 0.5rem;
+    --chart-1: #e76e50;
+    --chart-2: #2a9d90;
+    --chart-3: #274754;
+    --chart-4: #e8c468;
+    --chart-5: #f4a462;
+  }
+
+  .dark {
+    --background: #030712;
+    --foreground: #f9fafb;
+    --card: #030712;
+    --card-foreground: #f9fafb;
+    --popover: #030712;
+    --popover-foreground: #f9fafb;
+    --primary: #0f63ee;
+    --primary-lighter: #3e84f4;
+    --primary-foreground: #f9fafb;
+    --primary-color: var(--primary);
+    --secondary: #1f2937;
+    --secondary-foreground: #f9fafb;
+    --muted: #1f2937;
+    --muted-foreground: #9ca3af;
+    --accent: #1f2937;
+    --accent-foreground: #f9fafb;
+    --destructive: #7f1d1d;
+    --destructive-foreground: #f9fafb;
+    --border: #1f2937;
+    --input: #1f2937;
+    --ring: var(--primary);
+    --chart-1: #2662d9;
+    --chart-2: #2eb88a;
+    --chart-3: #e88c30;
+    --chart-4: #af57db;
+    --chart-5: #e23670;
+  }
+}
+
+@layer base {
+  * {
+    @apply border-border;
+  }
+  body {
+    @apply bg-background text-foreground;
+  }
+}
+
+@layer base {
+  * {
+    @apply border-border;
+  }
+  body {
+    @apply bg-background text-foreground;
+  }
+  button {
+    outline: none;
+  }
+  button:focus {
+    outline: none;
+  }
+}
+
+/* Keep MarkdownFlow editor text crisp without grayscale smoothing */
+.markdown-flow-editor,
+.markdown-flow-editor .cm-line {
+  -webkit-font-smoothing: subpixel-antialiased;
+  -moz-osx-font-smoothing: auto;
+}
+
+/* HACK: markdown-flow-ui relies on CSS variables, so keep dedicated aliases for primary colors */
+.content-render-theme {
+  strong {
+    color: var(--primary);
+  }
+  custom-button-after-content,
+  .content-render-custom-button-after-content {
+    width: 58px;
+    height: 20px;
+    gap: 4px;
+    font-size: 12px;
+    line-height: 1;
+    border-radius: 24px;
+    font-weight: 500;
+    display: inline-flex;
+    align-items: center;
+    justify-content: center;
+    box-shadow: 0 1px 2px 0 rgba(0, 0, 0, 0.05);
+    background-color: rgba(26, 104, 235, var(--tw-bg-opacity, 1));
+    color: rgba(255, 255, 255, var(--tw-text-opacity, 1));
+  }
+  custom-button-after-content img,
+  .content-render-custom-button-after-content img {
+    flex-shrink: 0;
+  }
+  custom-button-after-content span,
+  .content-render-custom-button-after-content span {
+    color: inherit;
+    white-space: nowrap;
+  }
+}
+
+.content-render-theme.pay-system-interaction {
+  .content-render .single-select-container button,
+  .content-render .single-select-container .select,
+  .content-render .single-select-container button:disabled,
+  .content-render .single-select-container button:hover,
+  .content-render .single-select-container button:active,
+  .content-render .single-select-container button:focus-visible {
+    border-color: var(--base-border, #e5e5e5);
+    background: var(--base-background, #fff);
+    color: var(--base-foreground, #0a0a0a);
+    opacity: 1;
+    cursor: pointer;
+    box-shadow: var(--shadow-xs-offset-x, 0) var(--shadow-xs-offset-y, 1px)
+      var(--shadow-xs-blur-radius, 2px) var(--shadow-xs-spread-radius, 0)
+      var(--shadow-xs-color, rgba(0, 0, 0, 0.05));
+  }
+}
+
+.content-render-iframe-sandbox {
+  strong {
+    color: var(--primary);
+  }
+}
+
+.shifu-setting-icon-container {
+  border-radius: var(--border-radius-rounded-md, 8px);
+  background: var(--base-secondary, #f5f5f5);
+  color: #0a0a0a;
+  /* shadow/xs */
+  box-shadow: var(--shadow-xs-offset-x, 0) var(--shadow-xs-offset-y, 1px)
+    var(--shadow-xs-blur-radius, 2px) var(--shadow-xs-spread-radius, 0)
+    var(--shadow-xs-color, rgba(0, 0, 0, 0.05));
+  .title {
+    color: var(--base-secondary-foreground, #171717);
+    font-family: 'PingFang SC';
+    font-size: var(--text-sm-font-size, 14px);
+    font-style: normal;
+    font-weight: var(--font-weight-medium, 500);
+    line-height: var(--text-sm-line-height, 20px); /* 142.857% */
+    &.text-white {
+      color: var(--base-primary-foreground, #ffffff);
+    }
+  }
+}
+
+.reveal img,
+.reveal video,
+.reveal iframe {
+  max-width: 100% !important;
+}
