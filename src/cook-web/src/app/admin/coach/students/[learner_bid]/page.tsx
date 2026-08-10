@@ -3,7 +3,7 @@
 import { useEffect, useState } from 'react';
 import Link from 'next/link';
 import { useParams, useSearchParams } from 'next/navigation';
-import { ArrowLeft, FileText, Loader2, Route } from 'lucide-react';
+import { ArrowLeft, ClipboardList, FileText, Loader2, Route } from 'lucide-react';
 import { coachApi } from '@/lib/coach-api';
 import type {
   ChecklistItem,
@@ -120,12 +120,20 @@ export default function CoachStudentDetailPage() {
                 `${student.employeeNo} · ${student.department} · ${student.positionName}`}
             </p>
           </div>
+        <div className="flex flex-wrap items-center gap-3">
           <Link
             href={`/admin/dept/report/${learnerBid}`}
             className="inline-flex items-center gap-1.5 rounded-md bg-primary px-3.5 py-2 text-sm font-medium text-primary-foreground hover:bg-primary-lighter"
           >
             <FileText className="size-4" /> 查看分析报告
           </Link>
+          <Link
+            href={`/admin/coach/students/${learnerBid}/progress`}
+            className="inline-flex items-center gap-1.5 rounded-md border border-border bg-card px-3.5 py-2 text-sm font-medium text-foreground hover:bg-muted"
+          >
+            <ClipboardList className="size-4 text-primary" /> 带教进度详表
+          </Link>
+        </div>
         </div>
       </div>
 
