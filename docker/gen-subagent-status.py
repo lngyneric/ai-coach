@@ -42,6 +42,8 @@ def get_running_subagents() -> list:
     return running
 
 def collect_sessions() -> list:
+    """最近会话：以 .meta 文件为会话标识（实时 updated_at + preview），
+    todos/status 从 goal-state.json 补充（该文件是会话封存产物，非实时，存在才显示）。"""
     sessions = []
     if not PROJECTS.exists():
         return sessions
@@ -49,28 +51,34 @@ def collect_sessions() -> list:
         sess_dir = proj / "sessions"
         if not sess_dir.is_dir():
             continue
-        for gs in sorted(sess_dir.glob("*.goal-state.json"), key=lambda p: p.stat().st_mtime, reverse=True)[:6]:
-            d = gs.parent
+        for meta_f in sess_dir.glob("*.meta"):
             try:
-                data = json.loads(gs.read_text())
+                meta = json.loads(meta_f.read_text())
             except Exception:
                 continue
-            # 会话身份：meta 文件名
-            meta = None
-            for f in d.glob("*.meta"):
-                try:
-                    meta = json.loads(f.read_text())
-                except Exception:
-                    pass
-                break
+            sid = meta.get("id") or meta_f.name[: -len(".jsonl.meta")]
+            gs = sess_dir / f"{sid}.goal-state.json"
+            todos, status = [], ""
+            try:
+                g = json.loads(gs.read_text())
+                todos = g.get("todos", [])
+                status = g.get("status", "")
+            except Exception:
+                pass
+            updated = meta.get("updated_at", "")
+            updated = updated[:16].replace("T", " ") if updated else ""
             sessions.append({
-                "dir": d.name,
-                "status": data.get("status", "unknown"),
-                "todos": data.get("todos", []),
-                "model": (meta or {}).get("model", ""),
-                "updated": time.strftime("%Y-%m-%d %H:%M", time.localtime(gs.stat().st_mtime)),
+                "dir": sid,
+                "preview": meta.get("preview", ""),
+                "status": status,
+                "todos": todos,
+                "model": meta.get("model", ""),
+                "turns": meta.get("turns", ""),
+                "updated": updated,
+                "mtime": meta_f.stat().st_mtime,
             })
-    return sessions
+    sessions.sort(key=lambda s: s["mtime"], reverse=True)
+    return sessions[:6]
 
 def collect_artifacts() -> list:
     arts = []
