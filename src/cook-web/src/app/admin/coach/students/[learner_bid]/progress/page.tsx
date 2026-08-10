@@ -369,10 +369,10 @@ export default function LearnerProgressPage() {
             <ArrowLeft className="size-4" /> 返回学员详情
           </Link>
           <Link
-            href={`/admin/dept/report/${learnerBid}`}
+            href={`/admin/coach/students/${learnerBid}/report`}
             className="mb-2 inline-flex items-center gap-1.5 rounded-md bg-primary px-3 py-1.5 text-xs font-medium text-primary-foreground hover:bg-primary-lighter"
           >
-            <FileText className="size-4" /> 查看分析报告
+            <FileText className="size-4" /> 查看报告
           </Link>
         </div>
         <h1 className="text-2xl font-semibold tracking-tight">
