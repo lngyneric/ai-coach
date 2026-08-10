@@ -200,3 +200,6 @@ docker/.env.prod.bak-*
 docker/nginx.dev.conf.bak-*
 docker/*.bak_vod
 docker/nginx.conf.bak*
+
+# 生成物：subagent 看板状态（systemd timer 每 2 分钟采集）
+docker/subagent-status.json
