@@ -87,6 +87,54 @@ def collect_artifacts() -> list:
     return arts
 
 
+def file_title(content: str) -> str:
+    """从任务文件内容提取标题：取第一个 Markdown 标题行，去掉 # 与可选「任务」前缀。"""
+    for ln in content.splitlines():
+        ln = ln.strip()
+        if ln.startswith("#"):
+            t = re.sub(r"^#+\s*", "", ln).strip()
+            t = re.sub(r"^任务[:：]?\s*", "", t)
+            return t[:60]
+    return ""
+
+
+def extract_task(cmd: str, task_files: dict = None) -> str:
+    """从 Pi 的 run 命令提取任务标题。
+
+    优先级：
+      1. `$(cat /tmp/xxx.md)` → 会话 heredoc 缓存 → 文件系统 → 回退文件名
+      2. 内联双引号参数（如 "审查 docs/... 写入 docs/...md"）→ 取第一个句子，超长截断
+    task_files: {/tmp/xxx.md: 文件内容}，从会话 heredoc 命令恢复（/tmp 可能已被清理）。
+    """
+    TMP_TASK = re.compile(r"\$\(cat (/tmp/[a-z0-9-]+\.md)\)")
+    m = TMP_TASK.search(cmd)
+    if m:
+        fn = m.group(1)
+        content = (task_files or {}).get(fn)
+        if content:
+            title = file_title(content)
+            if title:
+                return title
+        p = Path(fn)
+        if p.exists():
+            try:
+                text = p.read_text(encoding="utf-8", errors="ignore")
+                title = file_title(text)
+                if title:
+                    return title
+            except Exception:
+                pass
+        return f"cat {fn}"
+    q = re.search(r'"([^"]{10,})"', cmd)
+    if q:
+        t = q.group(1).strip()
+        head = re.split(r"[，。；\n]", t)[0].strip()
+        if not head:
+            head = t
+        return head[:60] + ("…" if len(head) > 60 else "")
+    return ""
+
+
 def collect_pi_subagent_calls(running_map: dict) -> list:
     """解析 Pi 会话 jsonl 中 nohup reasonix subagent run 的启动记录。
 
@@ -101,6 +149,19 @@ def collect_pi_subagent_calls(running_map: dict) -> list:
     latest = sorted(PI_SESSIONS.glob("*/*.jsonl"), key=lambda p: p.stat().st_mtime, reverse=True)[:1]
     for f in latest:
         try:
+            # 先扫描本会话的 heredoc 命令，恢复任务文件内容（/tmp 可能已被清理）
+            task_files = {}
+            heredoc_re = re.compile(r"cat > (/tmp/[a-z0-9-]+\.md) << 'EOF'\n(.*?)\nEOF", re.S)
+            for line in open(f, encoding="utf-8", errors="ignore"):
+                try:
+                    d0 = json.loads(line)
+                except Exception:
+                    continue
+                for c0 in d0.get("message", {}).get("content", []):
+                    if c0.get("type") == "toolCall" and c0.get("name") == "bash":
+                        cmd0 = c0.get("arguments", {}).get("command", "")
+                        for hm in heredoc_re.finditer(cmd0):
+                            task_files[hm.group(1)] = hm.group(2)
             for line in open(f, encoding="utf-8", errors="ignore"):
                 try:
                     d = json.loads(line)
@@ -127,6 +188,7 @@ def collect_pi_subagent_calls(running_map: dict) -> list:
                                 "status": "running" if matched else "done",
                                 "pid": matched or "",
                                 "cmd": " ".join(cmd.split())[:150],
+                                "task": extract_task(cmd, task_files),
                             })
         except Exception:
             continue
