@@ -74,7 +74,7 @@ async function load() {
   }
 }
 
-const statusTag = (s) => s === 'running' ? '<span class="tag progress">● 运行中</span>' : s === 'completed' ? '<span class="tag progress">✓ 完成</span>' : s === 'failed' ? '<span class="tag" style="background:#fef2f2;color:#dc2626">✗ 失败</span>' : `<span class="tag stopped">${s}</span>`;
+const statusTag = (s) => s === 'running' ? '<span class="tag progress">● 运行中</span>' : s === 'completed' ? '<span class="tag progress">✓ 完成</span>' : s === 'failed' ? '<span class="tag" style="background:#fef2f2;color:#dc2626">✗ 失败</span>' : s ? `<span class="tag stopped">${s}</span>` : '';
 
 function render(d) {
   const dot = (s) => `<span class="dot ${s === 'running' ? 'running' : s === 'completed' ? 'completed' : s === 'failed' ? 'failed' : 'stopped'}"></span>`;
@@ -100,8 +100,8 @@ function render(d) {
   // sessions
   const s = d.sessions || [];
   document.getElementById('sessions').innerHTML = s.length
-    ? s.map(x => `<div class="card"><h3>${dot(x.status)} ${x.dir.slice(0, 26)}… ${statusTag(x.status)}</h3>
-        <div class="meta">${x.model || ''} · 更新 ${x.updated}</div>
+    ? s.map(x => `<div class="card"><h3>${dot(x.status)} ${(x.preview || x.dir).slice(0, 26)}… ${statusTag(x.status)}</h3>
+        <div class="meta">${x.model || ''}${x.turns ? ' · ' + x.turns + ' 轮' : ''} · 更新 ${x.updated}</div>
         ${(x.todos || []).map(t => `<div class="todo ${t.status === 'completed' ? 'done' : ''}"><span class="mk">${t.status === 'completed' ? '✅' : '⏳'}</span>${t.content}</div>`).join('')}
       </div>`).join('')
     : `<div class="empty">无会话记录</div>`;
