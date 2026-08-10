@@ -94,7 +94,7 @@ function render(d) {
     ? `<div style="font-size:.75rem;color:var(--muted);margin-bottom:8px">累计拉起 ${pc.length} 次 · 运行中 ${runCount} · 完成/休眠 ${pc.length - runCount}</div>` +
       pc.slice().reverse().map(x => `<div class="art">🤖 <b>${x.subagent}</b> · ${x.ts}
         ${x.status === 'running' ? '<span class="tag progress">● 运行中' + (x.pid ? ' PID ' + x.pid : '') + '</span>' : '<span class="tag stopped">✓ 完成</span>'}
-        <span style="font-size:.72rem;color:var(--muted)">${x.cmd.slice(0, 60)}</span></div>`).join('')
+        <div style="font-size:.78rem;margin-top:2px">📋 ${x.task || x.cmd.slice(0, 60)}</div></div>`).join('')
     : `<div class="empty">无 Pi subagent 调用记录</div>`;
 
   // sessions
