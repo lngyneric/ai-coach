@@ -122,7 +122,7 @@ export default function CoachStudentDetailPage() {
           </div>
         <div className="flex flex-wrap items-center gap-3">
           <Link
-            href={`/admin/dept/report/${learnerBid}`}
+            href={`/admin/coach/students/${learnerBid}/report`}
             className="inline-flex items-center gap-1.5 rounded-md bg-primary px-3.5 py-2 text-sm font-medium text-primary-foreground hover:bg-primary-lighter"
           >
             <FileText className="size-4" /> 查看分析报告
