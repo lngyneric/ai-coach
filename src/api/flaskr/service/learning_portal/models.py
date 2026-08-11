@@ -209,6 +209,9 @@ class CoachSession(db.Model):
     learner_bid = db.Column(db.String(32), nullable=False, index=True)
     mentor_bid = db.Column(db.String(32), nullable=False, index=True)
     phase_bid = db.Column(db.String(32), nullable=True, index=True)
+    # Training-loop (TRAINING-LOOP-DESIGN §改造2): optional link to the
+    # learner's current coaching record (learner_coaching.record_bid).
+    record_bid = db.Column(db.String(32), nullable=True, index=True)
     session_type = db.Column(db.String(20), nullable=False, default="regular")
     session_date = db.Column(db.DateTime, nullable=False)
     duration_minutes = db.Column(db.Integer, default=0)

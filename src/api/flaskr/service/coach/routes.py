@@ -223,6 +223,7 @@ def _serialize_session(session: CoachSession) -> dict[str, Any]:
         "learner_bid": session.learner_bid,
         "mentor_bid": session.mentor_bid,
         "phase_bid": session.phase_bid,
+        "record_bid": session.record_bid,
         "session_type": session.session_type,
         "session_date": str(session.session_date)
         if session.session_date
@@ -364,12 +365,33 @@ def register_coach_routes(app: Flask, path_prefix: str = "/api/coach") -> None:
             _require_coach_write(app, request.user)
             _require_session_scope(app, request.user, learner_bid)
 
+        # Training-loop (docs/TRAINING-LOOP-DESIGN.md §改造2): optional link to
+        # the learner's coaching record (learner_coaching.record_bid, current
+        # phase). When ``phase_record_bid`` is present it must resolve to a real
+        # record that belongs to the same learner; learner_bid membership is
+        # already guarded above by ``_require_session_scope`` (mentor must be the
+        # learner's own coach / admin+hr scope-all / dept_head / learner self).
+        phase_record_bid = (
+            str(payload.get("phase_record_bid") or "").strip() or None
+        )
+        if phase_record_bid:
+            record = LearnerMentorship.query.filter_by(
+                record_bid=phase_record_bid
+            ).first()
+            if record is None:
+                raise_param_error("coach: coaching record not found")
+            if record.learner_bid != learner_bid:
+                raise AppException(
+                    "面谈学员与阶段记录不匹配", PERMISSION_DENIED_CODE
+                )
+
         session = CoachSession(
             session_bid=uuid.uuid4().hex,
             learner_bid=learner_bid,
             mentor_bid=str(payload.get("mentor_bid") or "").strip()
             or user_id,
             phase_bid=str(payload.get("phase_bid") or "").strip() or None,
+            record_bid=phase_record_bid,
             session_type=str(payload.get("session_type") or "regular").strip()
             or "regular",
             session_date=datetime.now(),

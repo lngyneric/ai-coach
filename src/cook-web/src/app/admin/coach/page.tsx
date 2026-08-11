@@ -28,6 +28,13 @@ import {
   TableRow,
 } from '@/components/ui/Table';
 import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/Tabs';
+import {
+  Select,
+  SelectContent,
+  SelectItem,
+  SelectTrigger,
+  SelectValue,
+} from '@/components/ui/Select';
 import { useToast } from '@/hooks/useToast';
 import { cn } from '@/lib/utils';
 
@@ -302,6 +309,11 @@ function SessionsTab() {
 
   const [sessions, setSessions] = useState<SessionItem[]>([]);
   const [sessionsLoading, setSessionsLoading] = useState(true);
+  // Training-loop（TRAINING-LOOP-DESIGN §改造1）：面谈学员必须从"我的学员"
+  // 下拉选择（GET /api/portal/mentor/students，仅当前导师带教），禁止手工
+  // 输入 learner_bid。
+  const [students, setStudents] = useState<CoachStudent[]>([]);
+  const [studentsLoading, setStudentsLoading] = useState(true);
   const [createLearner, setCreateLearner] = useState('');
   const [createTopic, setCreateTopic] = useState('');
   const [creating, setCreating] = useState(false);
@@ -322,21 +334,35 @@ function SessionsTab() {
   }, []);
 
   useEffect(() => {
-    if (!perms.isLoading) {
-      loadSessions();
+    if (perms.isLoading) {
+      return;
     }
-  }, [loadSessions, perms.isLoading]);
+    coachApi
+      .listStudents()
+      .then(setStudents)
+      .catch(e => {
+        console.error('[coach] students failed', e);
+        toast({ title: '学员列表加载失败', variant: 'destructive' });
+      })
+      .finally(() => setStudentsLoading(false));
+    loadSessions();
+  }, [loadSessions, perms.isLoading, toast]);
 
   const handleCreate = async () => {
-    if (!createLearner.trim() || !createTopic.trim()) {
-      toast({ title: '请填写 learner_bid 和主题' });
+    const selectedStudent = students.find(
+      s => s.learnerBid === createLearner
+    );
+    if (!createLearner || !createTopic.trim()) {
+      toast({ title: '请选择学员并填写主题' });
       return;
     }
     setCreating(true);
     try {
       await api.createCoachSession({
-        learner_bid: createLearner.trim(),
+        learner_bid: createLearner,
         topic: createTopic.trim(),
+        // 可选关联学员当前阶段 learner_coaching.record_bid（闭环，改造2）
+        phase_record_bid: selectedStudent?.currentPhaseRecordBid ?? undefined,
       });
       toast({ title: '面谈记录已创建' });
       setCreateLearner('');
@@ -374,22 +400,59 @@ function SessionsTab() {
             新建面谈记录
           </h2>
           <div className="flex flex-col gap-2 sm:flex-row">
-            <Input
-              placeholder="learner_bid（带教学员）"
-              value={createLearner}
-              onChange={e => setCreateLearner(e.target.value)}
-              className="sm:max-w-[240px]"
-            />
+            {studentsLoading ? (
+              <Input
+                value="加载学员…"
+                disabled
+                className="sm:max-w-[240px]"
+              />
+            ) : students.length === 0 ? (
+              <div className="flex h-8 items-center gap-2 rounded-md border border-warning/40 bg-warning/10 px-3 text-sm text-amber-600 sm:max-w-[240px]">
+                无学员，请先分配
+              </div>
+            ) : (
+              <Select value={createLearner} onValueChange={setCreateLearner}>
+                <SelectTrigger className="sm:max-w-[240px]">
+                  <SelectValue placeholder="选择学员（仅带教）" />
+                </SelectTrigger>
+                <SelectContent>
+                  {students.map(s => (
+                    <SelectItem key={s.learnerBid} value={s.learnerBid}>
+                      {s.name || s.employeeNo || s.learnerBid}
+                      {s.employeeNo ? `（${s.employeeNo}）` : ''}
+                    </SelectItem>
+                  ))}
+                </SelectContent>
+              </Select>
+            )}
             <Input
               placeholder="主题（如：月度辅导）"
               value={createTopic}
               onChange={e => setCreateTopic(e.target.value)}
               className="flex-1"
             />
-            <Button onClick={handleCreate} disabled={creating}>
+            <Button
+              onClick={handleCreate}
+              disabled={creating || !createLearner || students.length === 0}
+            >
               {creating ? '创建中…' : '创建'}
             </Button>
           </div>
+          {!studentsLoading &&
+            students.length > 0 &&
+            createLearner &&
+            (() => {
+              const selected = students.find(
+                s => s.learnerBid === createLearner
+              );
+              return (
+                <p className="mt-2 text-xs text-slate-400">
+                  {selected?.currentPhaseRecordBid
+                    ? '面谈将自动关联该学员当前阶段记录'
+                    : '该学员未纳入阶段计划，面谈将不关联阶段记录'}
+                </p>
+              );
+            })()}
           <p className="mt-2 text-xs text-slate-400">
             coach_sessions CRUD（数据域：{perms.dataScope || '—'}
             {perms.isFallback ? '（后端未响应，回退 isOperator）' : ''}）

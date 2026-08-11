@@ -456,6 +456,8 @@ def register_learning_portal_routes(
                     else None,
                     "status": s.status,
                     "current_phase_status": active_phase.status if active_phase else None,
+                    "current_phase_bid": active_phase.phase_bid if active_phase else None,
+                    "current_phase_record_bid": active_phase.record_bid if active_phase else None,
                     "pending_score_count": pending_count,
                 }
             )
@@ -557,14 +559,28 @@ def register_learning_portal_routes(
         # caller's mentored scope (admin/hr scope-all exception preserved).
         _require_permission(app, request.user, "create_session")
         data = request.get_json() or {}
-        learner_bid = data.get("learner_bid", "")
-        title = data.get("title", "")
-        _require_mentored_learner(app, request.user, learner_bid)
-        task_type = data.get("task_type", "course")
-        due_at = data.get("due_at")
+        learner_bid = str(data.get("learner_bid") or "").strip()
+        title = str(data.get("title") or "").strip()
+        # Training-loop (docs/TRAINING-LOOP-DESIGN.md §改造3): a task may only
+        # be created against the learner's coaching record
+        # (learner_coaching.record_bid, current phase plan) — no free-form
+        # tasks. Missing record / unknown record → "学员未纳入计划".
+        record_bid = str(data.get("record_bid") or "").strip()
 
         if not learner_bid or not title:
             raise_param_error("learner_bid and title are required")
+        if not record_bid:
+            raise AppException("学员未纳入计划", PERMISSION_DENIED_CODE)
+
+        _require_mentored_learner(app, request.user, learner_bid)
+        record = LearnerMentorship.query.filter_by(
+            record_bid=record_bid
+        ).first()
+        if record is None or record.learner_bid != learner_bid:
+            raise AppException("学员未纳入计划", PERMISSION_DENIED_CODE)
+
+        task_type = data.get("task_type", "course")
+        due_at = data.get("due_at")
 
         task = LearnerTask(
             task_bid=uuid.uuid4().hex,
@@ -572,6 +588,7 @@ def register_learning_portal_routes(
             title=title,
             description=data.get("description", ""),
             task_type=task_type,
+            related_bid=record_bid,
             due_at=datetime.fromisoformat(due_at) if due_at else None,
             created_by=request.user.user_id,
         )

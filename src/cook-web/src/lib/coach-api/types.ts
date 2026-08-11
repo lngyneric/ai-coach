@@ -49,6 +49,8 @@ export interface CoachStudent {
   status: string;
   currentPhaseStatus: string | null;
   currentPhaseBid?: string | null;
+  /** 当前阶段 learner_coaching.record_bid（面谈/任务闭环关联，TRAINING-LOOP） */
+  currentPhaseRecordBid?: string | null;
   pendingTaskCount: number;
   pendingScoreCount: number;
 }
@@ -182,6 +184,9 @@ export interface CoachApi {
     topic: string;
     preCourseBids?: string[];
     goal?: string;
+    /** 培训闭环（TRAINING-LOOP-DESIGN §改造2）：可选关联当前阶段
+     *  learner_coaching.record_bid → POST /api/coach/sessions phase_record_bid */
+    phaseRecordBid?: string | null;
   }): Promise<CoachSession>;
   saveSessionNotes(input: {
     sessionBid: string;

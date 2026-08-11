@@ -49,6 +49,7 @@ const mapStudent = (s: any): CoachStudent => ({
   status: s.status ?? '',
   currentPhaseStatus: s.current_phase_status ?? null,
   currentPhaseBid: s.current_phase_bid ?? null,
+  currentPhaseRecordBid: s.current_phase_record_bid ?? null,
   pendingTaskCount: num(s.pending_task_count),
   pendingScoreCount: num(s.pending_score_count),
 });
@@ -230,6 +231,8 @@ export const coachApi: CoachApi = {
     const created = (await requestApi.createCoachSession({
       learner_bid: input.learnerBid,
       phase_bid: input.phaseBid || null,
+      // 培训闭环（TRAINING-LOOP-DESIGN §改造2）：可选关联当前阶段记录
+      phase_record_bid: input.phaseRecordBid || null,
       session_type: input.sessionType,
       session_date: input.sessionDate,
       topic: input.topic,
