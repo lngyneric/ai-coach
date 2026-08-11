@@ -2,6 +2,29 @@ import json
 from flask import request
 from flaskr.framework.plugin.inject import inject
 from flaskr.route.common import make_common_response
+from flaskr.service.common.models import AppException
+from flaskr.service.coach.permissions import visible_students_scope
+from flaskr.service.learning_portal.models import LearnerProfile
+
+# Permission denied business code (matches learning_portal PERMISSION_DENIED_CODE).
+PERMISSION_DENIED_CODE = 403
+
+
+def _require_phase_detail_access(app, user, learner_bid: str) -> None:
+    """Raise a 403 business error unless ``user`` may read ``learner_bid``'s
+    phase detail.
+
+    Rule (aligned with learning_portal ``_require_mentored_learner``):
+    - admin / hr (data scope ``all``) may read any learner;
+    - everyone else must be the learner's own mentor
+      (``LearnerProfile.coach_bid == user.user_id``).
+    """
+    scope = visible_students_scope(app, user)
+    if scope == "all":
+        return
+    profile = LearnerProfile.query.filter_by(learner_bid=learner_bid).first()
+    if profile is None or profile.coach_bid != user.user_id:
+        raise AppException("没有权限操作非带教学员的数据", PERMISSION_DENIED_CODE)
 
 @inject
 def register_my_enroll_routes(app, path_prefix="/api/shifu"):
@@ -39,6 +62,10 @@ def register_my_enroll_routes(app, path_prefix="/api/shifu"):
     # ── Coach phase detail ──
     @app.route(path_prefix + "/coach/phase-detail/<learner_bid>", methods=["GET"])
     def coach_phase_detail(learner_bid):
+        try:
+            _require_phase_detail_access(app, request.user, learner_bid)
+        except AppException as e:
+            return make_common_response({"error": e.message}, code=e.code or PERMISSION_DENIED_CODE)
         try:
             from sqlalchemy import text
             from flaskr.dao import db
