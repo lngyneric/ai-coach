@@ -27,7 +27,22 @@ const COURSE_CATEGORIES = [
 ] as const;
 
 // ── Course Card ──────────────────────────────────────────────────
-function CourseCard({ shifu }: { shifu: Shifu }) {
+type CourseBadge = 'required' | 'recommended';
+
+// portal/courses 返回字段兜底：该接口历史字段集为 bid/name/description/tts_enabled，
+// keywords/avatar 补齐后仍可能缺值，统一给默认值，保证三态分组/分类匹配/卡片渲染不崩。
+function normalizePortalCourse(c: any): Shifu {
+  return {
+    bid: c?.bid || '',
+    name: c?.name || '未命名课程',
+    description: c?.description || '',
+    keywords: Array.isArray(c?.keywords) ? c.keywords : [],
+    avatar: c?.avatar || '',
+    tts_enabled: Boolean(c?.tts_enabled),
+  };
+}
+
+function CourseCard({ shifu, badge }: { shifu: Shifu; badge?: CourseBadge }) {
   const isVideo = (shifu.keywords || []).some((k: string) => /视频|video/i.test(k));
   const courseUrl = isVideo ? `/video-player.html?bid=${shifu.bid}` : `/c/${shifu.bid}`;
   return (
@@ -44,6 +59,12 @@ function CourseCard({ shifu }: { shifu: Shifu }) {
           </div>
           {shifu.description && <p className="text-xs text-slate-500 line-clamp-2 leading-relaxed mt-1">{shifu.description}</p>}
           <div className="flex items-center gap-2 mt-auto pt-2">
+            {badge === 'required' && (
+              <Badge variant="default" className="text-xs font-normal">必修</Badge>
+            )}
+            {badge === 'recommended' && (
+              <Badge variant="outline" className="text-xs font-normal bg-blue-50 text-blue-700 border-blue-200">推荐</Badge>
+            )}
             <Badge variant="secondary" className="text-xs font-normal">{shifu.tts_enabled ? '🎧 语音' : '📖 阅读'}</Badge>
           </div>
         </CardContent>
@@ -144,6 +165,9 @@ export default function CoursesPage() {
   const [activeCategory, setActiveCategory] = useState<string | null>(null);
   const [showEnrollModal, setShowEnrollModal] = useState(false);
   const [greeting, setGreeting] = useState('');
+  // 三态标注（闭环 3）：必修来自 my_enrollments，推荐来自 /portal/recommend
+  const [requiredBids, setRequiredBids] = useState<Set<string>>(new Set());
+  const [recommendedBids, setRecommendedBids] = useState<Set<string>>(new Set());
 
   const isAdmin = userInfo?.is_operator || userInfo?.is_creator;
 
@@ -164,8 +188,11 @@ export default function CoursesPage() {
   const fetchCourses = useCallback(async () => {
     setLoading(true);
     try {
-      const { items } = await api.getShifuList({ page_index: 1, page_size: 50, archived: false });
-      setShifus(items || []);
+      // 数据源切换（学员课程 401 修复）：/api/shifu/shifus 带 is_creator 守卫，
+      // 普通学员业务码 401 → 课程列表为空；/api/portal/courses 对学员开放。
+      const data = await request.get('/api/portal/courses');
+      const items = Array.isArray(data) ? data : [];
+      setShifus(items.map(normalizePortalCourse));
     } catch (err) { console.error('Failed to fetch courses:', err); }
     finally { setLoading(false); }
   }, []);
@@ -175,8 +202,43 @@ export default function CoursesPage() {
     else if (isInitialized) setLoading(false);
   }, [isInitialized, isGuest, fetchCourses]);
 
+  // 三态标注：并行拉取我的分配（必修）+ 岗位推荐（推荐），失败不影响列表
+  const fetchStateBadges = useCallback(async () => {
+    try {
+      const [enrollments, rec] = await Promise.all([
+        request.get('/api/portal/enrollments'),
+        api.getPortalRecommend({ limit: 20 }),
+      ]);
+      const enrolledBids: string[] = (enrollments || [])
+        .map((e: any) => e?.shifu_bid)
+        .filter(Boolean);
+      const recBids: string[] = ((rec as any)?.courses || [])
+        .map((c: any) => c?.shifu_bid)
+        .filter(Boolean);
+      setRequiredBids(new Set(enrolledBids));
+      setRecommendedBids(new Set(recBids));
+    } catch (err) {
+      console.warn('Failed to load enrollment/recommendation state:', err);
+    }
+  }, []);
+
+  useEffect(() => {
+    if (isInitialized && !isGuest) fetchStateBadges();
+  }, [isInitialized, isGuest, fetchStateBadges]);
+
+  const badgeFor = (bid: string): CourseBadge | undefined =>
+    requiredBids.has(bid) ? 'required'
+      : recommendedBids.has(bid) ? 'recommended'
+      : undefined;
+
+  // 三态分组（闭环 3）：仅在渲染层重排，复用 fetchCourses / fetchStateBadges 数据，不重复抓取。
+  // 必修 = admin 分配；推荐 = 岗位匹配且非必修；其余 = 全部课程（走原分类逻辑）。
+  const requiredCourses = shifus.filter(s => requiredBids.has(s.bid));
+  const recommendedCourses = shifus.filter(s => recommendedBids.has(s.bid) && !requiredBids.has(s.bid));
+  const restCourses = shifus.filter(s => !requiredBids.has(s.bid) && !recommendedBids.has(s.bid));
+
   const getCoursesByCategory = (categoryId: string) => {
-    return shifus.filter(s => {
+    return restCourses.filter(s => {
       const name = (s.name || '').toLowerCase();
       const desc = (s.description || '').toLowerCase();
       const kw = (s.keywords || []).join(' ').toLowerCase();
@@ -191,7 +253,7 @@ export default function CoursesPage() {
     }).slice(0, 6);
   };
 
-  const otherCourses = shifus.filter(s => {
+  const otherCourses = restCourses.filter(s => {
     const name = (s.name || '').toLowerCase();
     const desc = (s.description || '').toLowerCase();
     const kw = (s.keywords || []).join(' ').toLowerCase();
@@ -277,6 +339,39 @@ export default function CoursesPage() {
           </div>
         ) : (
           <div className="space-y-10">
+            {/* 三态分组 · 必修（置顶展示，空组隐藏） */}
+            {requiredCourses.length > 0 && (
+              <section>
+                <div className="flex items-center justify-between mb-4">
+                  <div>
+                    <h3 className="text-base font-semibold text-slate-900 flex items-center gap-2"><span>📌</span> 必修课程</h3>
+                    <p className="text-xs text-slate-500 mt-0.5">企业为你分配的必修课程，请按计划完成学习</p>
+                  </div>
+                </div>
+                <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4 gap-4">
+                  {requiredCourses.map(s => <CourseCard key={s.bid} shifu={s} badge="required" />)}
+                </div>
+              </section>
+            )}
+
+            {/* 三态分组 · 为你推荐（第二组，空组隐藏） */}
+            {recommendedCourses.length > 0 && (
+              <section>
+                <div className="flex items-center justify-between mb-4">
+                  <div>
+                    <h3 className="text-base font-semibold text-slate-900 flex items-center gap-2"><span>✨</span> 为你推荐</h3>
+                    <p className="text-xs text-slate-500 mt-0.5">根据你的岗位为你匹配的课程</p>
+                  </div>
+                </div>
+                <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4 gap-4">
+                  {recommendedCourses.map(s => <CourseCard key={s.bid} shifu={s} badge="recommended" />)}
+                </div>
+              </section>
+            )}
+
+            {/* 三态分组 · 全部课程（其余课程走原分类逻辑；无其余课程时整组隐藏） */}
+            {restCourses.length > 0 && (
+            <>
             {(activeCategory ? COURSE_CATEGORIES.filter(c => c.id === activeCategory) : COURSE_CATEGORIES).map(cat => {
               const catCourses = getCoursesByCategory(cat.id);
               if (catCourses.length === 0 && activeCategory !== cat.id) return null;
@@ -290,7 +385,7 @@ export default function CoursesPage() {
                   </div>
                   {catCourses.length > 0 ? (
                     <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4 gap-4">
-                      {catCourses.map(s => <CourseCard key={s.bid} shifu={s} />)}
+                      {catCourses.map(s => <CourseCard key={s.bid} shifu={s} badge={badgeFor(s.bid)} />)}
                     </div>
                   ) : (
                     <Card className="border-slate-200 border-dashed"><CardContent className="p-8 flex flex-col items-center justify-center text-center">
@@ -304,8 +399,10 @@ export default function CoursesPage() {
             {otherCourses.length > 0 && (
               <section>
                 <div className="flex items-center justify-between mb-4"><div><h3 className="text-base font-semibold text-slate-900 flex items-center gap-2"><span>📂</span> 其他课程</h3></div></div>
-                <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4 gap-4">{otherCourses.map(s => <CourseCard key={s.bid} shifu={s} />)}</div>
+                <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4 gap-4">{otherCourses.map(s => <CourseCard key={s.bid} shifu={s} badge={badgeFor(s.bid)} />)}</div>
               </section>
+            )}
+            </>
             )}
             {shifus.length === 0 && (
               <Card className="border-slate-200 border-dashed"><CardContent className="p-12 flex flex-col items-center justify-center text-center">

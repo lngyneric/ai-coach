@@ -213,6 +213,13 @@ const api = {
   getPortalAdminStats: 'GET /portal/admin/stats',
   getPortalAdminRoles: 'GET /portal/admin/roles',
   getPortalMentorStudents: 'GET /portal/mentor/students',
+  // AI-Coach 导师端待评分 / 评分 / 阶段明细（coach-lab 迁移新增）
+  getPortalMentorPendingScores: 'GET /portal/mentor/pending-scores',
+  scorePortalMentorshipItem:
+    'POST /portal/mentorship/items/{record_bid}/score',
+  getShifuCoachPhaseDetail: 'GET /shifu/coach/phase-detail/{learner_bid}',
+  submitShifuCoachPhaseSummary: 'POST /shifu/coach/phase-summary',
+  getShifuCoachReport: 'GET /shifu/coach/report/{learner_bid}',
 
   // AI-Coach 面谈记录（coach_sessions）完整 CRUD
   getCoachSessions: 'GET /coach/sessions',

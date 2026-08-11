@@ -45,6 +45,35 @@ Disallowed patterns:
 3. Side-by-side interpretation
 4. Updated decision path
 
+### Pattern D: ABT Narrative (已知 → 冲突 → 为什么学)
+
+Open every lesson with a three-beat narrative to build learner motivation (adult learners in particular), inspired by the ABT (And-But-Therefore) structure:
+
+1. **And (已知)** — anchor on what the learner already knows or has seen.
+2. **But (冲突)** — surface the gap, anomaly, or failure case that makes existing knowledge insufficient (e.g., “why does this test result mislead?”).
+3. **Therefore (为什么学)** — state why resolving this conflict matters for the learner's real work.
+
+Rules:
+- The ABT open must appear before the first learning-objective statement, not after.
+- The conflict beat must reference a concrete, domain-plausible case (not a generic rhetorical question).
+- The “therefore” beat must tie to the learner's job outcome (decision, report, patient/customer impact).
+- Keep the whole ABT open to 3-5 sentences; do not let it balloon into background lore.
+
+### Pattern E: Five-Lens Method (五透镜法，难概念教学)
+
+For difficult concepts (mechanisms, workflows, instrument principles), teach through five lenses instead of one long explanation:
+
+1. **See It (看现象)** — observable outcome or symptom first.
+2. **Break It (拆原理)** — decompose into parts/steps.
+3. **Explain It (讲机制)** — mechanism linking parts to outcome.
+4. **Compare It (对比差异)** — contrast with the nearest alternative (method, instrument, workflow).
+5. **Transfer It (迁移应用)** — apply to a new but similar case.
+
+Rules:
+- Use the five-lens method when the concept has mechanism depth or high misdiagnosis risk (e.g., IVD method principles, reference-value interpretation).
+- Each lens must be a distinct segment or block, not merged into one paragraph.
+- The Compare lens should reuse existing comparison content from [Medical Vertical Segmentation Rules](#medical-vertical-segmentation-rules) when applicable.
+
 ## Cognitive Techniques
 
 Increase learner understanding through targeted cognitive moves rather than information dumping. Each lesson should include at least one of these as a deepening interaction.
@@ -199,6 +228,30 @@ These are the *teaching* rules around interactions. For interaction *syntax* see
 - Use no more than one `viewpoint_check` per lesson unless justified.
 - Avoid repetitive interaction semantics across lessons unless comparison intent is explicit.
 - For input interactions, the pre-interaction question must be more specific than the short `...` placeholder.
+
+### Scaffolded Difficulty (三层脚手架)
+
+Layer practice difficulty so learners can attempt increasingly independent work (inspired by I do / We do / You do):
+
+1. **Full demonstration** — worked example with every step shown.
+2. **Partial prompt** — same task with hints; learner fills the gap.
+3. **Independent attempt** — no hints; learner completes from scratch.
+
+Rules:
+- Use scaffolding when a lesson contains practice of a multi-step skill (interpretation, workflow, response drafting).
+- At most one full scaffolded sequence per lesson; avoid repeating identical drill levels.
+- The independent attempt must be followed by an interaction with real feedback, not a dead-end question.
+- Scaffold depth should be explicit in the Teaching Prompt (e.g., `Provide a worked example first, then a hinted attempt, then an independent attempt.`).
+
+### Diagnostic Feedback (错误诊断反馈)
+
+Every wrong option must carry a concrete diagnosis, not a bare “wrong” label:
+
+- For each incorrect choice, state why it sounds plausible and why it is wrong (mechanism, boundary, or missing step).
+- After a wrong selection, branch into a short correction explanation before re-asking, instead of looping the same prompt.
+- Diagnoses must be domain-accurate — reuse the terminology from [Medical Vertical Segmentation Rules](#medical-vertical-segmentation-rules) and the reference tables in `ivd-lookup.py` when available.
+- Never attribute an error to learner carelessness; attribute it to a specific concept gap.
+- If an interaction has multiple distractors, each distractor needs its own one-line diagnosis in the branch or feedback copy.
 
 ## Visual-Text Coordination
 

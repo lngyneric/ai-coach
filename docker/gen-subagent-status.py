@@ -4,7 +4,7 @@
 数据源（只读）：
   1. ~/.reasonix/projects/*/sessions/*/goal-state.json  — 每个会话的 status + todos
   2. ps 抓取运行中的 reasonix subagent run 进程
-  3. worktrees/coach-lab/docs/P0-*.md 等产物 mtime
+  3. worktrees/coach-lab/docs 等 P0-/TRAINING-LOOP-/ARCHITECTURE-DECISION-/REPORT/FIX 产物 mtime
 输出：/home/sysmex/worktrees/ai-shifu-dev/docker/subagent-status.json
 """
 import json, os, re, subprocess, time
@@ -80,19 +80,41 @@ def collect_sessions() -> list:
     sessions.sort(key=lambda s: s["mtime"], reverse=True)
     return sessions[:6]
 
+# 采集的产物 glob 模式（显式白名单，避免 *DESIGN* 等过宽匹配拉全量文档）
+ARTIFACT_PATTERNS = (
+    "P0-*.md",
+    "TRAINING-LOOP-*.md",
+    "ARCHITECTURE-DECISION-*.md",
+    "*-REPORT*.md",
+    "*-FIX*.md",
+)
+ARTIFACT_LIMIT = 8
+
 def collect_artifacts() -> list:
     arts = []
+    seen = set()
     for d in DOCS_DIRS:
         if not d.exists():
             continue
-        for f in sorted(d.glob("P0-*.md"), key=lambda p: p.stat().st_mtime, reverse=True)[:6]:
-            arts.append({
-                "name": f.name,
-                "path": str(f),
-                "size": f.stat().st_size,
-                "mtime": time.strftime("%Y-%m-%d %H:%M", time.localtime(f.stat().st_mtime)),
-            })
-    return arts
+        for pat in ARTIFACT_PATTERNS:
+            for f in d.glob(pat):
+                if f in seen:  # 同一文件可能命中多个模式（如 BATCH234-FIX-REPORT.md）
+                    continue
+                seen.add(f)
+                st = f.stat()
+                arts.append({
+                    "name": f.name,
+                    "path": str(f),
+                    "size": st.st_size,
+                    "_ts": st.st_mtime,
+                })
+    arts.sort(key=lambda a: a["_ts"], reverse=True)
+    return [{
+        "name": a["name"],
+        "path": a["path"],
+        "size": a["size"],
+        "mtime": time.strftime("%Y-%m-%d %H:%M", time.localtime(a["_ts"])),
+    } for a in arts[:ARTIFACT_LIMIT]]
 
 
 def file_title(content: str) -> str:

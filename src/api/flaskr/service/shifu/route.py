@@ -153,6 +153,7 @@ from flaskr.service.shifu.shifu_publish_funcs import (
     publish_shifu_draft,
     preview_shifu_draft,
 )
+from flaskr.service.shifu.tagging import sync_course_position_tags
 from flaskr.service.shifu.shifu_outline_funcs import (
     reorder_outline_tree,
     create_outline,
@@ -2406,9 +2407,17 @@ def register_shifu_routes(app: Flask, path_prefix="/api/shifu"):
         """
         user_id = request.user.user_id
         base_url = _get_request_base_url()
-        return make_common_response(
-            publish_shifu_draft(app, user_id, shifu_bid, base_url)
-        )
+        publish_url = publish_shifu_draft(app, user_id, shifu_bid, base_url)
+        # 闭环 1 · 发布即入池（PORTAL-COURSE-ALIGNMENT）：把课程的 role tag
+        # 同步进 course_position_tags，让课程一发布就进入推荐池。
+        # 同步失败只记日志，绝不阻塞发布响应。
+        try:
+            sync_course_position_tags(app, shifu_bid)
+        except Exception as exc:  # noqa: BLE001
+            app.logger.error(
+                "[tagging] publish hook failed for %s: %s", shifu_bid, exc
+            )
+        return make_common_response(publish_url)
 
     @app.route(path_prefix + "/shifus/<shifu_bid>/preview", methods=["POST"])
     @ShifuTokenValidation(ShifuPermission.VIEW)
