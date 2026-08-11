@@ -14,6 +14,9 @@
  *    LLM 生成 ai_summary）
  *  - POST /api/coach/sessions/<session_bid>/summarize（显式重新生成）
  *  - GET  /api/coach/report/<learner_bid>?source=rule
+ *    （report-align 升级后响应含 phases/total_phases/completed_phases/
+ *    checklist_pass_rate/session_count/learner_name/generated_at，getReport
+ *    直接映射，不再依赖 404 的 /api/shifu/coach/phase-detail 端点）
  *  - GET  /api/shifu/coach/phase-detail/<learner_bid>（v1 dev 未注册 → 空态降级）
  *  - POST /api/shifu/coach/phase-summary（v1 dev 未注册 → 错误上抛）
  *
@@ -112,6 +115,22 @@ async function listPhaseDetails(learnerBid: string): Promise<PhaseDetail[]> {
   }
 }
 
+/** 报告 phases[]（后端 report-align 契约）→ ReportPhase[]（camelCase）。 */
+const mapReportPhase = (p: any) => ({
+  phaseBid: p.phase_bid ?? '',
+  name: p.name ?? '',
+  status: p.status ?? '',
+  totalScore: num(p.total_score),
+  passingScore: num(p.passing_score ?? 60),
+  theoryScore: num(p.theory_score),
+  practiceScore: num(p.practice_score),
+  reviewScore: num(p.review_score ?? p.peer_review_score),
+  mentorScore: num(p.mentor_score ?? p.coach_score),
+  coachSummary: p.coach_summary ?? '',
+  startedAt: p.started_at ?? '',
+  completedAt: p.completed_at ?? '',
+});
+
 export const coachApi: CoachApi = {
   async listStudents() {
     const rows: any[] = await requestApi.getPortalMentorStudents({});
@@ -161,36 +180,28 @@ export const coachApi: CoachApi = {
   },
 
   async getReport(learnerBid) {
-    const [reportData, phases] = await Promise.all([
-      requestApi.getCoachReport({ learner_bid: learnerBid, source: 'rule' }).catch(() => null),
-      listPhaseDetails(learnerBid),
-    ]);
+    // report-align：后端 GET /api/coach/report 已返回 phases + 全部统计字段，
+    // 直接映射（snake_case → camelCase），不再依赖 404 的 phase-detail 端点。
+    // 旧后端（无这些字段）时各字段回退默认/空，行为与现状降级一致。
+    const reportData = await requestApi
+      .getCoachReport({ learner_bid: learnerBid, source: 'rule' })
+      .catch(() => null);
     const ctx = (reportData as any)?.context ?? {};
+    const rawPhases = (reportData as any)?.phases ?? [];
+    const phases = (Array.isArray(rawPhases) ? rawPhases : []).map(mapReportPhase);
     return {
       learnerName: (reportData as any)?.learner_name ?? '',
       learnerBid,
-      totalPhases: phases.length,
-      completedPhases: phases.filter(p => p.status === 'completed').length,
-      inProgressPhases: phases.filter(p => p.status === 'in_progress').length,
-      checklistTotal: 0,
-      checklistScored: 0,
-      checklistPassed: 0,
-      checklistPassRate: 0,
-      sessionCount: num(ctx.session_count),
-      phases: phases.map(p => ({
-        phaseBid: p.phaseBid,
-        name: p.phaseName,
-        status: p.status,
-        totalScore: p.totalScore,
-        passingScore: p.passingScore,
-        theoryScore: p.theoryScore,
-        practiceScore: p.practiceScore,
-        reviewScore: p.reviewScore,
-        mentorScore: p.mentorScore,
-        coachSummary: p.coachSummary,
-        startedAt: p.startedAt,
-        completedAt: p.completedAt,
-      })),
+      totalPhases: num((reportData as any)?.total_phases) || phases.length,
+      completedPhases: num((reportData as any)?.completed_phases),
+      inProgressPhases: num((reportData as any)?.in_progress_phases),
+      checklistTotal: num((reportData as any)?.checklist_total),
+      checklistScored: num((reportData as any)?.checklist_scored),
+      checklistPassed: num((reportData as any)?.checklist_passed),
+      checklistPassRate: num((reportData as any)?.checklist_pass_rate),
+      sessionCount:
+        num((reportData as any)?.session_count) || num(ctx.session_count),
+      phases,
       generatedAt: (reportData as any)?.generated_at ?? '',
     } as CoachReport;
   },
