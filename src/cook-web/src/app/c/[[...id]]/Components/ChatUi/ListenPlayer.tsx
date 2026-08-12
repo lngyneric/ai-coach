@@ -19,6 +19,7 @@ import {
 } from 'markdown-flow-ui/renderer';
 import { useTranslation } from 'react-i18next';
 import { LESSON_FEEDBACK_INTERACTION_MARKER } from '@/c-api/studyV2';
+import { sanitizeEmptyImageBlocks } from './chatUiUtils';
 
 interface ListenPlayerProps {
   className?: string;
@@ -161,7 +162,7 @@ const ListenPlayer = ({
             >
               <ContentRender
                 enableTypewriter={false}
-                content={effectiveInteraction.content || ''}
+                content={sanitizeEmptyImageBlocks(effectiveInteraction.content || '')}
                 customRenderBar={effectiveInteraction.customRenderBar}
                 userInput={resolvedInteractionUserInput}
                 interactionDefaultValueOptions={

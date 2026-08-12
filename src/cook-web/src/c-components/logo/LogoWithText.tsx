@@ -1,5 +1,4 @@
 import { memo, useMemo } from 'react';
-import Image, { type StaticImageData } from 'next/image';
 
 import { useEnvStore } from '@/c-store/envStore';
 
@@ -56,7 +55,9 @@ export const LogoWithText = ({ direction, size = 64 }) => {
             position: 'relative',
           }}
         >
-          <Image
+          {/* 使用原生 <img> 而非 next/image：项目已 images.unoptimized=true，
+              next/image 的 dev 尺寸一致性警告（style width:auto 与 prop width 不一致）不再触发 */}
+          <img
             src={wideLogoSrc}
             alt='logo'
             width={wideWidth}
@@ -70,9 +71,10 @@ export const LogoWithText = ({ direction, size = 64 }) => {
               opacity: isRow ? 1 : 0,
               transition: 'opacity 200ms ease',
             }}
-            priority
+            loading='eager'
+            fetchPriority='high'
           />
-          <Image
+          <img
             src={squareLogoSrc}
             alt='logo'
             width={size}
@@ -86,7 +88,8 @@ export const LogoWithText = ({ direction, size = 64 }) => {
               opacity: isRow ? 0 : 1,
               transition: 'opacity 200ms ease',
             }}
-            priority
+            loading='eager'
+            fetchPriority='high'
           />
         </div>
       </a>

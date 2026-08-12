@@ -10,6 +10,7 @@ import {
 import { useTranslation } from 'react-i18next';
 import Image from 'next/image';
 import { createPortal } from 'react-dom';
+import { resolveAssetSrc } from './chatUiUtils';
 import { Maximize2 } from 'lucide-react';
 import { getDocumentFullscreenElement } from '@/c-utils/browserFullscreen';
 import { cn } from '@/lib/utils';
@@ -1702,6 +1703,7 @@ const ListenModeSlideRenderer = ({
 
   const shouldRenderMobileAskEntry =
     showMobileAskEntry && mobileStyle && !shouldRenderEmptyPpt;
+  const askIconSrc = resolveAssetSrc(AskIcon);
   const isMobileFullscreen = mobileViewMode === 'fullscreen';
   const playerTexts = useMemo(
     () => ({
@@ -1824,12 +1826,18 @@ const ListenModeSlideRenderer = ({
       onClick={handleMobileAskToggle}
       ref={mobileAskActionRef}
     >
-      <Image
-        src={AskIcon.src}
-        alt='ask'
-        width={14}
-        height={14}
-      />
+      {askIconSrc ? (
+        <Image
+          src={askIconSrc}
+          alt='ask'
+          width={14}
+          height={14}
+        />
+      ) : (
+        <span className='listen-slide-mobile-ask-button--icon-fallback' aria-hidden='true'>
+          💬
+        </span>
+      )}
       <span>{t('module.chat.ask')}</span>
     </button>
   ) : null;

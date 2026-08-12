@@ -12,6 +12,7 @@ import {
 } from '@/c-utils/audio-utils';
 import { isLessonFeedbackInteractionContent } from '@/c-utils/lesson-feedback-interaction';
 import { isPaySystemInteractionContent } from '@/c-utils/system-interaction';
+import { sanitizeEmptyImageBlocks } from '@/app/c/[[...id]]/Components/ChatUi/chatUiUtils';
 
 interface ContentBlockProps {
   item: ChatContentItem;
@@ -102,7 +103,7 @@ const ContentBlock = memo(
       >
         <ContentRender
           enableTypewriter={false}
-          content={item.content || ''}
+          content={sanitizeEmptyImageBlocks(item.content || '')}
           onClickCustomButtonAfterContent={handleClick}
           customRenderBar={item.customRenderBar}
           userInput={resolvedUserInput}

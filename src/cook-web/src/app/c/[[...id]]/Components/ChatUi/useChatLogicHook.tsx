@@ -68,6 +68,7 @@ import {
   hasCustomButtonAfterContent,
   inheritCustomButtonAfterContent,
   normalizeLegacyBlockCompatList,
+  resolveAssetSrc,
   syncCustomButtonAfterContent,
 } from './chatUiUtils';
 
@@ -331,11 +332,12 @@ function useChatLogicHook({
 
   const effectivePreviewMode = previewMode ?? false;
   const allowTtsStreaming = !effectivePreviewMode;
-  const getAskButtonMarkup = useCallback(
-    () =>
-      `<custom-button-after-content><img src="${AskIcon.src}" alt="ask" width="14" height="14" /><span>${t('module.chat.ask')}</span></custom-button-after-content>`,
-    [t],
-  );
+  const getAskButtonMarkup = useCallback(() => {
+    const askIconSrc = resolveAssetSrc(AskIcon);
+    return askIconSrc
+      ? `<custom-button-after-content><img src="${askIconSrc}" alt="ask" width="14" height="14" /><span>${t('module.chat.ask')}</span></custom-button-after-content>`
+      : `<custom-button-after-content><span>${t('module.chat.ask')}</span></custom-button-after-content>`;
+  }, [t]);
 
   const resolveElementItemBid = useCallback(
     (

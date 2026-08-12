@@ -40,7 +40,7 @@ import {
   hasAudioContentInTrack,
 } from '@/c-utils/audio-utils';
 import { ELEMENT_TYPE } from '@/c-api/studyV2';
-import { syncCustomButtonAfterContent } from './chatUiUtils';
+import { resolveAssetSrc, syncCustomButtonAfterContent } from './chatUiUtils';
 import {
   Dialog,
   DialogContent,
@@ -219,10 +219,13 @@ export const NewChatComponents = ({
   const confirmButtonText = t('module.renderUi.core.confirm');
   const copyButtonText = t('module.renderUi.core.copyCode');
   const copiedButtonText = t('module.renderUi.core.copied');
+  const askIconSrc = resolveAssetSrc(AskIcon);
   const askButtonMarkup = useMemo(
     () =>
-      `<custom-button-after-content><img src="${AskIcon.src}" alt="ask" width="14" height="14" /><span>${t('module.chat.ask')}</span></custom-button-after-content>`,
-    [t],
+      askIconSrc
+        ? `<custom-button-after-content><img src="${askIconSrc}" alt="ask" width="14" height="14" /><span>${t('module.chat.ask')}</span></custom-button-after-content>`
+        : `<custom-button-after-content><span>${t('module.chat.ask')}</span></custom-button-after-content>`,
+    [askIconSrc, t],
   );
   const listenModeUpgradeDialogTitle = t(
     'module.chat.listenModeUpgradeDialogTitle',

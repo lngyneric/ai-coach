@@ -16,6 +16,7 @@ import {
   SSE_OUTPUT_TYPE,
 } from '@/c-api/studyV2';
 import { fixMarkdownStream } from '@/c-utils/markdownUtils';
+import { sanitizeEmptyImageBlocks } from './chatUiUtils';
 import LoadingBar from './LoadingBar';
 import StreamingLoadingDotsBar from './StreamingLoadingDotsBar';
 import styles from './AskBlock.module.scss';
@@ -550,7 +551,7 @@ export default function AskBlock({
                 className={cn(styles.assistantMessage, styles.askIframeWrapper)}
               >
                 <ContentRender
-                  content={message.content}
+                  content={sanitizeEmptyImageBlocks(message.content)}
                   customRenderBar={
                     message.isStreaming
                       ? () =>

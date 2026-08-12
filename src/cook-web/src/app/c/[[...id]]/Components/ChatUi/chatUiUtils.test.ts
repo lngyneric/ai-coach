@@ -2,6 +2,8 @@ import {
   appendCustomButtonAfterContent,
   hasCustomButtonAfterContent,
   inheritCustomButtonAfterContent,
+  resolveAssetSrc,
+  sanitizeEmptyImageBlocks,
   syncCustomButtonAfterContent,
 } from './chatUiUtils';
 
@@ -61,5 +63,38 @@ describe('chatUiUtils', () => {
     ).toBe(
       appendCustomButtonAfterContent('Updated lesson summary', buttonMarkup),
     );
+  });
+
+  it('sanitizeEmptyImageBlocks drops empty markdown/html image urls', () => {
+    expect(sanitizeEmptyImageBlocks('before ![alt]() after')).toBe(
+      'before  after',
+    );
+    expect(sanitizeEmptyImageBlocks('![x]()')).toBe('');
+    expect(sanitizeEmptyImageBlocks('a <img src=""> b')).toBe('a  b');
+    expect(sanitizeEmptyImageBlocks('a <img src="undefined"> b')).toBe(
+      'a  b',
+    );
+    // non-empty urls must survive
+    expect(sanitizeEmptyImageBlocks('![alt](/img/a.png)')).toBe(
+      '![alt](/img/a.png)',
+    );
+    expect(sanitizeEmptyImageBlocks('a <img src="/x.png"> b')).toBe(
+      'a <img src="/x.png"> b',
+    );
+    // null/undefined input
+    expect(sanitizeEmptyImageBlocks(null)).toBe('');
+    expect(sanitizeEmptyImageBlocks(undefined)).toBe('');
+  });
+
+  it('resolveAssetSrc normalizes string and {src} asset shapes', () => {
+    expect(resolveAssetSrc('/static/icon.svg')).toBe('/static/icon.svg');
+    expect(resolveAssetSrc({ src: '/static/icon.svg' })).toBe(
+      '/static/icon.svg',
+    );
+    expect(resolveAssetSrc({ src: '' })).toBe('');
+    expect(resolveAssetSrc({})).toBe('');
+    expect(resolveAssetSrc(null)).toBe('');
+    expect(resolveAssetSrc(undefined)).toBe('');
+    expect(resolveAssetSrc('  ')).toBe('');
   });
 });

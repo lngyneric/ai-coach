@@ -187,6 +187,11 @@
     width: 16px !important;
     height: 16px !important;
   }
+
+  &--icon-fallback {
+    font-size: 14px;
+    line-height: 1;
+  }
 }
 
 .listen-slide-mobile-ask-button--disabled,

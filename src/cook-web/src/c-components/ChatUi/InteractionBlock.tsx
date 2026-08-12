@@ -4,6 +4,7 @@ import { cn } from '@/lib/utils';
 import { useTranslation } from 'react-i18next';
 import Image from 'next/image';
 import AskIcon from '@/c-assets/newchat/light/icon_ask.svg';
+import { resolveAssetSrc } from '@/app/c/[[...id]]/Components/ChatUi/chatUiUtils';
 import './InteractionBlock.scss';
 import {
   Dialog,
@@ -55,6 +56,7 @@ export default function InteractionBlock({
 }: InteractionBlockProps) {
   const { t } = useTranslation();
   const [showRegenerateDialog, setShowRegenerateDialog] = useState(false);
+  const askIconSrc = resolveAssetSrc(AskIcon);
   const shouldShowAskButton = !disableAskButton;
   const hasVisibleActions = Boolean(
     shouldShowAskButton || showGenerateBtn || extraActions,
@@ -114,12 +116,18 @@ export default function InteractionBlock({
             )}
             disabled={disabled || readonly}
           >
-            <Image
-              src={AskIcon.src}
-              alt='ask'
-              width={14}
-              height={14}
-            />
+            {askIconSrc ? (
+              <Image
+                src={askIconSrc}
+                alt='ask'
+                width={14}
+                height={14}
+              />
+            ) : (
+              <span className='ask-button-fallback-icon' aria-hidden='true'>
+                💬
+              </span>
+            )}
             <span>{t('module.chat.ask')}</span>
           </button>
         ) : null}
