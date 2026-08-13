@@ -71,8 +71,11 @@ services:
     ports:
       - 8081:8080
       - 444:443
+    command: /bin/sh -c "envsubst '$${ARK_API_KEY}' < /etc/nginx/nginx.conf.tpl > /etc/nginx/nginx.conf && exec nginx -g 'daemon off;'"
+    environment:
+      - ARK_API_KEY=${ARK_API_KEY}
     volumes:
-      - ./nginx.prod.conf:/etc/nginx/nginx.conf:ro
+      - ./nginx.prod.conf:/etc/nginx/nginx.conf.tpl:ro
       - ./certs2:/etc/nginx/certs:ro
       - ./courses.html:/usr/share/nginx/html/courses.html:ro
       - ./logout.html:/usr/share/nginx/html/logout.html:ro
