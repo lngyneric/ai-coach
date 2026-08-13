@@ -87,6 +87,7 @@ ARTIFACT_PATTERNS = (
     "ARCHITECTURE-DECISION-*.md",
     "*-REPORT*.md",
     "*-FIX*.md",
+    "*-GUIDE*.md",
 )
 ARTIFACT_LIMIT = 8
 
