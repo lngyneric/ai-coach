@@ -72,10 +72,10 @@ def fmt(o):
         return o.__json__()
 
 
-def make_common_response(data):
+def make_common_response(data, code=0, message="success"):
     if data is None:
         data = {}
     response = json.dumps(
-        {"code": 0, "message": "success", "data": data}, default=fmt, ensure_ascii=False
+        {"code": code, "message": message, "data": data}, default=fmt, ensure_ascii=False
     )
     return response

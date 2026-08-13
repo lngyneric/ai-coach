@@ -220,7 +220,8 @@ def register_my_enroll_routes(app, path_prefix="/api/shifu"):
                 return make_common_response({"error": "session not found"})
             s = dict(session._mapping)
             # Generate AI summary (simulated)
-            summary = f"面谈主题：{s.get('topic','')}。教练记录：{s.get('mentor_notes','')[:100]}。学员反馈：{s.get('learner_notes','')[:100]}。"
+            # W5-2a fix: mentor_notes/learner_notes 可为 NULL——dict.get(key, '') 在 key 存在但值为 None 时返回 None，切片会崩
+            summary = f"面谈主题：{s.get('topic') or ''}。教练记录：{(s.get('mentor_notes') or '')[:100]}。学员反馈：{(s.get('learner_notes') or '')[:100]}。"
             db.session.execute(text("UPDATE coach_sessions SET ai_summary = :summary, updated_at = :now WHERE session_bid = :b").bindparams(summary=summary, now=dt.utcnow(), b=session_bid))
             db.session.commit()
             return make_common_response({"ai_summary": summary})
@@ -361,10 +362,25 @@ def register_my_enroll_routes(app, path_prefix="/api/shifu"):
             from sqlalchemy import text
             from flaskr.dao import db
             from datetime import datetime as dt
+            from flaskr.service.coach.permissions import has_permission
+            from flaskr.service.learning_portal.models import LearnerChecklistItem
             data = request.get_json() or {}
             record_bid = data.get("record_bid")
             if not record_bid:
                 return make_common_response({"error": "missing record_bid"})
+            # W5-2a fix(安全): 评分需 score 权限，且只能评自己带教学员（对齐 mentor_score_item 的 D4 规则）
+            if not has_permission(app, request.user, "score"):
+                raise AppException("没有权限执行此操作", PERMISSION_DENIED_CODE)
+            item = LearnerChecklistItem.query.filter_by(record_bid=record_bid).first()
+            if item is None:
+                return make_common_response({"error": "record not found"})
+            scope = visible_students_scope(app, request.user)
+            if scope != "all":
+                profile = LearnerProfile.query.filter_by(
+                    learner_bid=item.learner_bid
+                ).first()
+                if profile is None or profile.coach_bid != request.user.user_id:
+                    raise AppException("没有权限操作非带教学员的数据", PERMISSION_DENIED_CODE)
             db.session.execute(text("UPDATE learner_checklist_items SET score=:s, comment=:c, scored_by=:u, status='scored', scored_at=:now WHERE record_bid=:b")
                 .bindparams(s=data.get("score",0), c=data.get("comment",""), u=request.user.user_id, now=dt.utcnow(), b=record_bid))
             db.session.commit()
