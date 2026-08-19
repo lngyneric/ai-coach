@@ -113,6 +113,7 @@ services:
       - OPENCODE_API_KEY=${OPENCODE_API_KEY}
     volumes:
       - ./nginx.dev.conf:/etc/nginx/nginx.conf.tpl
+      - ./index.html:/usr/share/nginx/html/index.html:ro
       - ./portal.html:/usr/share/nginx/html/portal.html:ro
       - ./feature-overview.html:/usr/share/nginx/html/feature-overview.html:ro
       - ./feature-slides.html:/usr/share/nginx/html/feature-slides.html:ro
