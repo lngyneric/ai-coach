@@ -1,14 +1,4 @@
 services:
-  ai-shifu-training-api:
-    container_name: ai-shifu-training-api
-    image: python:3.11-slim
-    command: python3 /app/training-api.py 8803
-    volumes:
-      - ./training-api.py:/app/training-api.py
-      - ./training-dashboard.html:/app/training-dashboard.html
-      - /var/run/docker.sock:/var/run/docker.sock
-    restart: always
-    network_mode: host
   ai-shifu-api:
     container_name: ai-shifu-api
     depends_on:
