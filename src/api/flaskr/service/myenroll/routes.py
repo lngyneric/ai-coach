@@ -29,7 +29,14 @@ def _require_phase_detail_access(app, user, learner_bid: str) -> None:
 @inject
 def register_my_enroll_routes(app, path_prefix="/api/shifu"):
     app.logger.info(f"register my enroll routes {path_prefix}")
-    @app.route(path_prefix + "/enrollments", methods=["GET"])
+    # Idempotency guard: gunicorn --reload re-imports the module and would
+    # otherwise double-register the same view functions (AssertionError:
+    # View function mapping is overwriting ...).
+    existing = {str(rule.rule) for rule in app.url_map.iter_rules()}
+    if path_prefix + "/enrollments" in existing:
+        app.logger.info("my enroll routes already registered, skip")
+        return
+    @app.route(path_prefix + "/enrollments", methods=["GET"], endpoint="my_enrollments_shifu")
     def my_enrollments():
         try:
             from sqlalchemy import text
@@ -300,6 +307,77 @@ def register_my_enroll_routes(app, path_prefix="/api/shifu"):
             db.session.rollback()
             return make_common_response({"error": str(e)}, code=1001)
 
+    # ── POST /api/shifu/coach/courses（课件上传记录 · 9节点节点1）──
+    @app.route(path_prefix + "/coach/courses", methods=["POST"])
+    def coach_course_upload():
+        try:
+            from sqlalchemy import text
+            from flaskr.dao import db
+            from datetime import datetime as dt
+            import uuid
+            data = request.get_json() or {}
+            name = str(data.get("name") or "").strip()
+            link = str(data.get("link_url") or data.get("link") or "").strip()
+            course_bid = str(data.get("course_bid") or "").strip()
+            submitted_by = str(data.get("submitted_by") or request.user.user_id or "").strip()
+            if not name:
+                return make_common_response({"error": "missing name"})
+            if not link:
+                return make_common_response({"error": "missing link_url"})
+            bid = uuid.uuid4().hex[:32]
+            db.session.execute(text(
+                "INSERT INTO coach_course_materials (material_bid, name, link_url, course_bid, submitted_by, status, created_at, updated_at) "
+                "VALUES (:b, :n, :l, :c, :s, 'pending', :now, :now)"
+            ).bindparams(b=bid, n=name, l=link[:500], c=course_bid, s=submitted_by, now=dt.utcnow()))
+            db.session.commit()
+            return make_common_response({"material_bid": bid})
+        except Exception as e:
+            db.session.rollback()
+            return make_common_response({"error": str(e)}, code=1001)
+
+    # ── POST/PUT /api/shifu/coach/tasks/<task_bid>（待办登记/完成 · 9节点节点4）──
+    @app.route(path_prefix + "/coach/tasks/<task_bid>", methods=["POST", "PUT"])
+    def coach_task_status(task_bid):
+        try:
+            from sqlalchemy import text
+            from flaskr.dao import db
+            from datetime import datetime as dt
+            data = request.get_json() or {}
+            status = str(data.get("status") or "").strip()
+            row = db.session.execute(text("SELECT task_bid FROM learner_tasks WHERE task_bid = :b").bindparams(b=task_bid)).fetchone()
+            if row:
+                # 存在则更新状态（任务完成时写 completed_at）
+                fields = ["status = :status", "updated_at = :now"]
+                params = {"b": task_bid, "status": status or "in_progress", "now": dt.utcnow()}
+                if status in ("done", "completed"):
+                    fields.append("completed_at = :now")
+                db.session.execute(text("UPDATE learner_tasks SET " + ", ".join(fields) + " WHERE task_bid = :b").bindparams(**params))
+                db.session.commit()
+                return make_common_response({"ok": True, "task_bid": task_bid})
+            # 不存在则首次登记（POST 语义）
+            import uuid
+            from datetime import datetime as dt2
+            learner_bid = str(data.get("learner_bid") or "").strip()
+            title = str(data.get("title") or data.get("name") or "").strip()
+            if not learner_bid or not title:
+                return make_common_response({"error": "missing learner_bid or title"})
+            final_status = status or "pending"
+            done = final_status in ("done", "completed")
+            db.session.execute(text(
+                "INSERT INTO learner_tasks (task_bid, learner_bid, title, description, task_type, related_bid, due_at, completed_at, status, created_by, created_at, updated_at) "
+                "VALUES (:b, :l, :t, :d, :ty, :r, :due, :comp, :s, :cb, :now, :now)"
+            ).bindparams(
+                b=task_bid, l=learner_bid, t=title[:200], d=str(data.get("description") or ""),
+                ty=str(data.get("task_type") or "coach"), r=str(data.get("related_bid") or ""),
+                due=None, comp=(dt2.utcnow() if done else None), s=final_status,
+                cb=request.user.user_id, now=dt2.utcnow()
+            ))
+            db.session.commit()
+            return make_common_response({"ok": True, "task_bid": task_bid})
+        except Exception as e:
+            db.session.rollback()
+            return make_common_response({"error": str(e)}, code=1001)
+
     # ── GET /api/shifu/coach/students ──
     @app.route(path_prefix + "/coach/students", methods=["GET"])
     def coach_students_list():
@@ -406,7 +484,7 @@ def register_my_enroll_routes(app, path_prefix="/api/shifu"):
             db.session.rollback()
             return make_common_response({"error": str(e)}, code=1001)
 
-    @app.route(path_prefix + "/admin/learners", methods=["GET"])
+    @app.route(path_prefix + "/admin/learners", methods=["GET"], endpoint="admin_learners_shifu")
     def admin_learners():
         try:
             from sqlalchemy import text
