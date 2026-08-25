@@ -10,6 +10,7 @@ def register_route(app):
     from .order import register_order_handler
     from .storage import register_storage_handler
     from .user import register_user_handler
+    from flaskr.service.dashboard.routes import register_dashboard_routes
 
     prefix = app.config.get("PATH_PREFIX", "")
     app = register_common_handler(app)
@@ -20,4 +21,5 @@ def register_route(app):
     app = register_order_handler(app, prefix + "/order")
     app = register_callback_handler(app, prefix + "/callback")
     app = register_open_api_handler(app, prefix + "/open-api/v1")
+    register_dashboard_routes(app, prefix + "/dashboard")
     return app
