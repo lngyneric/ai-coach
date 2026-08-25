@@ -31,7 +31,7 @@ DB_HOST="${DB_HOST:-127.0.0.1}"
 # 生成 SQL：person_master.name + learner_profiles（user_bid=wecom_userid）→ 姓名→learner_bid
 SQL="SELECT pm.name, lp.learner_bid
 FROM person_master pm
-JOIN learner_profiles lp ON lp.user_bid = pm.wecom_userid
+JOIN learner_profiles lp ON lp.user_bid = pm.wecom_userid COLLATE utf8mb4_unicode_ci
 WHERE pm.name IS NOT NULL AND pm.name <> ''
   AND lp.learner_bid IS NOT NULL AND lp.learner_bid <> ''
 ORDER BY pm.name;"
