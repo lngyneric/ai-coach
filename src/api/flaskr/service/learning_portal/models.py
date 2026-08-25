@@ -279,3 +279,23 @@ class CoursePositionTag(db.Model):
         ),
     )
 
+
+class CoachCourseMaterial(db.Model):
+    """WECOM 课件上传记录（9 节点 · 节点 1）。
+
+    Each row records one material uploaded via the WeCom collection sheet
+    (name + link + optional course). Backs ``POST /api/shifu/coach/courses``.
+    Created by migration ``<head>_add_coach_course_materials``.
+    """
+
+    __tablename__ = "coach_course_materials"
+
+    material_bid = db.Column(db.String(32), primary_key=True)
+    name = db.Column(db.String(200), nullable=False)
+    link_url = db.Column(db.String(500), nullable=False)
+    course_bid = db.Column(db.String(32), nullable=True, index=True)
+    submitted_by = db.Column(db.String(32), nullable=True, index=True)
+    status = db.Column(db.String(20), nullable=False, default="pending")
+    created_at = db.Column(db.DateTime)
+    updated_at = db.Column(db.DateTime)
+
