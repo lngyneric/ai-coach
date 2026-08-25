@@ -42,3 +42,22 @@ WECOM_MOCK=1 + 注入模拟记录 + --dry-run，7 张业务表逐一验证：
    不影响闭环）。可给 call_coach 增加 method 参数。
 3. **COACH_API_TOKEN 未配置时钻调跳过**（默认空）——生产 cron 前需在环境注入
    X-WECOM-TOKEN 对应值。
+
+## 六、真实闭环实测（2026-08-25，B1-B4 全通过）
+
+真实记录 gFjWlW（凌云/完成产品知识课件学习/进行中）全链路：
+
+| 步骤 | 结果 |
+|------|:----:|
+| B1 读取待处理记录 | ✅ 状态过滤扩展 IN('待处理','进行中') |
+| B2 Coach API 调用 | ✅ PUT /coach/tasks/gFjWlW → {"ok":true,"task_bid":"gFjWlW"} |
+| B3 落库 | ✅ learner_tasks 新增（task_bid=gFjWlW, status=已完成） |
+| B4 关单+通知 | ✅ 记录状态→已处理 + 企微通知 |
+
+### 实测发现并修复
+1. **后端鉴权头是 Token**（非 X-WECOM-TOKEN）→ 脚本 curl 头一致化
+2. **业务表状态枚举**：任务登记用"进行中"（申请类才"待处理"）→ SQL 过滤适配
+3. **call_coach 误判**：API 返回 {"code":0,"data":{"error":...}} 曾被视为成功→关单丢数据
+   → 修复：响应含 "error" 即失败（保留待处理不关单）
+4. **title 提取缺"任务内容"列** → pick 名单补充
+5. **姓名→learner_bid 映射缺失**（凌云姓名透传当 bid 落库）——接主数据后补
