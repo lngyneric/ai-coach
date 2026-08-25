@@ -19,6 +19,9 @@
 # =============================================================================
 set -uo pipefail
 
+# 脚本绝对目录（用于定位缺省映射文件 scripts/wecom-name-map.json）
+SCRIPT_DIR="$(cd "$(dirname "${BASH_SOURCE[0]:-$0}")" && pwd)"
+
 # ── Coach API 配置（可被环境变量覆盖）────────────────────────────────────────
 COACH_API_BASE="${COACH_API_BASE:-http://localhost:8082}"
 COACH_API_TOKEN="${COACH_API_TOKEN:-}"
@@ -105,6 +108,7 @@ build_payload() {
   local TMPF
   TMPF=$(mktemp "${TMPDIR:-/tmp}/wecom-row.XXXXXX")
   printf '%s' "$ROW_JSON" > "$TMPF"
+  WECOM_NAME_MAP_FILE="${WECOM_NAME_MAP_FILE:-$SCRIPT_DIR/wecom-name-map.json}" \
   python3 - "$RID" "$MODE" "$TMPF" "$COACH_API_BASE" "$COACH_API_TOKEN" <<'PY'
 import sys, json, os
 rid, mode = sys.argv[1], sys.argv[2]
@@ -131,13 +135,37 @@ def pick(*names):
             return str(v)
     return ""
 
+# ── 姓名→learner_bid 映射（可选；缺失/为空/未命中 → 原样透传，不破坏现状）──
+# 来源优先级：环境变量 WECOM_NAME_MAP（JSON：{"姓名":"learner_bid"}）
+#            > 映射文件（WECOM_NAME_MAP_FILE 覆盖，缺省脚本目录 wecom-name-map.json）
+name_map = {}
+env_map = os.environ.get("WECOM_NAME_MAP", "").strip()
+if env_map:
+    try:
+        name_map = json.loads(env_map) or {}
+    except Exception:
+        name_map = {}
+else:
+    map_path = os.environ.get("WECOM_NAME_MAP_FILE", "") or "/nonexistent"
+    if os.path.isfile(map_path):
+        try:
+            with open(map_path, "r", encoding="utf-8") as f:
+                name_map = json.load(f) or {}
+        except Exception:
+            name_map = {}
+
+def learner():
+    name = pick("学员", "学员编号", "learner_bid", "learner", "学员ID")
+    # 命中映射 → 用 learner_bid；未命中 → 原样透传
+    return str(name_map.get(name, name)) if name else ""
+
 payload = {}
 if mode == "material":            # 课件上传：name/link_url/course_bid
     payload = {"name": pick("课件名称","名称","name","标题"),
                "link_url": pick("链接","下载链接","link_url","link","url"),
                "course_bid": pick("课程","课程编号","course_bid","course")}
 elif mode == "session":           # 面谈总结：learner_bid/topic/mentor_notes
-    payload = {"learner_bid": pick("学员","学员编号","learner_bid","learner","学员ID"),
+    payload = {"learner_bid": learner(),
                "phase_bid": pick("阶段","phase_bid","phase"),
                "topic": pick("主题","面谈主题","topic"),
                "mentor_notes": pick("教练记录","总结","mentor_notes","summary"),
@@ -145,13 +173,13 @@ elif mode == "session":           # 面谈总结：learner_bid/topic/mentor_note
 elif mode == "task":              # 任务登记/完成：status + learner_bid + title
     # status 优先取表单"完成状态"/"任务状态"列；缺省固定"已完成"（表单提交即意味着登记/完成动作）。
     # 注意：表单"状态"列是流转状态（待处理），不作为 API status 传入。
-    payload = {"learner_bid": pick("学员","学员编号","learner_bid","learner","学员ID"),
+    payload = {"learner_bid": learner(),
                "title": pick("任务","任务名称","任务内容","title","name"),
                "description": pick("说明","描述","description","备注"),
                "task_type": pick("类型","task_type","type") or "coach",
                "status": pick("完成状态","任务状态") or "已完成"}
 elif mode == "rating":            # 评教练：learner_bid/phase_bid/score
-    payload = {"learner_bid": pick("学员","学员编号","learner_bid","learner","学员ID"),
+    payload = {"learner_bid": learner(),
                "phase_bid": pick("阶段","phase_bid","phase"),
                "score": pick("评分","分值","score","rating")}
 elif mode == "phase_summary":     # 教练评学员：record_bid + 小结
@@ -161,14 +189,14 @@ elif mode == "phase_summary":     # 教练评学员：record_bid + 小结
                "improvement_plan": pick("改进计划","improvement_plan"),
                "complete": pick("完成","complete") == "是"}
 elif mode == "final_rating":      # 带教终评：learner_bid/phase_bid + 分项
-    payload = {"learner_bid": pick("学员","学员编号","learner_bid","learner","学员ID"),
+    payload = {"learner_bid": learner(),
                "phase_bid": pick("阶段","phase_bid","phase"),
                "theory_score": pick("理论分","theory_score"),
                "practice_score": pick("实操分","practice_score"),
                "peer_score": pick("互评分","peer_score"),
                "coach_score": pick("导师分","coach_score")}
 elif mode == "credential":        # 学习凭证：learner_bid/course_bid
-    payload = {"learner_bid": pick("学员","学员编号","learner_bid","learner","学员ID"),
+    payload = {"learner_bid": learner(),
                "course_bid": pick("课程","课程编号","course_bid","course")}
 print(json.dumps(payload, ensure_ascii=False))
 PY
