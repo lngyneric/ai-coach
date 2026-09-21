@@ -21,7 +21,7 @@ def get_db_courses():
             "SELECT shifu_bid, title, COALESCE(description,''), COALESCE(keywords,''), "
             "created_at FROM `ai-shifu`.shifu_published_shifus WHERE deleted=0 ORDER BY id"
         ],
-        capture_output=True, text=True
+        capture_output=True, text=True, errors="replace"
     )
     courses = {}
     for line in result.stdout.strip().split('\n'):
@@ -47,7 +47,7 @@ def get_outline_count(shifu_bid):
             f"SELECT COUNT(*) FROM `ai-shifu`.shifu_published_outline_items "
             f"WHERE shifu_bid='{shifu_bid}' AND deleted=0"
         ],
-        capture_output=True, text=True
+        capture_output=True, text=True, errors="replace"
     )
     try:
         return int(result.stdout.strip())
@@ -60,12 +60,12 @@ def get_lesson_titles(shifu_bid):
     result = subprocess.run(
         [
             "docker", "exec", "ai-shifu-mysql", "mysql",
-            "-uroot", "-pai-shifu", "-N", "-e",
+            "-uroot", "-pai-shifu", "--default-character-set=utf8mb4", "-N", "-e",
             f"SELECT title FROM `ai-shifu`.shifu_published_outline_items "
             f"WHERE shifu_bid='{shifu_bid}' AND deleted=0 "
             f"AND outline_item_bid != '{shifu_bid}' ORDER BY position"
         ],
-        capture_output=True, text=True
+        capture_output=True, text=True, errors="replace"
     )
     return [l.strip() for l in result.stdout.strip().split('\n') if l.strip()]
 
