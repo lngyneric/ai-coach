@@ -1,6 +1,12 @@
 from flask import Flask, request, make_response, current_app
 from functools import wraps
 
+# 访客（临时）身份的持久化方式：由服务端下发 cookie 保存 temp_id。
+# 这样同一浏览器在多次访问 / 多个页面间复用同一个临时账号，避免前端每次
+# 生成新的 temp_id 导致重复建号（user_conversion 里出现大量一次性记录）。
+GUEST_TEMP_ID_COOKIE = "guest_temp_id"
+GUEST_TEMP_ID_MAX_AGE = 365 * 24 * 60 * 60
+
 from flaskr.service.common.models import raise_param_error, raise_error
 from flaskr.service.user.consts import CREDENTIAL_STATE_VERIFIED
 from flaskr.service.user.password_utils import (
@@ -380,6 +386,11 @@ def register_user_handler(app: Flask, path_prefix: str) -> Flask:
         parsed_payload = request.get_json(silent=True)
         payload = parsed_payload if isinstance(parsed_payload, dict) else {}
         tmp_id = payload.get("temp_id", None)
+        # 访客身份优先取服务端下发的 cookie；cookie 不存在时才用客户端传入的
+        # temp_id（兼容旧前端），两者都没有则由服务端生成。cookie 种下之后，
+        # 后续请求都会命中同一个临时账号，不再重复建号。
+        cookie_tmp_id = request.cookies.get(GUEST_TEMP_ID_COOKIE) or None
+        effective_tmp_id = cookie_tmp_id or tmp_id or generate_id(app)
         source = str(payload.get("source") or "web").strip() or "web"
         wx_code = payload.get("wxcode", None)
         language = payload.get("language") or "en-US"
@@ -387,15 +398,25 @@ def register_user_handler(app: Flask, path_prefix: str) -> Flask:
         if isinstance(wx_code, str) and wx_code:
             masked_wx_code = f"***{wx_code[-4:]}" if len(wx_code) > 4 else "***"
         app.logger.info(
-            "require_tmp tmp_id: %s, source: %s, wx_code: %s",
+            "require_tmp tmp_id: %s, cookie_tmp_id: %s, effective: %s, "
+            "source: %s, wx_code: %s",
             tmp_id,
+            cookie_tmp_id,
+            effective_tmp_id,
             source,
             masked_wx_code,
         )
-        if not tmp_id:
-            raise_param_error("temp_id")
-        user_token = generate_temp_user(app, tmp_id, source, wx_code, language)
+        user_token = generate_temp_user(app, effective_tmp_id, source, wx_code, language)
         resp = make_response(make_common_response(user_token))
+        resp.set_cookie(
+            GUEST_TEMP_ID_COOKIE,
+            effective_tmp_id,
+            max_age=GUEST_TEMP_ID_MAX_AGE,
+            path="/",
+            httponly=False,
+            samesite="Lax",
+            secure=bool(request.is_secure),
+        )
         return resp
 
     @app.route(path_prefix + "/captcha", methods=["GET"])
