@@ -153,6 +153,10 @@ const MainInterface = ({
     [closeDesktopMenu],
   );
 
+  const billingEnabled = useEnvStore(
+    (state: EnvStoreState) => state.billingEnabled === 'true',
+  );
+
   const menuItems = useMemo(
     () =>
       buildAdminMenuItems({
@@ -161,15 +165,13 @@ const MainInterface = ({
         canManageUsers,
         canViewDeptOnly,
         canCreateSession,
+        billingEnabled,
       }),
-    [canCreateSession, canManageUsers, canViewDeptOnly, isOperator, t],
+    [canCreateSession, canManageUsers, canViewDeptOnly, isOperator, t, billingEnabled],
   );
 
   const { data: billingOverview, isLoading: billingOverviewLoading } =
     useBillingOverview();
-  const billingEnabled = useEnvStore(
-    (state: EnvStoreState) => state.billingEnabled === 'true',
-  );
   const { data: onboardingStatus, mutate: mutateOnboardingStatus } =
     useCreatorOnboardingStatus(menuReady);
   const courseCreatorUrl = useMemo(() => getCourseCreatorUrl(), []);

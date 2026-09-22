@@ -13,6 +13,7 @@ import {
   maskIncompleteMermaidBlock,
 } from '@/c-utils/markdownUtils';
 import { useCourseStore } from '@/c-store/useCourseStore';
+import { useEnvStore } from '@/c-store/envStore';
 import { useUserStore } from '@/store';
 import { useShallow } from 'zustand/react/shallow';
 import {
@@ -2406,8 +2407,11 @@ function useChatLogicHook({
         isLessonFeedbackContent(currentInteractionItem?.content);
 
       if (buttonText === SYS_INTERACTION_TYPE.PAY) {
-        trackEvent(EVENT_NAMES.POP_PAY, { from: 'show-btn' });
-        onPayModalOpen();
+        // 内训站点：计费停用时付费按钮不再打开支付弹窗
+        if (useEnvStore.getState().billingEnabled === 'true') {
+          trackEvent(EVENT_NAMES.POP_PAY, { from: 'show-btn' });
+          onPayModalOpen();
+        }
         return;
       }
       if (buttonText === SYS_INTERACTION_TYPE.LOGIN) {

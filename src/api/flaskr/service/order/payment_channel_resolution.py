@@ -20,10 +20,18 @@ def resolve_payment_channel(
     requested_channel_lower = requested_channel.lower()
     default_channel = (default_pingxx_channel or "").strip()
 
-    enabled_raw = str(get_config("PAYMENT_CHANNELS_ENABLED", "pingxx,stripe") or "")
+    # 语义分两种：
+    #   - 未配置（None）→ 保持历史默认 pingxx,stripe
+    #   - 已配置（含显式空串）→ 严格按配置解析，空串即"无任何可用渠道"
+    # 此前用 `or {"pingxx","stripe"}` 兜底，导致 PAYMENT_CHANNELS_ENABLED="" 看似
+    # 能关掉支付、实际仍回退到 pingxx+stripe，是个误导性的"假开关"。
+    enabled_raw_value = get_config("PAYMENT_CHANNELS_ENABLED", None)
+    enabled_raw = (
+        "pingxx,stripe" if enabled_raw_value is None else str(enabled_raw_value)
+    )
     enabled_providers = {
         item.strip().lower() for item in enabled_raw.split(",") if item.strip()
-    } or {"pingxx", "stripe"}
+    }
     supported_providers = {"pingxx", "stripe", "alipay", "wechatpay"}
     enabled_providers = enabled_providers.intersection(supported_providers)
 

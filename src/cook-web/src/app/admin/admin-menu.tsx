@@ -33,6 +33,10 @@ type BuildAdminMenuItemsOptions = {
   canManageUsers?: boolean;
   canViewDeptOnly?: boolean;
   canCreateSession?: boolean;
+  /**
+   * 计费/支付总闸。内训站点关闭时隐藏所有订单与运营-订单入口。
+   */
+  billingEnabled?: boolean;
 };
 
 export const buildAdminMenuItems = ({
@@ -41,6 +45,7 @@ export const buildAdminMenuItems = ({
   canManageUsers = false,
   canViewDeptOnly = false,
   canCreateSession = false,
+  billingEnabled = false,
 }: BuildAdminMenuItemsOptions): AdminMenuItem[] => {
   const items: AdminMenuItem[] = [
     {
@@ -51,8 +56,8 @@ export const buildAdminMenuItems = ({
     },
   ];
 
-  // 订单管理：admin 专属（is_operator 守卫的运营页）。
-  if (isOperator) {
+  // 订单管理：admin 专属（is_operator 守卫的运营页）。计费关闭时一并隐藏。
+  if (isOperator && billingEnabled) {
     items.push({
       id: 'orders',
       icon: <ShoppingCartIcon className='w-4 h-4' />,
@@ -123,11 +128,15 @@ export const buildAdminMenuItems = ({
           label: t('common.core.userManagement'),
           href: '/admin/operations/users',
         },
-        {
-          id: 'operations-order',
-          label: t('common.core.orderManagement'),
-          href: '/admin/operations/orders',
-        },
+        ...(billingEnabled
+          ? [
+              {
+                id: 'operations-order',
+                label: t('common.core.orderManagement'),
+                href: '/admin/operations/orders',
+              },
+            ]
+          : []),
         {
           id: 'operations-promotion',
           label: t('common.core.promotionManagement'),

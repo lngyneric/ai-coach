@@ -94,6 +94,12 @@ def _build_celery_config(flask_app: Flask) -> dict[str, Any]:
 
 
 def _build_billing_beat_schedule(flask_app: Flask) -> dict[str, Any]:
+    # 内训站点：计费关闭时不再注册任何 billing 定时任务。
+    # 否则这三个任务（renewal / bucket-expire 均为每分钟）会在无计费的站点上空转。
+    from flaskr.service.billing.primitives import is_billing_enabled
+
+    if not is_billing_enabled():
+        return {}
     return {
         "billing.dispatch_due_renewal_events.schedule": {
             "task": "billing.dispatch_due_renewal_events",

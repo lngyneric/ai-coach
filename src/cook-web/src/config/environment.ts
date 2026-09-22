@@ -204,12 +204,13 @@ function getStripeEnabled(): boolean {
 }
 
 function parsePaymentChannels(value?: string): string[] {
-  if (!value) return ['pingxx', 'stripe'];
+  // 内训站点：未显式配置支付渠道时默认空（不提供任何支付方式）。
+  if (!value) return [];
   const channels = value
     .split(',')
     .map(item => item.trim().toLowerCase())
     .filter(Boolean);
-  return channels.length > 0 ? channels : ['pingxx', 'stripe'];
+  return channels.length > 0 ? channels : [];
 }
 
 function getPaymentChannels(): string[] {

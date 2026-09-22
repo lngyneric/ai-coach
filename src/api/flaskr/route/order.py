@@ -2,6 +2,7 @@ from flask import Flask, request
 from flaskr.service.common.models import raise_param_error, raise_error
 from flaskr.service.order.coupon_funcs import use_coupon_code
 from flaskr.route.common import make_common_response
+from flaskr.service.billing.primitives import is_billing_enabled
 from flaskr.service.order import (
     generate_charge,
     query_buy_record,
@@ -30,6 +31,14 @@ def register_order_handler(app: Flask, path_prefix: str):
     def _require_creator():
         if not request.user.is_creator:
             raise_error("server.shifu.noPermission")
+
+
+    def _require_billing_enabled():
+        """内训站点：计费/支付总开关关闭时，面向学员的支付端点一律拒绝。"""
+        if is_billing_enabled():
+            return
+        app.logger.info("billing disabled for route %s", request.path)
+        raise_error("server.billing.disabled")
 
     @app.route(path_prefix + "/reqiure-to-pay", methods=["POST"])
     def reqiure_to_pay():
@@ -71,6 +80,7 @@ def register_order_handler(app: Flask, path_prefix: str):
                                     $ref: "#/components/schemas/BuyRecordDTO"
 
         """
+        _require_billing_enabled()
         payload = request.get_json(silent=True) or {}
         order_id = payload.get("order_id", "")
         channel = payload.get("channel", "")
@@ -122,6 +132,7 @@ def register_order_handler(app: Flask, path_prefix: str):
                                     $ref: "#/components/schemas/AICourseBuyRecordDTO"
 
         """
+        _require_billing_enabled()
         user_id = request.user.user_id
         course_id = request.get_json().get("course_id", "")
         return make_common_response(init_buy_record(app, user_id, course_id))
@@ -161,6 +172,7 @@ def register_order_handler(app: Flask, path_prefix: str):
                                     $ref: "#/components/schemas/AICourseBuyRecordDTO"
 
         """
+        _require_billing_enabled()
         order_id = request.get_json().get("order_id", "")
         return make_common_response(query_buy_record(app, order_id))
 
@@ -201,6 +213,7 @@ def register_order_handler(app: Flask, path_prefix: str):
                                     $ref: "#/components/schemas/AICourseBuyRecordDTO"
 
         """
+        _require_billing_enabled()
         discount_code = request.get_json().get("discount_code", "")
         if not discount_code:
             raise_param_error("discount_code")
@@ -244,6 +257,7 @@ def register_order_handler(app: Flask, path_prefix: str):
                                     type: object
         """
 
+        _require_billing_enabled()
         order_id = request.get_json().get("order_id", "")
         if not order_id:
             raise_param_error("order_id")
@@ -274,6 +288,7 @@ def register_order_handler(app: Flask, path_prefix: str):
                 description: 同步成功
         """
 
+        _require_billing_enabled()
         payload = request.get_json() or {}
         order_id = payload.get("order_id", "")
         if not order_id:
@@ -314,6 +329,7 @@ def register_order_handler(app: Flask, path_prefix: str):
                 description: 同步成功
         """
 
+        _require_billing_enabled()
         payload = request.get_json() or {}
         order_id = payload.get("order_id", "")
         if not order_id:
@@ -340,6 +356,7 @@ def register_order_handler(app: Flask, path_prefix: str):
                 description: Webhook已接收，具体逻辑待实现
         """
 
+        _require_billing_enabled()
         sig_header = request.headers.get("Stripe-Signature", "")
         raw_body = request.get_data() or b""
         payload, status_code = handle_stripe_webhook(app, raw_body, sig_header)

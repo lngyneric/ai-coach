@@ -16,6 +16,8 @@ import {
   resolveOperationOrdersTab,
   type OperationOrdersTab,
 } from './orderTabs';
+import { useEnvStore } from '@/c-store';
+import type { EnvStoreState } from '@/c-types/store';
 
 /**
  * t('module.operationsOrder.title')
@@ -28,9 +30,15 @@ export default function AdminOperationOrdersPage() {
   const router = useRouter();
   const searchParams = useSearchParams();
   const { isReady } = useOperatorGuard();
+  const billingEnabled = useEnvStore(
+    (state: EnvStoreState) => state.billingEnabled === 'true',
+  );
   const activeTabFromUrl = React.useMemo(
-    () => resolveOperationOrdersTab(searchParams.get('tab')),
-    [searchParams],
+    () =>
+      billingEnabled
+        ? resolveOperationOrdersTab(searchParams.get('tab'))
+        : 'learn',
+    [searchParams, billingEnabled],
   );
   const [activeTab, setActiveTab] =
     React.useState<OperationOrdersTab>(activeTabFromUrl);
@@ -81,16 +89,19 @@ export default function AdminOperationOrdersPage() {
           >
             {t('tabs.learn')}
           </TabsTrigger>
-          <TabsTrigger
-            value='credits'
-            className={ORDER_TABS_TRIGGER_CLASSNAME}
-          >
-            {t('tabs.credits')}
-          </TabsTrigger>
+          {billingEnabled ? (
+            <TabsTrigger
+              value='credits'
+              className={ORDER_TABS_TRIGGER_CLASSNAME}
+            >
+              {t('tabs.credits')}
+            </TabsTrigger>
+          ) : null}
         </TabsList>
 
         <div className='min-h-0 flex-1'>
-          {activeTab === 'learn' ? <LearnOrdersTab /> : <CreditOrdersTab />}
+          {activeTab === 'learn' ? <LearnOrdersTab /> : null}
+          {billingEnabled && activeTab === 'credits' ? <CreditOrdersTab /> : null}
         </div>
       </Tabs>
     </div>
