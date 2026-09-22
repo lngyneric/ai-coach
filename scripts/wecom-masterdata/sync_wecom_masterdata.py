@@ -121,7 +121,7 @@ def ensure_person_cols(conn, dry_run=False):
         rows = cur.fetchall()
     # DictCursor 时为 dict（key 'Field'），普通游标时为 tuple（index 0）
     cols = {r["Field"] if isinstance(r, dict) else r[0] for r in rows}
-    needed = {"email", "position_name", "dept_path", "dept_name", "sync_time"}
+    needed = {"email", "position_name", "dept_path", "dept_name", "sync_time", "roster_source"}
     missing = needed - cols
     if missing:
         col_sql = {
@@ -130,6 +130,7 @@ def ensure_person_cols(conn, dry_run=False):
             "dept_path": "JSON NULL",
             "dept_name": "VARCHAR(200) NULL",
             "sync_time": "TIMESTAMP NULL DEFAULT CURRENT_TIMESTAMP ON UPDATE CURRENT_TIMESTAMP",
+            "roster_source": "VARCHAR(32) NULL COMMENT '数据来源：smartsheet-5dept=权威表, keyword-enum=CLI关键词枚举'",
         }
         if dry_run:
             print("[dry-run] person_master 缺列，将添加: %s" % (", ".join(sorted(missing))))
@@ -189,8 +190,11 @@ def upsert_departments(conn, nodes, dry_run=False):
     return n
 
 
-def upsert_person(conn, user, dry_run=False):
-    """upsert 单个人到 person_master；返回 'inserted'/'updated'。"""
+def upsert_person(conn, user, dry_run=False, roster_source=None):
+    """upsert 单个人到 person_master；返回 'inserted'/'updated'。
+
+    roster_source 为 None 时不写该列（保留既有值）。
+    """
     userid = user.get("userid")
     if not userid:
         return None
@@ -205,19 +209,25 @@ def upsert_person(conn, user, dry_run=False):
         "dept_path": dept_path_json,
         "dept_name": primary_dept,
     }
+    src_sql = ",`roster_source`" if roster_source is not None else ""
+    src_ph = ",%s" if roster_source is not None else ""
+    src_up = ",`roster_source`=VALUES(`roster_source`)" if roster_source is not None else ""
     sql = (
-        "INSERT INTO `person_master` (`wecom_userid`,`name`,`position_name`,`email`,`dept_path`,`dept_name`) "
-        "VALUES (%s,%s,%s,%s,%s,%s) "
+        "INSERT INTO `person_master` (`wecom_userid`,`name`,`position_name`,`email`,`dept_path`,`dept_name`%s) "
+        "VALUES (%%s,%%s,%%s,%%s,%%s,%%s%s) "
         "ON DUPLICATE KEY UPDATE "
         "`name`=VALUES(`name`),`position_name`=VALUES(`position_name`),"
         "`email`=VALUES(`email`),`dept_path`=VALUES(`dept_path`),"
-        "`dept_name`=VALUES(`dept_name`),`sync_time`=NOW()"
-    )
+        "`dept_name`=VALUES(`dept_name`)%s,`sync_time`=NOW()"
+    ) % (src_sql, src_ph, src_up)
+    args = (userid, rows["name"], rows["position_name"],
+            rows["email"], rows["dept_path"], rows["dept_name"])
+    if roster_source is not None:
+        args = args + (roster_source,)
     if dry_run:
         return "dry"
     with conn.cursor() as cur:
-        cur.execute(sql, (userid, rows["name"], rows["position_name"],
-                          rows["email"], rows["dept_path"], rows["dept_name"]))
+        cur.execute(sql, args)
         if cur.rowcount == 1:
             return "inserted"
         return "updated"
@@ -287,7 +297,12 @@ def main():
     ap.add_argument("--keywords", default=None,
                     help="逗号分隔的搜索关键词（姓名/别名/邮箱）。接口要求必填，缺省时用常见姓氏枚举")
     ap.add_argument("--dry-run", action="store_true", help="只解析不写库")
+    ap.add_argument("--roster-source", default=None,
+                    help="写入 person_master.roster_source 的来源标记；缺省时 "
+                         "CLI 枚举路径记为 keyword-enum，--users-json 路径不写（保留既有值）")
     args = ap.parse_args()
+
+    roster_source = args.roster_source or (None if args.users_json else "keyword-enum")
 
     started = datetime.now()
     print("[%s] 开始同步 person_master" % started.strftime("%Y-%m-%d %H:%M:%S"))
@@ -319,7 +334,7 @@ def main():
 
         # ① + ② 组织节点收集 + ③④ 逐人处理
         for u in users:
-            r = upsert_person(conn, u, dry_run=args.dry_run)
+            r = upsert_person(conn, u, dry_run=args.dry_run, roster_source=roster_source)
             if r == "inserted":
                 inserted += 1
             elif r == "updated":
