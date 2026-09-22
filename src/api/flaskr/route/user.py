@@ -839,6 +839,9 @@ def register_user_handler(app: Flask, path_prefix: str) -> Flask:
                 raw_request_args=request.args.to_dict(flat=True),
             ),
         )
+        # 与 login_employee 一致：provider 内部只 flush，提交由路由负责。
+        # （token_store.save 用的是 begin_nested 保存点，不会提交。）
+        db.session.commit()
         resp = make_response(make_common_response(result.token))
         resp.set_cookie(
             TOKEN_COOKIE,
