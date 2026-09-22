@@ -196,6 +196,16 @@ class UserInfo(db.Model):
         default="",
         comment="Enterprise employee number",
     )
+    # 预置账号激活状态。批量建档（企微预设）产生的账号为 pending：在身份被
+    # 真实验证（企微 OAuth 通过 UserId，或生产环境 AAD 校验通过）之前不允许登录，
+    # 避免仅凭工号即可登入预置账号。
+    provision_state = Column(
+        String(16),
+        nullable=False,
+        default="active",
+        comment="Provision state: active=可登录, pending=预置未激活",
+        index=True,
+    )
     api_key = Column(
         String(64),
         nullable=False,

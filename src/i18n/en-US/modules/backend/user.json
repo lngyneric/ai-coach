@@ -1,6 +1,7 @@
 {
   "__namespace__": "server.user",
   "__flat__": {
+    "accountNotActivated": "This account is pre-provisioned but not activated yet. Please sign in via WeCom to activate it.",
     "checkCodeError": "Image captcha is incorrect",
     "checkCodeExpired": "Image captcha expired",
     "emailSendFailed": "Email send failed",

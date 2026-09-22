@@ -55,6 +55,14 @@ CREDENTIAL_STATE_VERIFIED = 1202
 SYNTHETIC_EMAIL_DOMAIN = "sysmex.internal"
 DEFAULT_LANGUAGE = "zh"
 
+# 预置账号默认未激活：在身份被真实验证前不允许登录。
+#   - 企微 OAuth 回调命中 UserId → 激活（WeComAuthProvider 负责）
+#   - 生产环境 AAD 校验通过 → 激活（EmployeeAuthProvider 负责）
+#   - dev 下 AAD_BYPASS 生效（无真实校验）→ 保持 pending，拒绝登入
+# 这样即便 OAuth 环节尚未就绪（缺域名/可见范围），预置账号也不会被人用
+# 工号直接登入。
+PROVISION_STATE_PENDING = "pending"
+
 
 def gen_id() -> str:
     """与 flaskr/util/uuid.generate_id 一致：uuid4 去连字符（32 位）。"""
@@ -134,8 +142,8 @@ def provision_one(conn, person: dict, dry_run: bool) -> dict:
             "INSERT INTO `user_users` "
             "(`user_bid`,`user_identify`,`nickname`,`avatar`,`language`,`state`,"
             " `is_creator`,`deleted`,`created_at`,`updated_at`,`api_key`,`is_operator`,"
-            " `employee_no`,`department`,`position_name`,`is_certifier`) "
-            "VALUES (%s,%s,%s,'',%s,%s,0,0,%s,%s,'',0,%s,%s,%s,0)",
+            " `employee_no`,`department`,`position_name`,`is_certifier`,`provision_state`) "
+            "VALUES (%s,%s,%s,'',%s,%s,0,0,%s,%s,'',0,%s,%s,%s,0,%s)",
             (
                 user_bid,
                 emp_no,
@@ -147,6 +155,7 @@ def provision_one(conn, person: dict, dry_run: bool) -> dict:
                 emp_no,
                 person["dept_name"],
                 person["position_name"],
+                PROVISION_STATE_PENDING,
             ),
         )
 

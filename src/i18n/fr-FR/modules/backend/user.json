@@ -1,6 +1,7 @@
 {
   "__namespace__": "server.user",
   "__flat__": {
+    "accountNotActivated": "Ce compte est pre-provisionne mais non active. Veuillez vous connecter via WeCom pour l'activer.",
     "checkCodeError": "Le captcha d'image est incorrect",
     "checkCodeExpired": "Le captcha d'image a expiré",
     "emailSendFailed": "Échec de l'envoi de l'e-mail",

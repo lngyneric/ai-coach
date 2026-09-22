@@ -597,6 +597,42 @@ def update_user_entity_fields(
     return entity
 
 
+# 预置账号激活状态：批量建档（企微预设）产生的账号为 pending，
+# 只有在身份被真实验证后才转 active。详见 provision_users.py 与 auth providers。
+PROVISION_STATE_ACTIVE = "active"
+PROVISION_STATE_PENDING = "pending"
+
+
+def get_provision_state(user_bid: str) -> str:
+    """读取账号的预置激活状态。
+
+    取不到用户（或列无值）时按 active 处理，保证存量账号行为不变。
+    """
+    if not user_bid:
+        return PROVISION_STATE_ACTIVE
+    entity = get_user_entity_by_bid(user_bid, include_deleted=True)
+    if entity is None:
+        return PROVISION_STATE_ACTIVE
+    return (getattr(entity, "provision_state", None) or "").strip() or PROVISION_STATE_ACTIVE
+
+
+def activate_provisioned_account(user_bid: str) -> bool:
+    """把 pending 的预置账号置为 active；返回是否发生了变更。
+
+    幂等：已 active 时直接返回 False。
+    """
+    if not user_bid:
+        return False
+    entity = get_user_entity_by_bid(user_bid, include_deleted=True)
+    if entity is None:
+        return False
+    if (getattr(entity, "provision_state", None) or "").strip() == PROVISION_STATE_PENDING:
+        entity.provision_state = PROVISION_STATE_ACTIVE
+        db.session.flush()
+        return True
+    return False
+
+
 def upsert_user_entity(
     *,
     user_bid: str,
