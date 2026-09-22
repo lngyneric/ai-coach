@@ -488,6 +488,11 @@ def ensure_user_for_identifier(
             if key
             in {"identify", "nickname", "avatar", "language", "state", "birthday"}
         }
+        # 已有昵称时不覆盖：employee / wecom provider 传入的 nickname 是工号
+        # 或企微 UserId，若每次登录都写入会把真人姓名冲掉（实测「凌云」→「sch00068」）。
+        # 仅在昵称为空时补写。
+        if (getattr(entity, "nickname", "") or "").strip():
+            update_defaults.pop("nickname", None)
         if update_defaults:
             update_user_entity_fields(entity, **update_defaults)
         db.session.flush()
