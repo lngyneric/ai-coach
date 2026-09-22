@@ -23,6 +23,7 @@ from flaskr.service.user.auth.base import (
 from flaskr.service.user.auth.factory import has_provider, register_provider
 from flaskr.service.user.consts import USER_STATE_REGISTERED
 from flaskr.service.user.repository import (
+    activate_provisioned_account,
     build_user_info_from_aggregate,
     ensure_user_for_identifier,
     load_user_aggregate,
@@ -181,6 +182,14 @@ class WeComAuthProvider(AuthProvider):
                 "state": USER_STATE_REGISTERED,
             },
         )
+
+        # 企微 OAuth 通过（UserId 命中）即证明身份，可激活批量建档产生的预置账号。
+        if activate_provisioned_account(aggregate.user_bid):
+            logger.info(
+                "企微 OAuth 激活预置账号 user_bid=%s wecom_userid=%s",
+                aggregate.user_bid,
+                subject_id,
+            )
 
         # Upsert the wecom credential
         credential = upsert_credential(

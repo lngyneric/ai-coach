@@ -23,8 +23,11 @@ from flaskr.service.user.auth.factory import (
     register_provider,
 )
 from flaskr.service.user.repository import (
+    PROVISION_STATE_PENDING,
+    activate_provisioned_account,
     build_user_info_from_aggregate,
     ensure_user_for_identifier,
+    get_provision_state,
     load_user_aggregate,
     upsert_credential,
 )
@@ -160,6 +163,25 @@ class EmployeeAuthProvider(AuthProvider):
                 "state": USER_STATE_REGISTERED,
             },
         )
+
+        # 预置账号（批量建档产生的 pending 账号）不允许仅凭工号登入：
+        #   - dev/测试下 AAD_BYPASS 会跳过真实校验，无法证明身份 → 拒绝登入；
+        #   - 生产环境 AAD 校验通过才视为身份已验 → 激活并放行。
+        if get_provision_state(aggregate.user_bid) == PROVISION_STATE_PENDING:
+            if aad_bypass:
+                logger.warning(
+                    "拒绝登入预置未激活账号 user_bid=%s employee_no=%s："
+                    "AAD_BYPASS 生效，无可信的身份校验",
+                    aggregate.user_bid,
+                    employee_no,
+                )
+                raise_error("server.user.accountNotActivated")
+            if activate_provisioned_account(aggregate.user_bid):
+                logger.info(
+                    "预置账号经 AAD 校验通过并激活 user_bid=%s employee_no=%s",
+                    aggregate.user_bid,
+                    employee_no,
+                )
 
         # Ensure an email credential exists for the employee
         # (the frontend initUser() checks mobile || email for auth status)

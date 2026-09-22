@@ -1,6 +1,7 @@
 {
   "__namespace__": "server.user",
   "__flat__": {
+    "accountNotActivated": "该账号为预置账号，尚未激活。请通过企业微信登录以激活。",
     "checkCodeError": "图形验证码错误",
     "checkCodeExpired": "图形验证码已过期",
     "emailSendFailed": "邮件发送失败",
