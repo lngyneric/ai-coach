@@ -664,6 +664,9 @@ export default function ChatPage() {
     })),
   );
 
+  // 内训站点：计费关闭时不渲染任何支付弹窗（双保险，触发点已在 hooks 内拦截）
+  const billingEnabled = useEnvStore(s => s.billingEnabled);
+
   const onPurchased = useCallback(() => {
     reloadTree();
   }, [reloadTree]);
@@ -878,7 +881,7 @@ export default function ChatPage() {
           />
         ) : null}
 
-        {payModalOpen && !inMiniProgram() && mobileStyle ? (
+        {payModalOpen && billingEnabled && !inMiniProgram() && mobileStyle ? (
           <PayModalM
             open={payModalOpen}
             onCancel={_onPayModalCancel}
@@ -888,7 +891,7 @@ export default function ChatPage() {
           />
         ) : null}
 
-        {payModalOpen && !inMiniProgram() && !mobileStyle ? (
+        {payModalOpen && billingEnabled && !inMiniProgram() && !mobileStyle ? (
           <PayModal
             open={payModalOpen}
             onCancel={_onPayModalCancel}

@@ -1,5 +1,6 @@
 from flask import Flask, jsonify, make_response, request
 
+from flaskr.service.billing.primitives import is_billing_enabled
 from flaskr.service.billing.webhooks import (
     apply_billing_native_notification,
     handle_billing_pingxx_webhook,
@@ -18,6 +19,8 @@ def register_callback_handler(app: Flask, path_prefix: str):
     @app.route(path_prefix + "/pingxx-callback", methods=["POST"])
     @bypass_token_validation
     def pingxx_callback():
+        if not is_billing_enabled():
+            return _billing_disabled_response(app, "pingxx")
         body = request.get_json()
         app.logger.info("pingxx-callback: %s", body)
         type = body.get("type", "")
@@ -38,6 +41,8 @@ def register_callback_handler(app: Flask, path_prefix: str):
     @app.route(path_prefix + "/alipay-notify", methods=["POST"])
     @bypass_token_validation
     def alipay_notify():
+        if not is_billing_enabled():
+            return _billing_disabled_response(app, "alipay")
         form_payload = request.form.to_dict(flat=True)
         app.logger.info("alipay-notify: %s", form_payload)
         provider = get_payment_provider("alipay")
@@ -75,6 +80,8 @@ def register_callback_handler(app: Flask, path_prefix: str):
     @app.route(path_prefix + "/wechatpay-notify", methods=["POST"])
     @bypass_token_validation
     def wechatpay_notify():
+        if not is_billing_enabled():
+            return _billing_disabled_response(app, "wechatpay")
         raw_body = request.get_data() or b""
         app.logger.info("wechatpay-notify: %s", raw_body)
         provider = get_payment_provider("wechatpay")
@@ -117,3 +124,18 @@ def _plain_text_response(value: str):
     response = make_response(value)
     response.mimetype = "text/plain"
     return response
+
+
+def _billing_disabled_response(app: Flask, channel: str):
+    """计费停用时对支付回调的拒绝响应。
+
+    刻意不用 raise_error：那会返回 500，支付平台判为可重试错误并持续重推，
+    形成重试风暴。这里返回 403 + 各平台自己的失败形态，平台停止重试并记录失败。
+    同时打 ERROR 日志——内训站点本不该出现支付回调，出现即说明有异常。
+    """
+    app.logger.error(
+        "收到 %s 支付回调，但计费已停用（BILL_ENABLED=false），已拒绝入账", channel
+    )
+    if channel == "wechatpay":
+        return jsonify({"code": "FAIL", "message": "billing disabled"}), 403
+    return _plain_text_response("billing disabled"), 403

@@ -72,14 +72,18 @@ export const useLessonTree = () => {
         lesson.type === LEARNING_PERMISSION.NORMAL &&
         !lesson.is_paid
       ) {
-        openPayModal({
-          type: lesson.type,
-          payload: {
-            chapterId,
-            lessonId: lesson.id,
-          },
-        });
-        return false;
+        // 内训站点：计费停用时不弹支付，直接放行。
+        // 真正付费的内容仍由后端 PaidException 兜底拦截。
+        if (useEnvStore.getState().billingEnabled === 'true') {
+          openPayModal({
+            type: lesson.type,
+            payload: {
+              chapterId,
+              lessonId: lesson.id,
+            },
+          });
+          return false;
+        }
       }
 
       return true;

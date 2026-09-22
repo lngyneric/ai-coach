@@ -376,6 +376,10 @@ export default function AdminOperationUsersPage() {
   const currencySymbol = useEnvStore(
     (state: EnvStoreState) => state.currencySymbol || '',
   );
+  // 内训站点：计费关闭时不展示积分列、不提供额度发放。
+  const billingEnabled = useEnvStore(
+    (state: EnvStoreState) => state.billingEnabled === 'true',
+  );
   const defaultUserName = React.useMemo(
     () => t('module.user.defaultUserName'),
     [t],
@@ -1268,20 +1272,24 @@ export default function AdminOperationUsersPage() {
                       {tOperationsUsers('table.totalPaidAmount')}
                       {renderResizeHandle('totalPaidAmount')}
                     </TableHead>
-                    <TableHead
-                      className={ADMIN_TABLE_HEADER_CELL_CENTER_CLASS}
-                      style={getColumnStyle('availableCredits')}
-                    >
-                      {tOperationsUsers('table.availableCredits')}
-                      {renderResizeHandle('availableCredits')}
-                    </TableHead>
-                    <TableHead
-                      className={ADMIN_TABLE_HEADER_CELL_CENTER_CLASS}
-                      style={getColumnStyle('creditsExpireAt')}
-                    >
-                      {tOperationsUsers('table.creditsExpireAt')}
-                      {renderResizeHandle('creditsExpireAt')}
-                    </TableHead>
+                    {billingEnabled ? (
+                      <TableHead
+                        className={ADMIN_TABLE_HEADER_CELL_CENTER_CLASS}
+                        style={getColumnStyle('availableCredits')}
+                      >
+                        {tOperationsUsers('table.availableCredits')}
+                        {renderResizeHandle('availableCredits')}
+                      </TableHead>
+                    ) : null}
+                    {billingEnabled ? (
+                      <TableHead
+                        className={ADMIN_TABLE_HEADER_CELL_CENTER_CLASS}
+                        style={getColumnStyle('creditsExpireAt')}
+                      >
+                        {tOperationsUsers('table.creditsExpireAt')}
+                        {renderResizeHandle('creditsExpireAt')}
+                      </TableHead>
+                    ) : null}
                     <TableHead
                       className={ADMIN_TABLE_HEADER_CELL_CENTER_CLASS}
                       style={getColumnStyle('lastLoginAt')}
@@ -1449,41 +1457,45 @@ export default function AdminOperationUsersPage() {
                             `${currencySymbol}${user.total_paid_amount || '0'}`,
                           )}
                         </TableCell>
-                        <TableCell
-                          className='border-r border-border last:border-r-0 whitespace-nowrap overflow-hidden text-ellipsis text-center'
-                          style={getColumnStyle('availableCredits')}
-                        >
-                          {userDetailUrl && user.available_credits ? (
-                            <Link
-                              href={`${userDetailUrl}#credits`}
-                              className='text-primary transition-colors hover:text-primary/80 hover:underline'
-                            >
-                              {renderTooltipText(
+                        {billingEnabled ? (
+                          <TableCell
+                            className='border-r border-border last:border-r-0 whitespace-nowrap overflow-hidden text-ellipsis text-center'
+                            style={getColumnStyle('availableCredits')}
+                          >
+                            {userDetailUrl && user.available_credits ? (
+                              <Link
+                                href={`${userDetailUrl}#credits`}
+                                className='text-primary transition-colors hover:text-primary/80 hover:underline'
+                              >
+                                {renderTooltipText(
+                                  user.available_credits
+                                    ? formatAdminCredits(
+                                        Number(user.available_credits),
+                                        i18n.language,
+                                      )
+                                    : EMPTY_STATE_LABEL,
+                                )}
+                              </Link>
+                            ) : (
+                              renderTooltipText(
                                 user.available_credits
                                   ? formatAdminCredits(
                                       Number(user.available_credits),
                                       i18n.language,
                                     )
                                   : EMPTY_STATE_LABEL,
-                              )}
-                            </Link>
-                          ) : (
-                            renderTooltipText(
-                              user.available_credits
-                                ? formatAdminCredits(
-                                    Number(user.available_credits),
-                                    i18n.language,
-                                  )
-                                : EMPTY_STATE_LABEL,
-                            )
-                          )}
-                        </TableCell>
-                        <TableCell
-                          className='border-r border-border last:border-r-0 whitespace-nowrap overflow-hidden text-ellipsis text-center'
-                          style={getColumnStyle('creditsExpireAt')}
-                        >
-                          {renderTooltipText(resolveCreditsExpireAtLabel(user))}
-                        </TableCell>
+                              )
+                            )}
+                          </TableCell>
+                        ) : null}
+                        {billingEnabled ? (
+                          <TableCell
+                            className='border-r border-border last:border-r-0 whitespace-nowrap overflow-hidden text-ellipsis text-center'
+                            style={getColumnStyle('creditsExpireAt')}
+                          >
+                            {renderTooltipText(resolveCreditsExpireAtLabel(user))}
+                          </TableCell>
+                        ) : null}
                         <TableCell
                           className='border-r border-border last:border-r-0 whitespace-nowrap overflow-hidden text-ellipsis text-center'
                           style={getColumnStyle('lastLoginAt')}
@@ -1540,11 +1552,13 @@ export default function AdminOperationUsersPage() {
                                 </button>
                               </DropdownMenuTrigger>
                               <DropdownMenuContent align='center'>
-                                <DropdownMenuItem
-                                  onClick={() => setGrantDialogUser(user)}
-                                >
-                                  {tOperationsUsers('actions.grantCredits')}
-                                </DropdownMenuItem>
+                                {billingEnabled ? (
+                                  <DropdownMenuItem
+                                    onClick={() => setGrantDialogUser(user)}
+                                  >
+                                    {tOperationsUsers('actions.grantCredits')}
+                                  </DropdownMenuItem>
+                                ) : null}
                               </DropdownMenuContent>
                             </DropdownMenu>
                           </div>
@@ -1695,16 +1709,18 @@ export default function AdminOperationUsersPage() {
               </div>
             </DialogContent>
           </Dialog>
-          <UserCreditGrantDialog
-            open={Boolean(grantDialogUser)}
-            user={grantDialogUser}
-            onOpenChange={nextOpen => {
-              if (!nextOpen) {
-                setGrantDialogUser(null);
-              }
-            }}
-            onGranted={handleGrantSuccess}
-          />
+          {billingEnabled ? (
+            <UserCreditGrantDialog
+              open={Boolean(grantDialogUser)}
+              user={grantDialogUser}
+              onOpenChange={nextOpen => {
+                if (!nextOpen) {
+                  setGrantDialogUser(null);
+                }
+              }}
+              onGranted={handleGrantSuccess}
+            />
+          ) : null}
         </div>
       </TooltipProvider>
     </div>

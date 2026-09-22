@@ -13,8 +13,12 @@ describe('buildAdminMenuItems', () => {
     ]);
   });
 
-  test('includes operations + orders for operators', () => {
-    const menuItems = buildAdminMenuItems({ t, isOperator: true });
+  test('includes operations + orders for operators when billing enabled', () => {
+    const menuItems = buildAdminMenuItems({
+      t,
+      isOperator: true,
+      billingEnabled: true,
+    });
 
     expect(menuItems.map(item => item.href)).toEqual([
       '/admin',
@@ -117,5 +121,19 @@ describe('buildAdminMenuItems', () => {
       '/admin/dashboard',
       '/admin/ai',
     ]);
+  });
+
+  test('hides orders + operations-order when billing disabled', () => {
+    const menuItems = buildAdminMenuItems({
+      t,
+      isOperator: true,
+      billingEnabled: false,
+    });
+
+    expect(menuItems.map(item => item.id)).not.toContain('orders');
+    const operations = menuItems.find(item => item.id === 'operations');
+    expect(operations?.children?.map(c => c.id)).not.toContain(
+      'operations-order',
+    );
   });
 });

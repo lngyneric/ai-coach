@@ -13,6 +13,7 @@ import imgLearningCompletedSelected from '@/c-assets/newchat/light/icon16-learni
 import imgLearningCompleted from '@/c-assets/newchat/light/icon16-learning-completed.png';
 import { LEARNING_PERMISSION } from '@/c-api/studyV2';
 import { useUserStore } from '@/store';
+import { useEnvStore } from '@/c-store/envStore';
 import { useCourseStore } from '@/c-store/useCourseStore';
 import { useShallow } from 'zustand/react/shallow';
 import { cn } from '@/lib/utils';
@@ -88,7 +89,13 @@ export const CourseSection = ({
       return;
     }
 
-    if (!previewMode && type === LEARNING_PERMISSION.NORMAL && !is_paid) {
+    if (
+      !previewMode &&
+      type === LEARNING_PERMISSION.NORMAL &&
+      !is_paid &&
+      // 内训站点：计费停用时不弹支付
+      useEnvStore.getState().billingEnabled === 'true'
+    ) {
       openPayModal({
         type,
         payload: {
