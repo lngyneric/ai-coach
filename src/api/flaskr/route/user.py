@@ -7,8 +7,14 @@ from functools import wraps
 GUEST_TEMP_ID_COOKIE = "guest_temp_id"
 GUEST_TEMP_ID_MAX_AGE = 365 * 24 * 60 * 60
 
+# 登录态 token 的 cookie 名：后端 validate_token 的读取顺序是
+# cookie("token") → query("token") → header("Token")，此处沿用同名。
+TOKEN_COOKIE = "token"
+
 from flaskr.service.common.models import raise_param_error, raise_error
 from flaskr.service.user.consts import CREDENTIAL_STATE_VERIFIED
+from flaskr.service.user.auth.base import OAuthCallbackRequest
+from flaskr.service.user.auth.factory import get_provider
 from flaskr.service.user.password_utils import (
     hash_password,
     verify_password,
@@ -799,6 +805,56 @@ def register_user_handler(app: Flask, path_prefix: str) -> Flask:
         if not feedback:
             raise_param_error("feedback")
         return make_common_response(submit_feedback(app, user_id, feedback, mail))
+
+    # -------- WeCom (企业微信) OAuth routes --------
+    #
+    # 前端契约（cook-web/src/app/wecom/learn/[id]/page.tsx）：
+    #   1) GET /api/user/oauth/wecom?redirect_uri=<uri>
+    #        → { code:0, data:{ authorize_url, state, redirect_uri } }，前端跳转
+    #   2) 企微回调 redirect_uri?code=..&state=..
+    #   3) GET /api/user/oauth/wecom/callback?code=..&state=..
+    #        → 服务端下发 token cookie，前端刷新后即为登录态
+
+    @app.route(path_prefix + "/oauth/wecom", methods=["GET"])
+    @bypass_token_validation
+    def wecom_oauth_begin():
+        """返回企微网页授权链接（scope=snsapi_base，静默授权）。"""
+        redirect_uri = request.args.get("redirect_uri") or None
+        provider = get_provider("wecom")
+        payload = provider.begin_oauth(app, {"redirect_uri": redirect_uri})
+        return make_response(make_common_response(payload))
+
+    @app.route(path_prefix + "/oauth/wecom/callback", methods=["GET"])
+    @bypass_token_validation
+    def wecom_oauth_callback():
+        """企微授权回调：用 code 换 UserId，落到预置账号并下发 token。"""
+        code = request.args.get("code") or None
+        state = request.args.get("state") or None
+        provider = get_provider("wecom")
+        result = provider.handle_oauth_callback(
+            app,
+            OAuthCallbackRequest(
+                code=code,
+                state=state,
+                raw_request_args=request.args.to_dict(flat=True),
+            ),
+        )
+        resp = make_response(make_common_response(result.token))
+        resp.set_cookie(
+            TOKEN_COOKIE,
+            result.token.token,
+            max_age=app.config["TOKEN_EXPIRE_TIME"],
+            path="/",
+            httponly=False,
+            samesite="Lax",
+            secure=bool(request.is_secure),
+        )
+        app.logger.info(
+            "wecom oauth callback ok user_bid=%s is_new_user=%s",
+            result.metadata.get("user_bid"),
+            result.is_new_user,
+        )
+        return resp
 
     # -------- Employee (AAD) login route --------
 

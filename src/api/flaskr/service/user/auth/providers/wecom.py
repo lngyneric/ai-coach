@@ -76,11 +76,17 @@ def _get_access_token(app: Flask) -> str:
 
 
 def _build_wecom_oauth_url(app: Flask, state: str, redirect_uri: str) -> str:
-    """Build the WeCom OAuth authorize URL."""
+    """Build the WeCom OAuth authorize URL.
+
+    ``agentid`` 按企微文档「建议填上该参数」携带；缺失时不影响 snsapi_base，
+    但带上后工作台/聊天工具栏内发起的请求可触发接口许可自动激活。
+    """
     corpid = app.config.get("WECOM_CORP_ID", "")
+    agentid = str(app.config.get("WECOM_AGENT_ID", "") or "").strip()
     from urllib.parse import quote
 
     encoded_redirect = quote(redirect_uri, safe="")
+    agent_part = f"&agentid={agentid}" if agentid else ""
     return (
         f"{WECOM_AUTHORIZE_URL}"
         f"?appid={corpid}"
@@ -88,6 +94,7 @@ def _build_wecom_oauth_url(app: Flask, state: str, redirect_uri: str) -> str:
         f"&response_type=code"
         f"&scope=snsapi_base"
         f"&state={state}"
+        f"{agent_part}"
         f"#wechat_redirect"
     )
 
@@ -151,12 +158,17 @@ class WeComAuthProvider(AuthProvider):
             logger.warning("WeCom userinfo failed: %s", data)
             raise_error("server.user.invalidCredentials")
 
-        user_id = data.get("UserId", "")
-        # OpenId is available for apps in WeChat ecosystem, UserId is internal
-        subject_id = user_id or data.get("OpenId", "")
-        if not subject_id:
-            logger.error("WeCom OAuth returned no UserId or OpenId: %s", data)
+        user_id = str(data.get("UserId", "") or "").strip()
+        if not user_id:
+            # 成员不在应用可见范围时，企微不返回 UserId（只给 OpenId）。
+            # 此处必须显式失败：若退回 OpenId 当作 subject，会以 (wecom, OpenId)
+            # 建出一个新账号，绕过批量建档预置的 (wecom, UserId) 凭据，
+            # 造成同一人两个账号。
+            logger.error(
+                "WeCom OAuth 未返回 UserId（成员可能不在应用可见范围内）: %s", data
+            )
             raise_error("server.user.invalidCredentials")
+        subject_id = user_id
 
         # Map to local user — UserId is the canonical subject
         aggregate, created = ensure_user_for_identifier(
