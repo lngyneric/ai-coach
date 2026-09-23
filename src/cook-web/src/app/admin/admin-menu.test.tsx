@@ -123,7 +123,7 @@ describe('buildAdminMenuItems', () => {
     ]);
   });
 
-  test('hides orders + operations-order when billing disabled', () => {
+  test('hides orders, operations-order and promotions when billing disabled', () => {
     const menuItems = buildAdminMenuItems({
       t,
       isOperator: true,
@@ -132,8 +132,9 @@ describe('buildAdminMenuItems', () => {
 
     expect(menuItems.map(item => item.id)).not.toContain('orders');
     const operations = menuItems.find(item => item.id === 'operations');
-    expect(operations?.children?.map(c => c.id)).not.toContain(
-      'operations-order',
-    );
+    const childIds = operations?.children?.map(c => c.id);
+    expect(childIds).not.toContain('operations-order');
+    // 促销依附订单流程，计费关闭时一并隐藏（内训站点）。
+    expect(childIds).not.toContain('operations-promotion');
   });
 });

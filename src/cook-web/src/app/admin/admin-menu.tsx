@@ -34,7 +34,8 @@ type BuildAdminMenuItemsOptions = {
   canViewDeptOnly?: boolean;
   canCreateSession?: boolean;
   /**
-   * 计费/支付总闸。内训站点关闭时隐藏所有订单与运营-订单入口。
+   * 计费/支付总闸。内训站点关闭时隐藏所有订单、运营-订单与促销入口
+   * （促销/优惠券依附于订单流程，无计费即不可用）。
    */
   billingEnabled?: boolean;
 };
@@ -137,11 +138,15 @@ export const buildAdminMenuItems = ({
               },
             ]
           : []),
-        {
-          id: 'operations-promotion',
-          label: t('common.core.promotionManagement'),
-          href: '/admin/operations/promotions',
-        },
+        ...(billingEnabled
+          ? [
+              {
+                id: 'operations-promotion',
+                label: t('common.core.promotionManagement'),
+                href: '/admin/operations/promotions',
+              },
+            ]
+          : []),
         {
           id: 'operations-permissions',
           label: '权限示例',
