@@ -63,7 +63,9 @@ test('coach 学员分析报告页（4 卡 + 面谈时间线 + AI 建议 + progre
   });
   await expect(page.getByText(/的带教分析报告/)).toBeVisible({ timeout: 30_000 });
   for (const label of ['阶段完成', '验收通过率', '面谈次数', '最新阶段总分']) {
-    await expect(page.getByText(label)).toBeVisible();
+    // exact 匹配统计卡标题：页面上「后端暂无…」提示与培训总结按钮也含这些文案，
+    // 非 exact 会触发 strict mode violation。
+    await expect(page.getByText(label, { exact: true })).toBeVisible();
   }
   await expect(page.getByRole('heading', { name: '面谈时间线' })).toBeVisible();
   // AI 建议卡（真实后端，LLM 或规则降级；放宽等待）
