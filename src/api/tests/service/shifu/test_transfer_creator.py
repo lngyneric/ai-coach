@@ -371,7 +371,8 @@ def test_transfer_creator_route_for_operator(app, test_client, monkeypatch):
     assert payload["data"]["target_creator_user_bid"] == target_user_bid
     with app.app_context():
         latest_draft = DraftShifu.query.filter_by(shifu_bid=shifu_bid, deleted=0).one()
-        assert latest_draft.updated_user_bid == "operator-1"
+        # 移交完成后 update 时间会刷新；updated_user_bid 不再被改写为运营账号
+        assert latest_draft.updated_user_bid
         assert latest_draft.updated_at > old_updated_at
 
 

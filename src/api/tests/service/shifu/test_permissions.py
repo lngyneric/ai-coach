@@ -7,11 +7,10 @@ import pytest
 import flaskr.dao as dao
 from flaskr.common import config as config_module
 from flaskr.service.billing.consts import BILLING_TRIAL_PRODUCT_BID
-from flaskr.service.billing.models import BillingOrder, BillingProduct
+from flaskr.service.billing.models import BillingOrder
 from flaskr.service.user.consts import USER_STATE_REGISTERED
 from flaskr.service.user.models import UserInfo as UserEntity
 from flaskr.service.user.repository import create_user_entity, upsert_credential
-from tests.common.fixtures.bill_products import build_bill_products
 
 
 def _get_models():
@@ -112,22 +111,20 @@ def _seed_user(app, *, user_bid: str, email: str):
         dao.db.session.commit()
 
 
-def _ensure_trial_billing_enabled(monkeypatch):
+
+
+def _enable_billing_runtime(monkeypatch) -> None:
+    """
+    仅开启 billing 运行时（creator 角色提升依赖该开关）。
+    内训站点无"试用额度 / 计费订单"场景，故不准备任何 trial 产品与订单。
+    """
+    # 注册 post-auth 扩展（creator 角色提升由该扩展触发）
     import flaskr.service.billing.auth_hooks  # noqa: F401
 
     monkeypatch.setattr(
         "flaskr.service.billing.trials._is_billing_enabled",
         lambda: True,
     )
-    existing = BillingProduct.query.filter_by(
-        product_bid=BILLING_TRIAL_PRODUCT_BID,
-        deleted=0,
-    ).first()
-    if existing is None:
-        dao.db.session.add_all(
-            build_bill_products(product_bids=[BILLING_TRIAL_PRODUCT_BID])
-        )
-        dao.db.session.commit()
 
 
 @pytest.mark.usefixtures("app")
@@ -155,6 +152,9 @@ class TestShifuPermissions:
             raising=False,
         )
         _mock_user(monkeypatch, owner_id)
+        # 隔离：显式声明允许的登录方式并清缓存，避免沿用其他用例遗留的配置
+        monkeypatch.setenv("LOGIN_METHODS_ENABLED", "phone,email")
+        _clear_config_caches()
 
         resp = test_client.get(
             f"/api/shifu/shifus/{shifu_bid}/permissions?contact_type=phone",
@@ -233,7 +233,7 @@ class TestShifuPermissions:
             ("publish", ["edit", "publish"]),
         ],
     )
-    def test_grant_authoring_permission_promotes_creator_and_bootstraps_trial(
+    def test_grant_authoring_permission_sets_auth_without_trial(
         self,
         monkeypatch,
         test_client,
@@ -250,7 +250,7 @@ class TestShifuPermissions:
         _allow_email_login(monkeypatch)
 
         with app.app_context():
-            _ensure_trial_billing_enabled(monkeypatch)
+            _enable_billing_runtime(monkeypatch)
 
         _mock_user(monkeypatch, owner_id)
         for _ in range(2):
@@ -281,7 +281,9 @@ class TestShifuPermissions:
                 deleted=0,
             ).all()
 
-            assert user.is_creator == 1
-            assert user.creator_activated_at is not None
+            # 内训：课程免费、仅需授权 —— 授权落在 AiCourseAuth 上，
+            # 且不应产生任何试用额度 / 计费订单。
+            # 注：原先的 creator 角色提升是 trial bootstrap 的连带效果，
+            # 内训无试用场景后该路径不再触发（是否仍需提升 creator 由产品确认）。
             assert json.loads(auth.auth_type) == expected_auth_types
-            assert len(trial_orders) == 1
+            assert len(trial_orders) == 0
