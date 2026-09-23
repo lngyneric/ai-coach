@@ -3274,7 +3274,8 @@ def test_audio_segments_stick_to_first_target_element_without_av_contract(app):
         assert "Intro visual" not in (follow_up_html.content_text or "")
         assert follow_up_html.audio_segments == []
         assert follow_up_html.audio_url == ""
-        assert follow_up_html.is_speakable is False
+        # HTML 已可朗读（可朗读内容 → is_speakable True）
+        assert follow_up_html.is_speakable is True
         assert any(
             item.is_new
             and item.element_bid == intro_html.element_bid
@@ -3779,7 +3780,8 @@ def test_listen_adapter_binds_buffered_audio_to_text_after_html(app):
         html_element = next(item for item in html_elements if not item.is_final)
         assert html_element.audio_segments == []
         assert html_element.audio_url == ""
-        assert html_element.is_speakable is False
+        # HTML 已可朗读（可朗读内容 → is_speakable True）
+        assert html_element.is_speakable is True
         assert all(item.audio_segments == [] for item in html_elements)
         assert all(item.audio_url == "" for item in html_elements)
 
@@ -4168,7 +4170,8 @@ def test_html_only_stream_does_not_absorb_audio_without_av_contract(app):
         assert text_elements == []
         assert all(item.audio_segments == [] for item in html_elements)
         assert all(item.audio_url == "" for item in html_elements)
-        assert all(item.is_speakable is False for item in html_elements)
+        # HTML 已可朗读（有可朗读内容时 is_speakable 为 True）
+        assert all(item.is_speakable is True for item in html_elements)
 
         persisted_rows = (
             LearnGeneratedElement.query.filter(

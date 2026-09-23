@@ -206,6 +206,7 @@ def test_runtime_config_dto_json_uses_public_aliases() -> None:
         googleOauthRedirect="https://example.com/login/google-callback",
         homeUrl="/",
         contactUsUrl="https://ai-shifu.cn/contact.html",
+        brandName="ai-shifu",
         currencySymbol="¥",
         legalUrls=RuntimeLegalUrlsDTO(
             agreement=RuntimeLocalizedUrlDTO(

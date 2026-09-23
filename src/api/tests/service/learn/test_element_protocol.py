@@ -1134,7 +1134,7 @@ def test_legacy_element_type_deserialized_to_new_enum(app):
     assert result.elements[0].is_marker is True
 
 
-def test_non_text_elements_are_never_speakable_in_records(app):
+def test_html_elements_with_speakable_content_are_speakable_in_records(app):
     """Non-text elements must normalize is_speakable to false."""
     _require_app(app)
     import json
@@ -1209,7 +1209,9 @@ def test_non_text_elements_are_never_speakable_in_records(app):
     assert result.elements[0].element_type == ElementType.HTML
     assert result.elements[0].is_renderable is True
     assert result.elements[0].is_marker is True
-    assert result.elements[0].is_speakable is False
+    # HTML 元素已纳入可朗读范围（listen_element_types._default_is_speakable），
+    # 存储标记 is_speakable=1 时记录层返回 True。
+    assert result.elements[0].is_speakable is True
 
 
 def test_interaction_elements_backfill_user_input_from_generated_blocks(app):
@@ -2799,7 +2801,8 @@ class TestElementChangeTypeSemantics:
             assert text_events == []
             assert all(item.audio_segments == [] for item in html_events)
             assert all(item.audio_url == "" for item in html_events)
-            assert all(item.is_speakable is False for item in html_events)
+            # HTML 已可朗读（有可朗读内容时 is_speakable 为 True）
+            assert all(item.is_speakable is True for item in html_events)
 
     def test_chunked_html_table_stream_stays_single_html_element(self, adapter_app):
         from flaskr.service.learn.learn_dtos import (
