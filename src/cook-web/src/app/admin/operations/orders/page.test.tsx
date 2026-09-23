@@ -4,6 +4,7 @@ import AdminOperationOrdersPage from './page';
 
 let mockSearchParamsValue = '';
 const mockReplace = jest.fn();
+let mockBillingEnabled = 'true';
 const LEARN_TAB_CONTENT = 'learn-orders-tab';
 const CREDIT_TAB_CONTENT = 'credit-orders-tab';
 
@@ -34,6 +35,12 @@ jest.mock('../useOperatorGuard', () => ({
 jest.mock('@/components/loading', () => ({
   __esModule: true,
   default: () => <div data-testid='loading-indicator' />,
+}));
+
+jest.mock('@/c-store', () => ({
+  __esModule: true,
+  useEnvStore: (selector: (state: { billingEnabled: string }) => unknown) =>
+    selector({ billingEnabled: mockBillingEnabled }),
 }));
 
 jest.mock('@/components/ui/Tabs', () => {
@@ -98,6 +105,7 @@ jest.mock('./CreditOrdersTab', () => ({
 describe('AdminOperationOrdersPage', () => {
   beforeEach(() => {
     mockSearchParamsValue = '';
+    mockBillingEnabled = 'true';
     mockReplace.mockReset();
   });
 
@@ -143,5 +151,20 @@ describe('AdminOperationOrdersPage', () => {
         scroll: false,
       },
     );
+  });
+
+  test('hides the credits tab and falls back to learn when billing is disabled', () => {
+    mockBillingEnabled = 'false';
+    mockSearchParamsValue = 'tab=credits';
+
+    render(<AdminOperationOrdersPage />);
+
+    expect(screen.getByText(LEARN_TAB_CONTENT)).toBeInTheDocument();
+    expect(screen.queryByText(CREDIT_TAB_CONTENT)).not.toBeInTheDocument();
+    expect(
+      screen.queryByRole('tab', {
+        name: 'module.operationsOrder.tabs.credits',
+      }),
+    ).not.toBeInTheDocument();
   });
 });

@@ -159,12 +159,14 @@ jest.mock('@/c-store', () => ({
   __esModule: true,
   useEnvStore: (
     selector: (state: {
+      billingEnabled: string;
       loginMethodsEnabled: string[];
       defaultLoginMethod: string;
       currencySymbol: string;
     }) => unknown,
   ) =>
     selector({
+      billingEnabled: 'true',
       loginMethodsEnabled: ['email'],
       defaultLoginMethod: 'email',
       currencySymbol: '¥',

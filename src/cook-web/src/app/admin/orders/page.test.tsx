@@ -6,6 +6,7 @@ import OrdersPage from './page';
 
 const mockReplace = jest.fn();
 let mockSearchParamsValue = 'shifu_bid=shifu-1&status=502';
+let mockBillingEnabled = 'true';
 
 jest.mock('next/navigation', () => ({
   useRouter: () => ({
@@ -37,6 +38,7 @@ jest.mock('@/c-store', () => ({
   __esModule: true,
   useEnvStore: (
     selector: (state: {
+      billingEnabled: string;
       loginMethodsEnabled: string[];
       defaultLoginMethod: string;
       currencySymbol: string;
@@ -44,6 +46,7 @@ jest.mock('@/c-store', () => ({
     }) => unknown,
   ) =>
     selector({
+      billingEnabled: mockBillingEnabled,
       loginMethodsEnabled: ['email'],
       defaultLoginMethod: 'email',
       currencySymbol: '¥',
@@ -83,6 +86,7 @@ describe('OrdersPage', () => {
     mockGetAdminOrders.mockReset();
     mockGetAdminOrderShifus.mockReset();
     mockSearchParamsValue = 'shifu_bid=shifu-1';
+    mockBillingEnabled = 'true';
     window.localStorage.clear();
 
     mockGetAdminOrders.mockResolvedValue({
@@ -181,6 +185,15 @@ describe('OrdersPage', () => {
           status: '502',
         }),
       );
+    });
+  });
+
+  test('redirects to admin home when billing is disabled', async () => {
+    mockBillingEnabled = 'false';
+    render(<OrdersPage />);
+
+    await waitFor(() => {
+      expect(mockReplace).toHaveBeenCalledWith('/admin');
     });
   });
 });

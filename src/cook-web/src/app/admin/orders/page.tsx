@@ -148,6 +148,9 @@ const OrdersPage = () => {
   const { t, i18n } = useTranslation();
   const router = useRouter();
   const searchParams = useSearchParams();
+  const billingEnabled = useEnvStore(
+    (state: EnvStoreState) => state.billingEnabled === 'true',
+  );
   // 内训站点：计费关闭时订单管理不可用，重定向回工作台首页。
   useEffect(() => {
     if (!billingEnabled) {
@@ -161,9 +164,6 @@ const OrdersPage = () => {
   );
   const isInitialized = useUserStore(state => state.isInitialized);
   const isGuest = useUserStore(state => state.isGuest);
-  const billingEnabled = useEnvStore(
-    (state: EnvStoreState) => state.billingEnabled === 'true',
-  );
   const loginMethodsEnabled = useEnvStore(
     (state: EnvStoreState) => state.loginMethodsEnabled,
   );
