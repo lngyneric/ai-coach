@@ -521,7 +521,7 @@ describe('useChatLogicHook stream cleanup', () => {
     );
   });
 
-  it('pushes an error item and shows a destructive toast after 3s of run stream inactivity', async () => {
+  it('pushes an error item and shows a destructive toast after run stream idle timeout', async () => {
     jest.useFakeTimers();
 
     const { result } = renderHook(
@@ -538,7 +538,8 @@ describe('useChatLogicHook stream cleanup', () => {
     await waitFor(() => expect(activeRun).toBeDefined());
 
     act(() => {
-      jest.advanceTimersByTime(3000);
+      // 与 RUN_STREAM_IDLE_TIMEOUT_MS 保持一致（15s 无流活动后报错）
+      jest.advanceTimersByTime(15000);
     });
 
     await waitFor(() =>

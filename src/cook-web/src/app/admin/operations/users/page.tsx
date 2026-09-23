@@ -71,7 +71,7 @@ import { cn } from '@/lib/utils';
 import { ErrorWithCode } from '@/lib/request';
 import { buildAdminOperationsCourseDetailUrl } from '../operation-course-routes';
 import { buildAdminOperationsUserDetailUrl } from '../operation-user-routes';
-import { formatOperatorNaiveDateTime } from './dateTime';
+import { formatOperatorUtcDateTime } from './dateTime';
 import { normalizeLoginMethodLabelKey } from './loginMethodUtils';
 import UserCreditGrantDialog from './UserCreditGrantDialog';
 import useOperatorGuard from '../useOperatorGuard';
@@ -489,7 +489,7 @@ export default function AdminOperationUsersPage() {
   const resolveCreditsExpireAtLabel = React.useCallback(
     (user: AdminOperationUserItem) => {
       if (user.credits_expire_at) {
-        return formatOperatorNaiveDateTime(user.credits_expire_at);
+        return formatOperatorUtcDateTime(user.credits_expire_at);
       }
       if (Number(user.available_credits || 0) > 0) {
         return tOperationsUsers('credits.longTerm');
@@ -1501,7 +1501,7 @@ export default function AdminOperationUsersPage() {
                           style={getColumnStyle('lastLoginAt')}
                         >
                           {renderTooltipText(
-                            formatOperatorNaiveDateTime(user.last_login_at),
+                            formatOperatorUtcDateTime(user.last_login_at),
                           )}
                         </TableCell>
                         <TableCell
@@ -1509,7 +1509,7 @@ export default function AdminOperationUsersPage() {
                           style={getColumnStyle('lastLearningAt')}
                         >
                           {renderTooltipText(
-                            formatOperatorNaiveDateTime(user.last_learning_at),
+                            formatOperatorUtcDateTime(user.last_learning_at),
                           )}
                         </TableCell>
                         <TableCell
@@ -1517,7 +1517,7 @@ export default function AdminOperationUsersPage() {
                           style={getColumnStyle('createdAt')}
                         >
                           {renderTooltipText(
-                            formatOperatorNaiveDateTime(user.created_at),
+                            formatOperatorUtcDateTime(user.created_at),
                           )}
                         </TableCell>
                         <TableCell
@@ -1525,7 +1525,7 @@ export default function AdminOperationUsersPage() {
                           style={getColumnStyle('updatedAt')}
                         >
                           {renderTooltipText(
-                            formatOperatorNaiveDateTime(user.updated_at),
+                            formatOperatorUtcDateTime(user.updated_at),
                           )}
                         </TableCell>
                         <TableCell

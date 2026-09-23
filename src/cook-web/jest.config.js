@@ -1,5 +1,9 @@
 const nextJest = require('next/jest'); // eslint-disable-line
 
+// 产品面向国内用户，日期断言按 Asia/Shanghai 编写；容器默认 TZ=UTC 会失败。
+// 必须在 jest 启动/worker 派生前设置，运行期改 TZ 对已初始化的 Date 无效。
+process.env.TZ = 'Asia/Shanghai';
+
 const createJestConfig = nextJest({
   // Provide the path to your Next.js app to load next.config.js and .env files
   dir: './',

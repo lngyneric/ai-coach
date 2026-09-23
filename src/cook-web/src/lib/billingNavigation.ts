@@ -1,7 +1,3 @@
-export const BILLING_NAV_ITEMS: { label: string; href: string }[] = [];
-export const BILLING_PACKAGES_HREF = '/admin/billing/packages';
-export const BILLING_DETAILS_HREF = '/admin/billing/details';
-
-export function isBillingEnabled() {
-  return false;
-}
+export const BILLING_CENTER_HREF = '/admin/billing';
+export const BILLING_PACKAGES_HREF = `${BILLING_CENTER_HREF}?tab=packages`;
+export const BILLING_DETAILS_HREF = `${BILLING_CENTER_HREF}?tab=details`;

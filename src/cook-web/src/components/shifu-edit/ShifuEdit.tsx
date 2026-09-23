@@ -93,6 +93,15 @@ const SUPPORTED_EDITOR_TRIGGER_SOURCES = new Set([
 const DEFAULT_EDITOR_TRIGGER_SOURCE = 'editor_entry';
 const CREATED_COURSE_ONBOARDING_DELAY_MS = 900;
 
+export const resolveEditorOnboardingTriggerSource = (
+  source: string | null | undefined,
+) => {
+  const explicitSource = String(source || '').trim();
+  return SUPPORTED_EDITOR_TRIGGER_SOURCES.has(explicitSource)
+    ? explicitSource
+    : DEFAULT_EDITOR_TRIGGER_SOURCE;
+};
+
 const VARIABLE_NAME_REGEXP = /\{\{([\p{L}\p{N}_]+)\}\}/gu;
 const HISTORY_CONTENT_PREVIEW_LINES = 6;
 

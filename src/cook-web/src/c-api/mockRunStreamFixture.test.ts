@@ -4,7 +4,13 @@ import {
 } from './mockRunStreamFixture';
 
 const setPageSearch = (search: string) => {
-  window.history.pushState({}, '', `/${search}`);
+  // jsdom 20 不会在 history.pushState 时同步 window.location，直接替换 location 以
+  // 让被测代码读到预期的 query string。
+  Object.defineProperty(window, 'location', {
+    configurable: true,
+    writable: true,
+    value: new URL(`http://localhost:3000/${search}`),
+  });
 };
 
 describe('mock run stream fixture mode', () => {

@@ -87,7 +87,9 @@ jest.mock('@/c-store/envStore', () => ({
 const mockUserStoreState = {
   isInitialized: true,
   isGuest: false,
+  isLoggedIn: true,
   userInfo: {
+    user_id: 'user-1',
     is_operator: false,
   },
 };
@@ -378,7 +380,9 @@ describe('AdminLayout', () => {
     mockEnvState.billingEnabled = 'true';
     mockUserStoreState.isInitialized = true;
     mockUserStoreState.isGuest = false;
+    mockUserStoreState.isLoggedIn = true;
     mockUserStoreState.userInfo = {
+      user_id: 'user-1',
       is_operator: false,
     };
     mockMutateBillingOverview.mockReset();
@@ -485,10 +489,12 @@ describe('AdminLayout', () => {
     });
   });
 
-  test('renders sidebar once initialization completes even if user info is unavailable', () => {
+  test('keeps the sidebar in loading state when the session user is unavailable', () => {
     mockUserStoreState.isInitialized = true;
     mockUserStoreState.isGuest = false;
+    mockUserStoreState.isLoggedIn = true;
     mockUserStoreState.userInfo = null as unknown as {
+      user_id: string;
       is_operator: false;
     };
 
@@ -498,12 +504,11 @@ describe('AdminLayout', () => {
       </AdminLayout>,
     );
 
+    // 菜单守卫依赖已解析的 user_id（角色菜单），拿不到时保持加载占位且不崩溃。
     expect(
-      screen.queryByLabelText('admin-sidebar-loading'),
-    ).not.toBeInTheDocument();
-    expect(
-      screen.getByRole('link', { name: 'common.core.shifu' }),
+      screen.getByLabelText('admin-sidebar-loading'),
     ).toBeInTheDocument();
+    expect(screen.queryByTestId('admin-sidebar-nav')).not.toBeInTheDocument();
   });
 
   test('links the admin logo to the configured home URL', () => {
@@ -543,7 +548,7 @@ describe('AdminLayout', () => {
     expect(
       screen.getByText('module.billing.sidebar.nonMemberBalanceTitle'),
     ).toBeInTheDocument();
-    expect(screen.getByText('12500')).toBeInTheDocument();
+    expect(screen.getByText('12,500')).toBeInTheDocument();
     expect(
       screen.getByRole('link', {
         name: 'module.billing.sidebar.usageCta',
@@ -583,7 +588,9 @@ describe('AdminLayout', () => {
       '/admin/billing?tab=packages',
     );
     expect(screen.queryByText(/0(?:\.0+)?/)).not.toBeInTheDocument();
-    expect(screen.getByText('--')).toBeInTheDocument();
+    expect(
+      screen.getByText('module.billing.sidebar.placeholderValue'),
+    ).toBeInTheDocument();
     expect(
       screen.getByRole('link', {
         name: 'module.billing.sidebar.usageCta',
