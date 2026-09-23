@@ -63,8 +63,27 @@ const buildObservabilityHints = (requestId: string) => ({
   diagnosticsCommand: `cd src/api && python scripts/harness_diagnostics.py --request-id ${requestId}`,
 });
 
+/**
+ * 手机号+验证码登录不可用时跳过本用例。
+ * 部分部署（如内训站点）仅启用工号/企微登录，且可能由 nginx 把 /login 重写为
+ * 静态员工登录页 —— 该 harness 走手机号+验证码 UI，在这类部署下不适用。
+ */
+const skipIfPhoneLoginUnavailable = async (page: Page) => {
+  const phoneInput = page.locator('#phone');
+  const available = await phoneInput
+    .waitFor({ state: 'attached', timeout: 3_000 })
+    .then(() => true)
+    .catch(() => false);
+
+  test.skip(
+    !available,
+    '当前部署未启用手机号+验证码登录（内训站点为工号/企微登录，/login 由 nginx 重写为静态页）',
+  );
+};
+
 const loginWithPhone = async (page: Page, redirectPath: string) => {
   await page.goto(`/login?redirect=${encodeURIComponent(redirectPath)}`);
+  await skipIfPhoneLoginUnavailable(page);
   await expect(page.getByTestId('login-page')).toBeVisible();
 
   const phoneInput = await ensurePhoneLoginVisible(page);
