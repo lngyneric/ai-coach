@@ -1,6 +1,15 @@
 import { expect, test } from '@playwright/test';
 
 /**
+ * 报告页数据与 AI 建议均来自真实后端（GET /api/coach/report/<bid>，LLM 优先、
+ * 规则降级），在并发/负载下可能明显慢于默认 15s 断言超时。此文件整体允许一次
+ * 重试，且对报告页断言使用显式放宽的超时，避免偶发抖动导致假失败。
+ */
+test.describe.configure({ retries: 1 });
+
+const REPORT_READY_TIMEOUT_MS = 30_000;
+
+/**
  * coach 学员分析报告页 e2e：
  *   devcoach 登录 → /admin/coach 学员看板（取第一个学员 learner_bid）
  *   → /admin/coach/students/<bid>/report：4 统计卡 / 面谈时间线 / AI 改进建议
@@ -46,9 +55,11 @@ test('coach 学员分析报告页（4 卡 + 面谈时间线 + AI 建议 + progre
 
   // ── 2. 学员看板 → 取第一个学员 bid ──
   await page.goto('/admin/coach', { waitUntil: 'networkidle', timeout: 60_000 });
-  await expect(page.getByRole('heading', { name: '导师工作台' })).toBeVisible();
+  await expect(page.getByRole('heading', { name: '导师工作台' })).toBeVisible({
+    timeout: REPORT_READY_TIMEOUT_MS,
+  });
   const studentLink = page.locator('a[href^="/admin/coach/students/"]').first();
-  await expect(studentLink).toBeVisible();
+  await expect(studentLink).toBeVisible({ timeout: REPORT_READY_TIMEOUT_MS });
   const href = (await studentLink.getAttribute('href')) ?? '';
   const match = href.match(/\/admin\/coach\/students\/([^/?#]+)$/);
   const learnerBid = match ? match[1] : 'w3-ln-4';
@@ -61,19 +72,27 @@ test('coach 学员分析报告页（4 卡 + 面谈时间线 + AI 建议 + progre
     waitUntil: 'load',
     timeout: 90_000,
   });
-  await expect(page.getByText(/的带教分析报告/)).toBeVisible({ timeout: 30_000 });
+  await expect(page.getByText(/的带教分析报告/)).toBeVisible({
+    timeout: REPORT_READY_TIMEOUT_MS,
+  });
   for (const label of ['阶段完成', '验收通过率', '面谈次数', '最新阶段总分']) {
     // exact 匹配统计卡标题：页面上「后端暂无…」提示与培训总结按钮也含这些文案，
     // 非 exact 会触发 strict mode violation。
-    await expect(page.getByText(label, { exact: true })).toBeVisible();
+    await expect(page.getByText(label, { exact: true })).toBeVisible({
+      timeout: REPORT_READY_TIMEOUT_MS,
+    });
   }
-  await expect(page.getByRole('heading', { name: '面谈时间线' })).toBeVisible();
+  await expect(page.getByRole('heading', { name: '面谈时间线' })).toBeVisible({
+    timeout: REPORT_READY_TIMEOUT_MS,
+  });
   // AI 建议卡（真实后端，LLM 或规则降级；放宽等待）
   await expect(page.getByText('AI 改进建议').first()).toBeVisible({
     timeout: 120_000,
   });
   // 返回进度详表链接（互链）
-  await expect(page.locator('a[href*="/progress"]').first()).toBeVisible();
+  await expect(page.locator('a[href*="/progress"]').first()).toBeVisible({
+    timeout: REPORT_READY_TIMEOUT_MS,
+  });
 
   // ── 4. progress 页入口互链 ──
   await page.goto(`/admin/coach/students/${learnerBid}/progress`, {
@@ -81,9 +100,11 @@ test('coach 学员分析报告页（4 卡 + 面谈时间线 + AI 建议 + progre
     timeout: 60_000,
   });
   const reportLink = page.locator('a[href$="/report"]').first();
-  await expect(reportLink).toBeVisible();
+  await expect(reportLink).toBeVisible({ timeout: REPORT_READY_TIMEOUT_MS });
   await reportLink.click();
-  await expect(page.getByText(/的带教分析报告/)).toBeVisible({ timeout: 30_000 });
+  await expect(page.getByText(/的带教分析报告/)).toBeVisible({
+    timeout: REPORT_READY_TIMEOUT_MS,
+  });
 
   expect(errors).toEqual([]);
 });
