@@ -254,7 +254,14 @@ def test_celery_task_runs_end_to_end(app):
         )
         db.session.commit()
 
+        from flaskr.common.celery_app import get_celery_app
         from flaskr.service.learning_portal.tasks import phase_auto_advance
+
+        # 显式把 celery 默认 app 绑定到本会话的 Flask app 上。
+        # 否则它可能指向其他用例（如 tests/common/test_celery_app）创建过、
+        # 绑定在无 DB 临时 Flask 实例上的 app，本用例的 task 会在错误的
+        # app 上下文里跑，出现 "no such table: learner_coaching"。
+        get_celery_app(flask_app=app)
 
         out = phase_auto_advance()
         assert "advanced=1" in out
