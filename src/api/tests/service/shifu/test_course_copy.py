@@ -13,7 +13,7 @@ from flaskr.dao import db
 from flaskr.i18n import _
 from flaskr.service.common.models import AppException, ERROR_CODE, raise_error
 from flaskr.service.profile.models import Variable
-from flaskr.service.shifu.admin import copy_operator_course
+from flaskr.service.shifu.admin_operations.courses import copy_operator_course
 from flaskr.service.shifu.models import AiCourseAuth, DraftOutlineItem, DraftShifu
 from flaskr.service.shifu.shifu_history_manager import get_shifu_history
 from flaskr.service.user.consts import USER_STATE_REGISTERED

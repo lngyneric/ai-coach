@@ -30,10 +30,14 @@ from tests.common.fixtures.bill_products import build_bill_products
 
 
 @pytest.fixture
-def billing_callback_app():
+def billing_callback_app(monkeypatch):
+    # 计费回调是 billing 运行面：必须显式开启 BILL_ENABLED。
+    # 计费关闭时（默认）回调会按各平台形态直接返回 403，这些用例断言的是正常回调路径。
+    monkeypatch.setenv("BILL_ENABLED", "true")
     app = Flask(__name__)
     app.testing = True
     app.config.update(
+        BILL_ENABLED=True,
         SQLALCHEMY_DATABASE_URI="sqlite:///:memory:",
         SQLALCHEMY_BINDS={
             "ai_shifu_saas": "sqlite:///:memory:",

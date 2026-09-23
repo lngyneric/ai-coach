@@ -24,9 +24,12 @@ def _assert_cron_schedule(
     assert getattr(schedule, "_orig_day_of_week") == day_of_week
 
 
-def test_create_celery_app_reuses_flask_config() -> None:
+def test_create_celery_app_reuses_flask_config(monkeypatch) -> None:
+    # billing beat 定时任务只在计费开启时注册（BILL_ENABLED 默认 False = 内训关闭态）。
+    monkeypatch.setenv("BILL_ENABLED", "true")
     flask_app = Flask(__name__)
     flask_app.config.update(
+        BILL_ENABLED=True,
         CELERY_BROKER_URL="redis://broker.example:6379/3",
         CELERY_RESULT_BACKEND="redis://backend.example:6379/4",
         CELERY_TASK_ALWAYS_EAGER=True,
@@ -296,8 +299,11 @@ def test_get_celery_app_loads_flask_app_from_app_factory(
     assert getattr(celery_app, "flask_app") is fake_flask_app
 
 
-def test_create_celery_app_uses_default_billing_beat_crons() -> None:
+def test_create_celery_app_uses_default_billing_beat_crons(monkeypatch) -> None:
+    # 默认 billing beat crons 仅在计费开启时注册。
+    monkeypatch.setenv("BILL_ENABLED", "true")
     flask_app = Flask(__name__)
+    flask_app.config.update(BILL_ENABLED=True)
     celery_app = celery_app_module.create_celery_app(flask_app=flask_app)
 
     beat_schedule = celery_app.conf.beat_schedule

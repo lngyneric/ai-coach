@@ -44,10 +44,14 @@ class DummyStripeProvider:
 
 
 @pytest.fixture
-def stripe_webhook_app():
+def stripe_webhook_app(monkeypatch):
+    # Stripe webhook 属于 billing 运行面：显式开启 BILL_ENABLED，
+    # 否则计费关闭时（默认）webhook 路由返回 403，这些用例断言的是正常入账路径。
+    monkeypatch.setenv("BILL_ENABLED", "true")
     app = Flask(__name__)
     app.testing = True
     app.config.update(
+        BILL_ENABLED=True,
         SQLALCHEMY_DATABASE_URI="sqlite:///:memory:",
         SQLALCHEMY_BINDS={
             "ai_shifu_saas": "sqlite:///:memory:",
