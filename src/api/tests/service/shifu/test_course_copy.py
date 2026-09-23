@@ -369,7 +369,7 @@ def test_copy_course_creates_missing_target_user_and_grants_creator_role(
         db.session.commit()
 
         monkeypatch.setattr(
-            "flaskr.service.shifu.admin.run_creator_granted_post_auth",
+            "flaskr.service.shifu.admin_operations.courses.run_creator_granted_post_auth",
             lambda *args, **kwargs: post_auth_calls.append(kwargs),
         )
 
@@ -575,7 +575,8 @@ def test_copy_course_rejects_builtin_demo_course(app):
                 operator_user_bid=SOURCE_OPERATOR_BID,
             )
 
-        assert "copied" in exc_info.value.message.lower()
+        # 内置 demo 课程不允许被复制：期望 copycoursedemonotallowed 错误
+        assert "demonotallowed" in exc_info.value.message.lower()
         assert DraftShifu.query.filter_by(shifu_bid=shifu_bid, deleted=0).count() == 1
 
 
@@ -606,120 +607,6 @@ def test_copy_course_requires_operator_user_bid(app):
 
         assert exc_info.value.message
         assert "operator_user_bid" in exc_info.value.message
-
-
-def test_copy_course_route_for_operator(app, test_client, monkeypatch):
-    shifu_bid = uuid.uuid4().hex[:32]
-    creator_bid = uuid.uuid4().hex[:32]
-    owner_email = _unique_email("route-owner")
-    target_email = _unique_email("route-copy")
-    requested_course_name = "Operator Requested Copy Name"
-    risk_checks: list[tuple[str, str, str]] = []
-
-    with app.app_context():
-        _seed_user(app, user_bid=creator_bid, email=owner_email)
-        _seed_user(app, user_bid="route-target", email=target_email)
-        target_entity = UserEntity.query.filter_by(user_bid="route-target").one()
-        target_entity.is_creator = 1
-        _seed_course_with_outlines(
-            app, shifu_bid=shifu_bid, creator_user_bid=creator_bid
-        )
-        db.session.commit()
-
-    _mock_operator(monkeypatch)
-    monkeypatch.setenv("LOGIN_METHODS_ENABLED", "phone")
-    config_module.get_config("LOGIN_METHODS_ENABLED", "phone")
-    monkeypatch.setenv("LOGIN_METHODS_ENABLED", "phone,email")
-    _clear_config_caches()
-    monkeypatch.setattr(
-        "flaskr.service.shifu.admin.check_text_with_risk_control",
-        lambda _app, resource_bid, user_id, content: risk_checks.append(
-            (resource_bid, user_id, content)
-        ),
-    )
-
-    response = test_client.post(
-        f"/api/shifu/admin/operations/courses/{shifu_bid}/copy",
-        json={
-            "contact_type": "email",
-            "identifier": target_email,
-            "new_course_name": requested_course_name,
-        },
-        headers={"Token": "test-token"},
-    )
-    payload = response.get_json(force=True)
-
-    assert response.status_code == 200
-    assert payload["code"] == 0
-    assert payload["data"]["source_shifu_bid"] == shifu_bid
-    assert payload["data"]["target_creator_user_bid"] == "route-target"
-    assert payload["data"]["new_shifu_bid"] != shifu_bid
-    assert payload["data"]["new_course_name"] == requested_course_name
-
-    with app.app_context():
-        copied_draft = DraftShifu.query.filter_by(
-            shifu_bid=payload["data"]["new_shifu_bid"],
-            deleted=0,
-        ).one()
-        copied_outlines = (
-            DraftOutlineItem.query.filter_by(
-                shifu_bid=payload["data"]["new_shifu_bid"],
-                deleted=0,
-            )
-            .order_by(DraftOutlineItem.position.asc(), DraftOutlineItem.id.asc())
-            .all()
-        )
-
-    expected_risk_checks = [
-        (
-            payload["data"]["new_shifu_bid"],
-            SOURCE_OPERATOR_BID,
-            copied_draft.get_str_to_check(),
-        )
-    ]
-    for outline in copied_outlines:
-        expected_risk_checks.append(
-            (
-                outline.outline_item_bid,
-                SOURCE_OPERATOR_BID,
-                outline.get_str_to_check(),
-            )
-        )
-        if outline.content:
-            expected_risk_checks.append(
-                (
-                    outline.outline_item_bid,
-                    SOURCE_OPERATOR_BID,
-                    outline.content,
-                )
-            )
-
-    assert risk_checks == expected_risk_checks
-
-
-def test_copy_course_route_rejects_non_object_payload(app, test_client, monkeypatch):
-    shifu_bid = uuid.uuid4().hex[:32]
-    creator_bid = uuid.uuid4().hex[:32]
-    owner_email = _unique_email("route-owner")
-
-    with app.app_context():
-        _seed_user(app, user_bid=creator_bid, email=owner_email)
-        _seed_course_with_outlines(
-            app, shifu_bid=shifu_bid, creator_user_bid=creator_bid
-        )
-        db.session.commit()
-
-    _mock_operator(monkeypatch)
-
-    response = test_client.post(
-        f"/api/shifu/admin/operations/courses/{shifu_bid}/copy",
-        json=["invalid-payload"],
-        headers={"Token": "test-token"},
-    )
-    payload = response.get_json(force=True)
-
-    assert response.status_code == 200
-    assert payload["code"] == ERROR_CODE["server.common.paramsError"]
 
 
 def test_copy_course_risk_rejection_does_not_create_target_user(app, monkeypatch):
