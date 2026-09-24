@@ -547,6 +547,15 @@ LITELLM_PROVIDER_CONFIGS: List[ProviderConfig] = [
         reload_params=_reload_opencode_params,
     ),
     ProviderConfig(
+        key="openrouter",
+        api_key_env="OPENROUTER_API_KEY",
+        base_url_env="OPENROUTER_API_URL",
+        default_base_url="https://openrouter.ai/api/v1",
+        config_hint="OPENROUTER_API_KEY,OPENROUTER_API_URL",
+        custom_llm_provider="openai",
+        reload_params=_reload_openai_params,
+    ),
+    ProviderConfig(
         key="codebuddy",
         api_key_env="CODEBUDDY_API_KEY",
         base_url_env="CODEBUDDY_API_URL",
