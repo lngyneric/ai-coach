@@ -32,6 +32,7 @@ from flaskr.api.tts.baidu_provider import BaiduTTSProvider
 from flaskr.api.tts.aliyun_provider import AliyunTTSProvider
 from flaskr.api.tts.edge_provider import EdgeTTSProvider
 from flaskr.api.tts.baidu_translate_provider import BaiduTranslateTTSProvider
+from flaskr.api.tts.openrouter_provider import OpenRouterTTSProvider
 from flaskr.api.tts.aliyun_nls_token import is_aliyun_nls_token_configured
 
 
@@ -46,6 +47,7 @@ _PROVIDER_REGISTRY = {
     "aliyun": AliyunTTSProvider,
     "edge": EdgeTTSProvider,
     "baidu_translate": BaiduTranslateTTSProvider,
+    "openrouter": OpenRouterTTSProvider,
 }
 _PROVIDER_PRIORITY = (
     "minimax",
@@ -55,6 +57,7 @@ _PROVIDER_PRIORITY = (
     "aliyun",
     "edge",
     "baidu_translate",
+    "openrouter",
 )
 
 # Provider instances (lazy initialized)

@@ -15,6 +15,7 @@ SUPPORTED_TTS_PROVIDERS = {
     "aliyun",
     "edge",
     "baidu_translate",
+    "openrouter",
 }
 PROVIDERS_REQUIRING_MODEL = {"minimax", "volcengine"}
 
