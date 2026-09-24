@@ -392,6 +392,20 @@ DEEPSEEK_FALLBACK_MODELS = [
 
 
 def _reload_openai_params(model_id: str, temperature: float) -> Dict[str, Any]:
+    params = _reload_openai_params_inner(model_id, temperature)
+    # OPENAI_BASE_URL 指向 OpenCode 网关时（如 zen/go），服务端直连同样需要
+    # x-opencode-session，否则 gpt-* 会被拒绝。
+    base_url = get_config("OPENAI_BASE_URL", "") or ""
+    if "opencode.ai" in base_url:
+        params["extra_headers"] = {
+            "x-opencode-session": str(
+                get_config("OPENCODE_SESSION_ID", "ai-shifu-backend")
+            )
+        }
+    return params
+
+
+def _reload_openai_params_inner(model_id: str, temperature: float) -> Dict[str, Any]:
     if model_id.startswith("gpt-5.2"):
         return {
             "reasoning_effort": "none",
@@ -461,6 +475,17 @@ def _reload_qwen_params(model_id: str, temperature: float) -> Dict[str, Any]:
     }
 
 
+def _reload_opencode_params(model_id: str, temperature: float) -> Dict[str, Any]:
+    # OpenCode 网关（zen / zen/go）要求携带 x-opencode-session，
+    # 否则服务端直连会被拒绝：
+    # "Request is missing x-opencode-session and cannot be routed efficiently"
+    session_id = get_config("OPENCODE_SESSION_ID", "ai-shifu-backend")
+    return {
+        "temperature": temperature,
+        "extra_headers": {"x-opencode-session": str(session_id)},
+    }
+
+
 def _reload_deepseek_params(model_id: str, temperature: float) -> Dict[str, Any]:
     return {
         "temperature": temperature,
@@ -498,6 +523,37 @@ LITELLM_PROVIDER_CONFIGS: List[ProviderConfig] = [
         prefix=ERNIE_V2_PREFIX,
         config_hint="ERNIE_API_KEY",
         custom_llm_provider="openai",
+    ),
+    ProviderConfig(
+        key="opencode_zen",
+        api_key_env="OPENCODE_ZEN_API_KEY",
+        base_url_env="OPENCODE_ZEN_API_URL",
+        default_base_url="https://opencode.ai/zen/v1",
+        filter_fn=lambda model_id: not model_id.startswith("gpt"),
+        config_hint="OPENCODE_ZEN_API_KEY,OPENCODE_ZEN_API_URL",
+        custom_llm_provider="openai",
+        reload_params=_reload_opencode_params,
+    ),
+    ProviderConfig(
+        key="opencode_go",
+        api_key_env="OPENCODE_GO_API_KEY",
+        base_url_env="OPENCODE_GO_API_URL",
+        default_base_url="https://opencode.ai/zen/go/v1",
+        # gpt-* 由 openai provider 负责（其 OPENAI_BASE_URL 通常也指向本网关），
+        # 此处只注册其余模型，避免同一 model id 在两处重复注册。
+        filter_fn=lambda model_id: not model_id.startswith("gpt"),
+        config_hint="OPENCODE_GO_API_KEY,OPENCODE_GO_API_URL",
+        custom_llm_provider="openai",
+        reload_params=_reload_opencode_params,
+    ),
+    ProviderConfig(
+        key="codebuddy",
+        api_key_env="CODEBUDDY_API_KEY",
+        base_url_env="CODEBUDDY_API_URL",
+        default_base_url=None,
+        config_hint="CODEBUDDY_API_KEY,CODEBUDDY_API_URL",
+        custom_llm_provider="openai",
+        reload_params=_reload_openai_params,
     ),
     ProviderConfig(
         key="deepseek",
