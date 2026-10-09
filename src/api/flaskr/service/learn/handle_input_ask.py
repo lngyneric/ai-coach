@@ -53,6 +53,7 @@ from flaskr.service.learn.listen_element_queries import (
     _load_latest_active_element_row,
     find_follow_up_element_rows,
 )
+from flaskr.service.learn.followup_scoring import schedule_followup_scoring
 
 check_text_with_llm_response = None
 LLMSettings = None
@@ -664,6 +665,21 @@ def handle_input_ask(
 
     # Backfill answer block content
     answer_block.generated_content = response_text
+
+    # Fire-and-forget JEV scoring of the learner question + generated answer.
+    # Pure side-channel: never blocks the answer stream or alters its output.
+    if not is_preview:
+        schedule_followup_scoring(
+            app,
+            shifu_bid=outline_item_info.shifu_bid,
+            outline_item_bid=outline_item_info.bid,
+            progress_record_bid=attend_id,
+            answer_block_bid=answer_block.generated_block_bid,
+            user_bid=user_info.user_id,
+            question=raw_input,
+            answer=response_text,
+            chapter_title=chapter_title,
+        )
 
     # End trace span
     _finalize_ask_trace(

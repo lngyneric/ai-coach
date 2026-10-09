@@ -42,6 +42,10 @@ from flaskr.service.tts.audio_utils import (
     get_audio_duration_ms,
 )
 from flaskr.service.tts.tts_handler import upload_audio_to_oss
+from flaskr.service.tts.semantic_split import (
+    choose_split_point_via_jev,
+    _jev_available,
+)
 from flaskr.common.log import AppLoggerProxy
 from flaskr.service.metering import UsageContext, record_tts_usage
 from flaskr.service.tts.patterns import (
@@ -74,6 +78,11 @@ logger = AppLoggerProxy(logging.getLogger(__name__))
 
 
 _DEFAULT_SENTENCE_ENDINGS = set(".!?。！？；;")
+
+# Clause-level delimiters used for semantic segmentation. Splitting on these
+# (in addition to sentence endings) keeps TTS chunks aligned with natural speech
+# boundaries such as commas, colons, dashes, and bracketed "supplementary notes".
+_CLAUSE_DELIMITERS = set("，、；：—…（）()《》〈〉「」『』[]{}“”‘’" "")
 
 _AV_SPEAKABLE_SANDBOX_ROOT_TAGS = {"div", "section", "article", "main", "template"}
 
@@ -560,6 +569,84 @@ def _split_by_sentence_and_newline(text: str) -> list[str]:
     return units
 
 
+def _split_by_clause(text: str) -> list[str]:
+    """
+    Split text into clause-ish units on both sentence-ending punctuation and
+    clause-level delimiters (commas, colons, dashes, brackets, etc.).
+
+    Unlike :func:`_split_by_sentence_and_newline`, this also breaks long
+    sentences at clause boundaries so each unit is a natural speech chunk.
+    The delimiter character is kept attached to the preceding unit.
+    """
+    units: list[str] = []
+    for raw_line in (text or "").replace("\r\n", "\n").split("\n"):
+        line = raw_line.strip()
+        if not line:
+            continue
+
+        start = 0
+        for idx, ch in enumerate(line):
+            if ch in _CLAUSE_DELIMITERS or ch in _DEFAULT_SENTENCE_ENDINGS:
+                end = idx + 1
+                piece = line[start:end].strip()
+                if piece:
+                    units.append(piece)
+                start = end
+
+        tail = line[start:].strip()
+        if tail:
+            units.append(tail)
+
+    return units
+
+
+def _split_long_clause_with_jev(clause: str, max_chars: int, provider: str) -> list[str]:
+    """
+    Split a single clause longer than ``max_chars``.
+
+    Prefers a break-point chosen by jev (when available and confident);
+    otherwise falls back to deterministic chunking. Recurses so every output
+    segment stays <= max_chars.
+
+    Candidate break-points are, in order of preference: internal clause
+    delimiters, then a window of positions around the ``max_chars`` boundary
+    (so a delimiter-less run can still be split at a natural point via jev).
+    """
+    if len(clause) <= max_chars:
+        return [clause]
+
+    # 1) Natural candidates: positions right after an internal clause delimiter.
+    candidates = [
+        i + 1
+        for i, ch in enumerate(clause)
+        if ch in _CLAUSE_DELIMITERS and i + 1 < len(clause)
+    ]
+
+    # 2) Fallback candidates: a window around the first limit boundary, giving
+    #    jev a chance to pick the least awkward break inside an unpunctuated run.
+    if not candidates:
+        window = max(5, min(40, max_chars // 4))
+        lo = max(1, max_chars - window)
+        hi = min(len(clause) - 1, max_chars + window)
+        candidates = list(range(lo, hi + 1))
+
+    point: int | None = None
+    if _jev_available() and candidates:
+        point = choose_split_point_via_jev(clause, candidates)
+    if point is None or not (0 < point < len(clause)):
+        # Deterministic fallback: cut at the limit, preferring a nearby
+        # delimiter if one is available.
+        if candidates:
+            point = min(candidates, key=lambda p: abs(p - max_chars))
+        else:
+            point = max_chars
+
+    left, right = clause[:point], clause[point:]
+    return _split_long_clause_with_jev(
+        left, max_chars, provider
+    ) + _split_long_clause_with_jev(right, max_chars, provider)
+
+
 def _split_text_by_max_chars(units: Sequence[str], max_chars: int) -> list[str]:
     if max_chars <= 0:
         raise ValueError("max_chars must be > 0")
@@ -663,16 +750,30 @@ def split_text_for_tts(
     if not cleaned:
         return []
 
+    provider = (provider_name or "").strip().lower()
     configured_max = get_config("TTS_MAX_SEGMENT_CHARS") or 300
     max_chars = int(max_segment_chars or configured_max or 300)
-    units = _split_by_sentence_and_newline(cleaned)
+
+    units = _split_by_clause(cleaned)
+
+    if provider == "baidu_translate":
+        # Baidu Translate public TTS allows ~200 characters per request.
+        # Only clauses that are themselves too long need jev's judgment; ordinary
+        # clause units flow straight through to packing.
+        packed_max = 200
+        expanded: list[str] = []
+        for unit in units:
+            expanded.extend(_split_long_clause_with_jev(unit, packed_max, provider))
+        units = expanded
+        max_chars = packed_max
+
     segments = _split_text_by_max_chars(units, max_chars=max_chars)
 
-    # Provider-specific byte constraints
-    if (provider_name or "").strip().lower() == "baidu":
+    # Provider-specific constraints
+    if provider == "baidu":
         # Baidu requires <= 1024 bytes in GBK encoding.
         segments = _split_text_by_max_bytes(segments, max_bytes=1024, encoding="gbk")
-    elif (provider_name or "").strip().lower() == "volcengine_http":
+    elif provider == "volcengine_http":
         # Volcengine HTTP v1/tts requires <= 1024 bytes in UTF-8 encoding.
         segments = _split_text_by_max_bytes(segments, max_bytes=1024, encoding="utf-8")
 

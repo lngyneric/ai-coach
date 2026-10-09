@@ -1143,6 +1143,67 @@ def register_learning_portal_routes(
         db.session.commit()
         return make_common_response({"progress_pct": enrollment.progress_pct})
 
+    # ═══════════════════════════════════════════════
+    #  Flashcard quiz analytics
+    # ═══════════════════════════════════════════════
+
+    # ── GET /api/portal/quiz/analysis?shifu_bid=... ──
+    @app.route(path_prefix + "/quiz/analysis", methods=["GET"])
+    def portal_quiz_analysis():
+        """Per-chapter quiz analysis for the current learner."""
+        from flaskr.service.learn.quiz_analytics import (
+            get_learner_quiz_analysis,
+        )
+
+        user_bid = request.user.user_id
+        shifu_bid = (request.args.get("shifu_bid") or "").strip()
+        if not shifu_bid:
+            raise_param_error("shifu_bid")
+        return make_common_response(
+            get_learner_quiz_analysis(app, user_bid=user_bid, shifu_bid=shifu_bid)
+        )
+
+    # ── GET /api/portal/mentor/quiz-analysis/<learner_bid>?shifu_bid=... ──
+    @app.route(
+        path_prefix + "/mentor/quiz-analysis/<learner_bid>", methods=["GET"]
+    )
+    def mentor_quiz_analysis(learner_bid):
+        """Quiz analysis for a mentored learner (mentor/coach only)."""
+        from flaskr.service.learn.quiz_analytics import (
+            get_learner_quiz_analysis,
+        )
+
+        user = request.user
+        _require_mentored_learner(app, user, learner_bid)
+        shifu_bid = (request.args.get("shifu_bid") or "").strip()
+        if not shifu_bid:
+            raise_param_error("shifu_bid")
+        return make_common_response(
+            get_learner_quiz_analysis(app, user_bid=learner_bid, shifu_bid=shifu_bid)
+        )
+
+    # ── GET /api/portal/admin/quiz-stats?shifu_bid=... ──
+    @app.route(path_prefix + "/admin/quiz-stats", methods=["GET"])
+    def admin_quiz_stats():
+        """Chapter-level quiz stats for a course (admins only)."""
+        from flaskr.service.learn.quiz_analytics import list_course_quiz_stats
+
+        user = request.user
+        _require_permission(app, user, "view_all_students")
+        shifu_bid = (request.args.get("shifu_bid") or "").strip()
+        if not shifu_bid:
+            raise_param_error("shifu_bid")
+        outline_bids = [
+            b.strip()
+            for b in (request.args.get("outline_item_bids") or "").split(",")
+            if b.strip()
+        ]
+        return make_common_response(
+            list_course_quiz_stats(
+                app, shifu_bid=shifu_bid, outline_item_bids=outline_bids or None
+            )
+        )
+
 
 def _recalc_phase_score(learner_bid: str) -> None:
     """Recalculate sub-scores + total score for every active phase.
