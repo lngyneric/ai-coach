@@ -4,6 +4,14 @@
 
 Implementation and architecture decisions that shape repository behavior live here.
 
+- [AI-Coach 工作日报 · 2026-08-04/05](../design-docs/2026-08-04-05-daily-report.md)
+  - Status: `` | Owner: `` | Last reviewed: `` | Canonical: ``
+- [Course Creator Skill · Agent 部署手册](../design-docs/COURSE-CREATOR-DEPLOYMENT.md)
+  - Status: `` | Owner: `` | Last reviewed: `` | Canonical: ``
+- [AI-Coach 企业大学 · 设计规划总览](../design-docs/DESIGN-OVERVIEW.md)
+  - Status: `` | Owner: `` | Last reviewed: `` | Canonical: ``
+- [AI-Coach 设计文档 · 企业微信 SmartPage 索引](../design-docs/WECOM-DOCS-INDEX.md)
+  - Status: `` | Owner: `` | Last reviewed: `` | Canonical: ``
 - [Agent-First Harness Phase 2](../design-docs/agent-first-harness-phase-2.md)
   - Status: `implemented` | Owner: `repo` | Last reviewed: `2026-04-17` | Canonical: `true`
 - [Agent-First Harness Migration](../design-docs/agent-first-harness.md)
