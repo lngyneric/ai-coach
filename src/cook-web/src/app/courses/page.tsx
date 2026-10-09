@@ -92,11 +92,37 @@ function EnrollModal({ onClose, onSuccess }: { onClose: () => void; onSuccess: (
   const [module, setModule] = useState('onboarding');
   const [courseBid, setCourseBid] = useState('');
   const [submitting, setSubmitting] = useState(false);
+  // manual_map prefill: 选中学员后按岗位预填模块/课程（可改）
+  const [suggestion, setSuggestion] = useState<{ position_name?: string; department?: string } | null>(null);
 
   useEffect(() => {
     request.get('/api/shifu/admin/operations/users?page_index=1&page_size=200').then((r: any) => setUsers(r?.items || r || [])).catch(() => {});
     request.get('/api/shifu/shifus?page_index=1&page_size=200').then((r: any) => setCourses(r?.items || r || [])).catch(() => {});
   }, []);
+
+  // 选中学员 → 拉取只读预填建议（按 learner_profiles 岗位匹配课程）
+  const handleUserChange = async (bid: string) => {
+    setUserBid(bid);
+    setSuggestion(null);
+    if (!bid) return;
+    try {
+      const s: any = await request.get(`/api/portal/admin/enroll-suggestion?user_bid=${encodeURIComponent(bid)}`);
+      const data = s?.data ?? s;
+      if (!data) return;
+      if (data.suggested_module) setModule(data.suggested_module);
+      const top = (data.suggested_courses || [])[0];
+      if (top?.shifu_bid) {
+        setCourseBid(top.shifu_bid);
+        // 建议课程可能不在已加载列表里，补入下拉项（按 bid 去重）
+        setCourses(prev => (prev.some((c: any) => (c.bid || c.shifu_bid) === top.shifu_bid)
+          ? prev
+          : [...prev, { bid: top.shifu_bid, name: top.title }]));
+      }
+      setSuggestion({ position_name: data.position_name, department: data.department });
+    } catch {
+      // 预填失败不阻塞：管理员可手动选择
+    }
+  };
 
   const submit = async () => {
     if (!userBid || !courseBid) { toast({ title: '请选择学员和课程', variant: 'destructive' }); return; }
@@ -121,10 +147,15 @@ function EnrollModal({ onClose, onSuccess }: { onClose: () => void; onSuccess: (
         <div className="space-y-4">
           <div>
             <label className="block text-sm font-medium text-slate-700 mb-1">选择学员</label>
-            <select value={userBid} onChange={e => setUserBid(e.target.value)} className="w-full border border-slate-300 rounded-lg px-3 py-2 text-sm">
+            <select value={userBid} onChange={e => handleUserChange(e.target.value)} className="w-full border border-slate-300 rounded-lg px-3 py-2 text-sm">
               <option value="">选择学员...</option>
               {users.map((u: any) => <option key={u.user_bid || u.bid} value={u.user_bid || u.bid}>{u.name || u.nickname || u.username || '未知'}</option>)}
             </select>
+            {suggestion && (
+              <p className="mt-1 text-xs text-blue-600">
+                已按学员岗位预填（{suggestion.department || '—'} / {suggestion.position_name || '—'}），可修改
+              </p>
+            )}
           </div>
           <div>
             <label className="block text-sm font-medium text-slate-700 mb-1">培训模块</label>

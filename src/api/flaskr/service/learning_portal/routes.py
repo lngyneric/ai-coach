@@ -1053,6 +1053,58 @@ def register_learning_portal_routes(
             raise_param_error("duplicate enrollment or database error")
         return make_common_response({"enroll_id": enrollment.id, "status": "active"})
 
+    # ── GET /api/portal/admin/enroll-suggestion?user_bid=... ──
+    @app.route(path_prefix + "/admin/enroll-suggestion", methods=["GET"])
+    def admin_enroll_suggestion():
+        """Read-only prefill for the enrollment form (manual_map).
+
+        Given a target learner (``user_bid``), resolve their position from
+        ``learner_profiles`` (fallback ``user_users.position_name``), fuzzy-map
+        it to a canonical position code, and return the top courses from
+        ``course_position_tags`` plus a suggested training module. The admin
+        reviews/edits before submitting — nothing is written here.
+        """
+        # Same guard as enroll: assignment is a manage_users operation.
+        _require_permission(app, request.user, "manage_users")
+        target = str(request.args.get("user_bid") or "").strip()
+        if not target:
+            raise_param_error("user_bid")
+
+        from flaskr.service.learning_portal.recommend import (
+            _load_recommendations,
+            _normalize_position,
+        )
+
+        profile = LearnerProfile.query.filter_by(user_bid=target).first()
+        position_name = str(profile.position_name or "") if profile else ""
+        department = str(profile.department or "") if profile else ""
+        if not position_name:
+            row = db.session.execute(
+                text(
+                    "SELECT position_name FROM user_users "
+                    "WHERE user_bid = :bid LIMIT 1"
+                ),
+                {"bid": target},
+            ).first()
+            if row:
+                position_name = str(row[0] or "")
+
+        position_code = _normalize_position(position_name) or "general"
+        courses = _load_recommendations(position_code, 5)
+        # Module heuristic (no position→module table exists): new-hire /
+        # general buckets map to onboarding, everything else to mentorship.
+        suggested_module = "onboarding" if position_code == "general" else "mentorship"
+        return make_common_response(
+            {
+                "user_bid": target,
+                "position_code": position_code,
+                "position_name": position_name,
+                "department": department,
+                "suggested_module": suggested_module,
+                "suggested_courses": courses,
+            }
+        )
+
     @app.route(path_prefix + "/admin/enroll", methods=["DELETE"])
     def admin_unenroll():
         """Remove a course assignment."""

@@ -400,7 +400,6 @@ def test_batch_enroll_rejects_empty_or_bad_role_tags(app, test_client):
 
 # ── regression · single enroll unchanged ───────────────────────────────
 
-
 def test_single_enroll_regression(app, test_client):
     admin_bid = "usr-pa-single-admin"
     user_bid = "usr-pa-single-u"
@@ -422,3 +421,125 @@ def test_single_enroll_regression(app, test_client):
     assert payload["code"] == 0, payload
     assert payload["data"]["enroll_id"] is not None
     assert payload["data"]["status"] == "active"
+
+
+# ── manual_map · enroll-suggestion prefill (read-only) ─────────────────
+
+
+def _seed_position_course(shifu_bid: str, position: str):
+    db.session.add(
+        PublishedShifu(shifu_bid=shifu_bid, title=f"{position} 课程", keywords="")
+    )
+    db.session.add(
+        CoursePositionTag(
+            shifu_bid=shifu_bid,
+            position=position,
+            position_name=position,
+            tag="t",
+            weight=20,
+            is_active=1,
+            created_at=datetime(2026, 1, 1),
+            updated_at=datetime(2026, 1, 1),
+        )
+    )
+    db.session.commit()
+
+
+def _make_admin(app, admin_bid: str) -> str:
+    _ensure_coach_tables()
+    _create_user(user_bid=admin_bid, is_operator=True, nickname="EnrollAdmin")
+    db.session.commit()
+    return generate_token(app, admin_bid)
+
+
+def test_enroll_suggestion_prefills_by_position(app, test_client):
+    admin_bid = "usr-es-admin1"
+    learner_bid = "usr-es-sales1"
+    shifu_bid = "crs-es-sales1"
+    with app.app_context():
+        token = _make_admin(app, admin_bid)
+        CoursePositionTag.query.filter_by(shifu_bid=shifu_bid).delete()
+        LearnerProfile.query.filter_by(user_bid=learner_bid).delete()
+        db.session.commit()
+        _seed_position_course(shifu_bid, "sales")
+        db.session.add(
+            LearnerProfile(
+                learner_bid=learner_bid,
+                user_bid=learner_bid,
+                department="销售本部",
+                position_name="销售经理",
+                status="active",
+                created_at=datetime(2026, 1, 1),
+                updated_at=datetime(2026, 1, 1),
+            )
+        )
+        db.session.commit()
+
+    resp = test_client.get(
+        f"/api/portal/admin/enroll-suggestion?user_bid={learner_bid}",
+        headers={"Token": token},
+    )
+    payload = resp.get_json(force=True)
+    assert payload["code"] == 0, payload
+    data = payload["data"]
+    assert data["position_code"] == "sales"
+    assert data["position_name"] == "销售经理"
+    assert data["department"] == "销售本部"
+    assert data["suggested_module"] == "mentorship"
+    assert shifu_bid in {c["shifu_bid"] for c in data["suggested_courses"]}
+
+
+def test_enroll_suggestion_general_maps_to_onboarding(app, test_client):
+    admin_bid = "usr-es-admin2"
+    learner_bid = "usr-es-new1"
+    with app.app_context():
+        token = _make_admin(app, admin_bid)
+        LearnerProfile.query.filter_by(user_bid=learner_bid).delete()
+        db.session.commit()
+        db.session.add(
+            LearnerProfile(
+                learner_bid=learner_bid,
+                user_bid=learner_bid,
+                department="管理部",
+                position_name="新员工",
+                status="active",
+                created_at=datetime(2026, 1, 1),
+                updated_at=datetime(2026, 1, 1),
+            )
+        )
+        db.session.commit()
+
+    resp = test_client.get(
+        f"/api/portal/admin/enroll-suggestion?user_bid={learner_bid}",
+        headers={"Token": token},
+    )
+    data = resp.get_json(force=True)["data"]
+    assert data["position_code"] == "general"
+    assert data["suggested_module"] == "onboarding"
+
+
+def test_enroll_suggestion_requires_manage_users(app, test_client):
+    learner_bid = "usr-es-plain"
+    with app.app_context():
+        _ensure_coach_tables()
+        _create_user(user_bid=learner_bid, nickname="Plain")
+        db.session.commit()
+        token = generate_token(app, learner_bid)
+
+    resp = test_client.get(
+        f"/api/portal/admin/enroll-suggestion?user_bid={learner_bid}",
+        headers={"Token": token},
+    )
+    assert resp.get_json(force=True)["code"] == 403
+
+
+def test_enroll_suggestion_missing_user_bid(app, test_client):
+    admin_bid = "usr-es-admin3"
+    with app.app_context():
+        token = _make_admin(app, admin_bid)
+
+    resp = test_client.get(
+        "/api/portal/admin/enroll-suggestion", headers={"Token": token}
+    )
+    assert resp.get_json(force=True)["code"] != 0
+
