@@ -10,11 +10,11 @@ import {
   PERMISSION_ALL,
   type CoachPermissionKey,
 } from '@/constants/coach-roles';
-import { parseScope, resolvePermissionFlags } from '@/lib/coach-permissions';
+import { parseScope, resolvePermissionFlags, resolveCanViewDeptOnly } from '@/lib/coach-permissions';
 import type { PortalPermissions, PortalRole } from '@/types/coach-permissions';
 
 export type { CoachPermissionFlag } from '@/lib/coach-permissions';
-export { parseScope, resolvePermissionFlags } from '@/lib/coach-permissions';
+export { parseScope, resolvePermissionFlags, resolveCanViewDeptOnly } from '@/lib/coach-permissions';
 
 export type CoachPermissions = {
   // ---- 12 权限 flags（P0-PERMISSION-KEYS.md §四 映射表）----
@@ -118,7 +118,7 @@ export function useCoachPermissions(): CoachPermissions {
 
     return {
       ...flags,
-      canViewDeptOnly: scopeType === DATA_SCOPE_PREFIX.department,
+      canViewDeptOnly: resolveCanViewDeptOnly(scopeType, isAdmin),
       dataScope,
       scopeType,
       scopeValue,

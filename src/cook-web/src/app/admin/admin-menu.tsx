@@ -27,7 +27,7 @@ type BuildAdminMenuItemsOptions = {
    * HR（manage_users）不再看到进不去的 admin 专属运营页（W3 缺口 4）。
    * 各角色独立工作台按对应 flag 显示：
    *  - canManageUsers   → HR 工作台 /admin/hr
-   *  - canViewDeptOnly  → 部门看板 /admin/dept（dept_head）
+   *  - canViewDeptOnly  → 部门看板 /admin/dept（dept_head；admin/全能账号亦为 true）
    *  - canCreateSession → 导师工作台 /admin/coach（coach）
    */
   canManageUsers?: boolean;

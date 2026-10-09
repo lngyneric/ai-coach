@@ -92,6 +92,28 @@ describe('buildAdminMenuItems', () => {
     ]);
   });
 
+  test('admin (isOperator + canViewDeptOnly) also gets dept dashboard', () => {
+    // devadmin/全能账号：前端已把 isAdmin 归入 canViewDeptOnly，故 admin
+    // 同时具备 HR/导师/部门三项工作台入口，便于逐测所有页面。
+    const menuItems = buildAdminMenuItems({
+      t,
+      isOperator: true,
+      canManageUsers: true,
+      canViewDeptOnly: true,
+      canCreateSession: true,
+    });
+
+    expect(menuItems.map(item => item.href)).toEqual([
+      '/admin',
+      '/admin/dashboard',
+      '/admin/hr',
+      '/admin/dept',
+      '/admin/coach',
+      '/admin/ai',
+      undefined,
+    ]);
+  });
+
   test('coach (canCreateSession) gets coach workbench', () => {
     const menuItems = buildAdminMenuItems({
       t,

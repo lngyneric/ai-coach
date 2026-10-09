@@ -59,6 +59,20 @@ export const parseScope = (
 };
 
 /**
+ * 是否显示「部门看板」(/admin/dept)。
+ *
+ * - dept_head：`data_scope` 以 `department:` 开头（后端 visible_students_scope）。
+ * - admin（isAdmin，含 role-admin 的 "all" 或旧 is_operator）：拥有
+ *   `custom_dashboard`，本就可进入任意看板，故也放行——供 dev 全能账号逐测。
+ *
+ * 以 `isAdmin` 收口，普通用户/其它角色不受影响。
+ */
+export const resolveCanViewDeptOnly = (
+  scopeType: DataScopeType | '',
+  isAdmin: boolean,
+): boolean => scopeType === DATA_SCOPE_PREFIX.department || isAdmin;
+
+/**
  * 由服务器 permissions key 列表 + 旧 isOperator 标志，计算 12 权限 flags。
  *
  * 规则（与后端 has_permission 对齐，P0-EXECUTION-7-ROUTES.md §3.1）：

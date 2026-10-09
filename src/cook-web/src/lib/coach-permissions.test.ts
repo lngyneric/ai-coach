@@ -1,5 +1,6 @@
 import {
   resolvePermissionFlags,
+  resolveCanViewDeptOnly,
   parseScope,
   COACH_PERMISSION_FLAGS,
   type CoachPermissionFlag,
@@ -124,7 +125,25 @@ describe('resolvePermissionFlags — P0 12 flags 映射矩阵', () => {
   });
 });
 
+describe('resolveCanViewDeptOnly — 部门看板可见性', () => {
+  test('dept_head（scope=department）→ true', () => {
+    expect(resolveCanViewDeptOnly('department', false)).toBe(true);
+  });
+
+  test('admin（isAdmin=true，scope=all）→ true（供逐测）', () => {
+    expect(resolveCanViewDeptOnly('all', true)).toBe(true);
+  });
+
+  test('普通角色（非 admin 且非 department）→ false', () => {
+    expect(resolveCanViewDeptOnly('all', false)).toBe(false);
+    expect(resolveCanViewDeptOnly('', false)).toBe(false);
+    expect(resolveCanViewDeptOnly('self', false)).toBe(false);
+    expect(resolveCanViewDeptOnly('mentored', false)).toBe(false);
+  });
+});
+
 describe('parseScope — data_scope 解析', () => {
+
   test('"all" → type=all, value=""', () => {
     expect(parseScope('all')).toEqual({ type: 'all', value: '' });
   });
