@@ -63,9 +63,9 @@ echo "$TOKEN"
 
 ## 7. 随堂测验（JEV）
 - [ ] 页面 `/c/{id}` 学习到第 2 个内容块 → 弹出 flashcard 测验（需 `QUIZ_ENABLED=true`，dev 已开）
-- [ ] API `GET /api/portal/quiz/analysis` → 返回测验分析
-- [ ] API `GET /api/portal/mentor/quiz-analysis/<learner_bid>`（devcoach）
-- [ ] API `GET /api/portal/admin/quiz-stats`（devadmin）
+- [ ] API `GET /api/portal/quiz/analysis?shifu_bid=<shifu_bid>` → 返回测验分析（**`shifu_bid` 必填**，缺则 `code=2001 paramsError`）
+- [ ] API `GET /api/portal/mentor/quiz-analysis/<learner_bid>?shifu_bid=<shifu_bid>`（devcoach）
+- [ ] API `GET /api/portal/admin/quiz-stats?shifu_bid=<shifu_bid>`（devadmin，**`shifu_bid` 必填**）
 - [ ] 备注：JEV 依赖出海代理，dev 已配（见记忆 `reference_jev_typesafe_proxy`）
 
 ## 8. 面谈（1v1 三环）
@@ -117,6 +117,9 @@ echo "$TOKEN"
 - [ ] 页面 `/admin/operations`（课程管理）→ 可见
 - [ ] 页面 `/admin/operations/users` → 用户管理
 - [ ] 页面 `/admin/operations/permissions` → 权限示例
+- [ ] API `GET /api/shifu/shifus?page_index=1&page_size=5` → 课程列表
+- [ ] API `GET /api/shifu/admin/operations/courses?page_index=1&page_size=5` → 运营-课程
+- [ ] API `GET /api/shifu/admin/operations/users?page_index=1&page_size=5` → 运营-用户
 - [ ] 页面 `/admin/orders` → 计费停用时应重定向/隐藏（`billingEnabled=false`）
 
 ---
@@ -126,3 +129,35 @@ echo "$TOKEN"
 - **已知环境缺口**：带 ⚠️ 的条目可能因表/列/前端缺失而失败——属**环境现状**，非本次改动引入。
 - **权限唯一变更**：本次仅改前端 `canViewDeptOnly`（admin 也可见部门看板），后端权限逻辑未动。
 - 逐测若发现**非缺口清单**内的失败，记为真实 bug 并回报。
+
+---
+
+## 实测结果（2026-10-09，devadmin，API 只读部分）
+
+以 `devadmin` 登录（`employeeNo=devadmin`、密码任意）逐项打 API，**17 PASS / 0 FAIL / 3 SKIP(写操作未实发)**。
+
+| 环节 | 检查项 | 结果 |
+|------|--------|------|
+| 1 登录/会话 | `GET /api/user/info` | ✅ code=0 |
+| 2 权限 | `GET /api/portal/permissions` | ✅ role-admin + `all` + 12 key + scope=all |
+| 3 建档 | `GET /api/portal/admin/learners` | ✅ code=0 |
+| 4 分配/报名 | `GET /api/portal/enrollments` | ✅ code=0 |
+| 5 带教 | `GET /api/portal/mentor/students` | ✅ code=0 |
+| 6 学习 | `GET /api/portal/courses` | ✅ code=0 |
+| 7 测验 | `GET /api/portal/quiz/analysis?shifu_bid=…` | ✅ code=0（attempts=2, accuracy=0.5） |
+| 7 测验 | `GET /api/portal/admin/quiz-stats?shifu_bid=…` | ✅ code=0 |
+| 8 面谈 | `GET /api/coach/sessions` | ✅ code=0 |
+| 10 评分 | `GET /api/portal/mentor/pending-scores` | ✅ code=0 |
+| 11 推进 | `GET /api/portal/admin/phases` | ✅ code=0 |
+| 12 报告 | `GET /api/shifu/coach/report/dev-learner-bid` | ✅ code=0 |
+| 14 看板 | `GET /api/dashboard/entry` | ✅ code=0 |
+| 15 部门看板 | `GET /api/portal/admin/learners` | ✅ code=0 |
+| 16 运营 | `GET /api/shifu/shifus` | ✅ code=0 |
+| 16 运营 | `GET /api/shifu/admin/operations/courses` | ✅ code=0 |
+| 16 运营 | `GET /api/shifu/admin/operations/users` | ✅ code=0 |
+
+**首次误报的 2 类（已澄清，非 bug）**：
+- `quiz/analysis`、`admin/quiz-stats` 缺 `shifu_bid` → `code=2001 paramsError`（上文 URL 已补必填参数）。
+- shifu 列表误用 `/api/shifu`、`/api/shifu/list` → 404；正确为 `/api/shifu/shifus`、`/api/shifu/admin/operations/*`。
+
+**未实发的写操作**（会改 dev 数据，默认 dry-run）：`POST /api/user/login_employee`（登录已隐式验证）、`POST /api/portal/admin/learners`、`POST /api/coach/phases/advance`。
