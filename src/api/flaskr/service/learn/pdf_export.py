@@ -118,6 +118,101 @@ def export_lesson_pdf(
     )
 
 
+def export_lesson_html(
+    app: Flask,
+    *,
+    shifu_bid: str,
+    outline_bid: str,
+    user_bid: str,
+    preview_mode: bool,
+) -> str:
+    """Render a lesson as a standalone, web-oriented HTML page.
+
+    Unlike :func:`export_lesson_pdf`, this keeps the original visual HTML
+    untouched — no 680px ``max-width`` rewrite, no ``clamp(...100vw/N)``
+    font rescaling, no rasterization — so viewport-based layouts
+    (``min-height:100vh`` / ``clamp``) render correctly in a browser.
+    """
+    record = load_lesson_export_record(
+        app,
+        shifu_bid=shifu_bid,
+        outline_bid=outline_bid,
+        user_bid=user_bid,
+        preview_mode=preview_mode,
+    )
+    document = build_pdf_export_document(
+        app,
+        shifu_bid=shifu_bid,
+        outline_bid=outline_bid,
+        preview_mode=preview_mode,
+        record=record,
+        temp_dir=None,
+        raw_visual=True,
+    )
+    return render_lesson_html(document)
+
+
+def render_lesson_html(document: PdfExportDocument) -> str:
+    rendered_blocks = "\n".join(
+        _render_pdf_block(block) for block in document.blocks if block.content
+    )
+    return f"""<!DOCTYPE html>
+<html lang="zh-CN">
+  <head>
+    <meta charset="utf-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1" />
+    <title>{escape(document.course_name)} - {escape(document.lesson_name)}</title>
+    <style>
+      * {{ box-sizing: border-box; }}
+      body {{
+        background: #f1f5f9;
+        color: #111827;
+        font-family: "PingFang SC", "Microsoft YaHei", "Noto Sans SC", sans-serif;
+        margin: 0;
+      }}
+      .html-export-header {{
+        background: #0f172a; color: #f8fafc; padding: 12px 20px;
+        position: sticky; top: 0; z-index: 50;
+      }}
+      .html-export-header .course {{ font-size: 16px; font-weight: 700; }}
+      .html-export-header .lesson {{ color: #94a3b8; font-size: 13px; }}
+      .block {{ max-width: 74em; margin: 0 auto; }}
+      .block-html {{ width: 100%; }}
+      .block-text, .block-title {{ padding: 12px 20px; }}
+      .block-title {{ font-size: 20px; font-weight: 700; }}
+      .block-pre {{
+        background: #0f172a; color: #e2e8f0; border-radius: 10px;
+        margin: 12px 20px; padding: 12px 14px; overflow: auto;
+        white-space: pre-wrap; font-family: "SFMono-Regular", Consolas, monospace;
+        font-size: 13px;
+      }}
+      .block-follow-up {{ background: #fff; border-radius: 12px; margin: 12px auto; padding: 12px 16px; }}
+      .block-label {{
+        background: #eff6ff; border: 1px solid #bfdbfe; border-radius: 999px;
+        color: #1d4ed8; display: inline-block; font-size: 12px; font-weight: 700;
+        margin-bottom: 8px; padding: 2px 10px;
+      }}
+      .interaction-shell {{ background: #eff6ff; border: 1px solid #bfdbfe; border-radius: 12px; margin: 12px 20px; padding: 12px 16px; }}
+      .interaction-heading {{ font-size: 12px; color: #475569; margin-bottom: 8px; }}
+      .interaction-options {{ display: flex; flex-wrap: wrap; gap: 8px; }}
+      .interaction-option {{ background: #2563eb; color: #fff; border-radius: 999px; padding: 6px 14px; font-size: 14px; }}
+      .interaction-option-status {{ margin-left: 6px; font-size: 11px; opacity: .8; }}
+      .interaction-input-row {{ margin-top: 8px; }}
+      .interaction-response-label {{ font-size: 11px; color: #64748b; margin-bottom: 4px; }}
+      .interaction-input-shell {{ background: #fff; border: 1px dashed #94a3b8; border-radius: 8px; padding: 8px 10px; }}
+      .interaction-input-placeholder {{ color: #94a3b8; }}
+    </style>
+  </head>
+  <body>
+    <div class="html-export-header">
+      <div class="course">{escape(document.course_name)}</div>
+      <div class="lesson">{escape(document.lesson_name)}</div>
+    </div>
+    {rendered_blocks}
+  </body>
+</html>"""
+
+
 def load_lesson_export_record(
     app: Flask,
     *,
@@ -144,6 +239,7 @@ def build_pdf_export_document(
     preview_mode: bool,
     record,
     temp_dir: str,
+    raw_visual: bool = False,
 ) -> PdfExportDocument:
     course_info = get_shifu_info(app, shifu_bid, preview_mode)
     lesson_name = resolve_lesson_title(
@@ -154,6 +250,7 @@ def build_pdf_export_document(
     blocks = filter_exportable_elements(
         record.elements or [],
         temp_dir=temp_dir,
+        raw_visual=raw_visual,
     )
     if not blocks:
         raise_param_error("lesson_content")
@@ -195,6 +292,7 @@ def filter_exportable_elements(
     elements: list[ElementDTO],
     *,
     temp_dir: str | None = None,
+    raw_visual: bool = False,
 ) -> list[PdfExportBlock]:
     blocks: list[PdfExportBlock] = []
     for index, element in enumerate(elements or []):
@@ -202,6 +300,7 @@ def filter_exportable_elements(
             element,
             order=index,
             temp_dir=temp_dir,
+            raw_visual=raw_visual,
         )
         if block is None:
             continue
@@ -214,6 +313,7 @@ def map_element_to_pdf_block(
     *,
     order: int,
     temp_dir: str | None = None,
+    raw_visual: bool = False,
 ) -> PdfExportBlock | None:
     if not element:
         return None
@@ -253,12 +353,13 @@ def map_element_to_pdf_block(
         ElementType.IMG,
         ElementType.MD_IMG,
     }:
-        content = _prepare_pdf_visual_content(
-            content,
-            element_type=element_type,
-            order=order,
-            temp_dir=temp_dir,
-        )
+        if not raw_visual:
+            content = _prepare_pdf_visual_content(
+                content,
+                element_type=element_type,
+                order=order,
+                temp_dir=temp_dir,
+            )
 
     return PdfExportBlock(
         block_type=block_type,

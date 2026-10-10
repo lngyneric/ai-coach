@@ -24,7 +24,7 @@ from flaskr.service.learn.lesson_feedback import (
     submit_lesson_feedback,
     list_lesson_feedbacks,
 )
-from flaskr.service.learn.pdf_export import export_lesson_pdf
+from flaskr.service.learn.pdf_export import export_lesson_html, export_lesson_pdf
 from flaskr.service.learn.preview_permissions import (
     require_shifu_preview_permission,
     resolve_preview_request_user,
@@ -729,6 +729,60 @@ def register_learn_routes(app: Flask, path_prefix: str = "/api/learn") -> Flask:
             as_attachment=True,
             download_name=export_result.download_name,
         )
+
+    @app.route(
+        path_prefix + "/shifu/<shifu_bid>/records/<outline_bid>/export-html",
+        methods=["GET"],
+    )
+    @with_shifu_context()
+    def export_lesson_html_api(shifu_bid: str, outline_bid: str):
+        """
+        export lesson record as a standalone HTML page
+        ---
+        tags:
+            - learn
+        parameters:
+            - name: shifu_bid
+              type: string
+              required: true
+            - name: outline_bid
+              type: string
+              required: true
+            - in: query
+              name: preview_mode
+              type: boolean
+              required: false
+            - in: query
+              name: download
+              type: boolean
+              required: false
+        responses:
+            200:
+                description: standalone lesson HTML (original layout preserved)
+                content:
+                    text/html:
+                        schema:
+                            type: string
+        """
+        preview_mode = request.args.get("preview_mode", "False")
+        preview_mode = preview_mode.lower() == "true"
+        as_download = str(request.args.get("download", "False")).lower() == "true"
+        user_bid = request.user.user_id
+        if preview_mode:
+            require_shifu_preview_permission(app, user_bid, shifu_bid)
+        html = export_lesson_html(
+            app,
+            shifu_bid=shifu_bid,
+            outline_bid=outline_bid,
+            user_bid=user_bid,
+            preview_mode=preview_mode,
+        )
+        headers = (
+            {"Content-Disposition": f'attachment; filename="{outline_bid}.html"'}
+            if as_download
+            else {}
+        )
+        return Response(html, mimetype="text/html", headers=headers)
 
     @app.route(
         path_prefix + "/shifu/<shifu_bid>/lesson-feedback/<outline_bid>",
