@@ -1,0 +1,8 @@
+# secrets / credentials (never commit)
+.env
+.env.bak*
+# python
+__pycache__/
+*.pyc
+# local course sync manifests
+.shifu-sync.json

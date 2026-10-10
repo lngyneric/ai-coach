@@ -85,6 +85,7 @@ Some concepts span multiple references files. Use this table to locate the autho
 | Output language | — | — | `references/data-contracts.md#language-resolution` |
 | IVD knowledge (medical vertical) | — | `references/pedagogy.md#medical-vertical-segmentation-rules` | `references/ivd-knowledge.md` + `scripts/ivd-lookup.py` |
 | Segmentation feedback loop (L3) | — | `references/segmentation-eval.md#quality-score` | `references/segmentation-eval.md` + `scripts/segmentation-eval.py` |
+| Segmentation quality pre-check (JEV) | — | `references/segmentation-quality.md` | `references/segmentation-quality.md` + `scripts/segmentation-quality.py` |
 | Business task breakdown (P1) | — | `references/task-driven-design.md` (五步拆解 + 场景示例) | `references/task-driven-design.md#课程路径` + `course-designer` Bloom 目标 |
 | Lesson-type templates (P2) | `references/lesson-type-templates.md` (per-type MDF skeleton) | `references/pedagogy.md` (ABT / scaffolding / diagnostic feedback) | `references/lesson-type-templates.md#通用约束` |
 
@@ -337,6 +338,7 @@ Segment list per `references/data-contracts.md#segment-schema` (each segment car
 - Preservation, one-core-question, and information-fidelity constraints pass — see `references/markdownflow.md#preservation` and `references/pedagogy.md#lesson-loop`.
 - Medical vertical (`domain == "medical_ivd"`): every reference-value / terminology span is grounded by `scripts/ivd-lookup.py`; reference-value spans carry `preserve_block: true` and `immutable` in their transfer signals.
 - Feedback loop (L3, optional): after deployment, run `scripts/segmentation-eval.py` on learner progress to rank lessons by completion/stick rate and flag `poor` lessons for re-segmentation — see `references/segmentation-eval.md`.
+- Quality pre-check (optional, JEV): **before** orchestration/generation, run `python3 scripts/segmentation-quality.py --segments <seg.json> [--source <raw.md>]` to score coverage / granularity / boundary / preservation with JEV (TypeSafe System One). Flagged segments (`flag: true`) should be re-segmented or confirmed by a human. Fail-open: no `TYPESAFE_API_KEY` (checked in the environment, then the skill's `.env`) → `status: skipped`, never blocks. See `references/segmentation-quality.md`.
 
 ---
 

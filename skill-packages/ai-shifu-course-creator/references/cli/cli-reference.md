@@ -26,10 +26,10 @@ For local deployments or AAD-enabled environments:
 
 ```bash
 # Login with employee credentials
-login --method employee --employee-no <id> --password <pwd> --base-url http://localhost:8080
+login --method employee --employee-no <id> --password <pwd> --base-url http://eu.sysmex.com.cn
 
 # Or set SHIFU_BASE_URL once and omit --base-url on subsequent commands
-export SHIFU_BASE_URL=http://localhost:8080
+export SHIFU_BASE_URL=http://eu.sysmex.com.cn
 login --method employee --employee-no <id> --password <pwd>
 ```
 
