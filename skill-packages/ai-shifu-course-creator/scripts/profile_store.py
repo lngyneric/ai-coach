@@ -5,6 +5,7 @@ from __future__ import annotations
 import contextlib
 import errno
 import hashlib
+import ipaddress
 import json
 import os
 import tempfile
@@ -20,6 +21,22 @@ from dotenv import dotenv_values, set_key
 
 SITE_URLS = {"cn": "https://app.ai-shifu.cn", "com": "https://app.ai-shifu.com"}
 LOOPBACK_HOSTS = frozenset({"localhost", "127.0.0.1", "::1"})
+
+
+def _is_private_host(hostname):
+    """True for private / link-local / CGNAT hosts (incl. Tailscale 100.64/10).
+
+    Plain HTTP is normally rejected except for loopback; allow it for
+    non-public addresses so dev/LAN/Tailscale deployments work.
+    """
+    try:
+        ip = ipaddress.ip_address(hostname)
+    except ValueError:
+        return False
+    if ip.is_private or ip.is_loopback or ip.is_link_local:
+        return True
+    # CGNAT / Tailscale 100.64.0.0/10 is not flagged by ip.is_private.
+    return ip.version == 4 and ip in ipaddress.ip_network("100.64.0.0/10")
 
 
 class ProfileError(ValueError):
@@ -64,7 +81,7 @@ def normalize_base_url(value):
         valid = False
     if not valid:
         raise ProfileError("Provide a service URL with a hostname and no credentials, query, or fragment.")
-    if parsed.scheme != "https" and hostname not in LOOPBACK_HOSTS:
+    if parsed.scheme != "https" and hostname not in LOOPBACK_HOSTS and not _is_private_host(hostname):
         raise ProfileError("Service URLs must use HTTPS; HTTP is only supported on localhost.")
     # Normalize host casing and default ports while preserving case-sensitive paths.
     host = f"[{hostname}]" if ":" in hostname else hostname
