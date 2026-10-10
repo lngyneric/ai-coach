@@ -3,7 +3,10 @@
 Record user-visible and maintainer-relevant changes in chronological release history.
 Current behavior remains defined by `SKILL.md`, references, and scripts.
 
-## Unreleased
+## 1.2.10+sysmex.1 - 2026-10-10
+
+Landed upstream CLI 1.2.10 into the local skill and added Sysmex-specific extensions.
+Version scheme: `<upstream base>+sysmex.<n>` (upstream base tracks `ai-shifu/skills`; `sysmex.<n>` counts local revisions).
 
 - Add a JEV (TypeSafe System One) **segmentation-quality pre-check** (`scripts/segmentation-quality.py` + `references/segmentation-quality.md`), run after Segmentation and before Orchestration/Generation. JEV is a typed-judgment model (noul/score), so it is used as a quality classifier, not a segmenter: one batched request scores `coverage` (0..4) plus per-segment `granularity` (0..4), `boundary` (0..4), and `preserve_ok` (noul), returning per-segment `flag`, a `summary`, and `uncertainty`/`rerun_hints` aligned with `data-contracts.md#segment-schema`. Fail-open: without `TYPESAFE_API_KEY` or on call failure it returns `{"status":"skipped"}` and never blocks. `TYPESAFE_API_KEY` is resolved from the process environment first, then the skill's root `.env`. Route it from `SKILL.md` (Cross-File Concept Routing + Segmentation Validation).
 - Verified the pre-check against `jev-1.13.0` on a 3-segment sample: it correctly flagged an over-packed segment (`granularity=1.64`) and a table with `preserve_block:false` (`preserve_ok=0.16`), and passed a well-formed segment.
