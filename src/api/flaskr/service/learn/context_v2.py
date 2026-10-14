@@ -2031,6 +2031,260 @@ class RunScriptContextV2:
             content=feedback_md,
         )
 
+    # ------------------------------------------------------------------
+    # In-lesson flashcard quiz
+    # ------------------------------------------------------------------
+    @staticmethod
+    def _quiz_var_name(position: int) -> str:
+        return f"sys_quiz_{position}"
+
+    def _quiz_enabled(self) -> bool:
+        return bool(self.app.config.get("QUIZ_ENABLED", False))
+
+    def _quiz_should_emit(self, progress_record: LearnProgressRecord) -> bool:
+        """Whether a quiz is due after the current content block."""
+        if not self._quiz_enabled() or not self._outline_item_info:
+            return False
+        try:
+            every_n = int(self.app.config.get("QUIZ_EVERY_N_BLOCKS", 2) or 2)
+        except (TypeError, ValueError):
+            every_n = 2
+        if every_n <= 0:
+            return False
+        content_count = (
+            LearnGeneratedBlock.query.filter(
+                LearnGeneratedBlock.progress_record_bid
+                == progress_record.progress_record_bid,
+                LearnGeneratedBlock.outline_item_bid == progress_record.outline_item_bid,
+                LearnGeneratedBlock.user_bid == self._user_info.user_id,
+                LearnGeneratedBlock.type == BLOCK_TYPE_MDCONTENT_VALUE,
+                LearnGeneratedBlock.status == 1,
+                LearnGeneratedBlock.deleted == 0,
+            ).count()
+        )
+        return content_count > 0 and content_count % every_n == 0
+
+    def _emit_quiz_interaction(
+        self,
+        *,
+        progress_record: LearnProgressRecord,
+        position: int,
+        paragraph: str,
+    ):
+        """Generate + JEV-validate a quiz and yield its interaction block.
+
+        Returns a generator; yields nothing when the quiz cannot be produced.
+        Persists the question row for later grading. Never raises.
+        """
+        from flaskr.service.learn.quiz_generation import generate_quiz_question
+        from flaskr.service.learn.quiz_judging import judge_question_validity
+        from flaskr.service.learn.quiz_analytics import record_quiz_question
+
+        var_name = self._quiz_var_name(position)
+        marker = f"%{{{{{var_name}}}}}"
+
+        # Idempotency: an existing quiz block at this position.
+        existing_block = (
+            LearnGeneratedBlock.query.filter(
+                LearnGeneratedBlock.progress_record_bid
+                == progress_record.progress_record_bid,
+                LearnGeneratedBlock.outline_item_bid == progress_record.outline_item_bid,
+                LearnGeneratedBlock.user_bid == self._user_info.user_id,
+                LearnGeneratedBlock.type == BLOCK_TYPE_MDINTERACTION_VALUE,
+                LearnGeneratedBlock.status == 1,
+                LearnGeneratedBlock.deleted == 0,
+                LearnGeneratedBlock.block_content_conf.contains(marker, autoescape=True),
+            )
+            .order_by(LearnGeneratedBlock.id.desc())
+            .first()
+        )
+        if existing_block:
+            yield RunMarkdownFlowDTO(
+                outline_bid=progress_record.outline_item_bid,
+                generated_block_bid=existing_block.generated_block_bid,
+                type=GeneratedType.INTERACTION,
+                content=existing_block.block_content_conf or "",
+            )
+            return
+
+        try:
+            max_retries = int(self.app.config.get("QUIZ_MAX_VALIDITY_RETRIES", 1) or 0)
+        except (TypeError, ValueError):
+            max_retries = 1
+        chapter_title = getattr(self._outline_item_info, "title", "") or ""
+
+        generated = None
+        validity = None
+        for _attempt in range(max(1, max_retries + 1)):
+            gen = generate_quiz_question(
+                self.app,
+                paragraph=paragraph,
+                chapter_title=chapter_title,
+                var_name=var_name,
+            )
+            if not gen:
+                continue
+            md, question = gen
+            validity = judge_question_validity(
+                stem=question.get("stem", ""),
+                options=question.get("options") or [],
+                correct_answer=question.get("correct_answer", ""),
+                paragraph=paragraph,
+                question_type=question.get("question_type", ""),
+            )
+            # Accept when JEV approves, or when JEV is unavailable (degrade open).
+            if validity is None or validity.get("accepted"):
+                generated = (md, question)
+                break
+
+        if not generated:
+            self.app.logger.info(
+                "quiz skipped (generation/validity failed) progress=%s pos=%s",
+                progress_record.progress_record_bid,
+                position,
+            )
+            return
+
+        md, question = generated
+        generated_block: LearnGeneratedBlock = init_generated_block(
+            self.app,
+            shifu_bid=progress_record.shifu_bid,
+            outline_item_bid=progress_record.outline_item_bid,
+            progress_record_bid=progress_record.progress_record_bid,
+            user_bid=self._user_info.user_id,
+            block_type=BLOCK_TYPE_MDINTERACTION_VALUE,
+            mdflow=md,
+            block_index=position,
+        )
+        generated_block.role = ROLE_TEACHER
+        generated_block.block_content_conf = md
+        db.session.add(generated_block)
+        db.session.flush()
+        db.session.commit()
+
+        try:
+            record_quiz_question(
+                self.app,
+                shifu_bid=progress_record.shifu_bid,
+                outline_item_bid=progress_record.outline_item_bid,
+                progress_record_bid=progress_record.progress_record_bid,
+                user_bid=self._user_info.user_id,
+                block_bid=generated_block.generated_block_bid,
+                position=position,
+                question=question,
+                mdflow=md,
+                paragraph=paragraph,
+                validity=validity,
+                provider_model=(validity or {}).get("model", ""),
+            )
+        except Exception as exc:  # analytics is best-effort
+            self.app.logger.warning("record_quiz_question failed: %r", exc)
+
+        self.append_langfuse_output(md)
+        yield RunMarkdownFlowDTO(
+            outline_bid=progress_record.outline_item_bid,
+            generated_block_bid=generated_block.generated_block_bid,
+            type=GeneratedType.INTERACTION,
+            content=md,
+        )
+
+    def _find_pending_quiz_block(
+        self,
+        progress_record: LearnProgressRecord,
+        position: int,
+    ) -> LearnGeneratedBlock | None:
+        """Return a pending (unanswered) synthetic quiz block at ``position``."""
+        marker = f"%{{{{sys_quiz_{position}}}}}"
+        return (
+            LearnGeneratedBlock.query.filter(
+                LearnGeneratedBlock.progress_record_bid
+                == progress_record.progress_record_bid,
+                LearnGeneratedBlock.outline_item_bid == progress_record.outline_item_bid,
+                LearnGeneratedBlock.user_bid == self._user_info.user_id,
+                LearnGeneratedBlock.type == BLOCK_TYPE_MDINTERACTION_VALUE,
+                LearnGeneratedBlock.position == position,
+                LearnGeneratedBlock.status == 1,
+                LearnGeneratedBlock.deleted == 0,
+                LearnGeneratedBlock.block_content_conf.contains(marker, autoescape=True),
+            )
+            .order_by(LearnGeneratedBlock.id.desc())
+            .first()
+        )
+
+    def _handle_quiz_input(
+        self,
+        *,
+        quiz_block: LearnGeneratedBlock,
+        progress_record: LearnProgressRecord,
+    ):
+        """Persist the learner's quiz answer, grade async, and advance.
+
+        Yields a BREAK marker so the client closes the input; the run then
+        continues from the next native block. Never raises.
+        """
+        from flaskr.service.learn.quiz_analytics import schedule_quiz_grading
+        from flaskr.service.learn.models import LearnQuizQuestion
+
+        learner_answer = ""
+        try:
+            parsed = MdflowContextV2.flatten_user_input_map(
+                self._normalize_user_input_for_block(quiz_block)
+            )
+            learner_answer = parsed or ""
+        except Exception:
+            learner_answer = ""
+        if not learner_answer and isinstance(self._input, dict):
+            learner_answer = ",".join(str(v) for v in self._input.values() if v)
+
+        quiz_block.generated_content = learner_answer
+        quiz_block.role = ROLE_STUDENT
+        db.session.add(quiz_block)
+        db.session.flush()
+
+        question_row = (
+            LearnQuizQuestion.query.filter(
+                LearnQuizQuestion.block_bid == quiz_block.generated_block_bid,
+                LearnQuizQuestion.deleted == 0,
+            )
+            .order_by(LearnQuizQuestion.id.desc())
+            .first()
+        )
+        if question_row and learner_answer:
+            try:
+                schedule_quiz_grading(
+                    self.app,
+                    shifu_bid=progress_record.shifu_bid,
+                    outline_item_bid=progress_record.outline_item_bid,
+                    progress_record_bid=progress_record.progress_record_bid,
+                    user_bid=self._user_info.user_id,
+                    question_bid=question_row.question_bid,
+                    answer_block_bid=quiz_block.generated_block_bid,
+                    learner_answer=learner_answer,
+                )
+            except Exception as exc:
+                self.app.logger.warning("schedule quiz grading failed: %r", exc)
+
+        yield RunMarkdownFlowDTO(
+            outline_bid=progress_record.outline_item_bid,
+            generated_block_bid=quiz_block.generated_block_bid,
+            type=GeneratedType.INTERACTION,
+            content=quiz_block.block_content_conf or "",
+        )
+
+    def _normalize_user_input_for_block(self, block: LearnGeneratedBlock) -> dict:
+        """Build the user_input map for a synthetic quiz block's variable."""
+        var_name = self._quiz_var_name(block.position)
+        raw = self._input
+        if isinstance(raw, dict):
+            if var_name in raw:
+                return {var_name: raw[var_name]}
+            # Single-value dict from the frontend.
+            values = [v for v in raw.values() if v not in (None, "")]
+            return {var_name: values[0] if values else ""}
+        if isinstance(raw, list):
+            return {var_name: ",".join(str(v) for v in raw if str(v).strip())}
+        return {var_name: "" if raw is None else str(raw)}
+
     def _is_access_gate_blocking_interaction(self, parsed_interaction: dict) -> bool:
         is_logged_in = bool(
             getattr(self._user_info, "mobile", None)
@@ -2139,9 +2393,30 @@ class RunScriptContextV2:
         has_next_outline_item: bool,
     ) -> Generator[RunMarkdownFlowDTO, None, None]:
         if current_outline_completed:
+            self._schedule_chapter_quiz_aggregate(progress_record)
             yield from self._emit_lesson_feedback_interaction(progress_record)
         if has_next_outline_item:
             yield from self._emit_next_chapter_interaction(progress_record)
+
+    def _schedule_chapter_quiz_aggregate(
+        self, progress_record: LearnProgressRecord
+    ) -> None:
+        """Aggregate this chapter's quiz performance for the learner (async)."""
+        if not self._quiz_enabled() or not progress_record:
+            return
+        try:
+            from flaskr.service.learn.quiz_analytics import (
+                schedule_chapter_aggregate,
+            )
+
+            schedule_chapter_aggregate(
+                self.app,
+                user_bid=self._user_info.user_id,
+                shifu_bid=progress_record.shifu_bid,
+                outline_item_bid=progress_record.outline_item_bid,
+            )
+        except Exception as exc:
+            self.app.logger.warning("schedule chapter quiz aggregate failed: %r", exc)
 
     def _get_default_llm_settings(self) -> LLMSettings:
         return LLMSettings(
@@ -2480,6 +2755,41 @@ class RunScriptContextV2:
         app.logger.info(f"block: {block}")
         app.logger.info(f"self._run_type: {self._run_type}")
         has_effective_input = self._has_effective_input()
+
+        # In-lesson flashcard quiz answer capture. A generated quiz block is a
+        # synthetic interaction that is NOT part of block_list, so it must be
+        # handled here before the native interaction realignment below.
+        pending_quiz_block = self._find_pending_quiz_block(
+            run_script_info.attend, run_script_info.block_position
+        )
+        if pending_quiz_block is not None:
+            if has_effective_input:
+                yield from self._handle_quiz_input(
+                    quiz_block=pending_quiz_block,
+                    progress_record=run_script_info.attend,
+                )
+                self._current_attend.block_position = (
+                    run_script_info.block_position + 1
+                )
+                self._current_attend.status = LEARN_STATUS_IN_PROGRESS
+                self._run_type = RunType.OUTPUT
+                self._can_continue = True
+                self._input = None
+                self._input_type = None
+                db.session.flush()
+                return
+            # No input yet (e.g. reconnect): re-emit the question and wait.
+            if self._run_type == RunType.INPUT:
+                yield RunMarkdownFlowDTO(
+                    outline_bid=run_script_info.outline_bid,
+                    generated_block_bid=pending_quiz_block.generated_block_bid,
+                    type=GeneratedType.INTERACTION,
+                    content=pending_quiz_block.block_content_conf or "",
+                )
+                self._can_continue = False
+                db.session.flush()
+                return
+
         if self._run_type == RunType.INPUT:
             if block.block_type != BlockType.INTERACTION:
                 if has_effective_input:
@@ -3321,6 +3631,26 @@ class RunScriptContextV2:
                 self._current_attend.block_position = next_block_position
                 db.session.flush()
                 db.session.commit()  # persist progress at every block boundary
+
+                # In-lesson flashcard quiz: after every N content blocks, insert
+                # a generated question (synchronous; skipped silently on failure).
+                if self._quiz_should_emit(self._current_attend):
+                    quiz_position = run_script_info.block_position
+                    emitted = False
+                    for quiz_event in self._emit_quiz_interaction(
+                        progress_record=self._current_attend,
+                        position=quiz_position,
+                        paragraph=generated_content or "",
+                    ):
+                        emitted = True
+                        yield quiz_event
+                    if emitted:
+                        # Hold on this position so the answer is captured at the
+                        # quiz block; the run resumes at the next native block.
+                        self._current_attend.block_position = quiz_position
+                        self._can_continue = False
+                        db.session.flush()
+                        return
 
         progress_record = self._current_attend
         outline_updates = self._get_next_outline_item()

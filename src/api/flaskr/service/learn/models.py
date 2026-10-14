@@ -6,6 +6,8 @@ from sqlalchemy import (
     Text,
     SmallInteger,
     Index,
+    Numeric,
+    JSON,
 )
 from sqlalchemy.dialects.mysql import BIGINT
 from sqlalchemy.sql import func
@@ -472,6 +474,388 @@ class LearnLessonFeedback(db.Model):
         comment="Submit mode: read or listen",
         index=True,
     )
+    deleted = Column(
+        SmallInteger,
+        nullable=False,
+        default=0,
+        comment="Deletion flag: 0=active, 1=deleted",
+        index=True,
+    )
+    created_at = Column(
+        DateTime,
+        nullable=False,
+        default=func.now(),
+        server_default=func.now(),
+        comment="Creation timestamp",
+    )
+    updated_at = Column(
+        DateTime,
+        nullable=False,
+        default=func.now(),
+        server_default=func.now(),
+        onupdate=func.now(),
+        comment="Last update timestamp",
+    )
+
+
+class LearnFollowupScore(db.Model):
+    """JEV (TypeSafe System One) scores for a learner follow-up question and its answer."""
+
+    __tablename__ = "learn_followup_scores"
+    __table_args__ = {"comment": "JEV follow-up question/answer scoring records"}
+
+    id = Column(BIGINT, primary_key=True, autoincrement=True)
+    score_bid = Column(
+        String(36),
+        nullable=False,
+        default="",
+        comment="Scoring record business identifier",
+        unique=True,
+    )
+    user_bid = Column(
+        String(36),
+        nullable=False,
+        default="",
+        comment="User business identifier",
+        index=True,
+    )
+    shifu_bid = Column(
+        String(36),
+        nullable=False,
+        default="",
+        comment="Shifu business identifier",
+        index=True,
+    )
+    outline_item_bid = Column(
+        String(36),
+        nullable=False,
+        default="",
+        comment="Outline item business identifier",
+        index=True,
+    )
+    progress_record_bid = Column(
+        String(36),
+        nullable=False,
+        default="",
+        comment="Learn progress record business identifier",
+        index=True,
+    )
+    answer_block_bid = Column(
+        String(36),
+        nullable=False,
+        default="",
+        comment="Answer generated block business identifier (idempotency key)",
+        index=True,
+    )
+    question = Column(
+        Text,
+        nullable=False,
+        comment="Learner follow-up question text",
+    )
+    answer_excerpt = Column(
+        Text,
+        nullable=True,
+        comment="Excerpt of the generated tutor answer",
+    )
+    mastery_score = Column(
+        Numeric(5, 2),
+        nullable=True,
+        comment="JEV mastery score (probability-weighted level index)",
+    )
+    ask_type = Column(
+        String(20),
+        nullable=True,
+        comment="JEV ask type: confusion/clarify/deepen/off_topic",
+    )
+    answer_on_topic = Column(
+        Numeric(4, 3),
+        nullable=True,
+        comment="JEV noul: probability the answer is on-topic (0-1)",
+    )
+    answer_quality = Column(
+        Numeric(5, 2),
+        nullable=True,
+        comment="JEV answer quality score (probability-weighted level index)",
+    )
+    difficulty_hint = Column(
+        String(10),
+        nullable=True,
+        comment="Derived difficulty hint: easier/keep/harder",
+    )
+    confidence = Column(
+        Numeric(4, 3),
+        nullable=True,
+        comment="JEV confidence of the primary judgment (0-1)",
+    )
+    provider_model = Column(
+        String(64),
+        nullable=False,
+        default="",
+        comment="JEV model that produced the score",
+    )
+    raw_json = Column(
+        JSON,
+        nullable=True,
+        comment="Raw JEV response payload",
+    )
+    deleted = Column(
+        SmallInteger,
+        nullable=False,
+        default=0,
+        comment="Deletion flag: 0=active, 1=deleted",
+        index=True,
+    )
+    created_at = Column(
+        DateTime,
+        nullable=False,
+        default=func.now(),
+        server_default=func.now(),
+        comment="Creation timestamp",
+    )
+    updated_at = Column(
+        DateTime,
+        nullable=False,
+        default=func.now(),
+        server_default=func.now(),
+        onupdate=func.now(),
+        comment="Last update timestamp",
+    )
+
+
+class LearnQuizQuestion(db.Model):
+    """An in-lesson flashcard/quiz question generated after a content paragraph."""
+
+    __tablename__ = "learn_quiz_questions"
+    __table_args__ = {"comment": "Generated in-lesson quiz questions"}
+
+    id = Column(BIGINT, primary_key=True, autoincrement=True)
+    question_bid = Column(
+        String(36),
+        nullable=False,
+        default="",
+        comment="Quiz question business identifier",
+        unique=True,
+    )
+    user_bid = Column(
+        String(36),
+        nullable=False,
+        default="",
+        comment="User business identifier",
+        index=True,
+    )
+    shifu_bid = Column(
+        String(36),
+        nullable=False,
+        default="",
+        comment="Shifu business identifier",
+        index=True,
+    )
+    outline_item_bid = Column(
+        String(36),
+        nullable=False,
+        default="",
+        comment="Outline item business identifier",
+        index=True,
+    )
+    progress_record_bid = Column(
+        String(36),
+        nullable=False,
+        default="",
+        comment="Learn progress record business identifier",
+        index=True,
+    )
+    block_bid = Column(
+        String(36),
+        nullable=False,
+        default="",
+        comment="Generated interaction block business identifier",
+        index=True,
+    )
+    position = Column(Integer, nullable=False, default=0, comment="Block position")
+    question_type = Column(
+        String(20),
+        nullable=False,
+        default="",
+        comment="single_choice/multi_choice/fill_blank/short_answer",
+    )
+    source_excerpt = Column(Text, nullable=True, comment="Source paragraph excerpt")
+    mdflow = Column(Text, nullable=True, comment="Rendered MarkdownFlow interaction line")
+    options_json = Column(JSON, nullable=True, comment="Answer options")
+    correct_answer = Column(Text, nullable=True, comment="Reference correct answer")
+    validity_score = Column(Numeric(5, 2), nullable=True, comment="JEV question validity (0-4)")
+    unique_answer = Column(
+        Numeric(4, 3), nullable=True, comment="JEV noul: unique-answer probability"
+    )
+    difficulty_score = Column(Numeric(5, 2), nullable=True, comment="JEV difficulty (0-4)")
+    reliability_score = Column(
+        Numeric(5, 2), nullable=True, comment="JEV meta reliability judgment (0-4)"
+    )
+    provider_model = Column(
+        String(64), nullable=False, default="", comment="Generation model id"
+    )
+    raw_json = Column(JSON, nullable=True, comment="Raw JEV/LLM payloads")
+    deleted = Column(
+        SmallInteger,
+        nullable=False,
+        default=0,
+        comment="Deletion flag: 0=active, 1=deleted",
+        index=True,
+    )
+    created_at = Column(
+        DateTime,
+        nullable=False,
+        default=func.now(),
+        server_default=func.now(),
+        comment="Creation timestamp",
+    )
+    updated_at = Column(
+        DateTime,
+        nullable=False,
+        default=func.now(),
+        server_default=func.now(),
+        onupdate=func.now(),
+        comment="Last update timestamp",
+    )
+
+
+class LearnQuizAttempt(db.Model):
+    """A learner's answer to an in-lesson quiz question."""
+
+    __tablename__ = "learn_quiz_attempts"
+    __table_args__ = {"comment": "Learner quiz answer attempts"}
+
+    id = Column(BIGINT, primary_key=True, autoincrement=True)
+    attempt_bid = Column(
+        String(36),
+        nullable=False,
+        default="",
+        comment="Attempt business identifier",
+        unique=True,
+    )
+    question_bid = Column(
+        String(36),
+        nullable=False,
+        default="",
+        comment="Quiz question business identifier",
+        index=True,
+    )
+    answer_block_bid = Column(
+        String(36),
+        nullable=False,
+        default="",
+        comment="Answer generated-block business identifier (idempotency key)",
+        index=True,
+    )
+    user_bid = Column(
+        String(36),
+        nullable=False,
+        default="",
+        comment="User business identifier",
+        index=True,
+    )
+    shifu_bid = Column(
+        String(36),
+        nullable=False,
+        default="",
+        comment="Shifu business identifier",
+        index=True,
+    )
+    outline_item_bid = Column(
+        String(36),
+        nullable=False,
+        default="",
+        comment="Outline item business identifier",
+        index=True,
+    )
+    progress_record_bid = Column(
+        String(36),
+        nullable=False,
+        default="",
+        comment="Learn progress record business identifier",
+        index=True,
+    )
+    answer = Column(Text, nullable=True, comment="Learner answer text")
+    is_correct = Column(
+        SmallInteger, nullable=True, comment="1=correct, 0=wrong, NULL=ungraded"
+    )
+    score = Column(Numeric(5, 2), nullable=True, comment="Grading score (0-4)")
+    grading_json = Column(JSON, nullable=True, comment="Raw JEV grading payload")
+    confidence = Column(Numeric(4, 3), nullable=True, comment="Grading confidence")
+    deleted = Column(
+        SmallInteger,
+        nullable=False,
+        default=0,
+        comment="Deletion flag: 0=active, 1=deleted",
+        index=True,
+    )
+    created_at = Column(
+        DateTime,
+        nullable=False,
+        default=func.now(),
+        server_default=func.now(),
+        comment="Creation timestamp",
+    )
+    updated_at = Column(
+        DateTime,
+        nullable=False,
+        default=func.now(),
+        server_default=func.now(),
+        onupdate=func.now(),
+        comment="Last update timestamp",
+    )
+
+
+class LearnQuizChapterAggregate(db.Model):
+    """Per-learner, per-chapter aggregation of quiz performance."""
+
+    __tablename__ = "learn_quiz_chapter_aggregates"
+    __table_args__ = (
+        Index(
+            "idx_learn_quiz_chapter_agg_unique_active",
+            "user_bid",
+            "shifu_bid",
+            "outline_item_bid",
+            "deleted",
+            unique=True,
+        ),
+        {"comment": "Learner quiz chapter-level aggregates"},
+    )
+
+    id = Column(BIGINT, primary_key=True, autoincrement=True)
+    aggregate_bid = Column(
+        String(36),
+        nullable=False,
+        default="",
+        comment="Aggregate business identifier",
+        unique=True,
+    )
+    user_bid = Column(
+        String(36),
+        nullable=False,
+        default="",
+        comment="User business identifier",
+        index=True,
+    )
+    shifu_bid = Column(
+        String(36),
+        nullable=False,
+        default="",
+        comment="Shifu business identifier",
+        index=True,
+    )
+    outline_item_bid = Column(
+        String(36),
+        nullable=False,
+        default="",
+        comment="Outline item business identifier",
+        index=True,
+    )
+    question_count = Column(Integer, nullable=False, default=0, comment="Questions attempted")
+    attempt_count = Column(Integer, nullable=False, default=0, comment="Total attempts")
+    correct_count = Column(Integer, nullable=False, default=0, comment="Correct attempts")
+    accuracy = Column(Numeric(5, 2), nullable=True, comment="correct/attempt (0-1)")
+    mastery_score = Column(Numeric(5, 2), nullable=True, comment="Aggregated mastery (0-4)")
+    weak_points_json = Column(JSON, nullable=True, comment="Weak knowledge points")
     deleted = Column(
         SmallInteger,
         nullable=False,

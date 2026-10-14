@@ -9,6 +9,10 @@
 | `docs/QUALITY_SCORE.md` | Quality Score | `root-doc` | `reference` | `repo` | `2026-04-17` | `true` |
 | `docs/RELIABILITY.md` | Reliability | `root-doc` | `reference` | `repo` | `2026-04-17` | `true` |
 | `docs/SECURITY.md` | Security | `root-doc` | `reference` | `repo` | `2026-04-17` | `true` |
+| `docs/design-docs/2026-08-04-05-daily-report.md` | AI-Coach 工作日报 · 2026-08-04/05 | `design-doc` | `-` | `-` | `-` | `-` |
+| `docs/design-docs/COURSE-CREATOR-DEPLOYMENT.md` | Course Creator Skill · Agent 部署手册 | `design-doc` | `-` | `-` | `-` | `-` |
+| `docs/design-docs/DESIGN-OVERVIEW.md` | AI-Coach 企业大学 · 设计规划总览 | `design-doc` | `-` | `-` | `-` | `-` |
+| `docs/design-docs/WECOM-DOCS-INDEX.md` | AI-Coach 设计文档 · 企业微信 SmartPage 索引 | `design-doc` | `-` | `-` | `-` | `-` |
 | `docs/design-docs/agent-first-harness-phase-2.md` | Agent-First Harness Phase 2 | `design-doc` | `implemented` | `repo` | `2026-04-17` | `true` |
 | `docs/design-docs/agent-first-harness.md` | Agent-First Harness Migration | `design-doc` | `implemented` | `repo` | `2026-04-17` | `true` |
 | `docs/design-docs/ai-doc-generator-shrink.md` | AI Doc Generator Shrink And Baseline Restoration | `design-doc` | `implemented` | `repo` | `2026-04-17` | `true` |
@@ -22,6 +26,7 @@
 | `docs/exec-plans/active/admin-home-onboarding.md` | Admin Home Onboarding | `exec-plan-active` | `active` | `repo` | `-` | `true` |
 | `docs/exec-plans/active/agent-first-harness-phase-2.md` | Agent-First Harness Phase 2 | `exec-plan-active` | `active` | `repo` | `-` | `true` |
 | `docs/exec-plans/active/employee-aad-auth.md` | Employee AAD Authentication | `exec-plan-active` | `active` | `repo` | `-` | `true` |
+| `docs/exec-plans/active/jev-content-quality.md` | JEV Content-Quality Judgment & Scoring | `exec-plan-active` | `active` | `repo` | `-` | `true` |
 | `docs/exec-plans/active/wecom-h5-learner.md` | WeCom H5 Learner Integration | `exec-plan-active` | `active` | `repo` | `-` | `true` |
 | `docs/exec-plans/completed/agent-first-harness-migration.md` | Agent-First Harness Migration | `exec-plan-completed` | `completed` | `repo` | `-` | `true` |
 | `docs/exec-plans/tech-debt-tracker.md` | Tech Debt Tracker | `exec-plan-support` | `active` | `repo` | `2026-04-17` | `true` |
